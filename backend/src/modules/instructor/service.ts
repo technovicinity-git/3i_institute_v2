@@ -1,10 +1,5 @@
 import { prisma } from "#/lib/prisma";
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "#/shared/errors";
+import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type { InstructorApplicationInput } from "#/modules/instructor/schema";
 
 export class InstructorService {
@@ -27,7 +22,7 @@ export class InstructorService {
     // Store WWCC and application data
     // We use a simple approach: store in user metadata fields
     // For production, you'd have a separate InstructorApplication model
-    const updated = await prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
         // Store application data in audit log for now
