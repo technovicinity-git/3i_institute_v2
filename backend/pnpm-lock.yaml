@@ -47,6 +47,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.2.1)
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -96,9 +99,6 @@ importers:
       prisma:
         specifier: ^7.9.1
         version: 7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
-      tsx:
-        specifier: ^4.23.12
-        version: 4.23.12
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
