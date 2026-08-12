@@ -21,7 +21,6 @@ export class InstructorController {
   approve = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const adminId = req.user?.sub!;
-      const input = adminReviewSchema.parse(req.body);
       const result = await instructorService.approve(
         adminId,
         req.params["userId"] as string,
@@ -47,7 +46,7 @@ export class InstructorController {
     }
   };
 
-  getPending = async (req: Request, res: Response, next: NextFunction) => {
+  getPending = async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const applications = await instructorService.getPendingApplications();
       sendSuccess(res, applications, 200);
