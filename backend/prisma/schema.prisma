@@ -1,0 +1,484 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────
+// Enums
+// ──────────────────────────────────────
+
+enum AccountType {
+  ADULT
+  STANDALONE_MINOR
+}
+
+enum CourseType {
+  REGULAR
+  ONLINE_CLASS
+  MIXED
+}
+
+enum CourseStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum BatchStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum WaiverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum CertificateType {
+  ATTENDANCE
+  COMPLETION
+}
+
+// ──────────────────────────────────────
+// Models
+// ──────────────────────────────────────
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  permissions RolePermission[]
+  users       User[]
+
+  createdAt   DateTime         @default(now())
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique
+  description String?
+  roles       RolePermission[]
+
+  createdAt   DateTime         @default(now())
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id            String      @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String      @unique
+  passwordHash  String
+  dateOfBirth   DateTime
+  locale        String      @default("en")
+  accountType   AccountType
+  emailVerified Boolean     @default(false)
+  emailVerifyToken String?
+  emailVerifyExpires DateTime?
+
+  roleId        String
+  role          Role        @relation(fields: [roleId], references: [id])
+
+  guardianName      String?
+  guardianEmail     String?
+  guardianNotifiedAt DateTime?
+
+  devices          Device[]
+  refreshTokens    RefreshToken[]
+  learnerProfiles  LearnerProfile[]
+  courses          Course[]
+  subscriptions    Subscription[]
+
+  stripeCustomerId   String?
+  billingContactName  String?
+  billingContactEmail String?
+
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([email])
+}
+
+model Device {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName    String
+  deviceToken   String
+  platform      String
+  lastUsedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([deviceToken])
+}
+
+model RefreshToken {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String    @unique
+  deviceInfo    String?
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model LearnerProfile {
+  id            String    @id @default(uuid())
+  accountId     String
+  account       User      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  displayName   String
+  dateOfBirth   DateTime
+  avatarUrl     String?
+  pinHash       String?
+  chatEnabled   Boolean   @default(false)
+  nameLocked    Boolean   @default(false)
+
+  enrolments    Enrolment[]
+  progress      MaterialProgress[]
+  examAttempts  ExamAttempt[]
+  attendance    Attendance[]
+  certificates  Certificate[]
+
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  @@index([accountId])
+}
+
+model Course {
+  id            String        @id @default(uuid())
+  title         String
+  summary       String
+  description   String
+  thumbnailUrl  String?
+  category      String
+  type          CourseType
+  level         String
+  language      String        @default("en")
+
+  minimumAge    Int
+  maximumAge    Int?
+
+  status        CourseStatus  @default(DRAFT)
+  approvedAt    DateTime?
+  approvedBy    String?
+
+  instructorId  String
+  instructor    User          @relation(fields: [instructorId], references: [id])
+
+  materials     Material[]
+  batches       Batch[]
+  exams         Exam[]
+  enrolments    Enrolment[]
+  ratings       CourseRating[]
+  questions     Question[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([minimumAge])
+}
+
+model CourseRating {
+  id            String    @id @default(uuid())
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  accountId     String
+  rating        Int
+  review        String?
+  hidden        Boolean   @default(false)
+
+  createdAt     DateTime  @default(now())
+
+  @@unique([courseId, accountId])
+}
+
+model Material {
+  id            String    @id @default(uuid())
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title         String
+  type          String
+  url           String
+  duration      Int?
+  order         Int       @default(0)
+  captionUrl    String?
+
+  progress      MaterialProgress[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([courseId])
+}
+
+model MaterialProgress {
+  id              String    @id @default(uuid())
+  materialId      String
+  material        Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  watchedSeconds  Int       @default(0)
+  completed       Boolean   @default(false)
+  completedAt     DateTime?
+  lastPosition    Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([materialId, learnerProfileId])
+}
+
+model Batch {
+  id            String    @id @default(uuid())
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name          String
+  capacity      Int
+  status        BatchStatus @default(UPCOMING)
+
+  sessions      Session[]
+  enrolments    Enrolment[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([courseId])
+}
+
+model Session {
+  id              String    @id @default(uuid())
+  batchId         String
+  batch           Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  title           String
+  scheduledAt     DateTime
+  durationMinutes Int
+  meetingLink     String?
+  notes           String?
+
+  attendance      Attendance[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([batchId])
+}
+
+model Enrolment {
+  id                String    @id @default(uuid())
+  learnerProfileId  String
+  learnerProfile    LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  courseId          String
+  course            Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  batchId           String?
+  batch             Batch?    @relation(fields: [batchId], references: [id])
+
+  ageOverrideApplied    Boolean   @default(false)
+  ageOverrideApprovedBy String?
+
+  waitlisted        Boolean   @default(false)
+  waitlistPosition  Int?
+
+  enrolledAt        DateTime  @default(now())
+
+  @@unique([learnerProfileId, courseId, batchId])
+  @@index([learnerProfileId])
+  @@index([courseId])
+}
+
+model Attendance {
+  id              String    @id @default(uuid())
+  sessionId       String
+  session         Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  status          String
+
+  markedAt        DateTime  @default(now())
+  markedBy        String
+
+  @@unique([sessionId, learnerProfileId])
+}
+
+model Question {
+  id            String    @id @default(uuid())
+  scope         String    @default("INSTRUCTOR")
+  ownerId       String
+  type          String
+  question      String
+  options       Json?
+  correctAnswer Json?
+  suggestedAnswer String?
+  marks         Int       @default(1)
+  negativeMarks Int       @default(0)
+  partialCredit Boolean   @default(false)
+  difficulty    String    @default("medium")
+  explanation   String?
+
+  courseId      String?
+  course        Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([scope])
+}
+
+model Exam {
+  id            String    @id @default(uuid())
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title         String
+  type          String
+  duration      Int
+  passMark      Int
+  totalMarks    Int
+  maxAttempts   Int       @default(3)
+  cooldownHours Int       @default(24)
+
+  openDate      DateTime?
+  closeDate     DateTime?
+  randomizeQuestions Boolean @default(false)
+  randomizeOptions   Boolean @default(false)
+  revealAnswers      String  @default("after_pass")
+
+  questions     Json
+
+  attempts      ExamAttempt[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([courseId])
+}
+
+model ExamAttempt {
+  id              String    @id @default(uuid())
+  examId          String
+  exam            Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  attemptNumber   Int
+  answers         Json
+  score           Int?
+  totalMarks      Int
+  passed          Boolean?
+  graded          Boolean   @default(false)
+  gradedBy        String?
+
+  startedAt       DateTime  @default(now())
+  submittedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([examId, learnerProfileId, attemptNumber])
+  @@index([examId])
+  @@index([learnerProfileId])
+}
+
+model Certificate {
+  id                  String    @id @default(uuid())
+  learnerProfileId    String?
+  learnerProfile      LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: SetNull)
+  courseId            String?
+  type                CertificateType
+  verificationCode    String    @unique
+  learnerNameSnapshot String
+  courseTitleSnapshot String
+  issuerName          String?
+  issuedAt            DateTime  @default(now())
+  revokedAt           DateTime?
+  revokeReason        String?
+
+  @@index([verificationCode])
+  @@index([learnerProfileId])
+}
+
+model Subscription {
+  id                    String             @id @default(uuid())
+  accountId             String
+  account               User               @relation(fields: [accountId], references: [id])
+  stripeSubscriptionId  String             @unique
+  status                SubscriptionStatus
+  seats                 Int                @default(1)
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelledAt           DateTime?
+
+  waiver                Waiver?
+
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([accountId])
+}
+
+model Waiver {
+  id              String         @id @default(uuid())
+  subscriptionId  String?        @unique
+  subscription    Subscription?  @relation(fields: [subscriptionId], references: [id])
+  accountId       String
+  explanation     String
+  evidenceFiles   String[]
+  status          WaiverStatus   @default(PENDING)
+  tier            Int?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  effectiveAt     DateTime?
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  revokeReason    String?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([accountId])
+}
+
+model AuditLog {
+  id            String    @id @default(uuid())
+  userId        String?
+  action        String
+  resource      String
+  resourceId    String?
+  details       Json?
+  ipAddress     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
