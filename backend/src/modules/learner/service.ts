@@ -1,11 +1,6 @@
 import { hash } from "argon2";
 import { prisma } from "#/lib/prisma";
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "#/shared/errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "#/shared/errors";
 import type {
   CreateLearnerInput,
   UpdateLearnerInput,

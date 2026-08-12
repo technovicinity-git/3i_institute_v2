@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "#/lib/jwt";
 import { UnauthorizedError } from "#/shared/errors";
-import type { AccessTokenPayload } from "#/lib/jwt";
 
 function authenticate(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
