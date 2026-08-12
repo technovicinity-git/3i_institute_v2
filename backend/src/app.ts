@@ -4,7 +4,8 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import compression from "compression";
-
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "#/config/swagger";
 import { env } from "#/config/env";
 import { mountRoutes } from "#/routes";
 import { errorHandler } from "#/middleware/error-handler";
@@ -32,6 +33,12 @@ app.use(compression());
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Swagger documentation
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api/docs.json", (_req, res) => {
+  res.json(swaggerSpec);
 });
 
 // Routes

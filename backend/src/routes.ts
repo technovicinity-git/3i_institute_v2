@@ -1,16 +1,12 @@
 import { type Express, Router } from "express";
 import { authRoutes } from "#/modules/auth/routes";
+import { userRoutes } from "#/modules/user/routes";
 
 const router: Router = Router();
 
-// ──────────────────────────────────────
-// Mount module routes
-// ──────────────────────────────────────
 router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
 
-// ──────────────────────────────────────
-// Central mount point
-// ──────────────────────────────────────
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
 }
