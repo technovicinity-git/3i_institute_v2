@@ -112,6 +112,7 @@ model User {
   learnerProfiles  LearnerProfile[]
   courses          Course[]
   subscriptions    Subscription[]
+  waivers          Waiver[]
 
   stripeCustomerId   String?
   billingContactName  String?
@@ -452,6 +453,7 @@ model Waiver {
   subscriptionId  String?        @unique
   subscription    Subscription?  @relation(fields: [subscriptionId], references: [id])
   accountId       String
+  account         User           @relation(fields: [accountId], references: [id])
   explanation     String
   evidenceFiles   String[]
   status          WaiverStatus   @default(PENDING)
