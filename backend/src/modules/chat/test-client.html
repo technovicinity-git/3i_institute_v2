@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Chat Test Client</title>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 600px;
+      }
+      #messages {
+        border: 1px solid #ccc;
+        height: 400px;
+        overflow-y: auto;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin-bottom: 8px;
+        padding: 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+      }
+      .message .sender {
+        font-weight: bold;
+        color: #333;
+      }
+      .message .time {
+        font-size: 0.8em;
+        color: #999;
+      }
+      input,
+      button {
+        padding: 8px;
+        margin: 4px;
+      }
+      #token,
+      #courseId {
+        width: 100%;
+      }
+      #messageInput {
+        width: 70%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat Test Client</h1>
+
+    <div>
+      <label>JWT Token:</label>
+      <input
+        type="text"
+        id="token"
+        placeholder="Paste your access token here"
+      />
+    </div>
+
+    <div>
+      <label>Course ID:</label>
+      <input type="text" id="courseId" placeholder="Enter course UUID" />
+    </div>
+
+    <div>
+      <label>Batch ID (optional):</label>
+      <input
+        type="text"
+        id="batchId"
+        placeholder="Leave empty for regular course"
+      />
+    </div>
+
+    <button onclick="connect()">Connect & Join</button>
+    <button onclick="disconnect()">Disconnect</button>
+
+    <hr />
+
+    <div id="messages"></div>
+
+    <div>
+      <input type="text" id="messageInput" placeholder="Type your message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+      let socket = null;
+
+      function connect() {
+        const token = document.getElementById("token").value;
+        const courseId = document.getElementById("courseId").value;
+        const batchId = document.getElementById("batchId").value;
+
+        if (!token || !courseId) {
+          alert("Token and Course ID are required");
+          return;
+        }
+
+        socket = io("http://localhost:4000", {
+          auth: { token },
+          transports: ["websocket"],
+        });
+
+        socket.on("connect", () => {
+          console.log("Connected:", socket.id);
+          addMessage("system", "Connected to server");
+
+          // Join course room
+          socket.emit("join-course", {
+            courseId,
+            batchId: batchId || undefined,
+          });
+        });
+
+        socket.on("message-history", (messages) => {
+          console.log("Message history:", messages);
+          document.getElementById("messages").innerHTML = "";
+          messages.forEach((msg) => {
+            addMessage(msg.displayName, msg.message, msg.createdAt);
+          });
+        });
+
+        socket.on("new-message", (message) => {
+          console.log("New message:", message);
+          addMessage(message.displayName, message.message, message.createdAt);
+        });
+
+        socket.on("error", (error) => {
+          console.error("Socket error:", error);
+          addMessage("error", error.message || "Unknown error");
+        });
+
+        socket.on("disconnect", () => {
+          console.log("Disconnected");
+          addMessage("system", "Disconnected from server");
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("Connection error:", error);
+          addMessage("error", "Connection failed: " + error.message);
+        });
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+        }
+      }
+
+      function sendMessage() {
+        if (!socket) {
+          alert("Connect first");
+          return;
+        }
+
+        const courseId = document.getElementById("courseId").value;
+        const batchId = document.getElementById("batchId").value;
+        const message = document.getElementById("messageInput").value;
+
+        if (!message.trim()) {
+          return;
+        }
+
+        socket.emit("send-message", {
+          courseId,
+          batchId: batchId || undefined,
+          message,
+        });
+
+        document.getElementById("messageInput").value = "";
+      }
+
+      function addMessage(sender, message, time) {
+        const messagesDiv = document.getElementById("messages");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message";
+
+        const senderSpan = document.createElement("span");
+        senderSpan.className = "sender";
+        senderSpan.textContent = sender + ": ";
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "time";
+        timeSpan.textContent = time ? new Date(time).toLocaleTimeString() : "";
+
+        messageDiv.appendChild(senderSpan);
+        messageDiv.appendChild(document.createTextNode(message));
+        messageDiv.appendChild(document.createElement("br"));
+        messageDiv.appendChild(timeSpan);
+
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+    </script>
+  </body>
+</html>
