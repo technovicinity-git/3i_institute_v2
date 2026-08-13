@@ -49,6 +49,10 @@ const envSchema = z.object({
     .string()
     .url()
     .default("https://api.pwnedpasswords.com/range"),
+
+  // Stripe Price IDs
+  STRIPE_MONTHLY_PRICE_ID: z.string().default("price_monthly"),
+  STRIPE_ANNUAL_PRICE_ID: z.string().default("price_annual"),
 });
 
 type Env = z.infer<typeof envSchema>;
