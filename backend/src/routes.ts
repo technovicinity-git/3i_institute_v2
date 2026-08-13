@@ -6,6 +6,7 @@ import { deviceRoutes } from "#/modules/device/routes";
 import { instructorRoutes } from "#/modules/instructor/routes";
 import { courseRoutes } from "#/modules/course/routes";
 import { enrolmentRoutes } from "#/modules/enrolment/routes";
+import { batchRoutes } from "#/modules/batch/routes";
 
 const router: Router = Router();
 
@@ -16,6 +17,7 @@ router.use("/devices", deviceRoutes);
 router.use("/instructors", instructorRoutes);
 router.use("/courses", courseRoutes);
 router.use("/enrolments", enrolmentRoutes);
+router.use("/batches", batchRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
