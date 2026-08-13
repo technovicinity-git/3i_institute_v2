@@ -10,6 +10,7 @@ import { batchRoutes } from "#/modules/batch/routes";
 import { examRoutes } from "#/modules/exam/routes";
 import { certificateRoutes } from "#/modules/certificate/routes";
 import { billingRoutes } from "#/modules/billing/routes";
+import { chatRoutes } from "#/modules/chat/routes";
 
 const router: Router = Router();
 
@@ -24,6 +25,7 @@ router.use("/batches", batchRoutes);
 router.use("/exams", examRoutes);
 router.use("/certificates", certificateRoutes);
 router.use("/billing", billingRoutes);
+router.use("/chat", chatRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
