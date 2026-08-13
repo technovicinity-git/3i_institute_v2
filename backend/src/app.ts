@@ -5,13 +5,18 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "#/config/swagger";
+
 import { env } from "#/config/env";
+import { swaggerSpec } from "#/config/swagger";
 import { mountRoutes } from "#/routes";
+import { stripeWebhookRoutes } from "#/modules/billing/webhook-routes";
 import { errorHandler } from "#/middleware/error-handler";
 import { notFoundHandler } from "#/middleware/not-found";
 
 const app: Express = express();
+
+// Stripe webhook MUST be before express.json() for raw body
+app.use("/webhooks", stripeWebhookRoutes);
 
 // Security
 app.use(helmet());
