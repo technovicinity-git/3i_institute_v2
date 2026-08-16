@@ -12,6 +12,7 @@ import { certificateRoutes } from "#/modules/certificate/routes";
 import { billingRoutes } from "#/modules/billing/routes";
 import { chatRoutes } from "#/modules/chat/routes";
 import { notificationRoutes } from "#/modules/notification/routes";
+import { reportRoutes } from "#/modules/report/routes";
 
 const router: Router = Router();
 
@@ -28,6 +29,7 @@ router.use("/certificates", certificateRoutes);
 router.use("/billing", billingRoutes);
 router.use("/chat", chatRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/reports", reportRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
