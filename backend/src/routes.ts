@@ -13,6 +13,7 @@ import { billingRoutes } from "#/modules/billing/routes";
 import { chatRoutes } from "#/modules/chat/routes";
 import { notificationRoutes } from "#/modules/notification/routes";
 import { reportRoutes } from "#/modules/report/routes";
+import { materialRoutes } from "#/modules/material/routes";
 
 const router: Router = Router();
 
@@ -30,6 +31,7 @@ router.use("/billing", billingRoutes);
 router.use("/chat", chatRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/reports", reportRoutes);
+router.use("/materials", materialRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
