@@ -11,6 +11,7 @@ import { examRoutes } from "#/modules/exam/routes";
 import { certificateRoutes } from "#/modules/certificate/routes";
 import { billingRoutes } from "#/modules/billing/routes";
 import { chatRoutes } from "#/modules/chat/routes";
+import { notificationRoutes } from "#/modules/notification/routes";
 
 const router: Router = Router();
 
@@ -26,6 +27,7 @@ router.use("/exams", examRoutes);
 router.use("/certificates", certificateRoutes);
 router.use("/billing", billingRoutes);
 router.use("/chat", chatRoutes);
+router.use("/notifications", notificationRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
