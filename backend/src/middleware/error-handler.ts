@@ -8,14 +8,18 @@ function errorHandler(
   _next: NextFunction,
 ): void {
   if (err instanceof AppError) {
+    const response: Record<string, unknown> = {
+      code: err.code,
+      message: err.message,
+    };
+
+    // Include details for validation errors
+    if (err instanceof ValidationError && err.details) {
+      response["details"] = err.details;
+    }
+
     res.status(err.statusCode).json({
-      error: {
-        code: err.code,
-        message: err.message,
-        ...(err instanceof ValidationError && err.details
-          ? { details: err.details }
-          : {}),
-      },
+      error: response,
     });
     return;
   }
