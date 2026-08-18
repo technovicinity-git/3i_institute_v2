@@ -53,6 +53,9 @@ const envSchema = z.object({
   // Stripe Price IDs
   STRIPE_MONTHLY_PRICE_ID: z.string().default("price_monthly"),
   STRIPE_ANNUAL_PRICE_ID: z.string().default("price_annual"),
+
+  APPLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
 });
 
 type Env = z.infer<typeof envSchema>;
