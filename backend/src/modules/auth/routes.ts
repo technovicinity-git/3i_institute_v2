@@ -11,6 +11,11 @@ import {
   changePasswordSchema,
 } from "#/modules/auth/schema";
 import { rateLimit } from "#/middleware/rate-limit";
+import {
+  googleLoginSchema,
+  appleLoginSchema,
+} from "#/modules/auth/social-schema";
+import { socialAuthController } from "#/modules/auth/social-controller";
 
 const router: Router = Router();
 
@@ -341,6 +346,90 @@ router.post(
   authenticate,
   validate(changePasswordSchema),
   authController.changePassword,
+);
+
+// ──────────────────────────────────────
+// Social login routes
+// ──────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/v1/auth/google:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login with Google
+ *     description: Authenticate using a Google ID token. New users must provide dateOfBirth.
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [idToken]
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *               locale:
+ *                 type: string
+ *                 enum: [en, bn, hi, ur, ar]
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       422:
+ *         description: DOB required or underage
+ */
+router.post(
+  "/google",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  validate(googleLoginSchema),
+  socialAuthController.googleLogin,
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/apple:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login with Apple
+ *     description: Authenticate using Apple identity token. New users must provide dateOfBirth.
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [identityToken]
+ *             properties:
+ *               identityToken:
+ *                 type: string
+ *               authorizationCode:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *               locale:
+ *                 type: string
+ *                 enum: [en, bn, hi, ur, ar]
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       422:
+ *         description: DOB required or underage
+ */
+router.post(
+  "/apple",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  validate(appleLoginSchema),
+  socialAuthController.appleLogin,
 );
 
 export { router as authRoutes };
