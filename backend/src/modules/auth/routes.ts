@@ -16,6 +16,11 @@ import {
   appleLoginSchema,
 } from "#/modules/auth/social-schema";
 import { socialAuthController } from "#/modules/auth/social-controller";
+import { registrationController } from "#/modules/auth/registration-controller";
+import {
+  learnerRegistrationSchema,
+  instructorRegistrationSchema,
+} from "#/modules/auth/registration-schema";
 
 const router: Router = Router();
 
@@ -430,6 +435,82 @@ router.post(
   rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
   validate(appleLoginSchema),
   socialAuthController.appleLogin,
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/register/learner:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register as learner (account + profile)
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, password, dateOfBirth, learnerDisplayName, learnerDateOfBirth]
+ *             properties:
+ *               firstName: { type: string }
+ *               lastName: { type: string }
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 10 }
+ *               dateOfBirth: { type: string, format: date }
+ *               locale: { type: string, enum: [en, bn, hi, ur, ar] }
+ *               guardianName: { type: string }
+ *               guardianEmail: { type: string, format: email }
+ *               learnerDisplayName: { type: string }
+ *               learnerDateOfBirth: { type: string, format: date }
+ *               learnerAvatarUrl: { type: string }
+ *               learnerPin: { type: string, pattern: '^\d{4}$' }
+ *     responses:
+ *       201:
+ *         description: Account and learner profile created
+ */
+router.post(
+  "/register/learner",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  validate(learnerRegistrationSchema),
+  registrationController.registerLearner,
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/register/instructor:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register as instructor (account + application)
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, password, dateOfBirth, bio, areaOfExpertise, cvUrl, wwccNumber, wwccState, wwccExpiry]
+ *             properties:
+ *               firstName: { type: string }
+ *               lastName: { type: string }
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 10 }
+ *               dateOfBirth: { type: string, format: date }
+ *               locale: { type: string, enum: [en, bn, hi, ur, ar] }
+ *               bio: { type: string }
+ *               areaOfExpertise: { type: string }
+ *               cvUrl: { type: string }
+ *               wwccNumber: { type: string }
+ *               wwccState: { type: string }
+ *               wwccExpiry: { type: string, format: date }
+ *     responses:
+ *       201:
+ *         description: Account created and application submitted
+ */
+router.post(
+  "/register/instructor",
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  validate(instructorRegistrationSchema),
+  registrationController.registerInstructor,
 );
 
 export { router as authRoutes };
