@@ -29,3 +29,12 @@ export const updateLearnerSchema = z.object({
 });
 
 export type UpdateLearnerInput = z.infer<typeof updateLearnerSchema>;
+
+export const verifyPinSchema = z.object({
+  pin: z
+    .string()
+    .length(4)
+    .regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
+});
+
+export type VerifyPinInput = z.infer<typeof verifyPinSchema>;

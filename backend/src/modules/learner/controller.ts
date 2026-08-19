@@ -3,6 +3,7 @@ import { learnerService } from "#/modules/learner/service";
 import {
   createLearnerSchema,
   updateLearnerSchema,
+  verifyPinSchema,
 } from "#/modules/learner/schema";
 import { sendSuccess } from "#/shared/response";
 
@@ -51,6 +52,36 @@ export class LearnerController {
         input,
       );
       sendSuccess(res, profile, 200, "Profile updated");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyPin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.sub!;
+      const input = verifyPinSchema.parse(req.body);
+      const result = await learnerService.verifyPin(
+        userId,
+        req.params["id"] as string,
+        input.pin,
+      );
+      sendSuccess(res, result, 200, "PIN verified");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resetPin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.sub!;
+      const input = verifyPinSchema.parse(req.body);
+      await learnerService.resetPin(
+        userId,
+        req.params["id"] as string,
+        input.pin,
+      );
+      sendSuccess(res, null, 200, "PIN reset");
     } catch (error) {
       next(error);
     }

@@ -6,6 +6,7 @@ import { validate } from "#/middleware/validate";
 import {
   createLearnerSchema,
   updateLearnerSchema,
+  verifyPinSchema,
 } from "#/modules/learner/schema";
 
 const router: Router = Router();
@@ -155,6 +156,68 @@ router.delete(
   authenticate,
   authorize("profiles.delete"),
   learnerController.delete,
+);
+
+/**
+ * @swagger
+ * /api/v1/learners/{id}/verify-pin:
+ *   post:
+ *     tags: [Learners]
+ *     summary: Verify profile PIN
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [pin]
+ *             properties:
+ *               pin: { type: string, pattern: '^\d{4}$' }
+ *     responses:
+ *       200:
+ *         description: PIN verified
+ */
+router.post(
+  "/:id/verify-pin",
+  authenticate,
+  validate(verifyPinSchema),
+  learnerController.verifyPin,
+);
+
+/**
+ * @swagger
+ * /api/v1/learners/{id}/reset-pin:
+ *   post:
+ *     tags: [Learners]
+ *     summary: Reset profile PIN
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [pin]
+ *             properties:
+ *               pin: { type: string, pattern: '^\d{4}$' }
+ *     responses:
+ *       200:
+ *         description: PIN reset
+ */
+router.post(
+  "/:id/reset-pin",
+  authenticate,
+  validate(verifyPinSchema),
+  learnerController.resetPin,
 );
 
 export { router as learnerRoutes };
