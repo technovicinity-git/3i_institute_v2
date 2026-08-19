@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Logo } from "@/components/layout/logo";
+import { useResendVerificationMutation } from "@/hooks/use-email-verification";
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") ?? "your email";
+
+  const resendMutation = useResendVerificationMutation();
+
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
@@ -21,10 +29,19 @@ export default function CheckEmailPage() {
   }, [countdown]);
 
   const handleResend = () => {
-    // TODO: Call resend API
-    console.log("Verification email resent");
-    setCountdown(60);
-    setCanResend(false);
+    if (!canResend) return;
+
+    resendMutation.mutate(email, {
+      onSuccess: () => {
+        setCountdown(60);
+        setCanResend(false);
+      },
+      onError: () => {
+        // Still reset countdown to prevent spam
+        setCountdown(60);
+        setCanResend(false);
+      },
+    });
   };
 
   return (
@@ -38,7 +55,10 @@ export default function CheckEmailPage() {
       <main className="flex-1 flex items-center justify-center px-6 py-10 sm:px-8 sm:py-12 lg:px-8 lg:py-16">
         <section className="w-full max-w-lg bg-white rounded-xl sm:rounded-2xl border border-surface-high shadow-card px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-12 flex flex-col items-center text-center">
           {/* Mail Icon */}
-          <div className="w-20 h-20 rounded-full bg-surface-low flex items-center justify-center mb-7 sm:mb-8">
+          <div
+            className="w-20 h-20 rounded-full bg-surface-low flex items-center justify-center mb-7 sm:mb-8"
+            aria-hidden="true"
+          >
             <svg
               className="w-9 h-9 sm:w-10 sm:h-10 text-gold"
               fill="none"
@@ -63,21 +83,21 @@ export default function CheckEmailPage() {
           <p className="text-muted text-sm sm:text-base leading-6 max-w-md mb-8">
             We&apos;ve sent a verification link to{" "}
             <span className="font-semibold text-primary break-all">
-              sarah@example.com
+              {email}
             </span>
           </p>
 
           {/* Resend Button */}
           <button
             onClick={handleResend}
-            disabled={!canResend}
-            className="w-full h-12 sm:h-[52px] bg-white border border-outline-variant text-outline font-medium text-sm sm:text-base rounded-xl hover:bg-surface-container hover:text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!canResend || resendMutation.isPending}
+            className="w-full h-12 sm:h-[52px] bg-white border border-outline-variant text-outline font-medium text-sm sm:text-base rounded-xl hover:bg-surface-container hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Resend email
+            {resendMutation.isPending ? "Sending..." : "Resend email"}
           </button>
 
           {/* Countdown */}
-          <p className="text-sm text-outline mt-4">
+          <p className="text-sm text-outline mt-4" aria-live="polite">
             {canResend ? (
               "You can resend now"
             ) : (
@@ -92,13 +112,32 @@ export default function CheckEmailPage() {
             Wrong email?{" "}
             <a
               href="/register"
-              className="text-green font-medium hover:underline underline-offset-4"
+              className="text-green font-medium hover:underline underline-offset-4 decoration-2 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-sm"
             >
               Go back
             </a>
           </p>
         </section>
       </main>
+
+      {/* Mobile Home Indicator */}
+      <div className="flex justify-center pb-5 sm:hidden">
+        <div className="w-32 h-1 rounded-full bg-gray-300" />
+      </div>
     </div>
+  );
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <p className="text-muted">Loading...</p>
+        </div>
+      }
+    >
+      <CheckEmailContent />
+    </Suspense>
   );
 }

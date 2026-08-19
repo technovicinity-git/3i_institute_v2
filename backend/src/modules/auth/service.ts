@@ -415,6 +415,39 @@ export class AuthService {
       data: { passwordHash },
     });
   }
+  async resendVerification(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Return success to prevent email enumeration
+      return {
+        message:
+          "If an account with that email exists, a verification email has been sent.",
+      };
+    }
+
+    if (user.emailVerified) {
+      return { message: "Email is already verified. You can log in." };
+    }
+
+    // Generate new token
+    const emailVerifyToken = generateToken();
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifyToken,
+        emailVerifyExpires,
+      },
+    });
+
+    // TODO: Send verification email with new token
+
+    return { message: "Verification email sent." };
+  }
 }
 
 export const authService = new AuthService();

@@ -10,6 +10,7 @@ import {
 } from "#/modules/auth/schema";
 import { ValidationError } from "#/shared/errors";
 import { sendSuccess } from "#/shared/response";
+import { resendVerificationSchema } from "#/modules/auth/resend-verification-schema";
 
 export class AuthController {
   register = async (req: Request, res: Response, next: NextFunction) => {
@@ -148,6 +149,20 @@ export class AuthController {
       const input = changePasswordSchema.parse(req.body);
       await authService.changePassword(userId, input);
       sendSuccess(res, null, 200, "Password changed successfully");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resendVerification = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const input = resendVerificationSchema.parse(req.body);
+      const result = await authService.resendVerification(input.email);
+      sendSuccess(res, result, 200, result.message);
     } catch (error) {
       next(error);
     }
