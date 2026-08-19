@@ -1,10 +1,5 @@
 import { prisma } from "#/lib/prisma";
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "#/shared/errors";
+import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 
 export class SeatService {
   /**
