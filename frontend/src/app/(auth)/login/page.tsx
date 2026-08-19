@@ -8,7 +8,8 @@ import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLoginMutation } from "@/hooks/use-auth-mutations";
+import { useLoginMutation } from "@/hooks/use-login";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -58,7 +59,11 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6"
+            noValidate
+          >
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
@@ -70,6 +75,8 @@ export default function LoginPage() {
                 placeholder="sarah@example.com"
                 {...register("email")}
                 className="px-4 py-3"
+                aria-invalid={!!errors.email}
+                autoComplete="email"
               />
               {errors.email && (
                 <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -84,7 +91,7 @@ export default function LoginPage() {
                 </Label>
                 <a
                   href="/forgot-password"
-                  className="text-sm text-green hover:text-green-hover font-medium"
+                  className="text-sm text-green hover:text-green-dark font-medium transition-colors"
                 >
                   Forgot password?
                 </a>
@@ -96,11 +103,14 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
                   className="px-4 py-3 pr-24 tracking-[0.2em]"
+                  aria-invalid={!!errors.password}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary bg-white px-1"
+                  tabIndex={-1}
                 >
                   <span className="w-4 h-4 rounded-full bg-muted inline-block" />
                   {showPassword ? "Hide" : "Show"}
@@ -116,7 +126,7 @@ export default function LoginPage() {
             {/* Submit */}
             <Button
               type="submit"
-              className="w-full bg-green text-white py-3 rounded-element font-medium hover:bg-green-hover shadow-sm"
+              className="w-full bg-green text-white py-3 rounded-element font-medium hover:bg-green-dark shadow-sm"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Logging in..." : "Log in"}
@@ -132,10 +142,10 @@ export default function LoginPage() {
 
           {/* Social buttons */}
           <div className="space-y-4">
-            <Button
-              variant="outline"
+            <button
               type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => toast.info("Google login coming soon")}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -144,12 +154,12 @@ export default function LoginPage() {
                 />
               </svg>
               Continue with Google
-            </Button>
+            </button>
 
-            <Button
-              variant="outline"
+            <button
               type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => toast.info("Apple login coming soon")}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -158,7 +168,7 @@ export default function LoginPage() {
                 />
               </svg>
               Continue with Apple
-            </Button>
+            </button>
           </div>
 
           {/* Footer */}
@@ -166,7 +176,7 @@ export default function LoginPage() {
             New to 3i?{" "}
             <a
               href="/register"
-              className="text-green hover:text-green-hover font-medium"
+              className="text-green hover:text-green-dark font-medium transition-colors"
             >
               Create an account
             </a>
