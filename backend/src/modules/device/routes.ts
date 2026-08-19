@@ -20,28 +20,43 @@ const registerDeviceSchema = z.object({
  *   get:
  *     tags: [Devices]
  *     summary: Get all registered devices
- *     description: Returns all devices registered for the authenticated user.
+ *     description: Returns devices plus device limit info (scales with seats: 1 + seats)
  *     responses:
  *       200:
- *         description: List of devices
+ *         description: List of devices with limit info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     devices:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     deviceLimit:
+ *                       type: integer
+ *                       description: Maximum devices allowed (1 + seats)
+ *                     currentCount:
+ *                       type: integer
+ *                     remainingSlots:
+ *                       type: integer
  *   post:
  *     tags: [Devices]
  *     summary: Register a device
- *     description: Register a new device for push notifications. Max 3 devices per account.
+ *     description: Register a new device. Device limit scales with subscription seats.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - deviceName
- *               - deviceToken
- *               - platform
+ *             required: [deviceName, deviceToken, platform]
  *             properties:
  *               deviceName:
  *                 type: string
- *                 example: iPhone 16 Pro
  *               deviceToken:
  *                 type: string
  *               platform:
@@ -51,15 +66,15 @@ const registerDeviceSchema = z.object({
  *       201:
  *         description: Device registered
  *       409:
- *         description: Max devices reached
+ *         description: Device limit reached
  */
 router.get(
   "/",
   authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const devices = await deviceService.getDevices(req.user?.sub!);
-      sendSuccess(res, devices, 200);
+      const result = await deviceService.getDevices(req.user?.sub!);
+      sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
     }
@@ -93,9 +108,7 @@ router.post(
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *           format: uuid
+ *         schema: { type: string, format: uuid }
  *     responses:
  *       200:
  *         description: Device removed
@@ -122,7 +135,6 @@ router.delete(
  *   delete:
  *     tags: [Devices]
  *     summary: Remove all devices
- *     description: De-authorize all devices for the authenticated user.
  *     responses:
  *       200:
  *         description: All devices removed

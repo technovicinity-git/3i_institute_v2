@@ -1,7 +1,39 @@
 import { prisma } from "#/lib/prisma";
 import { ConflictError, NotFoundError } from "#/shared/errors";
 
+/**
+ * Device limit rule:
+ * - Base: 1 device per account (minimum)
+ * - Additional: 1 device per purchased seat
+ * - Formula: maxDevices = 1 + seats
+ *
+ * Examples:
+ * - 1 seat → 2 devices
+ * - 2 seats → 3 devices
+ * - 3 seats → 4 devices
+ */
 export class DeviceService {
+  async getDeviceLimit(accountId: string): Promise<number> {
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        accountId,
+        status: "ACTIVE",
+      },
+      select: {
+        seats: true,
+      },
+    });
+
+    const seats = subscription?.seats ?? 0;
+    return 1 + seats;
+  }
+
+  async getCurrentDeviceCount(accountId: string): Promise<number> {
+    return prisma.device.count({
+      where: { userId: accountId },
+    });
+  }
+
   async registerDevice(
     userId: string,
     data: {
@@ -10,14 +42,14 @@ export class DeviceService {
       platform: string;
     },
   ) {
-    // Check device limit (FR-AUTH-11: max 3)
-    const deviceCount = await prisma.device.count({
-      where: { userId },
-    });
+    const [deviceLimit, currentCount] = await Promise.all([
+      this.getDeviceLimit(userId),
+      this.getCurrentDeviceCount(userId),
+    ]);
 
-    if (deviceCount >= 3) {
+    if (currentCount >= deviceLimit) {
       throw new ConflictError(
-        "Maximum of 3 devices reached. Manage your devices in settings.",
+        `Device limit reached. You have ${deviceLimit} device slot(s) available with your current subscription. Upgrade to add more seats and get more device slots.`,
       );
     }
 
@@ -27,10 +59,12 @@ export class DeviceService {
     });
 
     if (existing) {
-      // Update last used
       const updated = await prisma.device.update({
         where: { id: existing.id },
-        data: { lastUsedAt: new Date(), deviceName: data.deviceName },
+        data: {
+          lastUsedAt: new Date(),
+          deviceName: data.deviceName,
+        },
       });
       return updated;
     }
@@ -48,19 +82,28 @@ export class DeviceService {
   }
 
   async getDevices(userId: string) {
-    const devices = await prisma.device.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        deviceName: true,
-        platform: true,
-        lastUsedAt: true,
-        createdAt: true,
-      },
-      orderBy: { lastUsedAt: "desc" },
-    });
+    const [devices, deviceLimit, currentCount] = await Promise.all([
+      prisma.device.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          deviceName: true,
+          platform: true,
+          lastUsedAt: true,
+          createdAt: true,
+        },
+        orderBy: { lastUsedAt: "desc" },
+      }),
+      this.getDeviceLimit(userId),
+      this.getCurrentDeviceCount(userId),
+    ]);
 
-    return devices;
+    return {
+      devices,
+      deviceLimit,
+      currentCount,
+      remainingSlots: Math.max(0, deviceLimit - currentCount),
+    };
   }
 
   async removeDevice(userId: string, deviceId: string) {
