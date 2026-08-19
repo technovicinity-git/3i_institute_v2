@@ -17,22 +17,14 @@ export class AuthController {
       const input = registerSchema.parse(req.body);
       const result = await authService.register(input);
 
-      res.cookie("refreshToken", result.tokens.refreshToken, {
-        httpOnly: true,
-        secure: process.env["NODE_ENV"] === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/api/v1/auth",
-      });
-
+      // No tokens — user must verify email first
       sendSuccess(
         res,
         {
           user: result.user,
-          accessToken: result.tokens.accessToken,
         },
         201,
-        "Account created successfully",
+        "Account created. Please check your email to verify.",
       );
     } catch (error) {
       next(error);

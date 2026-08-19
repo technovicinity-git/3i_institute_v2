@@ -21,7 +21,7 @@ export const registerSchema = z.object({
     const date = new Date(value);
     return !isNaN(date.getTime());
   }, "Invalid date of birth"),
-  locale: z.enum(["en", "bn", "hi", "ur", "ar"]),
+  locale: z.enum(["en", "bn", "hi", "ur", "ar"]).default("en"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
