@@ -1,13 +1,5 @@
 import { create } from "zustand";
-
-interface LearnerProfile {
-  id: string;
-  displayName: string;
-  dateOfBirth: string;
-  avatarUrl: string | null;
-  chatEnabled: boolean;
-  nameLocked: boolean;
-}
+import type { LearnerProfile } from "@/services/learner.service";
 
 interface ProfileState {
   activeProfile: LearnerProfile | null;
