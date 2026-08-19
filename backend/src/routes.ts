@@ -16,6 +16,7 @@ import { reportRoutes } from "#/modules/report/routes";
 import { materialRoutes } from "#/modules/material/routes";
 import { progressRoutes } from "#/modules/progress/routes";
 import { ratingRoutes } from "#/modules/rating/routes";
+import { seatRoutes } from "#/modules/seat/routes";
 
 const router: Router = Router();
 
@@ -36,6 +37,7 @@ router.use("/reports", reportRoutes);
 router.use("/materials", materialRoutes);
 router.use("/progress", progressRoutes);
 router.use("/ratings", ratingRoutes);
+router.use("/seats", seatRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);

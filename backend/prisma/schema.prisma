@@ -56,6 +56,12 @@ enum CertificateType {
   COMPLETION
 }
 
+enum SeatStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
 // ──────────────────────────────────────
 // Models
 // ──────────────────────────────────────
@@ -165,6 +171,9 @@ model LearnerProfile {
   pinHash       String?
   chatEnabled   Boolean   @default(false)
   nameLocked    Boolean   @default(false)
+  isActive      Boolean   @default(false)  // NEW: true when seat assigned
+
+  seats         Seat[]
 
   enrolments    Enrolment[]
   progress      MaterialProgress[]
@@ -440,6 +449,7 @@ model Subscription {
   currentPeriodEnd      DateTime
   cancelledAt           DateTime?
 
+  assignedSeats         Seat[]
   waiver                Waiver?
 
   createdAt             DateTime           @default(now())
@@ -484,4 +494,28 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+}
+
+model Seat {
+  id              String        @id @default(uuid())
+  subscriptionId  String
+  subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id])
+  status          SeatStatus    @default(ACTIVE)
+  assignedAt      DateTime      @default(now())
+  cancelledAt     DateTime?
+
+  @@index([subscriptionId])
+  @@index([learnerProfileId])
+  @@unique([subscriptionId, learnerProfileId])
+}
+
+model SafetyMessage {
+  id          String    @id @default(uuid())
+  messageKey  String    @unique
+  content     Json      // { en: "...", bn: "...", hi: "...", ur: "...", ar: "..." }
+  isHumanTranslated Boolean @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
