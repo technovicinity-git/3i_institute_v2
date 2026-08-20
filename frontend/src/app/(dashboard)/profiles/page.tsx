@@ -94,13 +94,21 @@ export default function ProfilesPage() {
       <header className="border-b border-gray-200 bg-surface">
         <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-5 md:px-10">
           <Logo size="sm" href="/dashboard" />
-          <button
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-            className="text-sm font-semibold text-gray-600 hover:text-primary disabled:opacity-50"
-          >
-            {logoutMutation.isPending ? "Logging out..." : "Log out"}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/seats")}
+              className="text-sm font-semibold text-green hover:underline"
+            >
+              Manage seats
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className="text-sm font-semibold text-gray-600 hover:text-primary disabled:opacity-50"
+            >
+              {logoutMutation.isPending ? "Logging out..." : "Log out"}
+            </button>
+          </div>
         </div>
       </header>
 
