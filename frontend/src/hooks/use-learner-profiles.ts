@@ -78,3 +78,17 @@ export function useDeleteLearnerProfileMutation() {
     },
   });
 }
+
+export function useResetPinMutation() {
+  return useMutation({
+    mutationFn: ({ profileId, pin }: { profileId: string; pin: string }) =>
+      learnerService.resetPin(profileId, pin),
+    onSuccess: () => {
+      toast.success("PIN updated");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to reset PIN");
+    },
+  });
+}

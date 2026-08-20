@@ -59,6 +59,16 @@ export const learnerService = {
     return response.data.data;
   },
 
+  resetPin: async (
+    profileId: string,
+    pin: string,
+  ): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/learners/${profileId}/reset-pin`, {
+      pin,
+    });
+    return response.data.data;
+  },
+
   delete: async (profileId: string): Promise<void> => {
     await apiClient.delete(`/learners/${profileId}`);
   },
