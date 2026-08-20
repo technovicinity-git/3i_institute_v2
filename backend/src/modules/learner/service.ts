@@ -113,6 +113,7 @@ export class LearnerService {
         chatEnabled: true,
         nameLocked: true,
         isActive: true,
+        pinHash: true,
         createdAt: true,
         seats: {
           where: { status: "ACTIVE" },
@@ -126,11 +127,17 @@ export class LearnerService {
       orderBy: { createdAt: "asc" },
     });
 
-    // Add hasPin indicator without exposing hash
     return profiles.map((profile) => ({
-      ...profile,
-      hasPin: true, // We'll return this from pinHash presence in the query
-      // Actually we need to fetch pinHash to check — let's do it differently
+      id: profile.id,
+      displayName: profile.displayName,
+      dateOfBirth: profile.dateOfBirth,
+      avatarUrl: profile.avatarUrl,
+      chatEnabled: profile.chatEnabled,
+      nameLocked: profile.nameLocked,
+      isActive: profile.isActive,
+      hasPin: profile.pinHash !== null,
+      hasSeat: profile.seats.length > 0,
+      createdAt: profile.createdAt,
     }));
   }
 

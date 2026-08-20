@@ -1,23 +1,27 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Arabic, Noto_Sans_Bengali } from "next/font/google";
-import { Toaster } from "sonner";
+import { Inter, Libre_Caslon_Text } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const notoArabic = Noto_Sans_Arabic({
-  subsets: ["arabic"],
-  variable: "--font-arabic",
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
-const notoBengali = Noto_Sans_Bengali({
-  subsets: ["bengali"],
-  variable: "--font-bengali",
+
+const libreCaslon = Libre_Caslon_Text({
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-libre-caslon",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
     default: "3i International Islamic Institute",
-    template: "%s | 3i Institute",
+    template: "%s | 3i",
   },
   description:
     "Online Islamic education platform delivering self-paced and live-taught courses.",
@@ -30,9 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${notoArabic.variable} ${notoBengali.variable} font-sans antialiased`}
-      >
+      <body className={`${inter.variable} ${libreCaslon.variable} antialiased`}>
         <QueryProvider>
           {children}
           <Toaster position="top-right" richColors />

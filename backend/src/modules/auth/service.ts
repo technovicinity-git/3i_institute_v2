@@ -48,9 +48,11 @@ export class AuthService {
     const dateOfBirth = new Date(input.dateOfBirth);
     const age = calculateAge(dateOfBirth);
 
-    // FR-AUTH-03: Block under 13 with neutral message
-    if (age < 13) {
-      throw new ValidationError("Unable to process registration");
+    // Adult registration only — age must be 18+
+    if (age < 18) {
+      throw new ValidationError(
+        "You must be at least 18 years old to create an account",
+      );
     }
 
     // Check duplicate email
@@ -64,10 +66,7 @@ export class AuthService {
 
     const passwordHash = await hash(input.password);
     const emailVerifyToken = generateToken();
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // Determine account type
-    const accountType = age >= 18 ? "ADULT" : "STANDALONE_MINOR";
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // Get Account Holder role
     const role = await prisma.role.findUnique({
@@ -86,52 +85,15 @@ export class AuthService {
         passwordHash,
         dateOfBirth,
         locale: input.locale,
-        accountType,
+        accountType: "ADULT",
         emailVerified: false,
         emailVerifyToken,
         emailVerifyExpires,
         roleId: role.id,
-        ...(accountType === "STANDALONE_MINOR"
-          ? {
-              guardianName: null,
-              guardianEmail: null,
-            }
-          : {}),
-      },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
       },
     });
 
-    // Resolve permissions for JWT
-    const permissions = user.role.permissions.map(
-      (rp: { permission: { key: string } }) => rp.permission.key,
-    );
-
-    const tokens = generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      role: user.role.name,
-      permissions,
-    });
-
-    // Store refresh token hash
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        tokenHash: await hash(tokens.refreshToken),
-        deviceInfo: null,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    // TODO: Send verification email with emailVerifyToken
 
     return {
       user: {
@@ -142,7 +104,6 @@ export class AuthService {
         locale: user.locale,
         emailVerified: user.emailVerified,
       },
-      tokens,
     };
   }
 
@@ -453,6 +414,39 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash },
     });
+  }
+  async resendVerification(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Return success to prevent email enumeration
+      return {
+        message:
+          "If an account with that email exists, a verification email has been sent.",
+      };
+    }
+
+    if (user.emailVerified) {
+      return { message: "Email is already verified. You can log in." };
+    }
+
+    // Generate new token
+    const emailVerifyToken = generateToken();
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifyToken,
+        emailVerifyExpires,
+      },
+    });
+
+    // TODO: Send verification email with new token
+
+    return { message: "Verification email sent." };
   }
 }
 

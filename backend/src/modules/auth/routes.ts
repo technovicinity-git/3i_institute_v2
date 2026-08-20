@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authController } from "#/modules/auth/controller";
 import { authenticate } from "#/middleware/authenticate";
 import { validate } from "#/middleware/validate";
+import { resendVerificationSchema } from "#/modules/auth/resend-verification-schema";
 import {
   registerSchema,
   loginSchema,
@@ -511,6 +512,33 @@ router.post(
   rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
   validate(instructorRegistrationSchema),
   registrationController.registerInstructor,
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-verification:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Resend verification email
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200:
+ *         description: Verification email sent
+ */
+router.post(
+  "/resend-verification",
+  rateLimit({ windowMs: 60 * 1000, max: 1 }),
+  validate(resendVerificationSchema),
+  authController.resendVerification,
 );
 
 export { router as authRoutes };

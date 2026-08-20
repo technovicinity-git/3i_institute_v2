@@ -47,9 +47,33 @@ export interface AuthResponse {
   accessToken: string;
 }
 
+export interface RegisterInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  dateOfBirth: string;
+  locale: "en" | "bn" | "hi" | "ur" | "ar";
+}
+
+export interface RegisterResponse {
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    locale: string;
+    emailVerified: boolean;
+  };
+}
+
 export const authService = {
   login: async (input: LoginInput): Promise<AuthResponse> => {
     const response = await apiClient.post("/auth/login", input);
+    return response.data.data;
+  },
+  register: async (input: RegisterInput): Promise<RegisterResponse> => {
+    const response = await apiClient.post("/auth/register", input);
     return response.data.data;
   },
 
