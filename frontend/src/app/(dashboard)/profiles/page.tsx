@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/layout/logo";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
+import Image from "next/image";
 import {
   useLearnerProfiles,
   useVerifyPinMutation,
@@ -134,10 +135,12 @@ export default function ProfilesPage() {
                 >
                   <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-avatar-bg text-avatar-text transition group-hover:bg-[#c8e6c9]">
                     {profile.avatarUrl ? (
-                      <img
+                      <Image
                         src={profile.avatarUrl}
                         alt={profile.displayName}
-                        className="w-full h-full rounded-full object-cover"
+                        width={80}
+                        height={80}
+                        className="rounded-full object-cover"
                       />
                     ) : (
                       <span className="font-serif text-2xl">

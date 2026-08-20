@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLoginMutation } from "@/hooks/use-login";
-import { toast } from "sonner";
+import { GoogleButton } from "@/components/social/google-button";
+import { AppleButton } from "@/components/social/apple-button";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -141,7 +142,12 @@ export default function LoginPage() {
           </div>
 
           {/* Social buttons */}
+
           <div className="space-y-4">
+            <GoogleButton />
+            <AppleButton />
+          </div>
+          {/* <div className="space-y-4">
             <button
               type="button"
               className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
@@ -169,7 +175,7 @@ export default function LoginPage() {
               </svg>
               Continue with Apple
             </button>
-          </div>
+          </div> */}
 
           {/* Footer */}
           <div className="text-center mt-10 text-sm text-muted">
