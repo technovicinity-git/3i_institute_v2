@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { LandingLogo } from "@/components/landing/logo";
 export function Footer() {
   return (
     <footer className="bg-brand-navy text-white pt-20 pb-10">
@@ -8,16 +7,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-6">
-              <svg
-                className="w-8 h-8 text-green"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-              </svg>
-              <span className="font-semibold text-xl tracking-tight text-white">
-                3i Institute
-              </span>
+              <LandingLogo size="sm" textColor="light" />
             </div>
             <p className="text-sm text-gold mb-4 font-serif">
               Rigorous teaching. Global classrooms. One institute.

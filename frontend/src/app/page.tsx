@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
@@ -69,10 +70,15 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="w-full md:w-1/2 relative mt-12 md:mt-0">
-            <div className="relative bg-white p-4 rounded-xl shadow-2xl z-10 max-w-md mx-auto md:ml-auto">
-              <div className="w-full h-56 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">Student Image</span>
-              </div>
+            <div className="relative bg-white rounded-xl shadow-2xl z-10 max-w-md mx-auto md:ml-auto">
+              <Image
+                src="/assets/images/landing_page/student-image.png"
+                alt="Student studying online"
+                width={400}
+                height={300}
+                className="w-full rounded-t-lg mb-4 object-cover"
+              />
+
               <div className="px-2 pb-2">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold text-brand-navy">Sarah Chen</h3>
@@ -268,24 +274,28 @@ export default function LandingPage() {
                 instructor: "Dr. Elena Vasquez",
                 level: "Beginner",
                 rating: "4.8",
+                imageUrl: "/assets/images/landing_page/imag1.png",
               },
               {
                 title: "Academic Writing & Research Methods",
                 instructor: "Prof. Sarah Sterling",
                 level: "Intermediate",
                 rating: "4.9",
+                imageUrl: "/assets/images/landing_page/imag2.png",
               },
               {
                 title: "Introduction to Microeconomics",
                 instructor: "Dr. Omar Haddad",
                 level: "Beginner",
                 rating: "4.7",
+                imageUrl: "/assets/images/landing_page/imag3.png",
               },
               {
                 title: "Human Anatomy & Physiology",
                 instructor: "Dr. Amina Rahman",
                 level: "Intermediate",
                 rating: "4.9",
+                imageUrl: "/assets/images/landing_page/imag4.png",
               },
             ].map((course) => (
               <div
@@ -293,7 +303,13 @@ export default function LandingPage() {
                 className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white flex flex-col h-full"
               >
                 <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400 text-xs">Course Image</span>
+                  <Image
+                    src={course.imageUrl}
+                    alt={course.title}
+                    width={300}
+                    height={200}
+                    className="w-full h-48 object-cover"
+                  />
                 </div>
                 <div className="p-6 flex flex-col flex-grow">
                   <div className="flex justify-between items-center mb-3">
@@ -396,19 +412,39 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: "Dr. Elena Vasquez", role: "Ph.D. in Statistics" },
-              { name: "Prof. Sarah Sterling", role: "Professor of Rhetoric" },
-              { name: "Dr. Omar Haddad", role: "Ph.D. in Economics" },
-              { name: "Dr. Amina Rahman", role: "MBBS, MSc Physiology" },
+              {
+                name: "Dr. Elena Vasquez",
+                role: "Ph.D. in Statistics",
+                imageUrl: "/assets/images/landing_page/elena.png",
+              },
+              {
+                name: "Prof. Sarah Sterling",
+                role: "Professor of Rhetoric",
+                imageUrl: "/assets/images/landing_page/sarah.png",
+              },
+              {
+                name: "Dr. Omar Haddad",
+                role: "Ph.D. in Economics",
+                imageUrl: "/assets/images/landing_page/omar.png",
+              },
+              {
+                name: "Dr. Amina Rahman",
+                role: "MBBS, MSc Physiology",
+                imageUrl: "/assets/images/landing_page/amin.png",
+              },
             ].map((faculty) => (
               <div
                 key={faculty.name}
                 className="border border-gray-100 rounded-xl overflow-hidden group"
               >
-                <div className="w-full h-48 bg-gray-200 grayscale group-hover:grayscale-0 transition-all duration-300 flex items-center justify-center">
-                  <span className="text-gray-400 text-xs">
-                    Instructor Photo
-                  </span>
+                <div className="w-full h-48  group-hover:grayscale-0 transition-all duration-300 flex items-center justify-center">
+                  <Image
+                    src={faculty.imageUrl}
+                    alt={faculty.name}
+                    width={300}
+                    height={200}
+                    className="w-full h-48 object-cover group-hover:grayscale-0 transition-all duration-300"
+                  />
                 </div>
                 <div className="p-6">
                   <h3 className="font-serif text-lg text-brand-navy mb-1">
@@ -485,18 +521,21 @@ export default function LandingPage() {
                 role: "Research Analyst",
                 quote:
                   "The data analysis programme gave me the quantitative skills I'd been missing.",
+                imageUrl: "/assets/images/landing_page/james.png",
               },
               {
                 name: "Priya M.",
                 role: "Postgraduate Student",
                 quote:
                   "The academic writing course sharpened my research methodology.",
+                imageUrl: "/assets/images/landing_page/omar2.png",
               },
               {
                 name: "Omar T.",
                 role: "Policy Officer",
                 quote:
                   "The economics programme was exactly the structured education I was looking for.",
+                imageUrl: "/assets/images/landing_page/priya1.png",
               },
             ].map((t) => (
               <div
@@ -507,7 +546,13 @@ export default function LandingPage() {
                   &quot;{t.quote}&quot;
                 </p>
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200" />
+                  <Image
+                    src={t.imageUrl}
+                    alt={t.name}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
                   <div>
                     <p className="text-sm font-semibold text-brand-navy">
                       {t.name}
