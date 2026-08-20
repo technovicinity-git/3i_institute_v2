@@ -32,6 +32,12 @@
   --color-outline-variant: #c7c6c1;
   --color-avatar-bg: #e6f5ea;
   --color-avatar-text: #1d6335;
+  --color-brand-navy: #1a2f4c;
+  --color-brand-navy-light: #2c4364;
+  --color-brand-green: #1b9a4a;
+  --color-brand-green-dark: #147a3a;
+  --color-brand-cream: #faf9f6;
+  --color-brand-gold: #c5a866;
 
   --font-serif: "Libre Caslon Text", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
