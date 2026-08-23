@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
       {/* Desktop branding */}
-      <div className="hidden sm:flex absolute top-8 left-8 items-center gap-2 pointer-events-none">
+      <div className="hidden sm:flex absolute top-8 left-8 items-center gap-2">
         <Logo size="sm" />
       </div>
 
@@ -147,35 +147,6 @@ export default function LoginPage() {
             <GoogleButton />
             <AppleButton />
           </div>
-          {/* <div className="space-y-4">
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
-              onClick={() => toast.info("Google login coming soon")}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                  fill="currentColor"
-                />
-              </svg>
-              Continue with Google
-            </button>
-
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
-              onClick={() => toast.info("Apple login coming soon")}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                  d="M15.42 1.412C16.402 0.22 17.062-1.523 16.883-3.237c-1.468.059-3.327.978-4.347 2.206-0.89 1.077-1.688 2.875-1.472 4.531 1.635.127 3.366-.889 4.356-2.088zm-3.528 5.767c-1.895-.127-3.69 1.054-4.664 1.054-0.975 0-2.484-1.033-4.041-1.01-2.03.023-3.905 1.184-4.945 3.003-2.124 3.682-.544 9.124 1.517 12.115 1.008 1.465 2.197 3.1 3.766 3.045 1.488-.057 2.05-.964 3.843-.964 1.774 0 2.296.964 3.842.942 1.605-.023 2.627-1.466 3.614-2.915 1.144-1.674 1.615-3.295 1.635-3.376-.036-.015-3.162-1.213-3.204-4.821-.036-3.023 2.463-4.475 2.576-4.545-1.425-2.081-3.636-2.366-4.417-2.43z"
-                  transform="translate(2, 4)"
-                />
-              </svg>
-              Continue with Apple
-            </button>
-          </div> */}
 
           {/* Footer */}
           <div className="text-center mt-10 text-sm text-muted">

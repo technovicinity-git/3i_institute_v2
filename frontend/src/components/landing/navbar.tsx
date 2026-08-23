@@ -10,30 +10,33 @@ export function Navbar() {
       </Link>
 
       <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-        <a
-          href="#courses"
+        <Link
+          href="/courses"
           className="text-brand-navy hover:text-green transition-colors"
         >
           Courses
-        </a>
-        <a
+        </Link>
+
+        <Link
           href="#pathways"
           className="text-brand-navy hover:text-green transition-colors"
         >
           Programs
-        </a>
-        <a
+        </Link>
+
+        <Link
           href="#faculty"
           className="text-brand-navy hover:text-green transition-colors"
         >
           Instructors
-        </a>
-        <a
+        </Link>
+
+        <Link
           href="#about"
           className="text-brand-navy hover:text-green transition-colors"
         >
           About
-        </a>
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
