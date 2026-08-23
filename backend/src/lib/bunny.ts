@@ -43,7 +43,7 @@ class BunnyStreamService {
 
   async createVideo(
     title: string,
-    collectionId?: string,
+    _collectionId?: string,
   ): Promise<BunnyVideoResponse> {
     const response = await fetch(
       `${this.baseUrl}/library/${this.libraryId}/videos`,
@@ -52,7 +52,7 @@ class BunnyStreamService {
         headers: this.headers,
         body: JSON.stringify({
           title,
-          ...(collectionId ? { collectionId } : {}),
+          // Remove collectionId — videos go to root library
         }),
       },
     );
@@ -120,10 +120,17 @@ class BunnyStreamService {
   ): Promise<string> {
     const expires = Math.floor(Date.now() / 1000) + expirySeconds;
 
+    // Bunny Stream token signing
+    // Uses SHA256 hash of: securityKey + videoId + expires
     const crypto = await import("node:crypto");
+
+    // You also need a BUNNY_STREAM_SECURITY_KEY in env
+    const securityKey =
+      process.env["BUNNY_STREAM_SECURITY_KEY"] || env.BUNNY_API_KEY;
+
     const token = crypto
       .createHash("sha256")
-      .update(`${env.BUNNY_API_KEY}${videoId}${expires}`)
+      .update(`${securityKey}${videoId}${expires}`)
       .digest("hex");
 
     return `https://${this.cdnHostname}/${videoId}/playlist.m3u8?token=${token}&expires=${expires}`;

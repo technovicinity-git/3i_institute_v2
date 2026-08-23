@@ -32,18 +32,40 @@ const sortOptions: { value: SortOption; label: string }[] = [
 
 // ─── Components (unchanged except CourseCard uses API data) ──────────────────
 
-function LevelBadge({ level }: { level: Course["level"] }) {
-  const colors = {
-    Beginner: "bg-[#22A146]/10 text-[#22A146]",
-    Intermediate: "bg-[#2563BA]/10 text-[#2563BA]",
-    Advanced: "bg-[#7C3AED]/10 text-[#7C3AED]",
-  };
+function LevelBadge({ level }: { level: string }) {
+  const levelMap: Record<string, { bg: string; text: string; label: string }> =
+    {
+      "1": { bg: "bg-[#22A146]/10", text: "text-[#22A146]", label: "BEGINNER" },
+      "2": {
+        bg: "bg-[#2563BA]/10",
+        text: "text-[#2563BA]",
+        label: "INTERMEDIATE",
+      },
+      "3": { bg: "bg-[#7C3AED]/10", text: "text-[#7C3AED]", label: "ADVANCED" },
+      Beginner: {
+        bg: "bg-[#22A146]/10",
+        text: "text-[#22A146]",
+        label: "BEGINNER",
+      },
+      Intermediate: {
+        bg: "bg-[#2563BA]/10",
+        text: "text-[#2563BA]",
+        label: "INTERMEDIATE",
+      },
+      Advanced: {
+        bg: "bg-[#7C3AED]/10",
+        text: "text-[#7C3AED]",
+        label: "ADVANCED",
+      },
+    };
+
+  const config = levelMap[level] ?? levelMap["Beginner"];
 
   return (
     <span
-      className={`text-[11px] font-semibold px-2 py-1 rounded ${colors[level]}`}
+      className={`text-[11px] font-semibold px-2 py-1 rounded ${config.bg} ${config.text}`}
     >
-      {level.toUpperCase()}
+      {config.label}
     </span>
   );
 }

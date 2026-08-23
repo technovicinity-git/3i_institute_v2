@@ -3,7 +3,7 @@ import { env } from "#/config/env";
 
 const options: swaggerJsdoc.Options = {
   definition: {
-    openapi: "3.1.0",
+    openapi: "3.0.3", // Change from 3.1.0 to 3.0.3 — better swagger-ui support for file upload
     info: {
       title: "3i International Islamic Institute API",
       version: "2.0.0",
