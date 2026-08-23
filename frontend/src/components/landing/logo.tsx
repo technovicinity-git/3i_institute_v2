@@ -4,6 +4,7 @@ interface LandingLogoProps {
   href?: string;
   size?: "sm" | "md" | "lg";
   textColor?: "light" | "dark";
+  asLink?: boolean;
 }
 
 const sizeClasses = {
@@ -25,16 +26,13 @@ export function LandingLogo({
   href = "/",
   size = "sm",
   textColor = "dark",
+  asLink = true,
 }: LandingLogoProps) {
   const { image, text } = sizeClasses[size];
   const textClass = textColor === "light" ? "text-white" : "text-brand-navy";
 
-  return (
-    <a
-      href={href}
-      className="flex items-center gap-2"
-      aria-label="3i Institute home"
-    >
+  const content = (
+    <>
       <Image
         src="/assets/images/landing_page/logo-icon.png"
         alt="3i Institute"
@@ -45,6 +43,20 @@ export function LandingLogo({
       <span className={`font-semibold tracking-tight ${text} ${textClass}`}>
         3i Institute
       </span>
-    </a>
+    </>
   );
+
+  if (asLink) {
+    return (
+      <a
+        href={href}
+        className="flex items-center gap-2"
+        aria-label="3i Institute home"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return <span className="flex items-center gap-2">{content}</span>;
 }

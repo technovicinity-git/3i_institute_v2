@@ -6,7 +6,7 @@ export function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-100 py-4 px-6 md:px-12 sticky top-0 z-50 flex items-center justify-between shadow-sm">
       <Link href="/" className="flex items-center gap-2">
-        <LandingLogo size="sm" textColor="dark" />
+        <LandingLogo asLink={false} size="sm" textColor="dark" />
       </Link>
 
       <div className="hidden md:flex items-center gap-8 text-sm font-medium">
