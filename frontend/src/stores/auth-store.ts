@@ -32,6 +32,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, accessToken: null });
     // Clear refresh token cookie
     document.cookie =
-      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api/v1/auth;";
+      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   },
 }));

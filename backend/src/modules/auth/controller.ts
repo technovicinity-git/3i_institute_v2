@@ -42,7 +42,7 @@ export class AuthController {
         secure: process.env["NODE_ENV"] === "production",
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/api/v1/auth",
+        path: "/",
       });
 
       sendSuccess(
@@ -74,7 +74,7 @@ export class AuthController {
         secure: process.env["NODE_ENV"] === "production",
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/api/v1/auth",
+        path: "/",
       });
 
       sendSuccess(
@@ -96,7 +96,7 @@ export class AuthController {
         await authService.logout(userId);
       }
 
-      res.clearCookie("refreshToken", { path: "/api/v1/auth" });
+      res.clearCookie("refreshToken", { path: "/" });
       sendSuccess(res, null, 200, "Logged out successfully");
     } catch (error) {
       next(error);
