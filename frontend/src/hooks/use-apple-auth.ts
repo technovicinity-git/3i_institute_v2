@@ -26,7 +26,7 @@ export function useAppleLoginMutation() {
       setUser(data.user);
       setAccessToken(data.accessToken);
       toast.success(`Welcome, ${data.user.firstName}!`);
-      router.push("/profiles");
+      router.push("/courses");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
