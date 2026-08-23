@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import TrustStrip from "@/components/landing/TrustStrip";
 import Hero from "@/components/landing/Hero";
+import BrandExplainer from "@/components/landing/BrandExplainer";
+import Programs from "@/components/landing/Programs";
 
 export default function LandingPage() {
   return (
@@ -11,124 +13,8 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <TrustStrip />
-
-      {/* Three Commitments */}
-      <section className="py-24 bg-brand-cream" id="about">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="text-xs font-semibold text-brand-gold uppercase tracking-widest mb-4">
-            The Name
-          </p>
-          <h2 className="font-serif text-4xl text-brand-navy mb-16">
-            Three commitments in one mark
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="flex flex-col items-center">
-              <span className="font-serif text-5xl text-brand-gold italic mb-6">
-                i
-              </span>
-              <h3 className="text-xl font-semibold text-brand-navy mb-3">
-                International
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed max-w-xs">
-                Students in 40 countries, faculty drawn from universities across
-                four continents.
-              </p>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="font-serif text-5xl text-brand-gold italic mb-6">
-                i
-              </span>
-              <h3 className="text-xl font-semibold text-brand-navy mb-3">
-                Islamic
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed max-w-xs">
-                Founded on a scholarly tradition that has valued learning,
-                inquiry, and careful teaching for centuries.
-              </p>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="font-serif text-5xl text-brand-gold italic mb-6">
-                i
-              </span>
-              <h3 className="text-xl font-semibold text-brand-navy mb-3">
-                Institute
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed max-w-xs">
-                Structured programs, real assessment, and certificates that are
-                verified and recognised.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pathways */}
-      <section className="py-24 bg-white" id="pathways">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-12">
-            <p className="text-xs font-semibold text-brand-gold uppercase tracking-widest mb-2">
-              Curriculum Pathways
-            </p>
-            <h2 className="font-serif text-4xl text-brand-navy">
-              Choose Your Pathway
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Computer Science & Data",
-                desc: "From programming fundamentals to machine learning — structured tracks that build real analytical skill from day one.",
-                modules: "14 Comprehensive Modules",
-                icon: "📚",
-              },
-              {
-                title: "Business & Economics",
-                desc: "Micro and macroeconomics, financial modelling, and management theory — grounded in quantitative rigour.",
-                modules: "10 Core Modules",
-                icon: "📊",
-              },
-              {
-                title: "Languages & Linguistics",
-                desc: "Academic language acquisition and linguistic theory — from grammar and phonology to translation studies.",
-                modules: "8 Intensive Levels",
-                icon: "💬",
-              },
-            ].map((pathway) => (
-              <a
-                key={pathway.title}
-                href="#"
-                className="block group border border-gray-100 rounded-2xl p-8 hover:shadow-xl hover:border-brand-green/20 transition-all duration-300 bg-white"
-              >
-                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-6 text-2xl group-hover:scale-110 transition-transform">
-                  {pathway.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-brand-navy mb-3">
-                  {pathway.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                  {pathway.desc}
-                </p>
-                <div className="flex items-center text-xs text-gray-500 font-medium">
-                  <svg
-                    className="w-4 h-4 mr-1.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                  {pathway.modules}
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      <BrandExplainer />
+      <Programs />
 
       {/* Popular Courses */}
       <section className="py-24 bg-white border-t border-gray-50" id="courses">
@@ -142,12 +28,12 @@ export default function LandingPage() {
                 Popular Right Now
               </h2>
             </div>
-            <a
-              href="#"
+            <Link
+              href="/courses"
               className="inline-flex items-center justify-center border border-gray-300 text-gray-700 font-medium text-sm py-2 px-6 rounded-md hover:bg-gray-50"
             >
               View All Courses
-            </a>
+            </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
