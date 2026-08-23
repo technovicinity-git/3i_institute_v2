@@ -6,29 +6,47 @@ export type CourseStatus =
   | "SUSPENDED"
   | "ARCHIVED";
 
+export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
+export type CourseFormat = "self-paced" | "live" | "hybrid";
+export type SortOption = "popularity" | "newest" | "rating" | "title";
+
 export interface Course {
   id: string;
   title: string;
   summary: string;
-  description: string;
   thumbnailUrl: string | null;
   category: string;
-  type: CourseType;
-  level: string;
+  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
+  level: CourseLevel;
   language: string;
   minimumAge: number;
-  maximumAge: number | null;
-  status: CourseStatus;
-  instructorId: string;
-  createdAt: string;
-  updatedAt: string;
-  instructor?: {
+  instructor: {
     id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
-  materials?: Material[];
-  batches?: Batch[];
+  enrolmentCount: number;
+  averageRating: number | null;
+  ratingCount: number;
+  format: CourseFormat;
+}
+
+export interface CourseListResponse {
+  courses: Course[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface CourseFilters {
+  page: number;
+  limit: number;
+  category?: string;
+  level?: string;
+  format?: string;
+  search?: string;
+  sortBy?: SortOption;
+  minRating?: number;
 }
 
 export interface Material {

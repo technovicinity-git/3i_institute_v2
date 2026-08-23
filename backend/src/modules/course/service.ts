@@ -121,24 +121,85 @@ export class CourseService {
   }
 
   async list(query: ListCoursesQuery) {
-    const { page, limit, category, type, level, language, minimumAge, search } =
-      query;
+    const {
+      page,
+      limit,
+      category,
+      level,
+      type,
+      format,
+      search,
+      sortBy,
+      minRating,
+    } = query;
 
-    const where = {
-      status: "PUBLISHED" as const,
+    const where: any = {
+      status: "PUBLISHED",
       ...(category && { category }),
-      ...(type && { type }),
       ...(level && { level }),
-      ...(language && { language }),
-      ...(minimumAge !== undefined && { minimumAge: { lte: minimumAge } }),
+      ...(type && { type }),
+      ...(format && {
+        type:
+          format === "self-paced"
+            ? "REGULAR"
+            : format === "live"
+              ? "ONLINE_CLASS"
+              : "MIXED",
+      }),
       ...(search && {
         OR: [
-          { title: { contains: search, mode: "insensitive" as const } },
-          { summary: { contains: search, mode: "insensitive" as const } },
-          { description: { contains: search, mode: "insensitive" as const } },
+          { title: { contains: search, mode: "insensitive" } },
+          { summary: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          {
+            instructor: {
+              firstName: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            instructor: {
+              lastName: { contains: search, mode: "insensitive" },
+            },
+          },
         ],
       }),
+      ...(minRating && {
+        ratings: {
+          some: {
+            rating: { gte: minRating },
+          },
+        },
+      }),
     };
+
+    // Build orderBy based on sortBy
+    let orderBy: any = { createdAt: "desc" };
+
+    switch (sortBy) {
+      case "newest":
+        orderBy = { createdAt: "desc" };
+        break;
+      case "rating":
+        // Use raw SQL for average rating sort
+        orderBy = {
+          ratings: {
+            _count: "desc",
+          },
+        };
+        break;
+      case "title":
+        orderBy = { title: "asc" };
+        break;
+      case "popularity":
+      default:
+        // Popularity = enrolment count
+        orderBy = {
+          enrolments: {
+            _count: "desc",
+          },
+        };
+        break;
+    }
 
     const [total, courses] = await Promise.all([
       prisma.course.count({ where }),
@@ -152,14 +213,61 @@ export class CourseService {
               lastName: true,
             },
           },
+          _count: {
+            select: {
+              enrolments: true,
+            },
+          },
+          ratings: {
+            select: {
+              rating: true,
+            },
+          },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
     ]);
 
-    return { courses, total, page, limit };
+    // Transform courses to include computed fields
+    const transformedCourses = courses.map((course) => {
+      const avgRating =
+        course.ratings.length > 0
+          ? Math.round(
+              (course.ratings.reduce((sum, r) => sum + r.rating, 0) /
+                course.ratings.length) *
+                10,
+            ) / 10
+          : null;
+
+      return {
+        id: course.id,
+        title: course.title,
+        summary: course.summary,
+        thumbnailUrl: course.thumbnailUrl,
+        category: course.category,
+        type: course.type,
+        level: course.level,
+        language: course.language,
+        minimumAge: course.minimumAge,
+        instructor: {
+          id: course.instructor.id,
+          name: `${course.instructor.firstName} ${course.instructor.lastName}`,
+        },
+        enrolmentCount: course._count.enrolments,
+        averageRating: avgRating,
+        ratingCount: course.ratings.length,
+        format:
+          course.type === "REGULAR"
+            ? "self-paced"
+            : course.type === "ONLINE_CLASS"
+              ? "live"
+              : "hybrid",
+      };
+    });
+
+    return { courses: transformedCourses, total, page, limit };
   }
 
   async suspend(instructorId: string, courseId: string) {
