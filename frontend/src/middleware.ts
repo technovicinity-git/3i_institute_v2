@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Routes that require authentication
 const protectedRoutes = [
-  "/dashboard",
+  // "/dashboard",
   "/my-courses",
   "/certificates",
   "/notifications",
