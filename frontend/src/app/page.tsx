@@ -2,133 +2,15 @@ import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import Link from "next/link";
 import Image from "next/image";
+import TrustStrip from "@/components/landing/TrustStrip";
+import Hero from "@/components/landing/Hero";
 
 export default function LandingPage() {
   return (
     <div className="font-sans text-gray-800 bg-brand-cream antialiased">
       <Navbar />
-
-      {/* Hero Section */}
-      <section className="relative bg-white pt-20 pb-32 md:pt-32 md:pb-48 overflow-hidden">
-        <div className="absolute inset-y-0 right-0 w-3/4 md:w-1/2 bg-brand-navy clip-hero-bg z-0 hidden md:block" />
-        <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 flex flex-col md:flex-row items-center gap-12">
-          <div className="w-full md:w-1/2 md:pr-8">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-px w-8 bg-brand-gold" />
-              <span className="uppercase tracking-widest text-brand-gold font-semibold text-xs">
-                3i — International Islamic Institute
-              </span>
-            </div>
-            <h1 className="font-serif text-5xl md:text-6xl text-brand-navy leading-tight mb-6 text-balance">
-              Study seriously, from anywhere.
-            </h1>
-            <p className="text-gray-600 text-lg mb-8 max-w-lg leading-relaxed">
-              3i Institute is an accredited online institute offering structured
-              programs across the sciences, humanities, and professional fields
-              — taught by qualified faculty and assessed to a university
-              standard.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <Link
-                href="/get-started"
-                className="bg-brand-green hover:bg-brand-green-dark text-white font-medium py-3 px-8 rounded-md transition-colors text-center shadow-md"
-              >
-                Explore Programs
-              </Link>
-              <Link
-                href="#pathways"
-                className="bg-white hover:bg-gray-50 text-brand-navy border border-gray-300 font-medium py-3 px-8 rounded-md transition-colors text-center shadow-sm"
-              >
-                View Curriculum
-              </Link>
-            </div>
-            <div className="flex gap-12 border-t border-gray-100 pt-8">
-              <div>
-                <div className="text-3xl font-serif text-brand-gold mb-1">
-                  12,000+
-                </div>
-                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-                  Active Students
-                </div>
-              </div>
-              <div>
-                <div className="text-3xl font-serif text-brand-gold mb-1">
-                  140+
-                </div>
-                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-                  Rigorous Courses
-                </div>
-              </div>
-              <div>
-                <div className="text-3xl font-serif text-brand-gold mb-1">
-                  38
-                </div>
-                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-                  Expert Instructors
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-full md:w-1/2 relative mt-12 md:mt-0">
-            <div className="relative bg-white rounded-xl shadow-2xl z-10 max-w-md mx-auto md:ml-auto">
-              <Image
-                src="/assets/images/landing_page/student-image.png"
-                alt="Student studying online"
-                width={400}
-                height={300}
-                className="w-full rounded-t-lg mb-4 object-cover"
-              />
-
-              <div className="px-2 pb-2">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-brand-navy">Sarah Chen</h3>
-                  <span className="text-xs text-gray-500">
-                    Graduate &apos;23
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 mb-3">
-                  Program: Data Analysis &amp; Statistical Methods
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div className="bg-brand-green h-1.5 rounded-full w-full" />
-                  </div>
-                  <span className="text-[10px] text-brand-green font-medium uppercase">
-                    Completed
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-brand-gold/10 rounded-full blur-3xl -z-10" />
-          </div>
-        </div>
-      </section>
-
-      {/* Partners */}
-      <section className="bg-white border-y border-gray-100 py-10">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-8">
-            Partnered &amp; Recognized By
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
-            <span className="text-sm font-medium text-gray-600">
-              Accreditation Council
-            </span>
-            <span className="text-sm font-medium text-gray-600">
-              Open Education Alliance
-            </span>
-            <span className="text-sm font-medium text-gray-600">
-              Intl. Council for Distance Learning
-            </span>
-            <span className="text-sm font-medium text-gray-600">
-              Quality Assurance Agency
-            </span>
-            <span className="text-sm font-medium text-gray-600">
-              Global Universities Network
-            </span>
-          </div>
-        </div>
-      </section>
+      <Hero />
+      <TrustStrip />
 
       {/* Three Commitments */}
       <section className="py-24 bg-brand-cream" id="about">
