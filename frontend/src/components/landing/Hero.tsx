@@ -65,14 +65,14 @@ export default function Hero() {
           {/* Navy diagonal background */}
           <svg
             className="absolute top-0 right-0 h-full"
-            width="600"
+            width="700"
             height="720"
             viewBox="0 0 700 720"
             preserveAspectRatio="none"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <polygon points="0,0 700,0 700,720 100,720" fill="#12304E" />
+            <polygon points="0,0 700,0 700,720 400,720" fill="#12304E" />
           </svg>
 
           {/* Diamond/Star pattern overlay */}
