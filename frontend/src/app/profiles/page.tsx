@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-learner-profiles";
 import { useProfileStore } from "@/stores/profile-store";
 import type { LearnerProfile } from "@/services/learner.service";
+import { toast } from "sonner";
 
 function calculateAge(dateOfBirth: string): number {
   const today = new Date();
@@ -64,9 +65,11 @@ export default function ProfilesPage() {
   const handlePinSuccess = (profile: LearnerProfile) => {
     setActiveProfile(profile);
     setShowPinScreen(false);
-    router.push("/dashboard");
+    // Use router.push with a small delay to ensure state is set
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 100);
   };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
@@ -189,7 +192,6 @@ export default function ProfilesPage() {
 // ──────────────────────────────────────
 // PIN Entry Screen
 // ──────────────────────────────────────
-
 function PinEntryScreen({
   profile,
   onCancel,
@@ -199,9 +201,13 @@ function PinEntryScreen({
   onCancel: () => void;
   onSuccess: () => void;
 }) {
+  const router = useRouter();
   const verifyPinMutation = useVerifyPinMutation();
+  const { setActiveProfile } = useProfileStore();
+
   const [pinValues, setPinValues] = useState(["", "", "", ""]);
   const [error, setError] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = Array.from({ length: 4 }, () =>
     useRef<HTMLInputElement>(null),
   );
@@ -221,14 +227,19 @@ function PinEntryScreen({
 
       if (index === 3 && value) {
         const enteredPin = newValues.join("");
+        setIsVerifying(true);
 
         verifyPinMutation.mutate(
           { profileId: profile.id, pin: enteredPin },
           {
             onSuccess: () => {
-              onSuccess();
+              setActiveProfile(profile);
+              setIsVerifying(false);
+              toast.success(`Welcome, ${profile.displayName}!`);
+              router.push("/dashboard");
             },
             onError: () => {
+              setIsVerifying(false);
               setError(true);
               setTimeout(() => {
                 setPinValues(["", "", "", ""]);
@@ -239,7 +250,14 @@ function PinEntryScreen({
         );
       }
     },
-    [pinValues, profile.id, verifyPinMutation, onSuccess, inputRefs],
+    [
+      pinValues,
+      profile,
+      verifyPinMutation,
+      setActiveProfile,
+      router,
+      inputRefs,
+    ],
   );
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
