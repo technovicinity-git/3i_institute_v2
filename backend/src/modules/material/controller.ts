@@ -27,16 +27,13 @@ export class MaterialController {
 
       const files = (req as any).files;
       const videoFile = files?.video?.[0]?.buffer;
-      const captionsFile = files?.captions?.[0]?.buffer;
+      const captionsFile = files?.captions?.[0]?.buffer; // Optional
 
       if (!videoFile) {
         throw new ValidationError("Video file is required");
       }
 
-      if (!captionsFile) {
-        throw new ValidationError("Caption file is required");
-      }
-
+      // captionsFile is now optional
       const result = await materialService.uploadVideo(
         instructorId,
         input,

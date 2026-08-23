@@ -56,29 +56,36 @@ router.post(
  * /api/v1/materials/upload-video:
  *   post:
  *     tags: [Materials]
- *     summary: Upload a video with captions
+ *     summary: Upload a video with optional captions
+ *     description: Upload video file. Captions are optional.
  *     consumes:
  *       - multipart/form-data
  *     parameters:
  *       - in: formData
  *         name: courseId
- *         required: true
  *         type: string
+ *         format: uuid
+ *         required: true
  *       - in: formData
  *         name: title
- *         required: true
  *         type: string
+ *         required: true
+ *       - in: formData
+ *         name: order
+ *         type: integer
+ *         required: false
  *       - in: formData
  *         name: video
- *         required: true
  *         type: file
+ *         required: true
  *       - in: formData
  *         name: captions
- *         required: true
  *         type: file
+ *         required: false
+ *         description: Optional English caption file (VTT or SRT)
  *     responses:
  *       201:
- *         description: Video uploaded
+ *         description: Video uploaded successfully
  */
 router.post(
   "/upload-video",

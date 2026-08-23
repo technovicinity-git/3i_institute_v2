@@ -49,10 +49,10 @@ export default function Hero() {
           <div className="flex gap-12 border-t border-gray-200 pt-6 max-w-[624px]">
             {stats.map((stat) => (
               <div key={stat.label} className="min-w-[120px]">
-                <p className="font-serif text-[28px] text-[#12304E] leading-tight">
+                <p className="font-serif text-[28px] text-[#B8912F] leading-tight">
                   {stat.value}
                 </p>
-                <p className="text-[13px] font-medium text-[#6B7280] mt-1">
+                <p className="text-[13px] font-medium text-[#64748B] mt-1">
                   {stat.label}
                 </p>
               </div>

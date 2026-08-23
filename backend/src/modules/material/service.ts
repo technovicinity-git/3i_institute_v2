@@ -56,7 +56,7 @@ export class MaterialService {
     instructorId: string,
     input: UploadVideoInput,
     videoFile: Buffer,
-    captionsFile: Buffer,
+    captionsFile?: Buffer, // Make optional
   ) {
     // Validate file sizes
     if (videoFile.length > MAX_VIDEO_SIZE) {
@@ -67,9 +67,10 @@ export class MaterialService {
       throw new ValidationError("Video file is empty");
     }
 
-    if (captionsFile.length === 0) {
-      throw new ValidationError("Caption file (VTT/SRT) is required");
-    }
+    // Remove required caption validation
+    // if (captionsFile.length === 0) {
+    //   throw new ValidationError("Caption file (VTT/SRT) is required");
+    // }
 
     // Verify course ownership
     const course = await prisma.course.findUnique({
@@ -87,10 +88,7 @@ export class MaterialService {
     }
 
     // Create video object in Bunny Stream
-    const video = await bunnyStream.createVideo(
-      input.title,
-      course.id, // Use course ID as collection ID
-    );
+    const video = await bunnyStream.createVideo(input.title);
 
     try {
       // Upload video file
@@ -100,19 +98,31 @@ export class MaterialService {
         `${input.title}.mp4`,
       );
 
-      // Add English captions
-      await bunnyStream.addCaptions(video.guid, captionsFile, "en", "English");
+      // Add captions only if provided
+      if (captionsFile && captionsFile.length > 0) {
+        try {
+          await bunnyStream.addCaptions(
+            video.guid,
+            captionsFile,
+            "en",
+            "English",
+          );
+        } catch (captionError) {
+          console.warn("Caption upload failed (non-critical):", captionError);
+          // Continue without captions
+        }
+      }
 
-      // Create material record with Bunny video ID
+      // Create material record
       const material = await prisma.material.create({
         data: {
           courseId: input.courseId,
           title: input.title,
           type: "video",
-          url: video.guid, // Store Bunny GUID, not full URL
+          url: video.guid,
           order: input.order,
           duration: video.length || null,
-          captionUrl: null, // Captions are managed by Bunny
+          captionUrl: null,
         },
       });
 
@@ -123,7 +133,6 @@ export class MaterialService {
         status: video.status,
       };
     } catch (error) {
-      // Cleanup on failure
       await bunnyStream.deleteVideo(video.guid);
       throw error;
     }
