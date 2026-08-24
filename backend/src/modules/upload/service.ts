@@ -21,15 +21,6 @@ interface UploadResult {
   thumbnailUrl?: string;
 }
 
-interface UploadImageInput {
-  buffer: Buffer;
-  mimetype: string;
-  originalFilename: string;
-  folder: string;
-  accountId: string;
-  entityId?: string;
-}
-
 export class UploadService {
   /**
    * Core upload method with validation
@@ -134,7 +125,7 @@ export class UploadService {
     accountId: string,
     buffer: Buffer,
     mimetype: string,
-    originalFilename: string,
+    _originalFilename: string,
   ): Promise<UploadResult> {
     const folderPath = `instructors/${accountId}`;
 
@@ -168,7 +159,7 @@ export class UploadService {
     learnerProfileId: string,
     buffer: Buffer,
     mimetype: string,
-    originalFilename: string,
+    _originalFilename: string,
   ): Promise<UploadResult> {
     // Verify profile belongs to account
     const profile = await prisma.learnerProfile.findFirst({
@@ -210,7 +201,7 @@ export class UploadService {
     accountId: string,
     buffer: Buffer,
     mimetype: string,
-    originalFilename: string,
+    _originalFilename: string,
   ): Promise<UploadResult> {
     const folderPath = `accounts/${accountId}`;
 
@@ -244,7 +235,7 @@ export class UploadService {
     courseId: string,
     buffer: Buffer,
     mimetype: string,
-    originalFilename: string,
+    _originalFilename: string,
   ): Promise<UploadResult> {
     // Verify course belongs to instructor
     const course = await prisma.course.findUnique({
@@ -288,7 +279,7 @@ export class UploadService {
     courseId: string,
     buffer: Buffer,
     mimetype: string,
-    originalFilename: string,
+    _originalFilename: string,
   ): Promise<UploadResult> {
     // Verify course belongs to instructor
     const course = await prisma.course.findUnique({
