@@ -7,6 +7,6 @@ export function useDashboard(learnerProfileId: string) {
     queryFn: () => dashboardService.getDashboardData(learnerProfileId),
     enabled: !!learnerProfileId,
     staleTime: 60 * 1000,
-    retry: 1,
+    retry: 3,
   });
 }

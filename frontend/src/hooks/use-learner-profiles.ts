@@ -10,7 +10,8 @@ export function useLearnerProfiles() {
   return useQuery({
     queryKey: ["learner-profiles"],
     queryFn: () => learnerService.getAll(),
-    staleTime: 60 * 1000,
+    // staleTime: 60 * 1000,
+    retry: 3,
   });
 }
 
