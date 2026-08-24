@@ -37,7 +37,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
     <aside className="w-[260px] h-full bg-[#12304E] p-6 flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-between mb-10 shrink-0">
-        <div className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/assets/images/landing_page/logo-icon.png"
             alt="3i Institute"
@@ -48,7 +48,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
           <span className="text-white text-[14px] font-bold tracking-wide">
             3i INSTITUTE
           </span>
-        </div>
+        </Link>
         {onNavigate && (
           <button
             onClick={onNavigate}
