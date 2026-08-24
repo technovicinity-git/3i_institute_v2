@@ -30,13 +30,17 @@ const uploadImage = upload.fields([{ name: "image", maxCount: 1 }]);
  *   post:
  *     tags: [Uploads]
  *     summary: Upload instructor profile photo
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Photo uploaded
@@ -44,7 +48,6 @@ const uploadImage = upload.fields([{ name: "image", maxCount: 1 }]);
 router.post(
   "/instructor-photo",
   authenticate,
-  authorize("instructors.manage"),
   uploadImage,
   uploadController.uploadInstructorPhoto,
 );
@@ -55,17 +58,19 @@ router.post(
  *   post:
  *     tags: [Uploads]
  *     summary: Upload learner profile avatar
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         required: true
- *       - in: formData
- *         name: learnerProfileId
- *         type: string
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image, learnerProfileId]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               learnerProfileId:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Avatar uploaded
@@ -84,13 +89,17 @@ router.post(
  *   post:
  *     tags: [Uploads]
  *     summary: Upload account profile image
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Image uploaded
@@ -108,17 +117,19 @@ router.post(
  *   post:
  *     tags: [Uploads]
  *     summary: Upload course thumbnail
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         required: true
- *       - in: formData
- *         name: courseId
- *         type: string
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image, courseId]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               courseId:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Thumbnail uploaded
@@ -137,17 +148,19 @@ router.post(
  *   post:
  *     tags: [Uploads]
  *     summary: Upload course cover image
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         required: true
- *       - in: formData
- *         name: courseId
- *         type: string
- *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image, courseId]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               courseId:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Cover uploaded

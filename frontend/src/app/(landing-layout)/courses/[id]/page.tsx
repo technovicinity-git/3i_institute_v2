@@ -275,15 +275,25 @@ export default function CourseDetailsPage() {
             {/* Instructor */}
             <div className="flex flex-col sm:flex-row gap-8">
               <div className="shrink-0">
-                <div className="w-[120px] h-[120px] sm:w-[200px] sm:h-[200px] rounded-full bg-gradient-to-br from-amber-100 to-amber-200 overflow-hidden flex items-center justify-center">
-                  <span className="font-serif text-4xl text-[#B8912F]">
-                    {course.instructor.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </span>
-                </div>
+                {course.instructor.avatarUrl ? (
+                  <Image
+                    src={course.instructor.avatarUrl}
+                    alt={course.instructor.name}
+                    width={200}
+                    height={200}
+                    className="w-[120px] h-[120px] sm:w-[200px] sm:h-[200px] rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-[120px] h-[120px] sm:w-[200px] sm:h-[200px] rounded-full bg-gradient-to-br from-amber-100 to-amber-200 overflow-hidden flex items-center justify-center">
+                    <span className="font-serif text-4xl text-[#B8912F]">
+                      {course.instructor.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-3">
                 <p className="text-sm font-bold text-[#0C1F33]">
