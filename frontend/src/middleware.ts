@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
   // if (isAdminRoute && !refreshToken) {
   //   return NextResponse.redirect(new URL("/login", request.url));
   // }
-  if (protectedRoutes && !refreshToken) {
+  if (isProtected && !refreshToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
