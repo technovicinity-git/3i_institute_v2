@@ -33,6 +33,7 @@ export interface InstructorInfo {
   rating: number;
   courseCount: number;
   studentCount: number;
+  avatarUrl: string;
 }
 
 export interface RelatedCourse {

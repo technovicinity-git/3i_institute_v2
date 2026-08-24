@@ -12,6 +12,7 @@ export class CourseDetailsService {
             firstName: true,
             lastName: true,
             bio: true,
+            avatarUrl: true,
           },
         },
         materials: {
@@ -163,6 +164,7 @@ export class CourseDetailsService {
         id: course.instructor.id,
         name: `${course.instructor.firstName} ${course.instructor.lastName}`,
         bio: course.instructor.bio ?? "",
+        avatarUrl: course.instructor.avatarUrl ?? "",
         rating: avgRating,
         courseCount: instructorCourseCount,
         studentCount: instructorStudentCount,
