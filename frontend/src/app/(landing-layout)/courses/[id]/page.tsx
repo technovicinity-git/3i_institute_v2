@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Monitor,
 } from "lucide-react";
+import Image from "next/image";
 
 /* ────────────────────────────── data ────────────────────────────── */
 
@@ -137,21 +138,25 @@ const REVIEWS = [
 const RELATED_COURSES = [
   {
     title: "Holistic Herbalism & Human Anatomy",
+    image: "/assets/images/landing_page/imag1.png",
     instructor: "Prof. Sarah Sterling",
     rating: "4.9",
   },
   {
     title: "Classical Arabic Grammar & Rhetoric",
+    image: "/assets/images/landing_page/imag2.png",
     instructor: "Ustadh Yusuf Farooq",
     rating: "4.8",
   },
   {
     title: "Introduction to Islamic Jurisprudence",
+    image: "/assets/images/landing_page/imag3.png",
     instructor: "Shaykh Dr. Anas Rafiq",
     rating: "5.0",
   },
   {
     title: "Islamic Bioethics in Clinical Practice",
+    image: "/assets/images/landing_page/imag4.png",
     instructor: "Dr. Amina Rahman",
     rating: "4.8",
   },
@@ -382,7 +387,13 @@ export default function CoursePage() {
             <div className="flex gap-12">
               <div className="shrink-0">
                 <div className="w-[200px] h-[200px] rounded-full bg-gradient-to-br from-amber-100 to-amber-200 overflow-hidden">
-                  <div className="w-full h-full bg-[#12304E]/10" />
+                  <Image
+                    src="/assets/instructor-portrait.png"
+                    alt="Instructor"
+                    width={200}
+                    height={200}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-3">
@@ -499,7 +510,14 @@ export default function CoursePage() {
             <div className="lg:sticky lg:top-6">
               <div className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden">
                 {/* video thumbnail */}
-                <div className="relative h-[214px] bg-gradient-to-br from-[#12304E] to-[#0C1F33] flex items-center justify-center">
+                <div className="relative h-[214px] flex items-center justify-center">
+                  <Image
+                    src="/assets/preview-thumbnail.png"
+                    alt="Video Thumbnail"
+                    width={400}
+                    height={214}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="w-[54px] h-[54px] rounded-full bg-white/90 flex items-center justify-center">
                     <PlayCircle className="w-5 h-5 text-[#12304E]" />
                   </div>
@@ -673,7 +691,13 @@ export default function CoursePage() {
                 key={i}
                 className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="h-[160px] bg-gradient-to-br from-[#12304E] to-[#1a3d5f]" />
+                <Image
+                  src={course.image}
+                  alt={course.title}
+                  width={400}
+                  height={160}
+                  className="w-full h-[160px] object-cover"
+                />
                 <div className="p-5 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-white bg-[#2563BA] px-2 py-1 rounded">
