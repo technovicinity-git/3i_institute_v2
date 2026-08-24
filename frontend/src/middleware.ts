@@ -43,14 +43,17 @@ export function middleware(request: NextRequest) {
   }
 
   // If admin route and no token, redirect
-  if (isAdminRoute && !refreshToken) {
+  // if (isAdminRoute && !refreshToken) {
+  //   return NextResponse.redirect(new URL("/login", request.url));
+  // }
+  if (!refreshToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // If auth route and already logged in, redirect to dashboard
-  if (isAuthRoute && refreshToken) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+  // if (isAuthRoute && refreshToken) {
+  //   return NextResponse.redirect(new URL("/dashboard", request.url));
+  // }
 
   return NextResponse.next();
 }
