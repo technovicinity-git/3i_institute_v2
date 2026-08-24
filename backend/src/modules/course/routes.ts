@@ -7,6 +7,7 @@ import {
   createCourseSchema,
   updateCourseSchema,
 } from "#/modules/course/schema";
+import { courseDetailsController } from "#/modules/course/details-controller";
 
 const router: Router = Router();
 
@@ -179,5 +180,23 @@ router.post(
   authorize("courses.approve"),
   courseController.reject,
 );
+
+/**
+ * @swagger
+ * /api/v1/courses/{id}/details:
+ *   get:
+ *     tags: [Courses]
+ *     summary: Get detailed course page data
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Full course details for course page
+ */
+router.get("/:id/details", courseDetailsController.getCourseDetails);
 
 export { router as courseRoutes };

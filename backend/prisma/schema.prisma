@@ -105,6 +105,7 @@ model User {
   emailVerified Boolean     @default(false)
   emailVerifyToken String?
   emailVerifyExpires DateTime?
+   bio         String?
 
   roleId        String
   role          Role        @relation(fields: [roleId], references: [id])
@@ -193,10 +194,19 @@ model Course {
   summary       String
   description   String
   thumbnailUrl  String?
+  coverImageUrl String?
   category      String
   type          CourseType
   level         String
   language      String        @default("en")
+
+   learningOutcomes Json?     
+  requirements     Json?     
+  whatIncluded     Json?     
+  faq              Json?    
+  totalLessons     Int       @default(0)
+  totalDurationMinutes Int   @default(0)
+  totalModules     Int       @default(0)
 
   minimumAge    Int
   maximumAge    Int?
