@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Star, ChevronDown, X } from "lucide-react";
-import { Navbar } from "@/components/landing/navbar";
-import { Footer } from "@/components/landing/footer";
 import { Pagination } from "@/components/ui/pagination";
 import { useCourses } from "@/hooks/use-courses";
 import type { Course, CourseFilters, SortOption } from "@/types/course";
@@ -202,9 +200,7 @@ export default function CourseCatalogPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-
+    <div className=" bg-white">
       {/* Page Header */}
       <section className="bg-[#FBF9F4] px-6 md:px-[120px] py-10 md:py-16">
         <div className="max-w-[1200px] mx-auto">
@@ -413,8 +409,6 @@ export default function CourseCatalogPage() {
           </main>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }
