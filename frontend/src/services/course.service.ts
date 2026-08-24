@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { Course, CourseFilters, CourseListResponse } from "@/types/course";
+import { CourseDetails } from "@/types/course-details";
 
 export const courseService = {
   list: async (filters: CourseFilters): Promise<CourseListResponse> => {
@@ -28,6 +29,11 @@ export const courseService = {
 
   getById: async (courseId: string): Promise<Course> => {
     const response = await apiClient.get(`/courses/${courseId}`);
+    return response.data.data;
+  },
+
+  getDetails: async (courseId: string): Promise<CourseDetails> => {
+    const response = await apiClient.get(`/courses/${courseId}/details`);
     return response.data.data;
   },
 };
