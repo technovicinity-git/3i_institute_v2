@@ -99,6 +99,7 @@ model User {
   lastName      String
   email         String      @unique
   passwordHash  String
+  avatarUrl    String? 
   dateOfBirth   DateTime
   locale        String      @default("en")
   accountType   AccountType

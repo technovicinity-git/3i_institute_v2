@@ -56,6 +56,10 @@ const envSchema = z.object({
 
   APPLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
+
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
 });
 
 type Env = z.infer<typeof envSchema>;
