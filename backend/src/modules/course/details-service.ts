@@ -11,6 +11,7 @@ export class CourseDetailsService {
             id: true,
             firstName: true,
             lastName: true,
+            bio: true,
           },
         },
         materials: {
@@ -161,7 +162,7 @@ export class CourseDetailsService {
       instructor: {
         id: course.instructor.id,
         name: `${course.instructor.firstName} ${course.instructor.lastName}`,
-        bio: "Instructor bio here", // Need to add bio field
+        bio: course.instructor.bio ?? "",
         rating: avgRating,
         courseCount: instructorCourseCount,
         studentCount: instructorStudentCount,

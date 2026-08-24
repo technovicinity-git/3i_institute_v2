@@ -23,6 +23,9 @@ importers:
       argon2:
         specifier: ^0.45.1
         version: 0.45.1
+      cloudinary:
+        specifier: ^2.10.1
+        version: 2.10.1
       compression:
         specifier: ^1.8.1
         version: 1.8.1
@@ -1160,6 +1163,10 @@ packages:
 
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+
+  cloudinary@2.10.1:
+    resolution: {integrity: sha512-0aqF/sGwm2dSM/Xse87EI5OpKcuX/hwoPPdUDTdUal6GMPKevtElcI3spcaeuzJJbcLkY3vJaF22q0u50VO5Lw==}
+    engines: {node: '>=9'}
 
   combine-errors@3.0.3:
     resolution: {integrity: sha512-C8ikRNRMygCwaTx+Ek3Yr+OuZzgZjduCOfSQBjbM8V3MfgcjSTeto/GXP6PAwKvJz/v15b7GHZvx5rOlczFw/Q==}
@@ -3404,6 +3411,10 @@ snapshots:
       readdirp: 5.1.1
 
   classnames@2.5.1: {}
+
+  cloudinary@2.10.1:
+    dependencies:
+      lodash: 4.18.1
 
   combine-errors@3.0.3:
     dependencies:

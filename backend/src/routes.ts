@@ -18,6 +18,7 @@ import { progressRoutes } from "#/modules/progress/routes";
 import { ratingRoutes } from "#/modules/rating/routes";
 import { seatRoutes } from "#/modules/seat/routes";
 import { dashboardRoutes } from "#/modules/dashboard/routes";
+import { uploadRoutes } from "#/modules/upload/routes";
 
 const router: Router = Router();
 
@@ -40,6 +41,7 @@ router.use("/progress", progressRoutes);
 router.use("/ratings", ratingRoutes);
 router.use("/seats", seatRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/uploads", uploadRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
