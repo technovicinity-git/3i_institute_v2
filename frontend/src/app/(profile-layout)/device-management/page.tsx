@@ -1,5 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
+import { useDevices, useRemoveDeviceMutation } from "@/hooks/use-devices";
+
 // ---- Icons ----
 
 function SmartphoneIcon() {
@@ -92,89 +96,39 @@ function TabletIcon() {
   );
 }
 
-// ---- Types ----
-
-interface Device {
-  id: string;
-  name: string;
-  lastSeen: string;
-  icon: React.ReactNode;
+function getDeviceIcon(platform: string) {
+  switch (platform) {
+    case "ios":
+    case "android":
+      return <SmartphoneIcon />;
+    case "web":
+      return <MonitorIcon />;
+    default:
+      return <TabletIcon />;
+  }
 }
 
-// ---- Device Row ----
-
-function DeviceRow({
-  device,
-  onDeauthorise,
-}: {
-  device: Device;
-  onDeauthorise: (id: string) => void;
-}) {
-  return (
-    <div className="flexitems-center justify-between px-6 py-2.5 bg-white border border-[#E3E8EF] rounded-lg shadow-sm">
-      <div className="flex items-center gap-4">
-        {/* Device icon */}
-        <div className="shrink-0 flex items-center justify-center w-5 h-5">
-          {device.icon}
-        </div>
-
-        {/* Device info */}
-        <div className="flex flex-col gap-0.5">
-          <span className="text-base text-[#0C1F33]">{device.name}</span>
-          <span className="text-[13px] text-[#475569]">{device.lastSeen}</span>
-        </div>
-      </div>
-
-      {/* De-authorise action */}
-      <button
-        onClick={() => onDeauthorise(device.id)}
-        className="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors shrink-0 ml-4"
-      >
-        De-authorise
-      </button>
-    </div>
-  );
-}
-
-// ---- Sample data ----
-
-const devices: Device[] = [
-  {
-    id: "1",
-    name: "iPhone 14 Pro",
-    lastSeen: "Last seen: 2 hours ago",
-    icon: <SmartphoneIcon />,
-  },
-  {
-    id: "2",
-    name: "MacBook Pro",
-    lastSeen: "Last seen: Just now",
-    icon: <MonitorIcon />,
-  },
-  {
-    id: "3",
-    name: "iPad Air",
-    lastSeen: "Last seen: 3 days ago",
-    icon: <TabletIcon />,
-  },
-];
-
-// ---- Page Content ----
+// ---- Page ----
 
 export default function YourDevicesPage() {
-  const totalSeats = 3;
-  const maxDevices = 5;
-  const devicesInUse = devices.length;
-  const swapLimit = 2;
-  const swapsUsed = 1;
+  const { data, isLoading, isError } = useDevices();
+  const removeDeviceMutation = useRemoveDeviceMutation();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   function handleDeauthorise(deviceId: string) {
-    console.log(`De-authorise device: ${deviceId}`);
+    if (confirmId === deviceId) {
+      removeDeviceMutation.mutate(deviceId, {
+        onSuccess: () => setConfirmId(null),
+      });
+    } else {
+      setConfirmId(deviceId);
+      toast.info("Click again to confirm de-authorisation");
+    }
   }
 
   return (
     <section
-      className="w-full  h-full  bg-[#FBF9F4] px-6 sm:px-10 lg:px-[120px] pt-10 sm:pt-14 pb-16 sm:pb-20"
+      className="w-full min-h-full bg-[#FBF9F4] px-6 sm:px-10 lg:px-[120px] pt-10 sm:pt-14 pb-16 sm:pb-20"
       style={{ fontFamily: "'Figtree', sans-serif" }}
     >
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
@@ -186,32 +140,96 @@ export default function YourDevicesPage() {
           Your devices
         </h1>
 
-        {/* Summary card */}
-        <div className="flex items-center justify-center px-6 py-5 bg-white border border-[#E3E8EF] rounded-lg shadow-sm">
-          <p className="text-base text-[#0C1F33] text-center">
-            You have {totalSeats} seats, so up to {maxDevices} devices.{" "}
-            <span className="font-medium">
-              {devicesInUse} of {maxDevices} in use.
-            </span>
-          </p>
-        </div>
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+          </div>
+        )}
 
-        {/* Device list */}
-        <div className="flex flex-col gap-4">
-          {devices.map((device) => (
-            <DeviceRow
-              key={device.id}
-              device={device}
-              onDeauthorise={handleDeauthorise}
-            />
-          ))}
-        </div>
+        {/* Error */}
+        {isError && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <p className="text-red-600 font-medium">Failed to load devices</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-[#22A146] font-semibold hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
-        {/* Swap limit note */}
-        <p className="text-[13px] text-[#475569]">
-          You can swap devices up to {swapLimit} times every 30 days.
-          You&apos;ve used {swapsUsed} of {swapLimit}.
-        </p>
+        {/* Content */}
+        {!isLoading && !isError && data && (
+          <>
+            {/* Summary card */}
+            <div className="flex items-center justify-center px-6 py-5 bg-white border border-[#E3E8EF] rounded-lg shadow-sm">
+              <p className="text-base text-[#0C1F33] text-center">
+                You have {data.totalSeats}{" "}
+                {data.totalSeats === 1 ? "seat" : "seats"}, so up to{" "}
+                {data.deviceLimit}{" "}
+                {data.deviceLimit === 1 ? "device" : "devices"}.{" "}
+                <span className="font-medium">
+                  {data.currentCount} of {data.deviceLimit} in use.
+                </span>
+              </p>
+            </div>
+
+            {/* Device list */}
+            {data.devices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <p className="text-[#64748B]">No devices registered yet.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {data.devices.map((device) => (
+                  <div
+                    key={device.id}
+                    className="flex items-center justify-between px-6 py-4 bg-white border border-[#E3E8EF] rounded-lg shadow-sm"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="shrink-0 flex items-center justify-center w-5 h-5">
+                        {getDeviceIcon(device.platform)}
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-base text-[#0C1F33]">
+                          {device.name}
+                        </span>
+                        <span className="text-[13px] text-[#475569]">
+                          {device.lastSeen}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeauthorise(device.id)}
+                      disabled={removeDeviceMutation.isPending}
+                      className={`text-sm font-semibold transition-colors shrink-0 ml-4 disabled:opacity-50 ${
+                        confirmId === device.id
+                          ? "text-red-700 bg-red-50 px-3 py-1.5 rounded-md"
+                          : "text-red-600 hover:text-red-700"
+                      }`}
+                    >
+                      {confirmId === device.id ? "Confirm?" : "De-authorise"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Swap limit note */}
+            <p className="text-[13px] text-[#475569]">
+              You can swap devices up to {data.swapLimit} times every 30 days.
+              You&apos;ve used {data.swapsUsed} of {data.swapLimit}.
+              {data.swapsRemaining > 0 && (
+                <span className="font-medium text-[#22A146]">
+                  {" "}
+                  ({data.swapsRemaining} remaining)
+                </span>
+              )}
+            </p>
+          </>
+        )}
       </div>
     </section>
   );
