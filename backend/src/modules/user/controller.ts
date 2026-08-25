@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { userService } from "#/modules/user/service";
-import { updateProfileSchema } from "#/modules/user/schema";
+import { changeEmailSchema, updateProfileSchema } from "#/modules/user/schema";
 import { sendSuccess } from "#/shared/response";
 
 export class UserController {
@@ -18,6 +18,21 @@ export class UserController {
 
       const profile = await userService.getProfile(userId);
       sendSuccess(res, profile, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  changeEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.sub!;
+      const input = changeEmailSchema.parse(req.body);
+      const result = await userService.changeEmail(
+        userId,
+        input.newEmail,
+        input.currentPassword,
+      );
+      sendSuccess(res, result, 200, "Email updated");
     } catch (error) {
       next(error);
     }

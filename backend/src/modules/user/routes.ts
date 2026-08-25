@@ -2,7 +2,7 @@ import { Router } from "express";
 import { userController } from "#/modules/user/controller";
 import { authenticate } from "#/middleware/authenticate";
 import { validate } from "#/middleware/validate";
-import { updateProfileSchema } from "#/modules/user/schema";
+import { changeEmailSchema, updateProfileSchema } from "#/modules/user/schema";
 
 const router: Router = Router();
 
@@ -58,6 +58,32 @@ router.patch(
   authenticate,
   validate(updateProfileSchema),
   userController.updateProfile,
+);
+/**
+ * @swagger
+ * /api/v1/users/change-email:
+ *   post:
+ *     tags: [Users]
+ *     summary: Change email address
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newEmail, currentPassword]
+ *             properties:
+ *               newEmail: { type: string, format: email }
+ *               currentPassword: { type: string }
+ *     responses:
+ *       200:
+ *         description: Email updated
+ */
+router.post(
+  "/change-email",
+  authenticate,
+  validate(changeEmailSchema),
+  userController.changeEmail,
 );
 
 export { router as userRoutes };
