@@ -9,3 +9,15 @@ export const updateProfileSchema = z.object({
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const changeEmailSchema = z.object({
+  newEmail: z
+    .string()
+    .email("Invalid email address")
+    .max(255)
+    .toLowerCase()
+    .trim(),
+  currentPassword: z.string().min(1, "Current password is required"),
+});
+
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
