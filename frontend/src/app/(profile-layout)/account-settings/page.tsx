@@ -177,7 +177,7 @@ const settingsItems: SettingsRowProps[] = [
     icon: <UsersIcon />,
     title: "Family & profiles",
     description: "Manage learner profiles, PINs, and seats",
-    href: "/account/family",
+    href: "/profile-management",
   },
   {
     icon: <SmartphoneIcon />,
@@ -195,7 +195,7 @@ const settingsItems: SettingsRowProps[] = [
     icon: <LockIcon />,
     title: "Login & security",
     description: "Update your email and password",
-    href: "/account/security",
+    href: "/login-security",
   },
 ];
 
