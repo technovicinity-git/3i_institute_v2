@@ -15,12 +15,15 @@ import { LandingLogo } from "@/components/landing/logo";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
+import { useSessionRestore } from "@/hooks/use-session-restore";
 
 export function Navbar() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const { activeProfile, setActiveProfile } = useProfileStore();
   const logoutMutation = useLogoutMutation();
+
+  useSessionRestore();
 
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -93,7 +96,10 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        {isLoggedIn ? (
+        {isLoading ? (
+          // Show skeleton/placeholder while loading
+          <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+        ) : isLoggedIn ? (
           <>
             {/* Dashboard Button */}
             <Link
