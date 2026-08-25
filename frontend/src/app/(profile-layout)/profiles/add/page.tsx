@@ -3,16 +3,17 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Logo } from "@/components/layout/logo";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateLearnerProfileMutation } from "@/hooks/use-learner-profiles";
+import { useLearnerAvatarUploadMutation } from "@/hooks/use-avatar-upload";
 import {
   DAYS,
   MONTHS,
@@ -43,24 +44,63 @@ type AddLearnerFormData = z.infer<typeof addLearnerSchema>;
 export default function AddLearnerPage() {
   const router = useRouter();
   const createMutation = useCreateLearnerProfileMutation();
+  const avatarUploadMutation = useLearnerAvatarUploadMutation();
 
   const [initials, setInitials] = useState("L");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     control,
-    setValue,
     formState: { errors },
   } = useForm<AddLearnerFormData>({
     resolver: zodResolver(addLearnerSchema),
   });
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size exceeds 5MB limit");
+      return;
+    }
+
+    // Save file and show preview
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Reset input
+    e.target.value = "";
+  };
+
+  const removeAvatar = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
   const onSubmit = (data: AddLearnerFormData) => {
     const dateOfBirth = formatDateToISO(data.day, data.month, data.year);
     const age = calculateAge(dateOfBirth);
-
-    // Determine chat enabled based on age
     const chatEnabled = age >= 13;
 
     createMutation.mutate(
@@ -71,8 +111,27 @@ export default function AddLearnerPage() {
         chatEnabled,
       },
       {
-        onSuccess: () => {
-          router.push("/profiles");
+        onSuccess: (createdProfile) => {
+          // If avatar selected, upload it
+          if (selectedFile && createdProfile?.id) {
+            avatarUploadMutation.mutate(
+              {
+                learnerProfileId: createdProfile.id,
+                file: selectedFile,
+              },
+              {
+                onSuccess: () => {
+                  router.push("/profile-management");
+                },
+                onError: () => {
+                  // Still navigate even if avatar upload fails
+                  router.push("/profile-management");
+                },
+              },
+            );
+          } else {
+            router.push("/profile-management");
+          }
         },
         onError: (error: any) => {
           const message = error.response?.data?.error?.message;
@@ -95,22 +154,17 @@ export default function AddLearnerPage() {
     setInitials((name.slice(0, 2) || "L").toUpperCase());
   };
 
-  return (
-    <div className="min-h-screen bg-surface text-primary">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-5 md:px-10">
-          <Logo size="sm" href="/profiles" />
-          <button
-            onClick={() => router.push("/profiles")}
-            className="text-sm font-semibold text-gray-600 hover:text-primary"
-          >
-            Back
-          </button>
-        </div>
-      </header>
+  // Cleanup preview on unmount
+  useState(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  });
 
-      {/* Main */}
+  return (
+    <div className="text-primary min-h-full bg-[#FBF9F4]">
       <main className="flex items-center justify-center px-5 py-10">
         <div className="w-full max-w-[640px] rounded-2xl border border-gray-200 bg-white p-7 shadow-sm md:p-10">
           <Eyebrow className="mb-4">State A: Create</Eyebrow>
@@ -121,32 +175,70 @@ export default function AddLearnerPage() {
           </p>
 
           {/* Avatar */}
-          <div className="mb-8 flex justify-center">
+          <div className="mb-8 flex flex-col items-center gap-3">
             <div className="relative">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 border-green bg-white">
-                <span className="font-serif text-3xl">{initials}</span>
+              <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 border-green bg-white overflow-hidden">
+                {previewUrl ? (
+                  <Image
+                    src={previewUrl}
+                    alt="Profile preview"
+                    width={112}
+                    height={112}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="font-serif text-3xl">{initials}</span>
+                )}
               </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              {/* Upload button */}
               <button
                 type="button"
+                onClick={handleAvatarClick}
+                disabled={avatarUploadMutation.isPending}
                 aria-label="Add profile picture"
-                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow"
+                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"
-                  />
-                  <circle cx="12" cy="13" r="3" />
-                </svg>
+                {avatarUploadMutation.isPending ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"
+                    />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                )}
               </button>
             </div>
+
+            {/* Remove avatar option */}
+            {previewUrl && (
+              <button
+                type="button"
+                onClick={removeAvatar}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors"
+              >
+                Remove photo
+              </button>
+            )}
           </div>
 
           {/* Form */}
@@ -258,7 +350,6 @@ export default function AddLearnerPage() {
               </p>
 
               <div className="space-y-4">
-                {/* PIN */}
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
                     4-Digit PIN
@@ -281,7 +372,6 @@ export default function AddLearnerPage() {
                   )}
                 </div>
 
-                {/* Confirm PIN */}
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
                     Confirm PIN
@@ -311,7 +401,7 @@ export default function AddLearnerPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/profiles")}
+                onClick={() => router.push("/profile-management")}
                 className="w-1/3 py-4 border-gray-300"
               >
                 Cancel
@@ -319,9 +409,15 @@ export default function AddLearnerPage() {
               <Button
                 type="submit"
                 className="w-2/3 bg-green hover:bg-green-dark py-4 text-white font-bold"
-                disabled={createMutation.isPending}
+                disabled={
+                  createMutation.isPending || avatarUploadMutation.isPending
+                }
               >
-                {createMutation.isPending ? "Adding..." : "Add learner"}
+                {createMutation.isPending
+                  ? "Adding..."
+                  : avatarUploadMutation.isPending
+                    ? "Uploading avatar..."
+                    : "Add learner"}
               </Button>
             </div>
           </form>
@@ -332,7 +428,7 @@ export default function AddLearnerPage() {
 }
 
 // ──────────────────────────────────────
-// PinInput Component
+// PinInput Component (unchanged)
 // ──────────────────────────────────────
 
 interface PinInputProps {
