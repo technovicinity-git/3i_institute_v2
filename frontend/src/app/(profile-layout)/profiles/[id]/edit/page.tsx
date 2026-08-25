@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import {
   useUpdateLearnerProfileMutation,
 } from "@/hooks/use-profile-edit";
 import { useResetPinMutation } from "@/hooks/use-learner-profiles";
+import { useLearnerAvatarUploadMutation } from "@/hooks/use-avatar-upload";
 
 const editProfileSchema = z.object({
   displayName: z.string().min(1, "Name is required").max(100),
@@ -45,15 +47,33 @@ function getInitials(name: string): string {
 export default function EditProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const profileId = params.id as string;
 
   const { data: profile, isLoading: profileLoading } =
     useLearnerProfile(profileId);
   const updateMutation = useUpdateLearnerProfileMutation();
   const resetPinMutation = useResetPinMutation();
+  const avatarUploadMutation = useLearnerAvatarUploadMutation();
 
   const [showResetPin, setShowResetPin] = useState(false);
-  const [initials, setInitials] = useState("XX");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-open PIN reset if ?action=reset-pin
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (action === "reset-pin") {
+      setShowResetPin(true);
+    }
+  }, [searchParams]);
+
+  // Update preview when profile loads
+  useEffect(() => {
+    if (profile?.avatarUrl) {
+      setPreviewUrl(profile.avatarUrl);
+    }
+  }, [profile]);
 
   const {
     register,
@@ -80,7 +100,7 @@ export default function EditProfilePage() {
       },
       {
         onSuccess: () => {
-          router.push("/profiles");
+          router.push("/profile-management");
         },
       },
     );
@@ -103,6 +123,46 @@ export default function EditProfilePage() {
     );
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size exceeds 5MB limit");
+      return;
+    }
+
+    // Show local preview immediately
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Upload to server
+    avatarUploadMutation.mutate(
+      { learnerProfileId: profileId, file },
+      {
+        onError: () => {
+          // Revert preview on error
+          setPreviewUrl(profile?.avatarUrl ?? null);
+        },
+      },
+    );
+
+    // Reset input
+    e.target.value = "";
+  };
+
   if (profileLoading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
@@ -112,18 +172,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-outline-variant px-6 py-4 flex items-center justify-between">
-        <Logo size="md" href="/profiles" />
-        <button
-          onClick={() => router.push("/profiles")}
-          className="text-primary font-medium hover:opacity-80"
-        >
-          Back
-        </button>
-      </header>
-
+    <div className=" flex flex-col">
       {/* Main */}
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="bg-white rounded-2xl shadow-card border border-outline-variant p-8 md:p-12 w-full max-w-md">
@@ -135,34 +184,54 @@ export default function EditProfilePage() {
           {/* Avatar */}
           <div className="flex justify-center mb-10">
             <div className="relative inline-block">
-              <div className="w-24 h-24 rounded-full border-2 border-green flex items-center justify-center bg-surface text-green text-3xl font-serif">
-                {profile?.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={profile.displayName}
+              <div className="w-24 h-24 rounded-full border-2 border-green flex items-center justify-center bg-surface text-green text-3xl font-serif overflow-hidden">
+                {previewUrl ? (
+                  <Image
+                    src={previewUrl}
+                    alt={profile?.displayName ?? "Profile"}
+                    width={96}
+                    height={96}
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   getInitials(profile?.displayName ?? "XX")
                 )}
               </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              {/* Upload button */}
               <button
+                type="button"
+                onClick={handleAvatarClick}
+                disabled={avatarUploadMutation.isPending}
                 aria-label="Change profile picture"
-                className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-sm border border-white"
+                className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-sm border border-white hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                  <circle cx="12" cy="13" r="3" />
-                </svg>
+                {avatarUploadMutation.isPending ? (
+                  <div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                )}
               </button>
             </div>
           </div>
@@ -303,7 +372,7 @@ export default function EditProfilePage() {
 }
 
 // ──────────────────────────────────────
-// PinInput Component (same as Add Learner)
+// PinInput Component
 // ──────────────────────────────────────
 
 interface PinInputProps {
