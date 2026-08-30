@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -7,9 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { LandingLogo } from "@/components/landing/logo";
-import { useLoginMutation } from "@/hooks/use-login";
+import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { decodeJwtPayload } from "@/lib/jwt";
+import { useProfileStore } from "@/stores/profile-store";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -20,8 +21,11 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function InstructorLoginPage() {
   const router = useRouter();
-  const loginMutation = useLoginMutation();
+  const { setUser, setAccessToken, setLoading } = useAuthStore();
+  const { setActiveProfile } = useProfileStore();
+
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -31,29 +35,40 @@ export default function InstructorLoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data, {
-      onSuccess: (result) => {
-        // The login response does not include a `role` field, so read it
-        // from the JWT access-token payload (the backend puts the role
-        // name there, e.g. "Instructor").
-        const role = decodeJwtPayload(result.accessToken)?.role;
+  const onSubmit = async (data: LoginFormData) => {
+    setIsSubmitting(true);
 
-        // Check if user is instructor
-        if (role === "Instructor") {
-          toast.success(`Welcome back, ${result.user.firstName}!`);
-          router.push("/instructor/dashboard");
-        } else {
-          toast.error("This account is not an instructor account");
-          // Logout the user
-          useAuthStore.getState().logout();
-          router.push("/login");
-        }
-      },
-      // API errors are toasted by the shared `useLoginMutation` hook
-      // (onError), which React Query invokes alongside the callbacks
-      // passed to `mutate`, so no extra handling is needed here.
-    });
+    try {
+      const response = await apiClient.post("/auth/login", data);
+      const { user: userData, accessToken } = response.data.data;
+
+      // Check if user has Instructor role
+      if (userData.role !== "Instructor") {
+        toast.error("This account is not an instructor account");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Set auth state
+      setUser({
+        ...userData,
+        role: "Instructor",
+      });
+      setAccessToken(accessToken);
+      setLoading(false);
+
+      // Clear active profile
+      setActiveProfile(null);
+      localStorage.removeItem("activeProfile");
+
+      toast.success(`Welcome back, ${userData.firstName}!`);
+      router.push("/instructor/dashboard");
+    } catch (error: any) {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Login failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -144,10 +159,10 @@ export default function InstructorLoginPage() {
 
             <button
               type="submit"
-              disabled={loginMutation.isPending}
+              disabled={isSubmitting}
               className="w-full bg-green text-white py-3 rounded-lg font-medium hover:bg-green-dark transition-colors shadow-sm disabled:opacity-50"
             >
-              {loginMutation.isPending ? "Logging in..." : "Log in"}
+              {isSubmitting ? "Logging in..." : "Log in"}
             </button>
           </form>
 

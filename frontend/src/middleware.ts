@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that require authentication
+// Routes that require authentication (learner dashboard)
 const protectedRoutes = [
-  // "/dashboard",
+  "/dashboard",
   "/my-courses",
   "/certificates",
   "/notifications",
@@ -11,15 +11,29 @@ const protectedRoutes = [
   "/notes",
   "/settings",
   "/exams",
+  "/profiles",
+  "/seats",
+  "/live-classes",
+  "/assignments",
+  "/wishlist",
 ];
 
-// Routes that only instructors can access
-const instructorRoutes = ["/instructor"];
+// Routes that only instructors can access (protected)
+const instructorProtectedRoutes = [
+  "/instructor/dashboard",
+  "/instructor/courses",
+  "/instructor/live-classes",
+  "/instructor/assignments",
+  "/instructor/exams",
+  "/instructor/certificates",
+  "/instructor/students",
+  "/instructor/settings",
+];
 
-// Routes that only admins can access
-const adminRoutes = ["/admin"];
+// Instructor public routes (not protected)
+const instructorPublicRoutes = ["/instructor/login", "/instructor/register"];
 
-// Public routes — redirect authenticated users away
+// Public auth routes — redirect authenticated users away
 const authRoutes = ["/login", "/register"];
 
 export function middleware(request: NextRequest) {
@@ -29,31 +43,38 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/"),
   );
-  const isInstructorRoute = instructorRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // If protected route and no refresh token, redirect to login
+  const isInstructorProtected = instructorProtectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/"),
+  );
+
+  const isInstructorPublic = instructorPublicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/"),
+  );
+
+  const isAuthRoute = authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/"),
+  );
+
+  // If learner protected route and no token → redirect to login
   if (isProtected && !refreshToken) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // If admin route and no token, redirect
-  // if (isAdminRoute && !refreshToken) {
-  //   return NextResponse.redirect(new URL("/login", request.url));
-  // }
-  if (isProtected && !refreshToken) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // If instructor protected route and no token → redirect to instructor login
+  if (isInstructorProtected && !refreshToken) {
+    const loginUrl = new URL("/instructor/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // If auth route and already logged in, redirect to dashboard
-  // if (isAuthRoute && refreshToken) {
-  //   return NextResponse.redirect(new URL("/dashboard", request.url));
-  // }
+  // If auth route and already logged in → redirect to dashboard
+  // But skip instructor public routes (login/register)
+  if (isAuthRoute && refreshToken && !isInstructorPublic) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   return NextResponse.next();
 }

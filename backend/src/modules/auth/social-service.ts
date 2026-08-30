@@ -217,6 +217,7 @@ export class SocialAuthService {
         email: user.email,
         locale: user.locale,
         emailVerified: user.emailVerified,
+        role: user.role.name,
       },
       tokens,
     };
