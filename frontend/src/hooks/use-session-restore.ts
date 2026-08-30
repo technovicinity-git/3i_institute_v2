@@ -9,7 +9,10 @@ export function useSessionRestore() {
 
   useEffect(() => {
     // Skip if user already loaded
-    if (user) return;
+    if (user) {
+      setLoading(false);
+      return;
+    }
 
     const restoreSession = async () => {
       try {
@@ -37,7 +40,7 @@ export function useSessionRestore() {
         setUser(null);
         setAccessToken(null);
       } finally {
-        setLoading(false);
+        setLoading(false); // Always set loading to false
       }
     };
 

@@ -109,7 +109,6 @@ export default function InstructorDashboardPage() {
 
       {/* Recent Courses + Upcoming Classes */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-        {/* Courses */}
         <div className="bg-white rounded-xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-[#0C1F33]">Your Courses</h2>
@@ -145,7 +144,6 @@ export default function InstructorDashboardPage() {
           </div>
         </div>
 
-        {/* Upcoming Classes */}
         <div className="bg-white rounded-xl p-6 border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-[#0C1F33]">
