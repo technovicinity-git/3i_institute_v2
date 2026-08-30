@@ -17,7 +17,7 @@ export interface Course {
   thumbnailUrl: string | null;
   category: string;
   type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
-  level: CourseLevel;
+  level: string;
   language: string;
   minimumAge: number;
   instructor: {
@@ -27,7 +27,9 @@ export interface Course {
   enrolmentCount: number;
   averageRating: number | null;
   ratingCount: number;
-  format: CourseFormat;
+  format: "self-paced" | "live" | "hybrid";
+  enrolled: boolean;
+  wishlisted: boolean;
 }
 
 export interface CourseListResponse {
@@ -41,12 +43,13 @@ export interface CourseListResponse {
 export interface CourseFilters {
   page: number;
   limit: number;
+  search?: string;
   category?: string;
   level?: string;
   format?: string;
-  search?: string;
   sortBy?: SortOption;
   minRating?: number;
+  learnerProfileId?: string;
 }
 
 export interface Material {

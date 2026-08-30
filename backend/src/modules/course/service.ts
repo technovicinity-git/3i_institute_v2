@@ -120,32 +120,19 @@ export class CourseService {
     return course;
   }
 
-  async list(query: ListCoursesQuery) {
-    const {
-      page,
-      limit,
-      category,
-      level,
-      type,
-      format,
-      search,
-      sortBy,
-      minRating,
-    } = query;
+  async list(
+    query: ListCoursesQuery,
+    _accountId?: string,
+    learnerProfileId?: string,
+  ) {
+    const { page, limit, category, level, type, format, search, sortBy } =
+      query;
 
     const where: any = {
       status: "PUBLISHED",
       ...(category && { category }),
       ...(level && { level }),
       ...(type && { type }),
-      ...(format && {
-        type:
-          format === "self-paced"
-            ? "REGULAR"
-            : format === "live"
-              ? "ONLINE_CLASS"
-              : "MIXED",
-      }),
       ...(search && {
         OR: [
           { title: { contains: search, mode: "insensitive" } },
@@ -157,81 +144,73 @@ export class CourseService {
             },
           },
           {
-            instructor: {
-              lastName: { contains: search, mode: "insensitive" },
-            },
+            instructor: { lastName: { contains: search, mode: "insensitive" } },
           },
         ],
       }),
-      ...(minRating && {
-        ratings: {
-          some: {
-            rating: { gte: minRating },
-          },
-        },
-      }),
     };
 
-    // Build orderBy based on sortBy
-    let orderBy: any = { createdAt: "desc" };
+    // Format filter
+    if (format === "self-paced") where.type = "REGULAR";
+    if (format === "live") where.type = "ONLINE_CLASS";
+    if (format === "hybrid") where.type = "MIXED";
 
+    let orderBy: any = { createdAt: "desc" };
     switch (sortBy) {
       case "newest":
         orderBy = { createdAt: "desc" };
         break;
       case "rating":
-        // Use raw SQL for average rating sort
-        orderBy = {
-          ratings: {
-            _count: "desc",
-          },
-        };
+        orderBy = { ratings: { _count: "desc" } };
         break;
       case "title":
         orderBy = { title: "asc" };
         break;
       case "popularity":
       default:
-        // Popularity = enrolment count
-        orderBy = {
-          enrolments: {
-            _count: "desc",
-          },
-        };
+        orderBy = { enrolments: { _count: "desc" } };
         break;
     }
 
-    const [total, courses] = await Promise.all([
-      prisma.course.count({ where }),
-      prisma.course.findMany({
-        where,
-        include: {
-          instructor: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
+    const [total, courseRecords, userEnrolments, userWishlist] =
+      await Promise.all([
+        prisma.course.count({ where }),
+        prisma.course.findMany({
+          where,
+          include: {
+            instructor: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+            _count: {
+              select: { enrolments: true },
+            },
+            ratings: {
+              where: { hidden: false },
+              select: { rating: true },
             },
           },
-          _count: {
-            select: {
-              enrolments: true,
-            },
-          },
-          ratings: {
-            select: {
-              rating: true,
-            },
-          },
-        },
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
+          orderBy,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        learnerProfileId
+          ? prisma.enrolment.findMany({
+              where: { learnerProfileId, waitlisted: false },
+              select: { courseId: true },
+            })
+          : Promise.resolve([]),
+        learnerProfileId
+          ? prisma.wishlistItem.findMany({
+              where: { learnerProfileId },
+              select: { courseId: true },
+            })
+          : Promise.resolve([]),
+      ]);
 
-    // Transform courses to include computed fields
-    const transformedCourses = courses.map((course) => {
+    const enrolledCourseIds = new Set(userEnrolments.map((e) => e.courseId));
+    const wishlistedCourseIds = new Set(userWishlist.map((w) => w.courseId));
+
+    const courses = courseRecords.map((course) => {
       const avgRating =
         course.ratings.length > 0
           ? Math.round(
@@ -264,10 +243,18 @@ export class CourseService {
             : course.type === "ONLINE_CLASS"
               ? "live"
               : "hybrid",
+        enrolled: enrolledCourseIds.has(course.id),
+        wishlisted: wishlistedCourseIds.has(course.id),
       };
     });
 
-    return { courses: transformedCourses, total, page, limit };
+    return {
+      courses,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async suspend(instructorId: string, courseId: string) {

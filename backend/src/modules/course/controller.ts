@@ -46,8 +46,20 @@ export class CourseController {
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const query = listCoursesQuerySchema.parse(req.query);
-      const { courses, total, page, limit } = await courseService.list(query);
-      sendPaginated(res, courses, { page, limit, total });
+      const accountId = req.user?.sub;
+      const learnerProfileId = req.query["learnerProfileId"] as
+        string | undefined;
+
+      const result = await courseService.list(
+        query,
+        accountId,
+        learnerProfileId,
+      );
+      sendPaginated(res, result.courses, {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+      });
     } catch (error) {
       next(error);
     }
