@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import InstructorSidebar from "@/components/instructor/sidebar";
 import InstructorNavbar from "@/components/instructor/navbar";
 import { useAuthStore } from "@/stores/auth-store";
-import { useSessionRestore } from "@/hooks/use-session-restore";
+import { apiClient } from "@/lib/api-client";
 
 export default function InstructorCommonLayout({
   children,
@@ -13,31 +13,58 @@ export default function InstructorCommonLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { user, isLoading, setLoading } = useAuthStore();
+  const { user, setUser, setAccessToken, isLoading, setLoading } =
+    useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Restore session on mount
-  useSessionRestore();
-
-  // Add a safety timeout — if restore takes too long, stop loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoading) {
+    const restoreSession = async () => {
+      // If user already loaded and is Instructor, just set loading false
+      if (user && user.role === "Instructor") {
         setLoading(false);
+        return;
       }
-    }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [isLoading, setLoading]);
+      try {
+        // Try refresh token
+        const refreshResponse = await apiClient.post("/auth/refresh", {});
+        const { accessToken } = refreshResponse.data.data;
+        setAccessToken(accessToken);
 
-  // Redirect to login if no user after loading completes
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace("/instructor/login");
-    }
-  }, [isLoading, user, router]);
+        // Get user profile
+        const userResponse = await apiClient.get("/users/me");
+        const userData = userResponse.data.data;
 
-  // Show loading only while session is being restored
+        // Check if Instructor
+        if (
+          userData.role?.name === "Instructor" ||
+          userData.role === "Instructor"
+        ) {
+          setUser({
+            ...userData,
+            role: userData.role?.name ?? userData.role ?? "Instructor",
+          });
+          setLoading(false);
+        } else {
+          // Not an instructor
+          setUser(null);
+          setAccessToken(null);
+          setLoading(false);
+          router.replace("/instructor/login");
+        }
+      } catch {
+        // No valid session
+        setUser(null);
+        setAccessToken(null);
+        setLoading(false);
+        router.replace("/instructor/login");
+      }
+    };
+
+    restoreSession();
+  }, [user, setUser, setAccessToken, setLoading, router]);
+
+  // Loading
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#FBF9F4]">
@@ -46,19 +73,17 @@ export default function InstructorCommonLayout({
     );
   }
 
-  // Don't render content if no user
+  // No user
   if (!user) {
     return null;
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FBF9F4]">
-      {/* Sidebar - Desktop */}
       <div className="hidden lg:block shrink-0 h-full">
         <InstructorSidebar />
       </div>
 
-      {/* Sidebar - Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -71,7 +96,6 @@ export default function InstructorCommonLayout({
         </div>
       )}
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <InstructorNavbar onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto">{children}</main>

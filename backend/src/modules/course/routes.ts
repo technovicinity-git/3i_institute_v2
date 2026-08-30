@@ -81,6 +81,23 @@ router.post(
 
 /**
  * @swagger
+ * /api/v1/courses/my-courses:
+ *   get:
+ *     tags: [Courses]
+ *     summary: Get instructor's own courses
+ *     responses:
+ *       200:
+ *         description: Instructor courses
+ */
+router.get(
+  "/my-courses",
+  authenticate,
+  authorize("courses.create"),
+  courseController.getMyCourses,
+);
+
+/**
+ * @swagger
  * /api/v1/courses/{id}:
  *   get:
  *     tags: [Courses]

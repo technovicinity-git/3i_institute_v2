@@ -7,7 +7,6 @@ interface User {
   email: string;
   locale: string;
   emailVerified: boolean;
-  avatarUrl?: string;
   role?: string;
 }
 
@@ -31,8 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (loading) => set({ isLoading: loading }),
 
   logout: () => {
-    set({ user: null, accessToken: null });
-    // Clear refresh token cookie
+    set({ user: null, accessToken: null, isLoading: false });
     document.cookie =
       "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   },

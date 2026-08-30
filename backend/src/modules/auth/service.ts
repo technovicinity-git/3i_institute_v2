@@ -103,6 +103,7 @@ export class AuthService {
         email: user.email,
         locale: user.locale,
         emailVerified: user.emailVerified,
+        role: role.name,
       },
     };
   }
@@ -203,6 +204,7 @@ export class AuthService {
         email: user.email,
         locale: user.locale,
         emailVerified: user.emailVerified,
+        role: user.role.name,
       },
       tokens,
     };

@@ -333,6 +333,20 @@ export class CourseService {
 
     return updated;
   }
+
+  async getInstructorCourses(instructorId: string) {
+    const courses = await prisma.course.findMany({
+      where: { instructorId },
+      include: {
+        _count: {
+          select: { enrolments: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return courses;
+  }
 }
 
 export const courseService = new CourseService();

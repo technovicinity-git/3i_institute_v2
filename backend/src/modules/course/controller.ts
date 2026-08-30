@@ -103,6 +103,16 @@ export class CourseController {
       next(error);
     }
   };
+
+  getMyCourses = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const courses = await courseService.getInstructorCourses(instructorId);
+      sendSuccess(res, courses, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const courseController = new CourseController();

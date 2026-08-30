@@ -8,7 +8,7 @@ export function useSessionRestore() {
   const { setActiveProfile } = useProfileStore();
 
   useEffect(() => {
-    // Skip if user already loaded
+    // If user already in store, just set loading false
     if (user) {
       setLoading(false);
       return;
@@ -16,7 +16,7 @@ export function useSessionRestore() {
 
     const restoreSession = async () => {
       try {
-        // Try to refresh token
+        // Try to refresh token using cookie
         const refreshResponse = await apiClient.post("/auth/refresh", {});
         const { accessToken } = refreshResponse.data.data;
         setAccessToken(accessToken);
@@ -25,14 +25,14 @@ export function useSessionRestore() {
         const userResponse = await apiClient.get("/users/me");
         setUser(userResponse.data.data);
 
-        // Try to restore active profile
+        // Restore active profile
         const storedProfile = localStorage.getItem("activeProfile");
         if (storedProfile) {
           try {
             const parsed = JSON.parse(storedProfile);
             setActiveProfile(parsed);
           } catch {
-            // Invalid stored profile — ignore
+            // Invalid stored profile
           }
         }
       } catch {
@@ -40,7 +40,7 @@ export function useSessionRestore() {
         setUser(null);
         setAccessToken(null);
       } finally {
-        setLoading(false); // Always set loading to false
+        setLoading(false);
       }
     };
 
