@@ -7,6 +7,8 @@ interface User {
   email: string;
   locale: string;
   emailVerified: boolean;
+  avatarUrl?: string;
+  role?: string;
 }
 
 interface AuthState {

@@ -2,76 +2,127 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Search, Star, ChevronDown, X } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  Star,
+  Heart,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { useCourses } from "@/hooks/use-courses";
+import { useAuthStore } from "@/stores/auth-store";
+import { useProfileStore } from "@/stores/profile-store";
 import type { Course, CourseFilters, SortOption } from "@/types/course";
+import {
+  useAddToWishlistMutation,
+  useRemoveFromWishlistMutation,
+} from "@/hooks/use-wishlist";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const categories = [
-  "Islamic Studies",
-  "Qur'anic Arabic",
-  "Health Sciences",
-  "Fiqh",
-  "Hadith",
-];
-
-const levels = ["Beginner", "Intermediate", "Advanced"];
-const formats = ["self-paced", "live", "hybrid"];
+const AGE_BANDS = ["5-8", "9-12", "13-15", "16-17", "18+", "All ages"];
 
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "popularity", label: "Popularity" },
+  { value: "popularity", label: "Relevance" },
   { value: "newest", label: "Newest" },
   { value: "rating", label: "Highest Rated" },
   { value: "title", label: "Title A-Z" },
 ];
 
-// ─── Components (unchanged except CourseCard uses API data) ──────────────────
+function getAgeBadge(minimumAge: number): string {
+  if (minimumAge >= 18) return "18+";
+  if (minimumAge >= 16) return "16-17";
+  if (minimumAge >= 13) return "13-15";
+  if (minimumAge >= 9) return "9-12";
+  if (minimumAge >= 5) return "5-8";
+  return "All ages";
+}
 
-function LevelBadge({ level }: { level: string }) {
-  const levelMap: Record<string, { bg: string; text: string; label: string }> =
-    {
-      "1": { bg: "bg-[#22A146]/10", text: "text-[#22A146]", label: "BEGINNER" },
-      "2": {
-        bg: "bg-[#2563BA]/10",
-        text: "text-[#2563BA]",
-        label: "INTERMEDIATE",
-      },
-      "3": { bg: "bg-[#7C3AED]/10", text: "text-[#7C3AED]", label: "ADVANCED" },
-      Beginner: {
-        bg: "bg-[#22A146]/10",
-        text: "text-[#22A146]",
-        label: "BEGINNER",
-      },
-      Intermediate: {
-        bg: "bg-[#2563BA]/10",
-        text: "text-[#2563BA]",
-        label: "INTERMEDIATE",
-      },
-      Advanced: {
-        bg: "bg-[#7C3AED]/10",
-        text: "text-[#7C3AED]",
-        label: "ADVANCED",
-      },
-    };
+function getLevelBadge(level: string): string {
+  const levels: Record<string, string> = {
+    "1": "BEGINNER",
+    "2": "INTERMEDIATE",
+    "3": "ADVANCED",
+    Beginner: "BEGINNER",
+    Intermediate: "INTERMEDIATE",
+    Advanced: "ADVANCED",
+  };
+  return levels[level] ?? "ALL LEVELS";
+}
 
-  const config = levelMap[level] ?? levelMap["Beginner"];
-
+function Checkbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange?: () => void;
+}) {
   return (
-    <span
-      className={`text-[11px] font-semibold px-2 py-1 rounded ${config.bg} ${config.text}`}
-    >
-      {config.label}
-    </span>
+    <button type="button" onClick={onChange} className="shrink-0">
+      {checked ? (
+        <div className="w-[18px] h-[18px] rounded bg-[#2D6CDF] flex items-center justify-center">
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path
+              d="M1 4L3.5 6.5L9 1"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      ) : (
+        <div className="w-[18px] h-[18px] rounded border border-[#E3E8EF] bg-white" />
+      )}
+    </button>
   );
 }
 
 function CourseCard({ course }: { course: Course }) {
+  const router = useRouter();
+  const { activeProfile } = useProfileStore();
+  const addMutation = useAddToWishlistMutation();
+  const removeMutation = useRemoveFromWishlistMutation();
+  const [liked, setLiked] = useState(course.wishlisted);
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!activeProfile) {
+      toast.error("Please login and select a profile first");
+      return;
+    }
+
+    const newLiked = !liked;
+    setLiked(newLiked);
+
+    if (newLiked) {
+      addMutation.mutate({
+        learnerProfileId: activeProfile.id,
+        courseId: course.id,
+      });
+    } else {
+      removeMutation.mutate({
+        learnerProfileId: activeProfile.id,
+        courseId: course.id,
+      });
+    }
+  };
+
+  const handleClick = () => {
+    router.push(`/courses/${course.id}`);
+  };
+
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-      <div className="relative h-[160px] bg-gray-200">
+    <div
+      onClick={handleClick}
+      className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full"
+    >
+      {/* Thumbnail */}
+      <div className="relative h-[180px] bg-gradient-to-br from-[#12304E] to-[#2a5070] overflow-hidden">
         {course.thumbnailUrl ? (
           <Image
             src={course.thumbnailUrl}
@@ -80,59 +131,88 @@ function CourseCard({ course }: { course: Course }) {
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-white/30 text-sm">
             Course Image
           </div>
         )}
+        <button
+          onClick={handleWishlist}
+          aria-label="Toggle wishlist"
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm transition-opacity ${
+            liked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          <Heart
+            className={`w-4 h-4 ${liked ? "text-[#2D6CDF] fill-[#2D6CDF]" : "text-[#0C1F33]"}`}
+            strokeWidth={2}
+          />
+        </button>
       </div>
 
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="flex items-center justify-between mb-3">
-          <LevelBadge level={course.level} />
-          <div className="flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-medium text-[#12304E]">
-              {course.averageRating ?? "New"}
+      {/* Content */}
+      <div className="p-4 pt-3 flex flex-col gap-2 flex-grow">
+        {/* Badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
+            {getLevelBadge(course.level)}
+          </span>
+          {course.enrolled && (
+            <span className="text-[11px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
+              ENROLLED
             </span>
-            {course.ratingCount > 0 && (
-              <span className="text-xs text-slate-400">
-                ({course.ratingCount})
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
-        <h3 className="text-lg font-semibold text-[#12304E] leading-snug mb-2 line-clamp-2">
+        {/* Title */}
+        <h3 className="font-marcellus text-lg text-[#0C1F33] leading-6 min-h-[48px]">
           {course.title}
         </h3>
 
-        <p className="text-[13px] text-slate-500 mb-3">
-          {course.instructor.name}
-        </p>
+        {/* Instructor */}
+        <p className="text-[15px] text-[#475569]">{course.instructor.name}</p>
 
-        <div className="mt-auto">
-          <Link
-            href={`/courses/${course.id}`}
-            className="text-sm font-medium text-[#22A146] hover:underline"
-          >
-            Learn More
-          </Link>
+        {/* Meta row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] text-[#475569]">
+              {course.category}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="flex items-center gap-1 text-[13px]">
+              <Star className="w-3 h-3 text-[#B8912F] fill-[#B8912F]" />
+              <span className="text-[#0C1F33]">
+                {course.averageRating ?? "New"}
+              </span>
+              {course.ratingCount > 0 && (
+                <span className="text-[#475569]">({course.ratingCount})</span>
+              )}
+            </span>
+          </div>
         </div>
+
+        {/* Age badge */}
+        <span className="self-start text-[11px] font-bold text-[#0C1F33] border border-[#E3E8EF] px-2 py-0.5 rounded-full">
+          {getAgeBadge(course.minimumAge)}
+        </span>
       </div>
     </div>
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+export default function CoursesPage() {
+  const { user } = useAuthStore();
+  const { activeProfile } = useProfileStore();
 
-export default function CourseCatalogPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
-  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedAgeBands, setSelectedAgeBands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("popularity");
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Debounce search
@@ -141,7 +221,6 @@ export default function CourseCatalogPage() {
       setDebouncedSearch(searchQuery);
       setCurrentPage(1);
     }, 400);
-
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -151,19 +230,12 @@ export default function CourseCatalogPage() {
     search: debouncedSearch || undefined,
     category:
       selectedCategories.length > 0 ? selectedCategories.join(",") : undefined,
-    level: selectedLevels.length > 0 ? selectedLevels.join(",") : undefined,
-    format: selectedFormats.length > 0 ? selectedFormats.join(",") : undefined,
+    format: selectedTypes.length > 0 ? selectedTypes.join(",") : undefined,
     sortBy,
+    ...(activeProfile?.id ? { learnerProfileId: activeProfile.id } : {}),
   };
 
   const { data, isLoading, isFetching } = useCourses(filters);
-
-  // Active filters for chips
-  const activeFilters = [
-    ...selectedCategories.map((c) => ({ label: c, key: `cat-${c}` })),
-    ...selectedLevels.map((l) => ({ label: l, key: `level-${l}` })),
-    ...selectedFormats.map((f) => ({ label: f, key: `format-${f}` })),
-  ];
 
   const toggleFilter = (
     arr: string[],
@@ -175,223 +247,169 @@ export default function CourseCatalogPage() {
     setCurrentPage(1);
   };
 
-  const removeFilter = (key: string) => {
-    if (key.startsWith("cat-")) {
-      const val = key.replace("cat-", "");
-      setSelectedCategories(selectedCategories.filter((c) => c !== val));
-    } else if (key.startsWith("level-")) {
-      const val = key.replace("level-", "");
-      setSelectedLevels(selectedLevels.filter((l) => l !== val));
-    } else if (key.startsWith("format-")) {
-      const val = key.replace("format-", "");
-      setSelectedFormats(selectedFormats.filter((f) => f !== val));
-    }
-    setCurrentPage(1);
-  };
-
-  const clearAll = () => {
+  const clearAllFilters = () => {
     setSelectedCategories([]);
-    setSelectedLevels([]);
-    setSelectedFormats([]);
+    setSelectedTypes([]);
+    setSelectedLanguages([]);
+    setSelectedAgeBands([]);
     setSortBy("popularity");
-    setCurrentPage(1);
     setSearchQuery("");
     setDebouncedSearch("");
+    setCurrentPage(1);
   };
 
   return (
-    <div className=" bg-white">
-      {/* Page Header */}
-      <section className="bg-[#FBF9F4] px-6 md:px-[120px] py-10 md:py-16">
-        <div className="max-w-[1200px] mx-auto">
-          <h1 className="text-4xl md:text-[56px] font-bold text-[#12304E] leading-tight mb-2">
-            Courses
-          </h1>
-          <p className="text-lg text-[#0C1F33] mb-8">
-            140 courses across Islamic studies, Arabic, and health sciences.
-          </p>
+    <div
+      className="min-h-screen bg-[#FBF9F4]"
+      style={{ fontFamily: "'Figtree', sans-serif" }}
+    >
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-9 pb-12">
+        {/* Title */}
+        <h1
+          className="text-[32px] sm:text-[40px] text-[#0C1F33] mb-6"
+          style={{ fontFamily: "'Marcellus', serif" }}
+        >
+          Courses
+        </h1>
 
-          <div className="flex items-center gap-3 bg-white rounded-lg border border-gray-200 px-5 py-4 max-w-[1200px]">
-            <Search className="w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search courses, instructors, pathways..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 text-base text-gray-500 placeholder:text-gray-400 outline-none bg-transparent"
-            />
-            {isFetching && (
-              <div className="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin" />
+        {/* Search Bar */}
+        <div className="flex items-center gap-3 bg-white border border-[#E3E8EF] rounded-lg px-4 py-3.5 mb-6">
+          <Search
+            className="w-[18px] h-[18px] text-[#475569] shrink-0"
+            strokeWidth={2}
+          />
+          <input
+            type="text"
+            placeholder="Search courses, instructors, topics..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent text-base text-[#0C1F33] placeholder:text-[#475569] outline-none"
+          />
+          {isFetching && (
+            <div className="w-4 h-4 border-2 border-[#2D6CDF] border-t-transparent rounded-full animate-spin" />
+          )}
+        </div>
+
+        {/* Sort Row */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-base text-[#475569]">
+              {isLoading ? "Loading..." : `${data?.total ?? 0} courses`}
+            </span>
+            <button
+              onClick={() => setMobileFiltersOpen(true)}
+              className="lg:hidden flex items-center gap-1.5 text-sm font-semibold text-[#0C1F33] border border-[#E3E8EF] rounded-lg px-3 py-1.5"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+            </button>
+          </div>
+
+          {/* Sort dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="flex items-center gap-1.5 text-sm text-[#475569]"
+            >
+              Sort by:{" "}
+              <span className="font-semibold text-[#0C1F33]">
+                {sortOptions.find((s) => s.value === sortBy)?.label}
+              </span>
+              <ChevronDown className="w-4 h-4 text-[#0C1F33]" />
+            </button>
+            {showSortDropdown && (
+              <div className="absolute right-0 mt-1 bg-white border border-[#E3E8EF] rounded-lg shadow-lg z-20 min-w-[180px]">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setShowSortDropdown(false);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                      sortBy === option.value
+                        ? "text-[#2D6CDF] font-semibold"
+                        : "text-[#0C1F33]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>
-      </section>
 
-      {/* Main Content */}
-      <section className="bg-[#FBF9F4] px-6 md:px-[120px] py-6 md:py-10">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-6 md:gap-10">
-          {/* Sidebar */}
-          <aside className="w-full md:w-[280px] shrink-0 bg-white rounded-xl p-6 h-fit sticky top-6">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-[22px] font-bold text-[#12304E]">Filters</h2>
-              <button
-                onClick={clearAll}
-                className="text-sm text-[#22A146] hover:underline"
-              >
-                Clear all
-              </button>
-            </div>
+        {/* Two Column Layout */}
+        <div className="flex gap-6">
+          {/* Filter Panel - Desktop */}
+          <div className="hidden lg:block w-[280px] shrink-0 self-start sticky top-6">
+            <FilterPanel
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+              selectedTypes={selectedTypes}
+              setSelectedTypes={setSelectedTypes}
+              selectedLanguages={selectedLanguages}
+              setSelectedLanguages={setSelectedLanguages}
+              selectedAgeBands={selectedAgeBands}
+              setSelectedAgeBands={setSelectedAgeBands}
+              toggleFilter={toggleFilter}
+              clearAllFilters={clearAllFilters}
+            />
+          </div>
 
-            {/* Category */}
-            <div className="mb-6">
-              <h3 className="text-[13px] font-semibold text-[#12304E] uppercase tracking-wide mb-4">
-                Category
-              </h3>
-              <div className="space-y-3">
-                {categories.map((cat) => (
-                  <FilterCheckbox
-                    key={cat}
-                    label={cat}
-                    checked={selectedCategories.includes(cat)}
-                    onChange={() =>
-                      toggleFilter(
-                        selectedCategories,
-                        setSelectedCategories,
-                        cat,
-                      )
-                    }
-                  />
-                ))}
+          {/* Mobile Filter Overlay */}
+          {mobileFiltersOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setMobileFiltersOpen(false)}
+              />
+              <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] overflow-y-auto bg-[#FBF9F4] p-4">
+                <FilterPanel
+                  selectedCategories={selectedCategories}
+                  setSelectedCategories={setSelectedCategories}
+                  selectedTypes={selectedTypes}
+                  setSelectedTypes={setSelectedTypes}
+                  selectedLanguages={selectedLanguages}
+                  setSelectedLanguages={setSelectedLanguages}
+                  selectedAgeBands={selectedAgeBands}
+                  setSelectedAgeBands={setSelectedAgeBands}
+                  toggleFilter={toggleFilter}
+                  clearAllFilters={clearAllFilters}
+                  onClose={() => setMobileFiltersOpen(false)}
+                />
               </div>
             </div>
+          )}
 
-            <hr className="border-gray-200 my-6" />
-
-            {/* Level */}
-            <div className="mb-6">
-              <h3 className="text-[13px] font-semibold text-[#12304E] uppercase tracking-wide mb-4">
-                Level
-              </h3>
-              <div className="space-y-3">
-                {levels.map((level) => (
-                  <FilterCheckbox
-                    key={level}
-                    label={level}
-                    checked={selectedLevels.includes(level)}
-                    onChange={() =>
-                      toggleFilter(selectedLevels, setSelectedLevels, level)
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-
-            <hr className="border-gray-200 my-6" />
-
-            {/* Format */}
-            <div className="mb-6">
-              <h3 className="text-[13px] font-semibold text-[#12304E] uppercase tracking-wide mb-4">
-                Format
-              </h3>
-              <div className="space-y-3">
-                {formats.map((format) => (
-                  <FilterCheckbox
-                    key={format}
-                    label={format.charAt(0).toUpperCase() + format.slice(1)}
-                    checked={selectedFormats.includes(format)}
-                    onChange={() =>
-                      toggleFilter(selectedFormats, setSelectedFormats, format)
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          {/* Course Grid */}
-          <main className="flex-1">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 flex-wrap gap-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-[15px] font-medium text-[#12304E]">
-                  {isLoading
-                    ? "Loading..."
-                    : `Showing ${data?.courses?.length ?? 0} of ${data?.total ?? 0} courses`}
-                </span>
-                {activeFilters.map((filter) => (
-                  <span
-                    key={filter.key}
-                    className="inline-flex items-center gap-1.5 bg-[#22A146] text-white text-xs font-medium px-2.5 py-1 rounded-full"
-                  >
-                    {filter.label}
-                    <button
-                      onClick={() => removeFilter(filter.key)}
-                      className="hover:opacity-80"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              {/* Sort Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowSortDropdown(!showSortDropdown)}
-                  className="flex items-center gap-1.5 text-sm text-[#12304E] bg-white border border-gray-200 rounded-md px-3 py-2 hover:bg-gray-50"
-                >
-                  Sort by: {sortOptions.find((s) => s.value === sortBy)?.label}
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-
-                {showSortDropdown && (
-                  <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20 min-w-[180px]">
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSortBy(option.value);
-                          setShowSortDropdown(false);
-                          setCurrentPage(1);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 ${
-                          sortBy === option.value
-                            ? "text-[#22A146] font-semibold"
-                            : "text-[#12304E]"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Grid */}
+          {/* Right Column */}
+          <div className="flex-1 min-w-0 flex flex-col gap-8">
+            {/* Loading */}
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
-                    className="bg-white rounded-xl h-[300px] animate-pulse"
+                    className="bg-white rounded-xl h-[320px] animate-pulse"
                   />
                 ))}
               </div>
-            ) : !data || !data.courses || data.courses.length === 0 ? (
+            ) : data?.courses.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-lg text-gray-500">
+                <p className="text-lg text-[#475569]">
                   No courses found matching your filters.
                 </p>
                 <button
-                  onClick={clearAll}
-                  className="mt-4 text-[#22A146] font-medium hover:underline"
+                  onClick={clearAllFilters}
+                  className="mt-4 text-[#157A34] font-semibold hover:underline"
                 >
                   Clear all filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-[34px]">
                 {data?.courses.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))}
@@ -400,57 +418,221 @@ export default function CourseCatalogPage() {
 
             {/* Pagination */}
             {data && data.totalPages > 1 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={data.totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <div className="flex justify-center">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="w-10 h-10 flex items-center justify-center rounded-md bg-white border border-[#E3E8EF] hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-[#0C1F33]" />
+                  </button>
+
+                  {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-md text-[15px] font-medium transition-colors ${
+                          currentPage === page
+                            ? "bg-[#0C1F33] text-white"
+                            : "bg-white border border-[#E3E8EF] text-[#0C1F33] hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage(Math.min(data.totalPages, currentPage + 1))
+                    }
+                    disabled={currentPage === data.totalPages}
+                    className="w-10 h-10 flex items-center justify-center rounded-md bg-white border border-[#E3E8EF] hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    <ChevronRight className="w-4 h-4 text-[#0C1F33]" />
+                  </button>
+                </div>
+              </div>
             )}
-          </main>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
 
-// ─── Filter Checkbox (needed above) ──────────────────────────────────────────
+// ─── Filter Panel ───
 
-function FilterCheckbox({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}) {
+interface FilterPanelProps {
+  selectedCategories: string[];
+  setSelectedCategories: (v: string[]) => void;
+  selectedTypes: string[];
+  setSelectedTypes: (v: string[]) => void;
+  selectedLanguages: string[];
+  setSelectedLanguages: (v: string[]) => void;
+  selectedAgeBands: string[];
+  setSelectedAgeBands: (v: string[]) => void;
+  toggleFilter: (
+    arr: string[],
+    setArr: (v: string[]) => void,
+    val: string,
+  ) => void;
+  clearAllFilters: () => void;
+  onClose?: () => void;
+}
+
+function FilterPanel({
+  selectedCategories,
+  setSelectedCategories,
+  selectedTypes,
+  setSelectedTypes,
+  selectedLanguages,
+  setSelectedLanguages,
+  selectedAgeBands,
+  setSelectedAgeBands,
+  toggleFilter,
+  clearAllFilters,
+  onClose,
+}: FilterPanelProps) {
+  const categories = [
+    "Islamic Studies",
+    "Language",
+    "Art & Culture",
+    "Science",
+    "History",
+    "Business",
+    "Mathematics",
+    "Language Arts",
+  ];
+  const courseTypes = ["self-paced", "live"];
+  const languages = ["en", "bn", "hi", "ur", "ar"];
+  const languageLabels: Record<string, string> = {
+    en: "English",
+    bn: "Bangla",
+    hi: "Hindi",
+    ur: "Urdu",
+    ar: "Arabic",
+  };
+
   return (
-    <label className="flex items-center gap-2.5 cursor-pointer group">
-      <div
-        className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors ${
-          checked
-            ? "bg-[#22A146] border-[#22A146]"
-            : "border-gray-300 group-hover:border-gray-400"
-        }`}
-        onClick={onChange}
-      >
-        {checked && (
-          <svg
-            className="w-3 h-3 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={3}
+    <div className="bg-white border border-[#E3E8EF] rounded-xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-base font-semibold text-[#0C1F33]">Filters</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={clearAllFilters}
+            className="text-sm font-semibold text-[#157A34]"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        )}
+            Clear all
+          </button>
+          {onClose && (
+            <button onClick={onClose} className="lg:hidden">
+              <X className="w-5 h-5 text-[#475569]" />
+            </button>
+          )}
+        </div>
       </div>
-      <span className="text-sm text-[#0C1F33]">{label}</span>
-    </label>
+
+      <div className="flex flex-col gap-4 pt-4">
+        {/* Category */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-bold text-[#475569] uppercase">
+            Category
+          </span>
+          {categories.map((cat) => (
+            <label
+              key={cat}
+              className="flex items-center gap-2.5 py-1 cursor-pointer"
+            >
+              <Checkbox
+                checked={selectedCategories.includes(cat)}
+                onChange={() =>
+                  toggleFilter(selectedCategories, setSelectedCategories, cat)
+                }
+              />
+              <span className="text-[15px] text-[#0C1F33]">{cat}</span>
+            </label>
+          ))}
+        </div>
+
+        <hr className="border-[#E3E8EF]" />
+
+        {/* Course Type */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-bold text-[#475569] uppercase">
+            Course Type
+          </span>
+          {courseTypes.map((ct) => (
+            <label
+              key={ct}
+              className="flex items-center gap-2.5 py-1 cursor-pointer"
+            >
+              <Checkbox
+                checked={selectedTypes.includes(ct)}
+                onChange={() =>
+                  toggleFilter(selectedTypes, setSelectedTypes, ct)
+                }
+              />
+              <span className="text-[15px] text-[#0C1F33]">
+                {ct === "self-paced" ? "Regular" : "Online Class"}
+              </span>
+            </label>
+          ))}
+        </div>
+
+        <hr className="border-[#E3E8EF]" />
+
+        {/* Age Band */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-bold text-[#475569] uppercase">
+            Age Band
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {AGE_BANDS.map((age) => (
+              <button
+                key={age}
+                onClick={() =>
+                  toggleFilter(selectedAgeBands, setSelectedAgeBands, age)
+                }
+                className={`px-2.5 py-1 text-[13px] font-medium rounded-full border transition-colors ${
+                  selectedAgeBands.includes(age)
+                    ? "bg-[#0C1F33] text-white border-[#0C1F33]"
+                    : "text-[#0C1F33] bg-white border-[#E3E8EF] hover:bg-[#F5F0E8]"
+                }`}
+              >
+                {age}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <hr className="border-[#E3E8EF]" />
+
+        {/* Language */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-bold text-[#475569] uppercase">
+            Language
+          </span>
+          {languages.map((lang) => (
+            <label
+              key={lang}
+              className="flex items-center gap-2.5 py-1 cursor-pointer"
+            >
+              <Checkbox
+                checked={selectedLanguages.includes(lang)}
+                onChange={() =>
+                  toggleFilter(selectedLanguages, setSelectedLanguages, lang)
+                }
+              />
+              <span className="text-[15px] text-[#0C1F33]">
+                {languageLabels[lang]}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
