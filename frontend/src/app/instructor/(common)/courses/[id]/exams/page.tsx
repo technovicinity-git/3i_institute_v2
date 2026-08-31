@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { FileText, Clock, Plus, CheckCircle, AlertCircle } from "lucide-react";
 import { useCourseExams } from "@/hooks/use-exams";
+import Link from "next/link";
 
 function getTypeBadge(type: string) {
   return type === "final"
@@ -111,6 +112,12 @@ export default function ExamsPage() {
                       <span>Max attempts: {exam.maxAttempts}</span>
                     </div>
                   </div>
+                  <Link
+                    href={`/instructor/courses/${courseId}/exams/${exam.id}/attempts`}
+                    className="text-sm font-semibold text-[#22A146] hover:underline"
+                  >
+                    View Attempts
+                  </Link>
                 </div>
               </div>
             );

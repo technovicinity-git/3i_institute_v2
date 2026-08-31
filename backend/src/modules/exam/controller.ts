@@ -121,6 +121,30 @@ export class ExamController {
       next(error);
     }
   };
+
+  getExamAttempts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.params["examId"] as string;
+      const attempts = await examService.getExamAttempts(examId);
+      sendSuccess(res, attempts, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAttemptDetails = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const attemptId = req.params["attemptId"] as string;
+      const attempt = await examService.getAttemptDetails(attemptId);
+      sendSuccess(res, attempt, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const examController = new ExamController();
