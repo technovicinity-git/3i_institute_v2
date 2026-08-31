@@ -11,6 +11,7 @@ import {
   Eye,
   Edit,
   Video,
+  FileText,
 } from "lucide-react";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 
@@ -183,6 +184,13 @@ export default function InstructorCoursesPage() {
                     >
                       <Calendar className="w-4 h-4" />
                       Batches
+                    </Link>
+                    <Link
+                      href={`/instructor/courses/${course.id}/exams`}
+                      className="flex items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Exams
                     </Link>
                   </div>
                 </div>
