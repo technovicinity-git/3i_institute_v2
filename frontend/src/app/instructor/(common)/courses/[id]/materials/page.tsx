@@ -28,7 +28,7 @@ const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   type: z.enum(["video", "document", "audio", "link"]),
   url: z.string().url("Must be valid URL").optional().or(z.literal("")),
-  order: z.number().int().min(0).default(0),
+  order: z.number().int().min(0).optional(),
 });
 
 type AddMaterialFormData = z.infer<typeof addMaterialSchema>;
@@ -93,7 +93,7 @@ export default function CourseMaterialsPage() {
         title: data.title,
         type: data.type,
         url: data.url || undefined,
-        order: Number(data.order),
+        order: Number(data.order) ?? 0,
       },
       {
         onSuccess: () => {
