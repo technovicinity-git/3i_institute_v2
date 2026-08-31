@@ -11,6 +11,7 @@ import {
   Eye,
   Edit,
   MoreVertical,
+  Video,
 } from "lucide-react";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 
@@ -169,6 +170,13 @@ export default function InstructorCoursesPage() {
                     >
                       <Edit className="w-4 h-4" />
                       Edit
+                    </Link>
+                    <Link
+                      href={`/instructor/courses/${course.id}/materials`}
+                      className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
+                    >
+                      <Video className="w-4 h-4" />
+                      Materials
                     </Link>
                   </div>
                 </div>
