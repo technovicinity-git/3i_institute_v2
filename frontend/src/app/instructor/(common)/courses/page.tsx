@@ -7,10 +7,9 @@ import {
   Plus,
   BookOpen,
   Users,
-  Star,
+  Calendar,
   Eye,
   Edit,
-  MoreVertical,
   Video,
 } from "lucide-react";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
@@ -177,6 +176,13 @@ export default function InstructorCoursesPage() {
                     >
                       <Video className="w-4 h-4" />
                       Materials
+                    </Link>
+                    <Link
+                      href={`/instructor/courses/${course.id}/batches`}
+                      className="flex items-center gap-1 text-sm font-semibold text-[#7C3AED] hover:underline"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Batches
                     </Link>
                   </div>
                 </div>
