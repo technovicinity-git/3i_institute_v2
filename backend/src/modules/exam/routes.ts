@@ -62,6 +62,19 @@ router.get(
   examController.getAdminQuestions,
 );
 
+router.get(
+  "/attempts/:examId",
+  authenticate,
+  authorize("exams.grade"),
+  examController.getExamAttempts,
+);
+router.get(
+  "/attempts-details/:attemptId",
+  authenticate,
+  authorize("exams.grade"),
+  examController.getAttemptDetails,
+);
+
 /**
  * @swagger
  * /api/v1/exams/questions/{id}:

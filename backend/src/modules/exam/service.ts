@@ -361,6 +361,77 @@ export class ExamService {
 
     return { message: "Answer graded" };
   }
+
+  async getExamAttempts(examId: string) {
+    const attempts = await prisma.examAttempt.findMany({
+      where: { examId },
+      include: {
+        learnerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+        exam: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return attempts.map((attempt) => ({
+      id: attempt.id,
+      examId: attempt.examId,
+      examTitle: attempt.exam.title,
+      learnerProfileId: attempt.learnerProfileId,
+      learnerName: attempt.learnerProfile?.displayName ?? "Unknown",
+      attemptNumber: attempt.attemptNumber,
+      answers: attempt.answers,
+      score: attempt.score,
+      totalMarks: attempt.totalMarks,
+      passed: attempt.passed,
+      graded: attempt.graded,
+      gradedBy: attempt.gradedBy,
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+    }));
+  }
+
+  async getAttemptDetails(attemptId: string) {
+    const attempt = await prisma.examAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        learnerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+      },
+    });
+
+    if (!attempt) {
+      throw new NotFoundError("Attempt not found");
+    }
+
+    return {
+      id: attempt.id,
+      examId: attempt.examId,
+      learnerProfileId: attempt.learnerProfileId,
+      learnerName: attempt.learnerProfile?.displayName ?? "Unknown",
+      attemptNumber: attempt.attemptNumber,
+      answers: attempt.answers,
+      score: attempt.score,
+      totalMarks: attempt.totalMarks,
+      passed: attempt.passed,
+      graded: attempt.graded,
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+    };
+  }
 }
 
 export const examService = new ExamService();

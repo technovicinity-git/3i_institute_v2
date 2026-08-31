@@ -41,3 +41,25 @@ export interface CreateExamInput {
   revealAnswers?: string;
   questions: ExamQuestion[];
 }
+
+export interface ExamAttempt {
+  id: string;
+  examId: string;
+  examTitle: string;
+  learnerProfileId: string;
+  learnerName: string;
+  attemptNumber: number;
+  answers: Record<string, string | string[]>;
+  score: number | null;
+  totalMarks: number;
+  passed: boolean | null;
+  graded: boolean;
+  gradedBy: string | null;
+  startedAt: string;
+  submittedAt: string | null;
+}
+
+export interface GradeAnswerInput {
+  questionId: string;
+  marksAwarded: number;
+}
