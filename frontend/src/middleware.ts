@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Routes that require authentication (learner dashboard)
 const protectedRoutes = [
-  "/dashboard",
+  // "/dashboard",
   "/my-courses",
   "/certificates",
   "/notifications",
@@ -20,7 +20,7 @@ const protectedRoutes = [
 
 // Routes that only instructors can access (protected)
 const instructorProtectedRoutes = [
-  "/instructor/dashboard",
+  // "/instructor/dashboard",
   "/instructor/courses",
   "/instructor/live-classes",
   "/instructor/assignments",
