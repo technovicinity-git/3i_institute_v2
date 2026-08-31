@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Check } from "lucide-react";
 import { useCreateQuestionMutation } from "@/hooks/use-questions";
 
 const createQuestionSchema = z.object({
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),
   question: z.string().min(1, "Question is required"),
   marks: z.number().int().min(1).max(100),
-  negativeMarks: z.number().int().min(0).default(0),
+  negativeMarks: z.number().int().min(0).optional(),
   difficulty: z.enum(["easy", "medium", "hard"]),
   explanation: z.string().optional(),
 });
@@ -29,6 +29,9 @@ export default function CreateQuestionPage() {
   const [correctAnswers, setCorrectAnswers] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<string>("true");
   const [suggestedAnswer, setSuggestedAnswer] = useState("");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium",
+  );
 
   const {
     register,
@@ -40,7 +43,6 @@ export default function CreateQuestionPage() {
     defaultValues: {
       type: "mcq",
       marks: 1,
-      negativeMarks: 0,
       difficulty: "medium",
     },
   });
@@ -48,6 +50,15 @@ export default function CreateQuestionPage() {
   const handleTypeChange = (type: string) => {
     setQuestionType(type);
     setValue("type", type as CreateQuestionFormData["type"]);
+    // Reset answer selections when type changes
+    setCorrectAnswer("");
+    setCorrectAnswers([]);
+    setTrueFalseAnswer("true");
+  };
+
+  const handleDifficultyChange = (diff: "easy" | "medium" | "hard") => {
+    setDifficulty(diff);
+    setValue("difficulty", diff);
   };
 
   const addOption = () => {
@@ -56,6 +67,14 @@ export default function CreateQuestionPage() {
 
   const removeOption = (index: number) => {
     setOptions(options.filter((_, i) => i !== index));
+    // Clear correct answer if it was this option
+    const removedOption = options[index];
+    if (removedOption && correctAnswer === removedOption) {
+      setCorrectAnswer("");
+    }
+    if (removedOption && correctAnswers.includes(removedOption)) {
+      setCorrectAnswers(correctAnswers.filter((a) => a !== removedOption));
+    }
   };
 
   const updateOption = (index: number, value: string) => {
@@ -64,7 +83,13 @@ export default function CreateQuestionPage() {
     setOptions(newOptions);
   };
 
+  const selectCorrectAnswer = (option: string) => {
+    if (option.trim() === "") return;
+    setCorrectAnswer(option);
+  };
+
   const toggleCorrectAnswer = (option: string) => {
+    if (option.trim() === "") return;
     if (correctAnswers.includes(option)) {
       setCorrectAnswers(correctAnswers.filter((a) => a !== option));
     } else {
@@ -80,12 +105,18 @@ export default function CreateQuestionPage() {
     switch (questionType) {
       case "mcq":
         finalOptions = options.filter((o) => o.trim() !== "");
-        finalCorrectAnswer = correctAnswer || undefined;
+        if (!correctAnswer) {
+          // Show error via toast or inline
+          return;
+        }
+        finalCorrectAnswer = correctAnswer;
         break;
       case "multi_select":
         finalOptions = options.filter((o) => o.trim() !== "");
-        finalCorrectAnswer =
-          correctAnswers.length > 0 ? correctAnswers : undefined;
+        if (correctAnswers.length === 0) {
+          return;
+        }
+        finalCorrectAnswer = correctAnswers;
         break;
       case "true_false":
         finalOptions = ["True", "False"];
@@ -105,7 +136,7 @@ export default function CreateQuestionPage() {
         correctAnswer: finalCorrectAnswer,
         suggestedAnswer: finalSuggestedAnswer,
         marks: data.marks,
-        negativeMarks: data.negativeMarks,
+        negativeMarks: data.negativeMarks ?? 0,
         difficulty: data.difficulty,
         explanation: data.explanation || undefined,
       },
@@ -176,7 +207,7 @@ export default function CreateQuestionPage() {
             {...register("question")}
             rows={4}
             placeholder="Enter your question"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
           {errors.question && (
             <p className="mt-1 text-xs text-red-600">
@@ -188,63 +219,88 @@ export default function CreateQuestionPage() {
         {/* MCQ / Multi Select Options */}
         {(questionType === "mcq" || questionType === "multi_select") && (
           <div>
-            <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-              Options
-            </label>
-            <div className="space-y-2">
-              {options.map((option, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    value={option}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    placeholder={`Option ${index + 1}`}
-                    className="flex-1 px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
-                  />
-                  {questionType === "mcq" ? (
-                    <button
-                      type="button"
-                      onClick={() => setCorrectAnswer(option)}
-                      className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                        correctAnswer === option && option !== ""
-                          ? "bg-[#22A146] text-white border-[#22A146]"
-                          : "border-[#E3E8EF] text-[#64748B]"
-                      }`}
-                    >
-                      ✓
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toggleCorrectAnswer(option)}
-                      className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                        correctAnswers.includes(option) && option !== ""
-                          ? "bg-[#22A146] text-white border-[#22A146]"
-                          : "border-[#E3E8EF] text-[#64748B]"
-                      }`}
-                    >
-                      ✓
-                    </button>
-                  )}
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(index)}
-                      className="p-2 text-red-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addOption}
-                className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline"
-              >
-                <Plus className="w-4 h-4" />
-                Add Option
-              </button>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-[#0C1F33]">
+                Options
+              </label>
+              {questionType === "mcq" && (
+                <span className="text-xs text-[#64748B]">
+                  {correctAnswer
+                    ? "✓ Correct answer selected"
+                    : "Select one correct answer"}
+                </span>
+              )}
+              {questionType === "multi_select" && (
+                <span className="text-xs text-[#64748B]">
+                  {correctAnswers.length > 0
+                    ? `✓ ${correctAnswers.length} correct answer(s) selected`
+                    : "Select all correct answers"}
+                </span>
+              )}
             </div>
+
+            <div className="space-y-2">
+              {options.map((option, index) => {
+                const isCorrect =
+                  questionType === "mcq"
+                    ? correctAnswer === option && option !== ""
+                    : correctAnswers.includes(option) && option !== "";
+
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      value={option}
+                      onChange={(e) => updateOption(index, e.target.value)}
+                      placeholder={`Option ${index + 1}`}
+                      className={`flex-1 px-4 py-2.5 border rounded-lg text-sm outline-none focus:border-[#12304E] ${
+                        isCorrect
+                          ? "border-[#22A146] bg-green-50"
+                          : "border-[#E3E8EF]"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        questionType === "mcq"
+                          ? selectCorrectAnswer(option)
+                          : toggleCorrectAnswer(option)
+                      }
+                      className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                        isCorrect
+                          ? "bg-[#22A146] text-white border-[#22A146]"
+                          : "border-[#E3E8EF] text-[#64748B] hover:bg-gray-50"
+                      }`}
+                      title={
+                        questionType === "mcq"
+                          ? "Mark as correct answer"
+                          : "Toggle correct answer"
+                      }
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(index)}
+                        className="p-2 text-red-500 hover:text-red-700"
+                        title="Remove option"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={addOption}
+              className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline mt-3"
+            >
+              <Plus className="w-4 h-4" />
+              Add Option
+            </button>
           </div>
         )}
 
@@ -255,18 +311,21 @@ export default function CreateQuestionPage() {
               Correct Answer
             </label>
             <div className="flex gap-3">
-              {["true", "false"].map((value) => (
+              {[
+                { value: "true", label: "True" },
+                { value: "false", label: "False" },
+              ].map((item) => (
                 <button
-                  key={value}
+                  key={item.value}
                   type="button"
-                  onClick={() => setTrueFalseAnswer(value)}
+                  onClick={() => setTrueFalseAnswer(item.value)}
                   className={`px-6 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                    trueFalseAnswer === value
+                    trueFalseAnswer === item.value
                       ? "bg-[#22A146] text-white border-[#22A146]"
-                      : "bg-white border-[#E3E8EF]"
+                      : "bg-white border-[#E3E8EF] hover:bg-gray-50"
                   }`}
                 >
-                  {value === "true" ? "True" : "False"}
+                  {item.label}
                 </button>
               ))}
             </div>
@@ -277,14 +336,14 @@ export default function CreateQuestionPage() {
         {(questionType === "short_answer" || questionType === "essay") && (
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-              Suggested Answer (optional)
+              Suggested Answer (optional — for grading reference)
             </label>
             <textarea
               value={suggestedAnswer}
               onChange={(e) => setSuggestedAnswer(e.target.value)}
               rows={4}
-              placeholder="Model answer for grading reference"
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              placeholder="Model answer for grading"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
           </div>
         )}
@@ -298,7 +357,7 @@ export default function CreateQuestionPage() {
             <input
               type="number"
               {...register("marks", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
             {errors.marks && (
               <p className="mt-1 text-xs text-red-600">
@@ -313,7 +372,7 @@ export default function CreateQuestionPage() {
             <input
               type="number"
               {...register("negativeMarks", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
           </div>
         </div>
@@ -324,18 +383,15 @@ export default function CreateQuestionPage() {
             Difficulty *
           </label>
           <div className="flex gap-2">
-            {["easy", "medium", "hard"].map((diff) => (
+            {(["easy", "medium", "hard"] as const).map((diff) => (
               <button
                 key={diff}
                 type="button"
-                onClick={() =>
-                  setValue("difficulty", diff as "easy" | "medium" | "hard")
-                }
-                className={`px-4 py-2 text-sm font-medium rounded-lg border capitalize ${
-                  register("difficulty").name && undefined
-                } ${
-                  // Use watch or state instead — simplified below
-                  ""
+                onClick={() => handleDifficultyChange(diff)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg border capitalize transition-colors ${
+                  difficulty === diff
+                    ? "bg-[#12304E] text-white border-[#12304E]"
+                    : "bg-white text-[#0C1F33] border-[#E3E8EF] hover:bg-gray-50"
                 }`}
               >
                 {diff}
@@ -353,7 +409,7 @@ export default function CreateQuestionPage() {
             {...register("explanation")}
             rows={3}
             placeholder="Explain why the answer is correct"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
         </div>
 
@@ -362,7 +418,7 @@ export default function CreateQuestionPage() {
           <button
             type="button"
             onClick={() => router.push("/instructor/questions")}
-            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
+            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >
             Cancel
           </button>
