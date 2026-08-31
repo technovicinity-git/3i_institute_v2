@@ -21,7 +21,7 @@ const protectedRoutes = [
 // Routes that only instructors can access (protected)
 const instructorProtectedRoutes = [
   // "/instructor/dashboard",
-  "/instructor/courses",
+  // "/instructor/courses",
   "/instructor/live-classes",
   "/instructor/assignments",
   "/instructor/exams",
