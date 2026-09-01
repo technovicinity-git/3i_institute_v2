@@ -79,4 +79,6 @@ export interface CourseDetails {
   curriculum: CurriculumModule[];
   relatedCourses: RelatedCourse[];
   enrolmentCount: number;
+  isEnrolled: boolean;
+  enrolmentBatchId: string | null;
 }

@@ -23,12 +23,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCourseDetails } from "@/hooks/use-course-details";
+import { useProfileStore } from "@/stores/profile-store";
 
 export default function CourseDetailsPage() {
   const params = useParams();
   const courseId = params.id as string;
+  const { activeProfile } = useProfileStore();
 
-  const { data: course, isLoading, isError } = useCourseDetails(courseId);
+  const {
+    data: course,
+    isLoading,
+    isError,
+  } = useCourseDetails(courseId, activeProfile?.id);
 
   const [openFaq, setOpenFaq] = useState<number>(0);
   const [openModule, setOpenModule] = useState<number>(0);
@@ -440,18 +446,62 @@ export default function CourseDetailsPage() {
                       Included with membership
                     </p>
                     <h3 className="font-serif text-2xl text-[#0C1F33]">
-                      Start learning today
+                      {course.isEnrolled
+                        ? "You're enrolled"
+                        : "Start learning today"}
                     </h3>
-                    <button className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors">
-                      Start 7-day free trial
-                    </button>
-                    <button
-                      onClick={() => toast.success("Added to wishlist")}
-                      className="w-full py-3 border border-[#12304E] text-[#12304E] rounded-lg text-[15px] font-semibold hover:bg-[#12304E] hover:text-white transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Heart className="w-4 h-4" />
-                      Add to wishlist
-                    </button>
+
+                    {course.isEnrolled ? (
+                      <>
+                        {/* Chat Room Button */}
+                        <Link
+                          href={`/chat?batchId=${course.enrolmentBatchId ?? ""}&courseTitle=${encodeURIComponent(course.title)}&batchName=${encodeURIComponent("Your Batch")}`}
+                          className="w-full py-3 bg-[#12304E] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1a4268] transition-colors text-center"
+                        >
+                          Chat Room
+                        </Link>
+
+                        {/* Go to Dashboard */}
+                        <Link
+                          href="/dashboard"
+                          className="w-full py-3 border border-[#12304E] text-[#12304E] rounded-lg text-[15px] font-semibold hover:bg-gray-50 transition-colors text-center"
+                        >
+                          Go to Dashboard
+                        </Link>
+
+                        {/* Enrolled badge */}
+                        <span className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-[#22A146]">
+                          <CheckCircle className="w-4 h-4" />
+                          Enrolled
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {/* Enrol button */}
+                        <Link
+                          href={
+                            activeProfile
+                              ? `/enrol/batch-selection?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&learnerProfileId=${activeProfile.id}`
+                              : "/profiles"
+                          }
+                          className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
+                        >
+                          {activeProfile
+                            ? "View Enrolment Options"
+                            : "Select Profile First"}
+                        </Link>
+
+                        {/* Wishlist */}
+                        <button
+                          onClick={() => toast.success("Added to wishlist")}
+                          className="w-full py-3 border border-[#12304E] text-[#12304E] rounded-lg text-[15px] font-semibold hover:bg-[#12304E] hover:text-white transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Heart className="w-4 h-4" />
+                          Add to wishlist
+                        </button>
+                      </>
+                    )}
+
                     <Link
                       href="/pricing"
                       className="text-sm font-semibold text-[#12304E] text-center underline"

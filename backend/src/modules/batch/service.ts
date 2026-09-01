@@ -71,7 +71,15 @@ export class BatchService {
       orderBy: { createdAt: "desc" },
     });
 
-    return batches;
+    return batches.map((batch) => ({
+      id: batch.id,
+      name: batch.name,
+      capacity: batch.capacity,
+      status: batch.status,
+      sessions: batch.sessions,
+      enrolmentCount: batch._count.enrolments,
+      seatsRemaining: batch.capacity - batch._count.enrolments,
+    }));
   }
 
   async getById(batchId: string) {

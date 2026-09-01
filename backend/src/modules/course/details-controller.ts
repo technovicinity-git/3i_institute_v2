@@ -10,7 +10,12 @@ export class CourseDetailsController {
   ) => {
     try {
       const courseId = req.params["id"] as string;
-      const data = await courseDetailsService.getCourseDetails(courseId);
+      const learnerProfileId = req.query["learnerProfileId"] as
+        string | undefined;
+      const data = await courseDetailsService.getCourseDetails(
+        courseId,
+        learnerProfileId,
+      );
       sendSuccess(res, data, 200);
     } catch (error) {
       next(error);
