@@ -11,6 +11,7 @@ export interface LearnerProfile {
   hasPin: boolean;
   hasSeat: boolean;
   createdAt: string;
+  accountId: string;
 }
 
 export interface CreateLearnerInput {

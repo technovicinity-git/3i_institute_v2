@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useCourseBatches, useEnrolMutation } from "@/hooks/use-enrolment";
 import { useProfileStore } from "@/stores/profile-store";
-import { useAuthStore } from "@/stores/auth-store";
 
 function BatchSelectionContent() {
   const router = useRouter();
@@ -15,7 +14,6 @@ function BatchSelectionContent() {
   const learnerProfileId = searchParams.get("learnerProfileId") ?? "";
 
   const { activeProfile } = useProfileStore();
-  const { user } = useAuthStore();
 
   const { data: batches, isLoading, isError } = useCourseBatches(courseId);
   const enrolMutation = useEnrolMutation();
@@ -35,6 +33,9 @@ function BatchSelectionContent() {
       return;
     }
 
+    const selectedBatch = batches?.find((b) => b.id === selectedBatchId);
+    const selectedBatchName = selectedBatch?.name ?? "Batch";
+
     enrolMutation.mutate(
       {
         learnerProfileId,
@@ -51,7 +52,7 @@ function BatchSelectionContent() {
           } else {
             toast.success("Enrolled successfully!");
             router.push(
-              `/chat?batchId=${selectedBatchId}&courseTitle=${encodeURIComponent(courseTitle)}`,
+              `/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(courseTitle)}&batchId=${selectedBatchId}&batchName=${encodeURIComponent(selectedBatchName)}`,
             );
           }
         },
