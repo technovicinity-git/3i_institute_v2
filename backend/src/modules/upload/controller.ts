@@ -183,6 +183,35 @@ export class UploadController {
       next(error);
     }
   };
+
+  uploadImage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Use "guest" or a temp identifier when not logged in
+      const accountId = req.user?.sub ?? "guest";
+      const folder = (req.body?.folder as string) ?? "general";
+
+      const files = (req as any).files;
+      const imageFile = files?.image?.[0];
+
+      if (!imageFile) {
+        throw new ValidationError(
+          "Image file is required (field name: 'image')",
+        );
+      }
+
+      const result = await uploadService.uploadImage(
+        accountId,
+        imageFile.buffer,
+        imageFile.mimetype,
+        imageFile.originalname,
+        folder,
+      );
+
+      sendSuccess(res, result, 201, "File uploaded successfully");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const uploadController = new UploadController();

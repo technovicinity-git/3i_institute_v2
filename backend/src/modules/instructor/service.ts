@@ -224,6 +224,51 @@ export class InstructorService {
 
     return { message: "Instructor suspended" };
   }
+  async getApplicationStatus(userId: string) {
+    // Check if user is already instructor
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    if (user.role.name === "Instructor") {
+      return { status: "APPROVED" };
+    }
+
+    // Check pending application
+    const application = await prisma.auditLog.findFirst({
+      where: {
+        userId,
+        action: "INSTRUCTOR_APPLICATION_SUBMITTED",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!application) {
+      return { status: "NONE" };
+    }
+
+    // Check if rejected
+    const rejection = await prisma.auditLog.findFirst({
+      where: {
+        userId,
+        action: "INSTRUCTOR_REJECTED",
+      },
+    });
+
+    if (rejection) {
+      return {
+        status: "REJECTED",
+        details: rejection.details,
+      };
+    }
+
+    return { status: "PENDING" };
+  }
 }
 
 export const instructorService = new InstructorService();
