@@ -2,7 +2,7 @@ import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
 
 export class CourseDetailsService {
-  async getCourseDetails(courseId: string) {
+  async getCourseDetails(courseId: string, learnerProfileId?: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -133,6 +133,24 @@ export class CourseDetailsService {
       };
     });
 
+    let isEnrolled = false;
+    let enrolmentBatchId: string | null = null;
+
+    if (learnerProfileId) {
+      const enrolment = await prisma.enrolment.findFirst({
+        where: {
+          learnerProfileId,
+          courseId,
+          waitlisted: false,
+        },
+      });
+
+      if (enrolment) {
+        isEnrolled = true;
+        enrolmentBatchId = enrolment.batchId;
+      }
+    }
+
     return {
       id: course.id,
       title: course.title,
@@ -197,6 +215,8 @@ export class CourseDetailsService {
       // Related
       relatedCourses: related,
       enrolmentCount: course._count.enrolments,
+      isEnrolled,
+      enrolmentBatchId,
     };
   }
 }

@@ -32,8 +32,16 @@ export const courseService = {
     return response.data.data;
   },
 
-  getDetails: async (courseId: string): Promise<CourseDetails> => {
-    const response = await apiClient.get(`/courses/${courseId}/details`);
+  getDetails: async (
+    courseId: string,
+    learnerProfileId?: string,
+  ): Promise<CourseDetails> => {
+    const params = learnerProfileId
+      ? `?learnerProfileId=${learnerProfileId}`
+      : "";
+    const response = await apiClient.get(
+      `/courses/${courseId}/details${params}`,
+    );
     return response.data.data;
   },
 };
