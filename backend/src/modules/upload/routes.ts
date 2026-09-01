@@ -9,15 +9,21 @@ const router: Router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024,
     files: 1,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "application/pdf",
+    ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF"));
+      cb(new Error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF, PDF"));
     }
   },
 });
@@ -193,5 +199,29 @@ router.post(
  *         description: Image deleted
  */
 router.post("/delete", authenticate, uploadController.deleteImage);
+
+/**
+ * @swagger
+ * /api/v1/uploads/images:
+ *   post:
+ *     tags: [Uploads]
+ *     summary: Upload a generic image
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: image
+ *         type: file
+ *         required: true
+ *       - in: formData
+ *         name: folder
+ *         type: string
+ *         required: false
+ *         description: instructors, profiles, courses, thumbnails, materials, general
+ *     responses:
+ *       201:
+ *         description: Image uploaded
+ */
+router.post("/images", uploadImage, uploadController.uploadImage);
 
 export { router as uploadRoutes };

@@ -2,11 +2,12 @@ import { cloudinary } from "#/lib/cloudinary";
 import { prisma } from "#/lib/prisma";
 import { NotFoundError, ValidationError } from "#/shared/errors";
 
-const ALLOWED_IMAGE_TYPES = [
+const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
+  "application/pdf",
 ];
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -22,6 +23,77 @@ interface UploadResult {
 }
 
 export class UploadService {
+  async uploadImage(
+    accountId: string,
+    buffer: Buffer,
+    mimetype: string,
+    _originalFilename: string,
+    folder: string = "general",
+  ): Promise<UploadResult> {
+    if (
+      !ALLOWED_FILE_TYPES.includes(mimetype) &&
+      mimetype !== "application/pdf"
+    ) {
+      throw new ValidationError(
+        "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, PDF",
+      );
+    }
+
+    if (buffer.length > MAX_IMAGE_SIZE) {
+      throw new ValidationError("File size exceeds 5MB limit");
+    }
+
+    if (buffer.length === 0) {
+      throw new ValidationError("File is empty");
+    }
+
+    const folderPath = `${folder}/${accountId}`;
+    const resourceType = mimetype === "application/pdf" ? "raw" : "image";
+
+    const result = await new Promise<UploadResult>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folderPath,
+          resource_type: resourceType,
+          ...(resourceType === "image"
+            ? {
+                transformation: [
+                  { quality: "auto:good" },
+                  { fetch_format: "auto" },
+                ],
+              }
+            : {}),
+          context: {
+            uploadedBy: accountId,
+          },
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          if (!result) {
+            reject(new Error("Upload failed — no result"));
+            return;
+          }
+
+          resolve({
+            url: result.secure_url,
+            publicId: result.public_id,
+            width: result.width ?? 0,
+            height: result.height ?? 0,
+            format: result.format ?? "pdf",
+            size: result.bytes,
+          });
+        },
+      );
+
+      uploadStream.end(buffer);
+    });
+
+    return result;
+  }
   /**
    * Core upload method with validation
    */
@@ -37,9 +109,9 @@ export class UploadService {
     } = {},
   ): Promise<UploadResult> {
     // Validate file type
-    if (!ALLOWED_IMAGE_TYPES.includes(mimetype)) {
+    if (!ALLOWED_FILE_TYPES.includes(mimetype)) {
       throw new ValidationError(
-        "Invalid file type. Allowed: JPEG, PNG, WebP, GIF",
+        "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, PDF",
       );
     }
 

@@ -77,6 +77,22 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/instructors/application-status:
+ *   get:
+ *     tags: [Instructors]
+ *     summary: Get current user's instructor application status
+ *     responses:
+ *       200:
+ *         description: Application status
+ */
+router.get(
+  "/application-status",
+  authenticate,
+  instructorController.getApplicationStatus,
+);
+
+/**
+ * @swagger
  * /api/v1/instructors/{userId}/approve:
  *   post:
  *     tags: [Instructors]

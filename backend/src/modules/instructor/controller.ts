@@ -67,6 +67,20 @@ export class InstructorController {
       next(error);
     }
   };
+
+  getApplicationStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user?.sub!;
+      const status = await instructorService.getApplicationStatus(userId);
+      sendSuccess(res, status, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const instructorController = new InstructorController();
