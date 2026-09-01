@@ -9,6 +9,70 @@ const router: Router = Router();
 
 /**
  * @swagger
+ * /api/v1/chat/send:
+ *   post:
+ *     tags: [Chat]
+ *     summary: Send a message via REST (fallback)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [courseId, message]
+ *             properties:
+ *               courseId: { type: string, format: uuid }
+ *               batchId: { type: string, format: uuid }
+ *               message: { type: string }
+ *     responses:
+ *       201:
+ *         description: Message sent
+ */
+router.post(
+  "/send",
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const senderId = req.user?.sub!;
+      const { courseId, batchId, message } = req.body;
+
+      if (!message || message.trim().length === 0) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Message cannot be empty",
+          },
+        });
+        return;
+      }
+
+      if (message.length > 2000) {
+        res.status(422).json({
+          success: false,
+          error: { code: "VALIDATION_ERROR", message: "Message too long" },
+        });
+        return;
+      }
+
+      const savedMessage = await chatService.sendMessage({
+        courseId,
+        batchId: batchId ?? null,
+        senderId,
+        senderType: "ACCOUNT",
+        displayName: req.user?.email ?? "User",
+        message: message.trim(),
+      });
+
+      sendSuccess(res, savedMessage, 201, "Message sent");
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * @swagger
  * /api/v1/chat/course/{courseId}/messages:
  *   get:
  *     tags: [Chat]

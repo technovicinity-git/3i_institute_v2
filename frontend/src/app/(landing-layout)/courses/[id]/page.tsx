@@ -455,7 +455,7 @@ export default function CourseDetailsPage() {
                       <>
                         {/* Chat Room Button */}
                         <Link
-                          href={`/chat?batchId=${course.enrolmentBatchId ?? ""}&courseTitle=${encodeURIComponent(course.title)}&batchName=${encodeURIComponent("Your Batch")}`}
+                          href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent("Your Batch")}`}
                           className="w-full py-3 bg-[#12304E] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1a4268] transition-colors text-center"
                         >
                           Chat Room
