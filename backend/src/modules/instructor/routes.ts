@@ -114,6 +114,18 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/instructors/dashboard:
+ *   get:
+ *     tags: [Instructors]
+ *     summary: Get instructor dashboard data
+ *     responses:
+ *       200:
+ *         description: Dashboard data
+ */
+router.get("/dashboard", authenticate, instructorController.getDashboard);
+
+/**
+ * @swagger
  * /api/v1/instructors/certificates:
  *   get:
  *     tags: [Instructors]
