@@ -100,14 +100,13 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
 
           const savedMessage = await chatService.sendMessage({
             courseId,
-            batchId,
+            batchId: batchId ?? null,
             senderId: user.sub,
             senderType: "ACCOUNT",
-            displayName: user.email,
+            displayName: user.email, // Should use learner profile name
             message: message.trim(),
           });
 
-          // Broadcast to room
           const roomName = batchId
             ? `course:${courseId}:batch:${batchId}`
             : `course:${courseId}`;

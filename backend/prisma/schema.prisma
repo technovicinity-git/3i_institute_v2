@@ -545,3 +545,18 @@ model WishlistItem {
   @@index([learnerProfileId])
   @@index([courseId])
 }
+
+model ChatMessage {
+  id          String    @id @default(uuid())
+  courseId    String
+  batchId     String?
+  senderId    String
+  senderType  String    @default("ACCOUNT")
+  displayName String
+  message     String
+  createdAt   DateTime  @default(now())
+
+  @@index([courseId])
+  @@index([batchId])
+  @@index([courseId, batchId])
+}
