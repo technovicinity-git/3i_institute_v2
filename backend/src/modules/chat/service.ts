@@ -77,19 +77,21 @@ export class ChatService {
       where: {
         action: "CHAT_MESSAGE",
         resourceId: courseId,
-        ...(batchId
-          ? {
-              details: {
-                equals: { batchId },
-              },
-            }
-          : {}),
       },
       orderBy: { createdAt: "asc" },
-      take: 200,
+      take: 500,
     });
 
-    return messages.map((m) => ({
+    // Filter by batchId in JS (more reliable for JSON fields)
+    const filteredMessages = messages.filter((m) => {
+      const details = (m.details as any) ?? {};
+      if (batchId) {
+        return details.batchId === batchId;
+      }
+      return details.batchId === null || details.batchId === undefined;
+    });
+
+    return filteredMessages.map((m) => ({
       id: m.id,
       courseId: m.resourceId,
       senderId: m.userId,
