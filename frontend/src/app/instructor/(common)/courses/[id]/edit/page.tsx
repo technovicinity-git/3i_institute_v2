@@ -10,6 +10,7 @@ import {
   useInstructorCourses,
   useUpdateCourseMutation,
 } from "@/hooks/use-instructor-courses";
+import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
 
 const editCourseSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -210,21 +211,13 @@ export default function EditCoursePage() {
         </div>
 
         {/* Thumbnail URL */}
-        <div>
-          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-            Thumbnail URL (optional)
-          </label>
-          <input
-            {...register("thumbnailUrl")}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
-          />
-          {errors.thumbnailUrl && (
-            <p className="mt-1 text-xs text-red-600">
-              {errors.thumbnailUrl.message}
-            </p>
-          )}
-        </div>
+        <ThumbnailUpload
+          courseId={courseId}
+          currentThumbnailUrl={course?.thumbnailUrl}
+          onUploadComplete={(url) => {
+            setValue("thumbnailUrl", url);
+          }}
+        />
 
         {/* Grid: Category, Type, Level, Language */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
