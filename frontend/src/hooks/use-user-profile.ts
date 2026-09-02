@@ -7,6 +7,7 @@ export interface UserProfile {
   lastName: string;
   email: string;
   locale: string;
+  bio: string | null;
   accountType: string;
   emailVerified: boolean;
   dateOfBirth: string;
@@ -15,6 +16,7 @@ export interface UserProfile {
   billingContactName: string | null;
   billingContactEmail: string | null;
   stripeCustomerId: string | null;
+  avatarUrl: string | null;
   createdAt: string;
   role: {
     name: string;

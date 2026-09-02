@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useProfileStore } from "@/stores/profile-store";
+import { useUserProfile } from "@/hooks/use-user-profile";
 
 interface InstructorNavbarProps {
   onMenuClick: () => void;
@@ -26,6 +27,7 @@ export default function InstructorNavbar({
 }: InstructorNavbarProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { data: profile } = useUserProfile();
   const { setActiveProfile } = useProfileStore();
   const logoutMutation = useLogoutMutation();
 
@@ -64,6 +66,10 @@ export default function InstructorNavbar({
       },
     });
   };
+
+  const avatarUrl = profile?.avatarUrl ?? null;
+  const displayName =
+    `${profile?.firstName ?? user?.firstName ?? "Instructor"} ${profile?.lastName ?? ""}`.trim();
 
   return (
     <header className="w-full h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-10 shrink-0">
@@ -173,17 +179,19 @@ export default function InstructorNavbar({
             }}
             className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
           >
-            {user?.avatarUrl ? (
+            {avatarUrl ? (
               <Image
-                src={user.avatarUrl}
-                alt={user.firstName}
+                src={avatarUrl}
+                alt={displayName}
                 width={36}
                 height={36}
                 className="rounded-full object-cover"
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-[#12304E] text-white flex items-center justify-center text-sm font-semibold">
-                {(user?.firstName ?? "I").slice(0, 2).toUpperCase()}
+                {(profile?.firstName ?? user?.firstName ?? "I")
+                  .slice(0, 2)
+                  .toUpperCase()}
               </div>
             )}
             <ChevronDown
@@ -198,9 +206,11 @@ export default function InstructorNavbar({
               {/* Info */}
               <div className="px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
                 <p className="text-sm font-semibold text-[#12304E]">
-                  {user?.firstName} {user?.lastName}
+                  {displayName}
                 </p>
-                <p className="text-xs text-[#64748B]">{user?.email}</p>
+                <p className="text-xs text-[#64748B]">
+                  {profile?.email ?? user?.email}
+                </p>
                 <span className="inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#22A146]/10 text-[#22A146]">
                   INSTRUCTOR
                 </span>

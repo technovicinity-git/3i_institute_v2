@@ -21,11 +21,13 @@ export class UserService {
         accountType: true,
         emailVerified: true,
         dateOfBirth: true,
+        bio: true,
         guardianName: true,
         guardianEmail: true,
         billingContactName: true,
         billingContactEmail: true,
         stripeCustomerId: true,
+        avatarUrl: true,
         createdAt: true,
         role: {
           select: {

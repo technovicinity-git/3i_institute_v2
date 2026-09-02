@@ -269,6 +269,64 @@ export class InstructorService {
 
     return { status: "PENDING" };
   }
+
+  async getStudents(instructorId: string, courseId?: string) {
+    // Get instructor's courses
+    const courses = await prisma.course.findMany({
+      where: {
+        instructorId,
+        ...(courseId ? { id: courseId } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    const courseIds = courses.map((c) => c.id);
+
+    // Get all enrolments for these courses
+    const enrolments = await prisma.enrolment.findMany({
+      where: {
+        courseId: { in: courseIds },
+        waitlisted: false,
+      },
+      include: {
+        learnerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+            dateOfBirth: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: { enrolledAt: "desc" },
+    });
+
+    const students = enrolments.map((enrolment) => ({
+      id: enrolment.id,
+      learnerProfileId: enrolment.learnerProfileId,
+      displayName: enrolment.learnerProfile?.displayName ?? "Unknown",
+      dateOfBirth: enrolment.learnerProfile?.dateOfBirth ?? null,
+      courseId: enrolment.courseId,
+      courseTitle: enrolment.course.title,
+      enrolledAt: enrolment.enrolledAt,
+      progress: 0, // TODO: Calculate from material progress
+      attendanceRate: 0, // TODO: Calculate from attendance
+      examAverage: null, // TODO: Calculate from exam attempts
+    }));
+
+    return {
+      students,
+      total: students.length,
+    };
+  }
 }
 
 export const instructorService = new InstructorService();

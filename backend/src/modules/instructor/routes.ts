@@ -93,6 +93,27 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/instructors/students:
+ *   get:
+ *     tags: [Instructors]
+ *     summary: Get all students enrolled in instructor's courses
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Students list
+ */
+router.get(
+  "/students",
+  authenticate,
+  authorize("enrolment.manage"),
+  instructorController.getStudents,
+);
+
+/**
+ * @swagger
  * /api/v1/instructors/{userId}/approve:
  *   post:
  *     tags: [Instructors]
