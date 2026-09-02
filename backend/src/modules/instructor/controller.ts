@@ -5,6 +5,7 @@ import {
   adminReviewSchema,
 } from "#/modules/instructor/schema";
 import { sendSuccess } from "#/shared/response";
+import { instructorDashboardService } from "./dashboard-service.js";
 
 export class InstructorController {
   apply = async (req: Request, res: Response, next: NextFunction) => {
@@ -104,6 +105,17 @@ export class InstructorController {
         instructorId,
         courseId,
       );
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getDashboard = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const result =
+        await instructorDashboardService.getDashboard(instructorId);
       sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
