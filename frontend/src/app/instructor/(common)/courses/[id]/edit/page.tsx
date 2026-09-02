@@ -162,6 +162,11 @@ export default function EditCoursePage() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
+        {/* Thumbnail URL */}
+        <ThumbnailUpload
+          courseId={courseId}
+          currentThumbnailUrl={course?.thumbnailUrl}
+        />
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
@@ -209,12 +214,6 @@ export default function EditCoursePage() {
             </p>
           )}
         </div>
-
-        {/* Thumbnail URL */}
-        <ThumbnailUpload
-          courseId={courseId}
-          currentThumbnailUrl={course?.thumbnailUrl}
-        />
 
         {/* Grid: Category, Type, Level, Language */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
