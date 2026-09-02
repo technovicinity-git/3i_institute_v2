@@ -153,6 +153,12 @@ export default function BatchesPage() {
                       <Eye className="w-4 h-4" />
                       Details
                     </Link>
+                    <Link
+                      href={`/instructor/courses/${courseId}/batches/${batch.id}/edit`}
+                      className="text-sm font-semibold text-[#2563EB] hover:underline"
+                    >
+                      Edit
+                    </Link>
                     {batch.status === "UPCOMING" && (
                       <button
                         onClick={() => handleCloseBatch(batch.id)}

@@ -8,6 +8,7 @@ import {
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
+import Link from "next/link";
 
 function getTypeBadge(type: string) {
   const typeMap: Record<string, { label: string; className: string }> = {
@@ -168,6 +169,12 @@ export default function QuestionsPage() {
                         {question.question}
                       </p>
                     </div>
+                    <Link
+                      href={`/instructor/questions/${question.id}/edit`}
+                      className="p-2 rounded-lg hover:bg-blue-50 text-[#2563EB]"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => handleDelete(question.id)}
                       disabled={deleteMutation.isPending}
