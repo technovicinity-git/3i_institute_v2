@@ -13,6 +13,7 @@ import {
   Users,
   Settings,
   X,
+  Bell,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
   { label: "Exams", icon: FileText, href: "/instructor/exams" },
   { label: "Certificates", icon: Award, href: "/instructor/certificates" },
   { label: "Students", icon: Users, href: "/instructor/students" },
+  { label: "Notifications", icon: Bell, href: "/instructor/notifications" },
   { label: "Settings", icon: Settings, href: "/instructor/settings" },
 ];
 
