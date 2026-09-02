@@ -27,4 +27,21 @@ export const uploadService = {
 
     return response.data.data;
   },
+
+  uploadInstructorPhoto: async (file: File): Promise<UploadResult> => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await apiClient.post(
+      "/uploads/instructor-photo",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data.data;
+  },
 };
