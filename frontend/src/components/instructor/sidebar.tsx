@@ -26,7 +26,7 @@ const navItems = [
     href: "/instructor/assignments",
   },
   { label: "Questions", icon: ClipboardList, href: "/instructor/questions" },
-  { label: "Exams", icon: FileText, href: "/instructor/exams" },
+  // { label: "Exams", icon: FileText, href: "/instructor/exams" },
   { label: "Certificates", icon: Award, href: "/instructor/certificates" },
   { label: "Students", icon: Users, href: "/instructor/students" },
   { label: "Notifications", icon: Bell, href: "/instructor/notifications" },
