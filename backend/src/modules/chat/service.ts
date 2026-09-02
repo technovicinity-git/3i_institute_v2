@@ -98,6 +98,35 @@ export class ChatService {
       orderBy: { createdAt: "asc" },
     });
   }
+
+  async moderateMessage(
+    moderatorId: string,
+    messageId: string,
+    action: "DELETE" | "MUTE" | "REMOVE",
+  ) {
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundError("Message not found");
+    }
+
+    const moderation = await prisma.auditLog.create({
+      data: {
+        userId: moderatorId,
+        action: "CHAT_MODERATION",
+        resource: "chat_moderation",
+        resourceId: messageId,
+        details: {
+          action,
+          moderatedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return moderation;
+  }
 }
 
 export const chatService = new ChatService();
