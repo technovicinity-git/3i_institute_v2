@@ -95,6 +95,20 @@ export class InstructorController {
       next(error);
     }
   };
+
+  getCertificates = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const courseId = req.query["courseId"] as string | undefined;
+      const result = await instructorService.getCertificates(
+        instructorId,
+        courseId,
+      );
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const instructorController = new InstructorController();

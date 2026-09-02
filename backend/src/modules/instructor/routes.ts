@@ -114,6 +114,27 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/instructors/certificates:
+ *   get:
+ *     tags: [Instructors]
+ *     summary: Get certificates issued for instructor's courses
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Certificates list
+ */
+router.get(
+  "/certificates",
+  authenticate,
+  authorize("certificates.read"),
+  instructorController.getCertificates,
+);
+
+/**
+ * @swagger
  * /api/v1/instructors/{userId}/approve:
  *   post:
  *     tags: [Instructors]
