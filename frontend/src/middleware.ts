@@ -3,31 +3,32 @@ import type { NextRequest } from "next/server";
 
 // Routes that require authentication (learner dashboard)
 const protectedRoutes = [
-  // "/dashboard",
-  "/my-courses",
-  "/certificates",
-  "/notifications",
-  "/chat",
-  "/notes",
-  "/settings",
-  "/exams",
-  "/profiles",
-  "/seats",
-  "/live-classes",
-  "/assignments",
-  "/wishlist",
+  "/dashboard2",
+  // "/my-courses",
+  // "/certificates",
+  // "/notifications",
+  // "/chat",
+  // "/notes",
+  // "/settings",
+  // "/exams",
+  // "/profiles",
+  // "/seats",
+  // "/live-classes",
+  // "/assignments",
+  // "/wishlist",
 ];
 
 // Routes that only instructors can access (protected)
 const instructorProtectedRoutes = [
   // "/instructor/dashboard",
   // "/instructor/courses",
-  "/instructor/live-classes",
-  "/instructor/assignments",
-  "/instructor/exams",
-  "/instructor/certificates",
-  "/instructor/students",
-  "/instructor/settings",
+  // "/instructor/live-classes",
+  // "/instructor/assignments",
+  // "/instructor/exams",
+  // "/instructor/certificates",
+  // "/instructor/students",
+  // "/instructor/settings",
+  "/instructor/notifications2",
 ];
 
 // Instructor public routes (not protected)
