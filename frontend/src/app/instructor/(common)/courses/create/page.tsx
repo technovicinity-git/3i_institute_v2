@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Camera, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { useCreateCourseMutation } from "@/hooks/use-instructor-courses";
+import { useCourseThumbnailUploadMutation } from "@/hooks/use-avatar-upload";
 
 const createCourseSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -15,11 +18,6 @@ const createCourseSchema = z.object({
     .min(10, "Summary must be at least 10 characters")
     .max(1000),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  thumbnailUrl: z
-    .string()
-    .url("Must be valid URL")
-    .optional()
-    .or(z.literal("")),
   category: z.string().min(1, "Category is required"),
   type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]),
   level: z.string().min(1, "Level is required"),
@@ -54,9 +52,14 @@ const LANGUAGES = [
 export default function CreateCoursePage() {
   const router = useRouter();
   const createMutation = useCreateCourseMutation();
+  const thumbnailUploadMutation = useCourseThumbnailUploadMutation();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [learningOutcomes, setLearningOutcomes] = useState<string[]>([]);
   const [newOutcome, setNewOutcome] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const {
     register,
@@ -82,16 +85,62 @@ export default function CreateCoursePage() {
     setLearningOutcomes(learningOutcomes.filter((_, i) => i !== index));
   };
 
+  const handleThumbnailClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size exceeds 5MB limit");
+      return;
+    }
+
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    e.target.value = "";
+  };
+
+  const removeThumbnail = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
   const onSubmit = (data: CreateCourseFormData) => {
     createMutation.mutate(
       {
         ...data,
-        thumbnailUrl: data.thumbnailUrl || undefined,
         learningOutcomes,
       },
       {
-        onSuccess: () => {
-          router.push("/instructor/courses");
+        onSuccess: (course) => {
+          // If thumbnail selected, upload it
+          if (selectedFile && course?.id) {
+            thumbnailUploadMutation.mutate(
+              { courseId: course.id, file: selectedFile },
+              {
+                onSuccess: () => {
+                  router.push("/instructor/courses");
+                },
+                onError: () => {
+                  // Still navigate even if thumbnail upload fails
+                  router.push("/instructor/courses");
+                },
+              },
+            );
+          } else {
+            router.push("/instructor/courses");
+          }
         },
       },
     );
@@ -99,7 +148,6 @@ export default function CreateCoursePage() {
 
   return (
     <div className="p-6 md:p-10 max-w-[800px] mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => router.push("/instructor/courses")}
@@ -115,11 +163,71 @@ export default function CreateCoursePage() {
         </h1>
       </div>
 
-      {/* Form */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
+        {/* Thumbnail Upload */}
+        <div>
+          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+            Course Thumbnail
+          </label>
+
+          <div className="flex items-center gap-4">
+            <div className="relative w-[160px] h-[90px] rounded-lg overflow-hidden bg-gray-100 border border-[#E3E8EF] shrink-0">
+              {previewUrl ? (
+                <Image
+                  src={previewUrl}
+                  alt="Thumbnail preview"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <Upload className="w-6 h-6 text-gray-300" />
+                  <span className="text-[10px] text-gray-400 mt-1">160×90</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleThumbnailClick}
+                className="flex items-center gap-2 px-4 py-2 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
+              >
+                <Camera className="w-4 h-4" />
+                {previewUrl ? "Change Thumbnail" : "Upload Thumbnail"}
+              </button>
+
+              {previewUrl && (
+                <button
+                  type="button"
+                  onClick={removeThumbnail}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-red-500 hover:text-red-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-[#64748B] mt-1.5">
+            Recommended: JPEG, PNG, WebP or GIF. Max 5MB.
+          </p>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+
+        <hr className="border-[#E3E8EF]" />
+
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
@@ -128,7 +236,7 @@ export default function CreateCoursePage() {
           <input
             {...register("title")}
             placeholder="e.g. Foundations of Prophetic Medicine"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] text-[#0C1F33]"
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
           {errors.title && (
             <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>
@@ -144,7 +252,7 @@ export default function CreateCoursePage() {
             {...register("summary")}
             rows={3}
             placeholder="Brief summary of what students will learn"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] text-[#0C1F33]"
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
           {errors.summary && (
             <p className="mt-1 text-xs text-red-600">
@@ -162,7 +270,7 @@ export default function CreateCoursePage() {
             {...register("description")}
             rows={6}
             placeholder="Detailed course description"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] text-[#0C1F33]"
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
           {errors.description && (
             <p className="mt-1 text-xs text-red-600">
@@ -171,24 +279,7 @@ export default function CreateCoursePage() {
           )}
         </div>
 
-        {/* Thumbnail URL */}
-        <div>
-          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-            Thumbnail URL (optional)
-          </label>
-          <input
-            {...register("thumbnailUrl")}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] text-[#0C1F33]"
-          />
-          {errors.thumbnailUrl && (
-            <p className="mt-1 text-xs text-red-600">
-              {errors.thumbnailUrl.message}
-            </p>
-          )}
-        </div>
-
-        {/* Grid: Category, Type, Level, Language */}
+        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
@@ -196,7 +287,7 @@ export default function CreateCoursePage() {
             </label>
             <select
               {...register("category")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
               <option value="">Select category</option>
               {CATEGORIES.map((cat) => (
@@ -218,7 +309,7 @@ export default function CreateCoursePage() {
             </label>
             <select
               {...register("type")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
               <option value="REGULAR">Regular (Self-paced)</option>
               <option value="ONLINE_CLASS">Online Class (Live)</option>
@@ -232,7 +323,7 @@ export default function CreateCoursePage() {
             </label>
             <select
               {...register("level")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
               <option value="">Select level</option>
               <option value="1">Beginner</option>
@@ -252,7 +343,7 @@ export default function CreateCoursePage() {
             </label>
             <select
               {...register("language")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.value} value={lang.value}>
@@ -263,8 +354,8 @@ export default function CreateCoursePage() {
           </div>
         </div>
 
-        {/* Age range */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Age */}
+        <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Minimum Age *
@@ -272,7 +363,7 @@ export default function CreateCoursePage() {
             <input
               type="number"
               {...register("minimumAge", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
             {errors.minimumAge && (
               <p className="mt-1 text-xs text-red-600">
@@ -280,7 +371,6 @@ export default function CreateCoursePage() {
               </p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Maximum Age (optional)
@@ -288,7 +378,7 @@ export default function CreateCoursePage() {
             <input
               type="number"
               {...register("maximumAge", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
           </div>
         </div>
@@ -309,12 +399,12 @@ export default function CreateCoursePage() {
                 }
               }}
               placeholder="Add a learning outcome..."
-              className="flex-1 px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              className="flex-1 px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
             <button
               type="button"
               onClick={addOutcome}
-              className="px-4 py-3 border border-[#12304E] text-[#12304E] rounded-lg hover:bg-gray-50"
+              className="px-4 py-3 border border-[#12304E] rounded-lg"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -324,7 +414,7 @@ export default function CreateCoursePage() {
               {learningOutcomes.map((outcome, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-2 bg-[#F9F6F0] px-3 py-1.5 rounded-lg text-sm text-[#0C1F33]"
+                  className="inline-flex items-center gap-2 bg-[#F9F6F0] px-3 py-1.5 rounded-lg text-sm"
                 >
                   {outcome}
                   <button type="button" onClick={() => removeOutcome(index)}>
@@ -341,16 +431,22 @@ export default function CreateCoursePage() {
           <button
             type="button"
             onClick={() => router.push("/instructor/courses")}
-            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
+            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={createMutation.isPending}
-            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold hover:bg-[#1E9040] disabled:opacity-50"
+            disabled={
+              createMutation.isPending || thumbnailUploadMutation.isPending
+            }
+            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
           >
-            {createMutation.isPending ? "Creating..." : "Create Course"}
+            {createMutation.isPending
+              ? "Creating..."
+              : thumbnailUploadMutation.isPending
+                ? "Uploading thumbnail..."
+                : "Create Course"}
           </button>
         </div>
       </form>

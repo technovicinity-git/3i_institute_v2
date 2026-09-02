@@ -143,7 +143,7 @@ router.post(
 router.post(
   "/course-thumbnail",
   authenticate,
-  authorize("courses.update"),
+  authorize("courses.create"),
   uploadImage,
   uploadController.uploadCourseThumbnail,
 );

@@ -25,3 +25,20 @@ export function useLearnerAvatarUploadMutation() {
     },
   });
 }
+
+export function useCourseThumbnailUploadMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ courseId, file }: { courseId: string; file: File }) =>
+      uploadService.uploadCourseThumbnail(courseId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      toast.success("Thumbnail uploaded");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to upload thumbnail");
+    },
+  });
+}

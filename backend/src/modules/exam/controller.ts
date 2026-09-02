@@ -145,6 +145,22 @@ export class ExamController {
       next(error);
     }
   };
+
+  updateQuestion = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ownerId = req.user?.sub!;
+      const questionId = req.params["id"] as string;
+      const input = createQuestionSchema.partial().parse(req.body);
+      const question = await examService.updateQuestion(
+        questionId,
+        ownerId,
+        input,
+      );
+      sendSuccess(res, question, 200, "Question updated");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const examController = new ExamController();

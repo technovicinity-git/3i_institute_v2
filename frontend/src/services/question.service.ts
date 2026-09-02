@@ -20,4 +20,15 @@ export const questionService = {
   deleteQuestion: async (questionId: string): Promise<void> => {
     await apiClient.delete(`/exams/questions/${questionId}`);
   },
+
+  update: async (
+    questionId: string,
+    input: Partial<CreateQuestionInput>,
+  ): Promise<Question> => {
+    const response = await apiClient.patch(
+      `/exams/questions/${questionId}`,
+      input,
+    );
+    return response.data.data;
+  },
 };

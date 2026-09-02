@@ -156,7 +156,7 @@ export default function InstructorCoursesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 border-t border-gray-100 pt-4">
+                  <div className="flex items-center gap-3 border-t border-gray-100 pt-4 flex-wrap">
                     <Link
                       href={`/courses/${course.id}`}
                       className="flex items-center gap-1 text-sm font-semibold text-[#12304E] hover:underline"

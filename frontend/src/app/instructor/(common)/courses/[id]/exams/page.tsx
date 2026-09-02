@@ -112,11 +112,18 @@ export default function ExamsPage() {
                       <span>Max attempts: {exam.maxAttempts}</span>
                     </div>
                   </div>
+
                   <Link
                     href={`/instructor/courses/${courseId}/exams/${exam.id}/attempts`}
                     className="text-sm font-semibold text-[#22A146] hover:underline"
                   >
                     View Attempts
+                  </Link>
+                  <Link
+                    href={`/instructor/courses/${courseId}/exams/${exam.id}/edit`}
+                    className="text-sm font-semibold text-[#2563EB] hover:underline"
+                  >
+                    Edit
                   </Link>
                 </div>
               </div>

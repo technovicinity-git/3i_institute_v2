@@ -156,6 +156,13 @@ router.post(
   examController.createExam,
 );
 
+router.patch(
+  "/questions/:id",
+  authenticate,
+  authorize("questions.update"),
+  examController.updateQuestion,
+);
+
 /**
  * @swagger
  * /api/v1/exams/course/{courseId}:

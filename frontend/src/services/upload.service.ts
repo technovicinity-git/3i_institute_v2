@@ -44,4 +44,25 @@ export const uploadService = {
 
     return response.data.data;
   },
+
+  uploadCourseThumbnail: async (
+    courseId: string,
+    file: File,
+  ): Promise<UploadResult> => {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("courseId", courseId);
+
+    const response = await apiClient.post(
+      "/uploads/course-thumbnail",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data.data;
+  },
 };
