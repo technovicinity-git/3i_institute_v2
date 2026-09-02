@@ -214,9 +214,6 @@ export default function EditCoursePage() {
         <ThumbnailUpload
           courseId={courseId}
           currentThumbnailUrl={course?.thumbnailUrl}
-          onUploadComplete={(url) => {
-            setValue("thumbnailUrl", url);
-          }}
         />
 
         {/* Grid: Category, Type, Level, Language */}
