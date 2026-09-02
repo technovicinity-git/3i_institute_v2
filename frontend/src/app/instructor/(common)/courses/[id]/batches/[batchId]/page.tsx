@@ -10,6 +10,7 @@ import {
   useAddSessionMutation,
   useCloseBatchMutation,
 } from "@/hooks/use-batches";
+import Link from "next/link";
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -241,6 +242,14 @@ export default function BatchDetailsPage() {
                         Join
                       </a>
                     )}
+
+                    <Link
+                      href={`/instructor/attendance/${session.id}`}
+                      className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline shrink-0"
+                    >
+                      <Users className="w-4 h-4" />
+                      Attendance
+                    </Link>
                     {isPast && (
                       <span className="text-[10px] font-bold text-gray-400 uppercase">
                         Completed

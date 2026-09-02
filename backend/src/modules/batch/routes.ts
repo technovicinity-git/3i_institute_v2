@@ -54,6 +54,13 @@ router.post(
   batchController.create,
 );
 
+router.get(
+  "/attendance/:sessionId",
+  authenticate,
+  authorize("attendance.mark"),
+  batchController.getSessionAttendance,
+);
+
 /**
  * @swagger
  * /api/v1/batches/course/{courseId}:

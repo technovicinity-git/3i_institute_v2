@@ -97,6 +97,20 @@ export class BatchController {
       next(error);
     }
   };
+
+  getSessionAttendance = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const sessionId = req.params["sessionId"] as string;
+      const result = await batchService.getSessionAttendance(sessionId);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const batchController = new BatchController();

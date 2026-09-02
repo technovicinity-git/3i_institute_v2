@@ -245,6 +245,55 @@ export class BatchService {
 
     return attendance;
   }
+
+  async getSessionAttendance(sessionId: string) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        batch: {
+          include: {
+            enrolments: {
+              where: { waitlisted: false },
+              include: {
+                learnerProfile: {
+                  select: {
+                    id: true,
+                    displayName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        attendance: true,
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    const learners = session.batch.enrolments.map((enrolment) => {
+      const existingAttendance = session.attendance.find(
+        (a) => a.learnerProfileId === enrolment.learnerProfileId,
+      );
+
+      return {
+        learnerProfileId: enrolment.learnerProfileId,
+        learnerName: enrolment.learnerProfile?.displayName ?? "Unknown",
+        status: existingAttendance?.status ?? null,
+      };
+    });
+
+    return {
+      sessionId: session.id,
+      sessionTitle: session.title,
+      scheduledAt: session.scheduledAt,
+      batchId: session.batchId,
+      batchName: session.batch.name,
+      learners,
+    };
+  }
 }
 
 export const batchService = new BatchService();
