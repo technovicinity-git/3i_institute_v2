@@ -20,6 +20,7 @@ import { seatRoutes } from "#/modules/seat/routes";
 import { dashboardRoutes } from "#/modules/dashboard/routes";
 import { uploadRoutes } from "#/modules/upload/routes";
 import { wishlistRoutes } from "#/modules/wishlist/routes";
+import { instructorAssignmentRoutes } from "#/modules/assignment/routes";
 
 const router: Router = Router();
 
@@ -44,6 +45,7 @@ router.use("/seats", seatRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/wishlist", wishlistRoutes);
+router.use("/instructors/assignments", instructorAssignmentRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);

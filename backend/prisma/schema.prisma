@@ -183,6 +183,7 @@ model LearnerProfile {
   examAttempts  ExamAttempt[]
   attendance    Attendance[]
   certificates  Certificate[]
+  assignmentSubmissions AssignmentSubmission[]
 
   createdAt     DateTime  @default(now())
   deletedAt     DateTime?
@@ -227,6 +228,7 @@ model Course {
   enrolments    Enrolment[]
   ratings       CourseRating[]
   questions     Question[]
+  assignments   Assignment[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -559,4 +561,39 @@ model ChatMessage {
   @@index([courseId])
   @@index([batchId])
   @@index([courseId, batchId])
+}
+
+model Assignment {
+  id          String    @id @default(uuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  dueDate     DateTime?
+  totalMarks  Int
+  status      String    @default("PUBLISHED")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  submissions AssignmentSubmission[]
+
+  @@index([courseId])
+}
+
+model AssignmentSubmission {
+  id            String    @id @default(uuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  content       String
+  fileUrl       String?
+  marksAwarded  Int?
+  feedback      String?
+  graded        Boolean   @default(false)
+  submittedAt   DateTime  @default(now())
+
+  @@unique([assignmentId, learnerProfileId])
+  @@index([assignmentId])
+  @@index([learnerProfileId])
 }

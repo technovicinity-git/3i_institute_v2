@@ -327,6 +327,48 @@ export class InstructorService {
       total: students.length,
     };
   }
+
+  async getCertificates(instructorId: string, courseId?: string) {
+    // Get instructor's courses
+    const courses = await prisma.course.findMany({
+      where: {
+        instructorId,
+        ...(courseId ? { id: courseId } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    const courseIds = courses.map((c) => c.id);
+    // const courseTitles = Object.fromEntries(
+    //   courses.map((c) => [c.id, c.title]),
+    // );
+
+    // Get certificates for these courses
+    const certificates = await prisma.certificate.findMany({
+      where: {
+        courseId: { in: courseIds },
+      },
+      orderBy: { issuedAt: "desc" },
+    });
+
+    const formattedCertificates = certificates.map((cert) => ({
+      id: cert.id,
+      learnerName: cert.learnerNameSnapshot,
+      courseTitle: cert.courseTitleSnapshot,
+      type: cert.type,
+      verificationCode: cert.verificationCode,
+      issuedAt: cert.issuedAt,
+      revokedAt: cert.revokedAt,
+    }));
+
+    return {
+      certificates: formattedCertificates,
+      total: formattedCertificates.length,
+    };
+  }
 }
 
 export const instructorService = new InstructorService();
