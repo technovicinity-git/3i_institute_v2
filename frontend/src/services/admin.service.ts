@@ -50,6 +50,60 @@ export interface PendingApplication {
   createdAt: string;
 }
 
+export interface PendingCourse {
+  id: string;
+  title: string;
+  summary: string;
+  thumbnailUrl: string | null;
+  category: string;
+  level: string;
+  minimumAge: number;
+  instructor: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+}
+
+export interface PendingWaiver {
+  id: string;
+  accountId: string;
+  account: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  explanation: string;
+  evidenceFiles: string[];
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminCourse {
+  id: string;
+  title: string;
+  summary: string;
+  thumbnailUrl: string | null;
+  category: string;
+  level: string;
+  type: string;
+  language: string;
+  minimumAge: number;
+  status: string;
+  instructor: {
+    id: string;
+    name: string;
+  };
+  enrolmentCount: number;
+  createdAt: string;
+}
+
+export interface AdminCoursesResponse {
+  courses: AdminCourse[];
+  total: number;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -93,5 +147,55 @@ export const adminService = {
 
   rejectInstructor: async (userId: string, reason: string): Promise<void> => {
     await apiClient.post(`/instructors/${userId}/reject`, { reason });
+  },
+
+  getPendingCourses: async (): Promise<PendingCourse[]> => {
+    const response = await apiClient.get("/admin/courses/pending");
+    return response.data.data;
+  },
+
+  approveCourse: async (courseId: string): Promise<void> => {
+    await apiClient.post(`/courses/${courseId}/approve`);
+  },
+
+  rejectCourse: async (courseId: string): Promise<void> => {
+    await apiClient.post(`/courses/${courseId}/reject`);
+  },
+
+  getPendingWaivers: async (): Promise<PendingWaiver[]> => {
+    const response = await apiClient.get("/admin/waivers/pending");
+    return response.data.data;
+  },
+
+  approveWaiver: async (waiverId: string, tier: number): Promise<void> => {
+    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
+      approved: true,
+      tier,
+    });
+  },
+
+  rejectWaiver: async (waiverId: string, reason: string): Promise<void> => {
+    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
+      approved: false,
+      reason,
+    });
+  },
+
+  getAllCourses: async (
+    page = 1,
+    status?: string,
+  ): Promise<AdminCoursesResponse> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (status) params.set("status", status);
+    const response = await apiClient.get(`/admin/courses?${params.toString()}`);
+    return response.data.data;
+  },
+
+  suspendCourse: async (courseId: string): Promise<void> => {
+    await apiClient.post(`/admin/courses/${courseId}/suspend`);
+  },
+
+  activateCourse: async (courseId: string): Promise<void> => {
+    await apiClient.post(`/admin/courses/${courseId}/activate`);
   },
 };
