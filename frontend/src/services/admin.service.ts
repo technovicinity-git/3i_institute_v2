@@ -104,6 +104,28 @@ export interface AdminCoursesResponse {
   total: number;
 }
 
+export interface AdminWaiver {
+  id: string;
+  accountId: string;
+  account: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  explanation: string;
+  evidenceFiles: string[];
+  status: string;
+  tier: number | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminWaiversResponse {
+  waivers: AdminWaiver[];
+  total: number;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -197,5 +219,15 @@ export const adminService = {
 
   activateCourse: async (courseId: string): Promise<void> => {
     await apiClient.post(`/admin/courses/${courseId}/activate`);
+  },
+
+  getAllWaivers: async (
+    page = 1,
+    status?: string,
+  ): Promise<AdminWaiversResponse> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (status) params.set("status", status);
+    const response = await apiClient.get(`/admin/waivers?${params.toString()}`);
+    return response.data.data;
   },
 };

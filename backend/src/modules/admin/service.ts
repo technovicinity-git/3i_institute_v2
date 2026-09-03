@@ -275,6 +275,34 @@ export class AdminService {
 
     return updated;
   }
+
+  async getAllWaivers(page: number, limit: number, status?: string) {
+    const where: any = {
+      ...(status ? { status } : {}),
+    };
+
+    const [total, waivers] = await Promise.all([
+      prisma.waiver.count({ where }),
+      prisma.waiver.findMany({
+        where,
+        include: {
+          account: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    return { waivers, total };
+  }
 }
 
 export const adminService = new AdminService();
