@@ -8,25 +8,22 @@ import {
   CreditCard,
   TrendingUp,
   Award,
-  Download,
 } from "lucide-react";
+import { ReportContent } from "@/components/admin/report-content";
 
 const REPORT_TYPES = [
   { value: "learner-activity", label: "Learner Activity", icon: Users },
   { value: "course-performance", label: "Course Performance", icon: BookOpen },
   { value: "enrolments", label: "Enrolments", icon: FileText },
+  { value: "attendance", label: "Attendance", icon: Award },
+  { value: "exams", label: "Exam Results", icon: FileText },
   { value: "revenue", label: "Revenue", icon: CreditCard },
-  { value: "instructors", label: "Instructor Activity", icon: TrendingUp },
-  { value: "certificates", label: "Certificates", icon: Award },
+  { value: "instructors", label: "Instructors", icon: TrendingUp },
 ];
 
 export default function AdminReportsPage() {
   const [selectedReport, setSelectedReport] = useState("learner-activity");
   const [dateRange, setDateRange] = useState("monthly");
-
-  const selectedReportInfo = REPORT_TYPES.find(
-    (r) => r.value === selectedReport,
-  );
 
   return (
     <div className="p-6 md:p-10">
@@ -38,12 +35,12 @@ export default function AdminReportsPage() {
           Reports
         </h1>
         <p className="text-base text-[#64748B]">
-          Platform analytics and exportable reports.
+          Platform analytics and reports.
         </p>
       </div>
 
       {/* Report Type Selector */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-6">
         {REPORT_TYPES.map((report) => {
           const Icon = report.icon;
           const isActive = selectedReport === report.value;
@@ -76,7 +73,7 @@ export default function AdminReportsPage() {
 
       {/* Date Range */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        {["daily", "weekly", "monthly", "custom"].map((range) => (
+        {["daily", "weekly", "monthly", "yearly"].map((range) => (
           <button
             key={range}
             onClick={() => setDateRange(range)}
@@ -91,36 +88,9 @@ export default function AdminReportsPage() {
         ))}
       </div>
 
-      {/* Report placeholder */}
-      <div className="bg-white rounded-xl border border-[#E3E8EF] p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-[#0C1F33]">
-              {selectedReportInfo?.label ?? "Report"}
-            </h2>
-            <p className="text-sm text-[#64748B]">
-              {dateRange.charAt(0).toUpperCase() + dateRange.slice(1)} report
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              // TODO: Trigger report export
-              console.log("Export report:", selectedReport, dateRange);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-        </div>
-
-        {/* Placeholder data */}
-        <div className="space-y-4">
-          <p className="text-sm text-[#64748B]">
-            Report data will be loaded from the API. Select report type and date
-            range to generate.
-          </p>
-        </div>
+      {/* Report Content */}
+      <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
+        <ReportContent type={selectedReport} dateRange={dateRange} />
       </div>
     </div>
   );
