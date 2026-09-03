@@ -126,6 +126,23 @@ export interface AdminWaiversResponse {
   total: number;
 }
 
+export interface ChatReport {
+  id: string;
+  messageId: string;
+  reporterId: string;
+  reason: string;
+  reportedAt: string;
+  status: string;
+}
+
+export interface AdminReport {
+  id: string;
+  title: string;
+  type: string;
+  summary: Record<string, unknown>;
+  createdAt: string;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -228,6 +245,21 @@ export const adminService = {
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (status) params.set("status", status);
     const response = await apiClient.get(`/admin/waivers?${params.toString()}`);
+    return response.data.data;
+  },
+
+  getModerationQueue: async (): Promise<ChatReport[]> => {
+    const response = await apiClient.get("/chat/moderation-queue");
+    return response.data.data;
+  },
+
+  moderateMessage: async (messageId: string, action: string): Promise<void> => {
+    await apiClient.post("/chat/moderate", { messageId, action });
+  },
+
+  getReports: async (type?: string): Promise<AdminReport[]> => {
+    const params = type ? `?type=${type}` : "";
+    const response = await apiClient.get(`/reports${params}`);
     return response.data.data;
   },
 };
