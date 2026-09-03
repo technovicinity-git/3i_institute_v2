@@ -227,3 +227,33 @@ export function useAdminAllWaivers(page: number, status?: string) {
     queryFn: () => adminService.getAllWaivers(page, status),
   });
 }
+
+export function useModerationQueue() {
+  return useQuery({
+    queryKey: ["admin-moderation-queue"],
+    queryFn: () => adminService.getModerationQueue(),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useModerateMessageMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      messageId,
+      action,
+    }: {
+      messageId: string;
+      action: string;
+    }) => adminService.moderateMessage(messageId, action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-moderation-queue"] });
+      toast.success("Moderation action completed");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to moderate");
+    },
+  });
+}
