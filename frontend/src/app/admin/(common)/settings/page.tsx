@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Save, Bell, Globe, Shield } from "lucide-react";
+import { Save, Bell, Globe, Shield, Lock } from "lucide-react";
+import { useChangePasswordMutation } from "@/hooks/use-security";
 
 export default function AdminSettingsPage() {
+  const changePasswordMutation = useChangePasswordMutation();
+
   const [settings, setSettings] = useState({
     platformName: "3i International Islamic Institute",
     supportEmail: "support@3iinstitute.edu",
@@ -14,8 +17,43 @@ export default function AdminSettingsPage() {
     pushNotifications: true,
   });
 
+  // Password state
+  const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const handleSave = () => {
     toast.success("Settings saved");
+  };
+
+  const handleChangePassword = () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (newPassword.length < 10) {
+      toast.error("Password must be at least 10 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    changePasswordMutation.mutate(
+      { currentPassword, newPassword },
+      {
+        onSuccess: () => {
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          setShowPassword(false);
+        },
+      },
+    );
   };
 
   return (
@@ -121,6 +159,77 @@ export default function AdminSettingsPage() {
           />
           <span className="text-sm">Push notifications</span>
         </div>
+      </div>
+
+      {/* Password */}
+      <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-5">
+        <h2 className="text-lg font-semibold text-[#0C1F33] flex items-center gap-2">
+          <Lock className="w-5 h-5 text-[#B8912F]" />
+          Password
+        </h2>
+
+        <button
+          onClick={() => setShowPassword(!showPassword)}
+          className="text-sm font-semibold text-[#22A146] hover:underline"
+        >
+          {showPassword ? "Cancel" : "Change Password"}
+        </button>
+
+        {showPassword && (
+          <>
+            <div>
+              <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••••"
+                className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••••"
+                className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg"
+              />
+              <p className="text-xs text-[#64748B] mt-1">
+                At least 10 characters
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••••"
+                className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg"
+              />
+            </div>
+
+            <button
+              onClick={handleChangePassword}
+              disabled={changePasswordMutation.isPending}
+              className="px-6 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
+            >
+              {changePasswordMutation.isPending
+                ? "Saving..."
+                : "Update Password"}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Save */}
