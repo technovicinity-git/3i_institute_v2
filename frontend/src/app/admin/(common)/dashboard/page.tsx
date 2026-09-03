@@ -22,6 +22,7 @@ export default function AdminDashboardPage() {
         subscriptions,
         pendingCourses,
         pendingWaivers,
+        certificates,
       ] = await Promise.all([
         apiClient.get("/admin/users?limit=1"),
         apiClient.get("/admin/instructors"),
@@ -29,6 +30,7 @@ export default function AdminDashboardPage() {
         apiClient.get("/admin/subscriptions?limit=1"),
         apiClient.get("/admin/courses/pending"),
         apiClient.get("/admin/waivers/pending"),
+        apiClient.get("/admin/certificates?limit=1"),
       ]);
 
       return {
@@ -41,6 +43,7 @@ export default function AdminDashboardPage() {
         activeSubscriptions: subscriptions.data.data.total,
         pendingCourses: pendingCourses.data.data.length,
         pendingWaivers: pendingWaivers.data.data.length,
+        totalCertificates: certificates.data.data.total,
       };
     },
   });
@@ -89,6 +92,12 @@ export default function AdminDashboardPage() {
       label: "Pending Waivers",
       value: String(stats?.pendingWaivers ?? 0),
       color: "bg-red-500",
+    },
+    {
+      icon: Award,
+      label: "Certificates",
+      value: String(stats?.totalCertificates ?? 0),
+      color: "bg-[#B8912F]",
     },
   ];
 

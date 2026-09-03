@@ -156,6 +156,16 @@ export interface AdminSubscription {
   createdAt: string;
 }
 
+export interface AdminCertificate {
+  id: string;
+  learnerName: string;
+  courseTitle: string;
+  type: string;
+  verificationCode: string;
+  issuedAt: string;
+  revokedAt: string | null;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -286,5 +296,24 @@ export const adminService = {
       `/admin/subscriptions?${params.toString()}`,
     );
     return response.data.data;
+  },
+
+  getCertificates: async (
+    page = 1,
+    search?: string,
+  ): Promise<{ certificates: AdminCertificate[]; total: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (search) params.set("search", search);
+    const response = await apiClient.get(
+      `/admin/certificates?${params.toString()}`,
+    );
+    return response.data.data;
+  },
+
+  revokeCertificate: async (
+    certificateId: string,
+    reason: string,
+  ): Promise<void> => {
+    await apiClient.post(`/certificates/${certificateId}/revoke`, { reason });
   },
 };

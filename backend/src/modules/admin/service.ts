@@ -343,6 +343,36 @@ export class AdminService {
 
     return { subscriptions: formattedSubscriptions, total };
   }
+
+  async getCertificates(page: number, limit: number, search?: string) {
+    const where: any = {
+      ...(search
+        ? {
+            OR: [
+              {
+                learnerNameSnapshot: { contains: search, mode: "insensitive" },
+              },
+              {
+                courseTitleSnapshot: { contains: search, mode: "insensitive" },
+              },
+              { verificationCode: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, certificates] = await Promise.all([
+      prisma.certificate.count({ where }),
+      prisma.certificate.findMany({
+        where,
+        orderBy: { issuedAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    return { certificates, total };
+  }
 }
 
 export const adminService = new AdminService();

@@ -204,4 +204,11 @@ router.get(
   adminController.getSubscriptions,
 );
 
+router.get(
+  "/certificates",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getCertificates,
+);
+
 export { router as adminRoutes };
