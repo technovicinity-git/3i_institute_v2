@@ -220,3 +220,10 @@ export function useActivateCourseMutation() {
     },
   });
 }
+
+export function useAdminAllWaivers(page: number, status?: string) {
+  return useQuery({
+    queryKey: ["admin-all-waivers", page, status],
+    queryFn: () => adminService.getAllWaivers(page, status),
+  });
+}

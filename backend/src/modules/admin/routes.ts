@@ -190,4 +190,11 @@ router.post(
   adminController.activateCourse,
 );
 
+router.get(
+  "/waivers",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getAllWaivers,
+);
+
 export { router as adminRoutes };
