@@ -197,4 +197,18 @@ router.get(
   adminController.getAllWaivers,
 );
 
+router.get(
+  "/subscriptions",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getSubscriptions,
+);
+
+router.get(
+  "/certificates",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getCertificates,
+);
+
 export { router as adminRoutes };

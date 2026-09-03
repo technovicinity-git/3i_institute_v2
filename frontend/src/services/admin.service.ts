@@ -143,6 +143,29 @@ export interface AdminReport {
   createdAt: string;
 }
 
+export interface AdminSubscription {
+  id: string;
+  accountId: string;
+  accountName: string;
+  accountEmail: string;
+  stripeSubscriptionId: string;
+  status: string;
+  seats: number;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  createdAt: string;
+}
+
+export interface AdminCertificate {
+  id: string;
+  learnerName: string;
+  courseTitle: string;
+  type: string;
+  verificationCode: string;
+  issuedAt: string;
+  revokedAt: string | null;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -261,5 +284,36 @@ export const adminService = {
     const params = type ? `?type=${type}` : "";
     const response = await apiClient.get(`/reports${params}`);
     return response.data.data;
+  },
+
+  getSubscriptions: async (
+    page = 1,
+    status?: string,
+  ): Promise<{ subscriptions: AdminSubscription[]; total: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (status) params.set("status", status);
+    const response = await apiClient.get(
+      `/admin/subscriptions?${params.toString()}`,
+    );
+    return response.data.data;
+  },
+
+  getCertificates: async (
+    page = 1,
+    search?: string,
+  ): Promise<{ certificates: AdminCertificate[]; total: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (search) params.set("search", search);
+    const response = await apiClient.get(
+      `/admin/certificates?${params.toString()}`,
+    );
+    return response.data.data;
+  },
+
+  revokeCertificate: async (
+    certificateId: string,
+    reason: string,
+  ): Promise<void> => {
+    await apiClient.post(`/certificates/${certificateId}/revoke`, { reason });
   },
 };
