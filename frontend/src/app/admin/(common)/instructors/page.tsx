@@ -120,11 +120,11 @@ export default function AdminInstructorsPage() {
 
           {!appLoading && applications && applications.length > 0 && (
             <div className="space-y-4">
-              {applications.map((application) => {
+              {applications.map((application, index) => {
                 const details = application.details ?? {};
                 return (
                   <div
-                    key={application.id}
+                    key={index}
                     className="bg-white rounded-xl border border-[#E3E8EF] p-6"
                   >
                     <div className="flex items-start justify-between gap-4 flex-wrap">
