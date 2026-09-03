@@ -138,6 +138,22 @@ export class AdminController {
       next(error);
     }
   };
+
+  getSubscriptions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const page = Number(req.query["page"] ?? 1);
+      const limit = Number(req.query["limit"] ?? 20);
+      const status = req.query["status"] as string | undefined;
+      const result = await adminService.getSubscriptions(page, limit, status);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const adminController = new AdminController();

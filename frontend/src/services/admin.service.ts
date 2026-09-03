@@ -143,6 +143,19 @@ export interface AdminReport {
   createdAt: string;
 }
 
+export interface AdminSubscription {
+  id: string;
+  accountId: string;
+  accountName: string;
+  accountEmail: string;
+  stripeSubscriptionId: string;
+  status: string;
+  seats: number;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  createdAt: string;
+}
+
 export const adminService = {
   getUsers: async (
     page = 1,
@@ -260,6 +273,18 @@ export const adminService = {
   getReports: async (type?: string): Promise<AdminReport[]> => {
     const params = type ? `?type=${type}` : "";
     const response = await apiClient.get(`/reports${params}`);
+    return response.data.data;
+  },
+
+  getSubscriptions: async (
+    page = 1,
+    status?: string,
+  ): Promise<{ subscriptions: AdminSubscription[]; total: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (status) params.set("status", status);
+    const response = await apiClient.get(
+      `/admin/subscriptions?${params.toString()}`,
+    );
     return response.data.data;
   },
 };

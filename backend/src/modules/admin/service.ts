@@ -303,6 +303,46 @@ export class AdminService {
 
     return { waivers, total };
   }
+
+  async getSubscriptions(page: number, limit: number, status?: string) {
+    const where: any = {
+      ...(status ? { status } : {}),
+    };
+
+    const [total, subscriptions] = await Promise.all([
+      prisma.subscription.count({ where }),
+      prisma.subscription.findMany({
+        where,
+        include: {
+          account: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const formattedSubscriptions = subscriptions.map((sub) => ({
+      id: sub.id,
+      accountId: sub.accountId,
+      accountName: `${sub.account.firstName} ${sub.account.lastName}`,
+      accountEmail: sub.account.email,
+      stripeSubscriptionId: sub.stripeSubscriptionId,
+      status: sub.status,
+      seats: sub.seats,
+      currentPeriodStart: sub.currentPeriodStart,
+      currentPeriodEnd: sub.currentPeriodEnd,
+      createdAt: sub.createdAt,
+    }));
+
+    return { subscriptions: formattedSubscriptions, total };
+  }
 }
 
 export const adminService = new AdminService();
