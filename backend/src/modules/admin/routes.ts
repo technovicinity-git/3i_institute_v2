@@ -166,4 +166,28 @@ router.get(
   adminController.getPendingWaivers,
 );
 
+// Get all courses with optional status filter
+router.get(
+  "/courses",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getAllCourses,
+);
+
+// Suspend course
+router.post(
+  "/courses/:id/suspend",
+  authenticate,
+  authorize("admin.access"),
+  adminController.suspendCourse,
+);
+
+// Activate course
+router.post(
+  "/courses/:id/activate",
+  authenticate,
+  authorize("admin.access"),
+  adminController.activateCourse,
+);
+
 export { router as adminRoutes };

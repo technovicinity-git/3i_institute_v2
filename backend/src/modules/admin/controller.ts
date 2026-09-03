@@ -94,6 +94,38 @@ export class AdminController {
       next(error);
     }
   };
+
+  getAllCourses = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const page = Number(req.query["page"] ?? 1);
+      const limit = Number(req.query["limit"] ?? 20);
+      const status = req.query["status"] as string | undefined;
+      const result = await adminService.getAllCourses(page, limit, status);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  suspendCourse = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = req.params["id"] as string;
+      const result = await adminService.suspendCourse(courseId);
+      sendSuccess(res, result, 200, "Course suspended");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  activateCourse = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = req.params["id"] as string;
+      const result = await adminService.activateCourse(courseId);
+      sendSuccess(res, result, 200, "Course activated");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const adminController = new AdminController();

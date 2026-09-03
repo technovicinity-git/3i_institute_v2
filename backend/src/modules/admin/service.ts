@@ -196,6 +196,85 @@ export class AdminService {
 
     return waivers;
   }
+
+  async getAllCourses(page: number, limit: number, status?: string) {
+    const where: any = {
+      ...(status ? { status } : {}),
+    };
+
+    const [total, courses] = await Promise.all([
+      prisma.course.count({ where }),
+      prisma.course.findMany({
+        where,
+        include: {
+          instructor: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          _count: {
+            select: { enrolments: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const formattedCourses = courses.map((course) => ({
+      id: course.id,
+      title: course.title,
+      summary: course.summary,
+      thumbnailUrl: course.thumbnailUrl,
+      category: course.category,
+      level: course.level,
+      type: course.type,
+      language: course.language,
+      minimumAge: course.minimumAge,
+      status: course.status,
+      instructor: {
+        id: course.instructor.id,
+        name: `${course.instructor.firstName} ${course.instructor.lastName}`,
+      },
+      enrolmentCount: course._count.enrolments,
+      createdAt: course.createdAt,
+    }));
+
+    return { courses: formattedCourses, total };
+  }
+
+  async suspendCourse(courseId: string) {
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    const updated = await prisma.course.update({
+      where: { id: courseId },
+      data: { status: "SUSPENDED" },
+    });
+
+    return updated;
+  }
+
+  async activateCourse(courseId: string) {
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    const updated = await prisma.course.update({
+      where: { id: courseId },
+      data: { status: "PUBLISHED" },
+    });
+
+    return updated;
+  }
 }
 
 export const adminService = new AdminService();
