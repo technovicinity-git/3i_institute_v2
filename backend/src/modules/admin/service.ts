@@ -131,20 +131,33 @@ export class AdminService {
     const applications = await prisma.auditLog.findMany({
       where: { action: "INSTRUCTOR_APPLICATION_SUBMITTED" },
       orderBy: { createdAt: "desc" },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
+    });
+
+    // Fetch user details separately
+    const userIds = applications
+      .map((app) => app.userId)
+      .filter((id): id is string => id !== null);
+
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        avatarUrl: true,
       },
     });
 
-    return applications;
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+
+    return applications.map((application) => ({
+      id: application.id,
+      userId: application.userId,
+      user: application.userId ? (userMap[application.userId] ?? null) : null,
+      details: application.details,
+      createdAt: application.createdAt,
+    }));
   }
 
   async getPendingCourses() {

@@ -117,6 +117,23 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/admin/instructors/pending:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get pending instructor applications
+ *     responses:
+ *       200:
+ *         description: Pending applications
+ */
+router.get(
+  "/instructors/pending",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getPendingApplications,
+);
+
+/**
+ * @swagger
  * /api/v1/admin/courses/pending:
  *   get:
  *     tags: [Admin]
