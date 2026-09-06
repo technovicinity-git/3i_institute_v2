@@ -224,6 +224,33 @@ export class AdminService {
       }),
     ]);
 
+    // Fetch rejection reasons for DRAFT courses
+    const draftCourseIds = courses
+      .filter((c) => c.status === "DRAFT")
+      .map((c) => c.id);
+
+    let rejectionMap = new Map<string, string>();
+
+    if (draftCourseIds.length > 0) {
+      const rejectionLogs = await prisma.auditLog.findMany({
+        where: {
+          action: "COURSE_REJECTED",
+          resourceId: { in: draftCourseIds },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      for (const log of rejectionLogs) {
+        if (log.resourceId && !rejectionMap.has(log.resourceId)) {
+          const details = log.details as any;
+          rejectionMap.set(
+            log.resourceId,
+            details?.reason ?? "No reason provided",
+          );
+        }
+      }
+    }
+
     const formattedCourses = courses.map((course) => ({
       id: course.id,
       title: course.title,
@@ -240,6 +267,10 @@ export class AdminService {
         name: `${course.instructor.firstName} ${course.instructor.lastName}`,
       },
       enrolmentCount: course._count.enrolments,
+      rejectionReason:
+        course.status === "DRAFT"
+          ? (rejectionMap.get(course.id) ?? null)
+          : null,
       createdAt: course.createdAt,
     }));
 

@@ -12,7 +12,6 @@ import {
   Eye,
 } from "lucide-react";
 import {
-  usePendingCourses,
   useApproveCourseMutation,
   useRejectCourseMutation,
   useAdminAllCourses,
@@ -219,6 +218,17 @@ export default function AdminCoursesPage() {
                         <span>{course.enrolmentCount} students</span>
                         <span>{formatDate(course.createdAt)}</span>
                       </div>
+                      {/* Rejection reason */}
+                      {course.status === "DRAFT" && course.rejectionReason && (
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-xs font-bold text-red-600 mb-1">
+                            Rejection Reason:
+                          </p>
+                          <p className="text-xs text-red-600 leading-5">
+                            {course.rejectionReason}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
