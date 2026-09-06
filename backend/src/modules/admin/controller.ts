@@ -166,6 +166,28 @@ export class AdminController {
       next(error);
     }
   };
+
+  getExams = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const page = Number(req.query["page"] ?? 1);
+      const limit = Number(req.query["limit"] ?? 20);
+      const type = req.query["type"] as string | undefined;
+      const result = await adminService.getExams(page, limit, type);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getExamAttempts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.params["examId"] as string;
+      const result = await adminService.getExamAttempts(examId);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const adminController = new AdminController();

@@ -373,6 +373,83 @@ export class AdminService {
 
     return { certificates, total };
   }
+
+  async getExams(page: number, limit: number, type?: string) {
+    const where: any = {
+      ...(type ? { type } : {}),
+    };
+
+    const [total, exams] = await Promise.all([
+      prisma.exam.count({ where }),
+      prisma.exam.findMany({
+        where,
+        include: {
+          course: {
+            select: { title: true },
+          },
+          _count: {
+            select: { attempts: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const formattedExams = exams.map((exam) => ({
+      id: exam.id,
+      courseId: exam.courseId,
+      courseTitle: exam.course.title,
+      title: exam.title,
+      type: exam.type,
+      duration: exam.duration,
+      passMark: exam.passMark,
+      totalMarks: exam.totalMarks,
+      maxAttempts: exam.maxAttempts,
+      questionCount: (exam.questions as any[])?.length ?? 0,
+      attemptCount: exam._count.attempts,
+      createdAt: exam.createdAt,
+    }));
+
+    return { exams: formattedExams, total };
+  }
+
+  async getExamAttempts(examId: string) {
+    const attempts = await prisma.examAttempt.findMany({
+      where: { examId },
+      include: {
+        learnerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+        exam: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return attempts.map((attempt) => ({
+      id: attempt.id,
+      examId: attempt.examId,
+      examTitle: attempt.exam.title,
+      learnerProfileId: attempt.learnerProfileId,
+      learnerName: attempt.learnerProfile?.displayName ?? "Unknown",
+      attemptNumber: attempt.attemptNumber,
+      score: attempt.score,
+      totalMarks: attempt.totalMarks,
+      passed: attempt.passed,
+      graded: attempt.graded,
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+    }));
+  }
 }
 
 export const adminService = new AdminService();
