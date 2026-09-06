@@ -250,8 +250,8 @@ export const adminService = {
     await apiClient.post(`/courses/${courseId}/approve`);
   },
 
-  rejectCourse: async (courseId: string): Promise<void> => {
-    await apiClient.post(`/courses/${courseId}/reject`);
+  rejectCourse: async (courseId: string, reason: string): Promise<void> => {
+    await apiClient.post(`/courses/${courseId}/reject`, { reason });
   },
 
   getPendingWaivers: async (): Promise<PendingWaiver[]> => {

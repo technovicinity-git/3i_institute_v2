@@ -345,7 +345,27 @@ export class CourseService {
       orderBy: { createdAt: "desc" },
     });
 
-    return courses;
+    // Fetch rejection reasons for DRAFT courses
+    const draftCourses = courses.filter((c) => c.status === "DRAFT");
+    const rejectionLogs = await prisma.auditLog.findMany({
+      where: {
+        action: "COURSE_REJECTED",
+        resourceId: { in: draftCourses.map((c) => c.id) },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const rejectionMap = new Map();
+    for (const log of rejectionLogs) {
+      if (!rejectionMap.has(log.resourceId)) {
+        rejectionMap.set(log.resourceId, log.details);
+      }
+    }
+
+    return courses.map((course) => ({
+      ...course,
+      rejectionReason: rejectionMap.get(course.id)?.reason ?? null,
+    }));
   }
 }
 

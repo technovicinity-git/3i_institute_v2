@@ -130,6 +130,17 @@ export default function InstructorCoursesPage() {
 
                 {/* Content */}
                 <div className="p-5">
+                  {/* Rejection reason banner */}
+                  {course.status === "DRAFT" && course.rejectionReason && (
+                    <div className="mb-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-xs font-bold text-red-600 mb-1">
+                        COURSE REJECTED
+                      </p>
+                      <p className="text-xs text-red-600 leading-5">
+                        {course.rejectionReason}
+                      </p>
+                    </div>
+                  )}
                   <h3
                     className="text-lg text-[#0C1F33] leading-6 mb-2"
                     style={{ fontFamily: "'Marcellus', serif" }}

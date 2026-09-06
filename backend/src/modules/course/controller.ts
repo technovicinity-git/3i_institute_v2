@@ -94,10 +94,9 @@ export class CourseController {
   reject = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const adminId = req.user?.sub!;
-      const course = await courseService.reject(
-        adminId,
-        req.params["id"] as string,
-      );
+      const courseId = req.params["id"] as string;
+      const reason = req.body?.reason as string | undefined;
+      const course = await courseService.reject(adminId, courseId, reason);
       sendSuccess(res, course, 200, "Course rejected");
     } catch (error) {
       next(error);

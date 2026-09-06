@@ -68,21 +68,31 @@ export default function AdminCoursesPage() {
   const suspendMutation = useSuspendCourseMutation();
   const activateMutation = useActivateCourseMutation();
 
+  // State for confirm actions and reject modal
   const [confirmAction, setConfirmAction] = useState<{
     id: string;
     action: string;
   } | null>(null);
+  const [rejectModal, setRejectModal] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const handleAction = (courseId: string, action: string) => {
+    if (action === "reject") {
+      // Open reject modal instead of confirm
+      const course = data?.courses.find((c) => c.id === courseId);
+      if (course) {
+        setRejectModal({ id: courseId, title: course.title });
+      }
+      return;
+    }
+
     if (confirmAction?.id === courseId && confirmAction.action === action) {
       switch (action) {
         case "approve":
           approveMutation.mutate(courseId, {
-            onSuccess: () => setConfirmAction(null),
-          });
-          break;
-        case "reject":
-          rejectMutation.mutate(courseId, {
             onSuccess: () => setConfirmAction(null),
           });
           break;
@@ -100,6 +110,20 @@ export default function AdminCoursesPage() {
     } else {
       setConfirmAction({ id: courseId, action });
     }
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectModal || !rejectReason.trim()) return;
+
+    rejectMutation.mutate(
+      { courseId: rejectModal.id, reason: rejectReason },
+      {
+        onSuccess: () => {
+          setRejectModal(null);
+          setRejectReason("");
+        },
+      },
+    );
   };
 
   return (
@@ -216,7 +240,7 @@ export default function AdminCoursesPage() {
                             confirmAction?.id === course.id &&
                             confirmAction.action === "approve"
                               ? "bg-[#22A146] text-white"
-                              : "border border-[#22A146] text-[#22A146]"
+                              : "border border-[#22A146] text-[#22A146] hover:bg-green-50"
                           }`}
                         >
                           <CheckCircle className="w-3.5 h-3.5" />
@@ -227,18 +251,10 @@ export default function AdminCoursesPage() {
                         </button>
                         <button
                           onClick={() => handleAction(course.id, "reject")}
-                          className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold ${
-                            confirmAction?.id === course.id &&
-                            confirmAction.action === "reject"
-                              ? "bg-red-600 text-white"
-                              : "border border-red-300 text-red-600"
-                          }`}
+                          className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-red-300 text-red-600 hover:bg-red-50"
                         >
                           <XCircle className="w-3.5 h-3.5" />
-                          {confirmAction?.id === course.id &&
-                          confirmAction.action === "reject"
-                            ? "Confirm?"
-                            : "Reject"}
+                          Reject
                         </button>
                       </>
                     )}
@@ -250,7 +266,7 @@ export default function AdminCoursesPage() {
                           confirmAction?.id === course.id &&
                           confirmAction.action === "suspend"
                             ? "bg-red-600 text-white"
-                            : "border border-red-300 text-red-600"
+                            : "border border-red-300 text-red-600 hover:bg-red-50"
                         }`}
                       >
                         <Ban className="w-3.5 h-3.5" />
@@ -264,7 +280,7 @@ export default function AdminCoursesPage() {
                     {course.status === "SUSPENDED" && (
                       <button
                         onClick={() => handleAction(course.id, "activate")}
-                        className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-[#22A146] text-[#22A146]"
+                        className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-[#22A146] text-[#22A146] hover:bg-green-50"
                       >
                         <PlayCircle className="w-3.5 h-3.5" />
                         Activate
@@ -296,6 +312,49 @@ export default function AdminCoursesPage() {
           >
             →
           </button>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setRejectModal(null)}
+          />
+          <div className="relative bg-white rounded-xl p-6 w-full max-w-[420px] z-10">
+            <h3 className="text-lg font-semibold text-[#0C1F33] mb-2">
+              Reject Course
+            </h3>
+            <p className="text-sm text-[#64748B] mb-4">
+              Rejecting: <strong>{rejectModal.title}</strong>
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Reason for rejection..."
+              className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm mb-4 outline-none focus:border-red-400"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setRejectModal(null);
+                  setRejectReason("");
+                }}
+                className="flex-1 py-2.5 border border-[#E3E8EF] rounded-lg text-sm font-semibold text-[#0C1F33]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={!rejectReason.trim() || rejectMutation.isPending}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+              >
+                {rejectMutation.isPending ? "Rejecting..." : "Confirm Reject"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
