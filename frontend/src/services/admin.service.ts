@@ -127,6 +127,7 @@ export interface AdminCourse {
   };
   enrolmentCount: number;
   createdAt: string;
+  rejectionReason: string | null;
 }
 
 export interface AdminCoursesResponse {
