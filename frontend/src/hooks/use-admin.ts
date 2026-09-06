@@ -137,9 +137,11 @@ export function useRejectCourseMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (courseId: string) => adminService.rejectCourse(courseId),
+    mutationFn: ({ courseId, reason }: { courseId: string; reason: string }) =>
+      adminService.rejectCourse(courseId, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pending-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-all-courses"] });
       toast.success("Course rejected");
     },
     onError: (error: any) => {
@@ -257,4 +259,3 @@ export function useModerateMessageMutation() {
     },
   });
 }
-

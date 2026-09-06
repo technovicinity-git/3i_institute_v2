@@ -20,6 +20,7 @@ export interface InstructorCourse {
   faq?: Array<{ question: string; answer: string }>;
   totalLessons: number;
   totalDurationMinutes: number;
+  rejectionReason?: string | null;
   totalModules: number;
   createdAt: string;
   updatedAt: string;

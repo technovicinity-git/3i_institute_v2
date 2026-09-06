@@ -211,4 +211,18 @@ router.get(
   adminController.getCertificates,
 );
 
+router.get(
+  "/exams",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getExams,
+);
+
+router.get(
+  "/exams/:examId/attempts",
+  authenticate,
+  authorize("admin.access"),
+  adminController.getExamAttempts,
+);
+
 export { router as adminRoutes };

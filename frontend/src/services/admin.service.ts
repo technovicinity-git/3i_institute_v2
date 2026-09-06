@@ -66,6 +66,36 @@ export interface PendingCourse {
   createdAt: string;
 }
 
+export interface AdminExam {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  title: string;
+  type: string;
+  duration: number;
+  passMark: number;
+  totalMarks: number;
+  maxAttempts: number;
+  questionCount: number;
+  attemptCount: number;
+  createdAt: string;
+}
+
+export interface AdminExamAttempt {
+  id: string;
+  examId: string;
+  examTitle: string;
+  learnerProfileId: string;
+  learnerName: string;
+  attemptNumber: number;
+  score: number | null;
+  totalMarks: number;
+  passed: boolean | null;
+  graded: boolean;
+  startedAt: string;
+  submittedAt: string | null;
+}
+
 export interface PendingWaiver {
   id: string;
   accountId: string;
@@ -220,8 +250,8 @@ export const adminService = {
     await apiClient.post(`/courses/${courseId}/approve`);
   },
 
-  rejectCourse: async (courseId: string): Promise<void> => {
-    await apiClient.post(`/courses/${courseId}/reject`);
+  rejectCourse: async (courseId: string, reason: string): Promise<void> => {
+    await apiClient.post(`/courses/${courseId}/reject`, { reason });
   },
 
   getPendingWaivers: async (): Promise<PendingWaiver[]> => {
@@ -315,5 +345,20 @@ export const adminService = {
     reason: string,
   ): Promise<void> => {
     await apiClient.post(`/certificates/${certificateId}/revoke`, { reason });
+  },
+
+  getExams: async (
+    page = 1,
+    status?: string,
+  ): Promise<{ exams: AdminExam[]; total: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (status) params.set("type", status);
+    const response = await apiClient.get(`/admin/exams?${params.toString()}`);
+    return response.data.data;
+  },
+
+  getExamAttempts: async (examId: string): Promise<AdminExamAttempt[]> => {
+    const response = await apiClient.get(`/admin/exams/${examId}/attempts`);
+    return response.data.data;
   },
 };
