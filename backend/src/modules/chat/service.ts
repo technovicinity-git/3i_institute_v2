@@ -51,7 +51,25 @@ export class ChatService {
       },
     });
 
-    return message;
+    // Fetch sender avatar
+    const sender = await prisma.user.findUnique({
+      where: { id: input.senderId },
+      select: { avatarUrl: true },
+    });
+
+    const learnerProfile = await prisma.learnerProfile.findFirst({
+      where: {
+        accountId: input.senderId,
+        displayName: input.displayName,
+        deletedAt: null,
+      },
+      select: { avatarUrl: true },
+    });
+
+    return {
+      ...message,
+      avatarUrl: learnerProfile?.avatarUrl ?? sender?.avatarUrl ?? null,
+    };
   }
 
   async getCourseMessages(courseId: string, batchId?: string) {
@@ -64,7 +82,48 @@ export class ChatService {
       take: 500,
     });
 
-    return messages;
+    // Fetch sender profile info for each unique sender
+    const senderIds = [...new Set(messages.map((m) => m.senderId))];
+
+    const senderProfiles = await prisma.user.findMany({
+      where: { id: { in: senderIds } },
+      select: {
+        id: true,
+        avatarUrl: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    const senderMap = Object.fromEntries(senderProfiles.map((u) => [u.id, u]));
+
+    // Also fetch learner profiles for messages where senderType is ACCOUNT
+    const learnerProfiles = await prisma.learnerProfile.findMany({
+      where: {
+        accountId: { in: senderIds },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        accountId: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+    });
+
+    return messages.map((message) => {
+      const sender = senderMap[message.senderId];
+      const learnerProfile = learnerProfiles.find(
+        (lp) =>
+          lp.accountId === message.senderId &&
+          lp.displayName === message.displayName,
+      );
+
+      return {
+        ...message,
+        avatarUrl: learnerProfile?.avatarUrl ?? sender?.avatarUrl ?? null,
+      };
+    });
   }
 
   async reportMessage(reporterId: string, messageId: string, reason: string) {

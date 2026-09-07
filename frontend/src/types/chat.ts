@@ -7,6 +7,7 @@ export interface ChatMessage {
   displayName: string;
   message: string;
   createdAt: string;
+  avatarUrl?: string | null;
 }
 
 export interface ChatRoomInfo {
