@@ -20,18 +20,18 @@ export class RatingService {
       throw new ValidationError("Course is not available for rating");
     }
 
-    // Check if already rated
-    const existing = await prisma.courseRating.findUnique({
+    // Check if already rated by this learner profile
+    const existing = await prisma.courseRating.findFirst({
       where: {
-        courseId_accountId: {
-          courseId: input.courseId,
-          accountId,
-        },
+        courseId: input.courseId,
+        learnerProfileId: input.learnerProfileId ?? null,
       },
     });
 
     if (existing) {
-      throw new ConflictError("You have already rated this course");
+      throw new ConflictError(
+        "This learner profile has already rated this course",
+      );
     }
 
     const rating = await prisma.courseRating.create({
