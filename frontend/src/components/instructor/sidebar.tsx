@@ -44,12 +44,9 @@ export default function InstructorSidebar({ onClose }: InstructorSidebarProps) {
     <aside className="w-[260px] h-full bg-[#12304E] p-6 flex flex-col shrink-0">
       {/* Logo */}
       <div className="flex items-center justify-between mb-10 shrink-0">
-        <Link
-          href="/instructor/dashboard"
-          className="flex items-center gap-2.5"
-        >
+        <Link href="/" className="flex items-center gap-2.5">
           <Image
-            src="/logo-icon.png"
+            src="/assets/images/landing_page/logo-icon.png"
             alt="3i Institute"
             width={36}
             height={36}

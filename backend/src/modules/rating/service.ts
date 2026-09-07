@@ -3,7 +3,10 @@ import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type { CreateRatingInput } from "#/modules/rating/schema";
 
 export class RatingService {
-  async create(accountId: string, input: CreateRatingInput) {
+  async create(
+    accountId: string,
+    input: CreateRatingInput & { learnerProfileId?: string },
+  ) {
     // Verify course exists and is published
     const course = await prisma.course.findUnique({
       where: { id: input.courseId },
@@ -17,7 +20,7 @@ export class RatingService {
       throw new ValidationError("Course is not available for rating");
     }
 
-    // Check if already rated (FR-CRS-11: once per course)
+    // Check if already rated
     const existing = await prisma.courseRating.findUnique({
       where: {
         courseId_accountId: {
@@ -35,6 +38,7 @@ export class RatingService {
       data: {
         courseId: input.courseId,
         accountId,
+        learnerProfileId: input.learnerProfileId ?? null,
         rating: input.rating,
         review: input.review ?? null,
       },
@@ -50,11 +54,18 @@ export class RatingService {
           courseId,
           hidden: false,
         },
-        select: {
-          id: true,
-          rating: true,
-          review: true,
-          createdAt: true,
+        include: {
+          account: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+          learnerProfile: {
+            select: {
+              displayName: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),

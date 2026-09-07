@@ -25,6 +25,17 @@ export class CourseDetailsService {
             rating: true,
             review: true,
             createdAt: true,
+            account: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+            learnerProfile: {
+              select: {
+                displayName: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -60,14 +71,30 @@ export class CourseDetailsService {
     });
 
     // Get recent reviews (top 3)
-    const reviews = course.ratings.slice(0, 3).map((r) => ({
-      id: r.id,
-      name: "Student", // We don't store name in rating — update if needed
-      role: "",
-      rating: r.rating,
-      text: r.review ?? "",
-      createdAt: r.createdAt,
-    }));
+    const reviews = course.ratings.slice(0, 3).map((r) => {
+      // Build reviewer name
+      let reviewerName = "Student";
+
+      if (r.account) {
+        reviewerName = `${r.account.firstName} ${r.account.lastName}`.trim();
+      }
+
+      if (
+        r.learnerProfile &&
+        r.learnerProfile.displayName !== r.account?.firstName
+      ) {
+        reviewerName = `${r.account?.firstName ?? "Guardian"} (on behalf of ${r.learnerProfile.displayName})`;
+      }
+
+      return {
+        id: r.id,
+        name: reviewerName,
+        role: r.learnerProfile ? "Submitted on behalf of a learner" : "",
+        rating: r.rating,
+        text: r.review ?? "",
+        createdAt: r.createdAt,
+      };
+    });
 
     // Get instructor stats
     const instructorStats = await prisma.course.findMany({
@@ -107,7 +134,24 @@ export class CourseDetailsService {
         },
         ratings: {
           where: { hidden: false },
-          select: { rating: true },
+          select: {
+            id: true,
+            rating: true,
+            review: true,
+            createdAt: true,
+            account: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+            learnerProfile: {
+              select: {
+                displayName: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
         },
       },
       take: 4,
