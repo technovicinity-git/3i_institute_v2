@@ -3,6 +3,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { verifyAccessToken } from "#/lib/jwt";
 import { chatService } from "#/modules/chat/service";
 import { env } from "#/config/env";
+import { prisma } from "#/lib/prisma";
 
 let io: SocketIOServer | null = null;
 
@@ -41,45 +42,38 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
     const user = socket.data.user;
     console.log(`🔌 User connected: ${user.email} (${socket.id})`);
 
-    // ────────────────────────────────
     // Join course chat room
-    // ────────────────────────────────
-    socket.on("join-course", (data: { courseId: string; batchId?: string }) => {
-      const { courseId, batchId } = data;
-      const roomName = batchId
-        ? `course:${courseId}:batch:${batchId}`
-        : `course:${courseId}`;
+    socket.on(
+      "join-course",
+      (data: {
+        courseId: string;
+        batchId?: string;
+        learnerProfileId?: string;
+      }) => {
+        const { courseId, batchId, learnerProfileId } = data;
+        const roomName = batchId
+          ? `course:${courseId}:batch:${batchId}`
+          : `course:${courseId}`;
 
-      socket.join(roomName);
-      socket.data.roomName = roomName;
+        socket.join(roomName);
+        socket.data.roomName = roomName;
+        socket.data.learnerProfileId = learnerProfileId ?? null;
 
-      console.log(`📝 ${user.email} joined ${roomName}`);
+        console.log(`📝 ${user.email} joined ${roomName}`);
 
-      // Send recent messages to the joining user only
-      chatService
-        .getCourseMessages(courseId, batchId)
-        .then((messages) => {
-          socket.emit("message-history", messages);
-        })
-        .catch((error) => {
-          console.error("Failed to load message history:", error);
-        });
-    });
+        // Send recent messages to the joining user only
+        chatService
+          .getCourseMessages(courseId, batchId)
+          .then((messages) => {
+            socket.emit("message-history", messages);
+          })
+          .catch((error) => {
+            console.error("Failed to load message history:", error);
+          });
+      },
+    );
 
-    // ────────────────────────────────
-    // Leave course chat room
-    // ────────────────────────────────
-    socket.on("leave-course", () => {
-      if (socket.data.roomName) {
-        socket.leave(socket.data.roomName);
-        console.log(`📤 ${user.email} left ${socket.data.roomName}`);
-        socket.data.roomName = null;
-      }
-    });
-
-    // ────────────────────────────────
     // Send message
-    // ────────────────────────────────
     socket.on(
       "send-message",
       async (data: { courseId: string; batchId?: string; message: string }) => {
@@ -98,12 +92,25 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             return;
           }
 
+          // Get learner profile display name
+          let displayName = user.email;
+          if (socket.data.learnerProfileId) {
+            const profile = await prisma.learnerProfile.findUnique({
+              where: { id: socket.data.learnerProfileId },
+              select: { displayName: true },
+            });
+            if (profile) {
+              displayName = profile.displayName;
+            }
+          }
+
+          // Service now returns avatarUrl
           const savedMessage = await chatService.sendMessage({
             courseId,
             batchId: batchId ?? null,
             senderId: user.sub,
             senderType: "ACCOUNT",
-            displayName: user.email, // Should use learner profile name
+            displayName,
             message: message.trim(),
           });
 

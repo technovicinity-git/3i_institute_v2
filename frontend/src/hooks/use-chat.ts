@@ -7,9 +7,11 @@ import { chatService } from "@/services/chat.service";
 import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ChatMessage } from "@/types/chat";
+import { useProfileStore } from "@/stores/profile-store";
 
 export function useChat(courseId: string, batchId: string | null) {
   const { accessToken } = useAuthStore();
+  const { activeProfile } = useProfileStore();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +61,11 @@ export function useChat(courseId: string, batchId: string | null) {
     socket.on("connect", () => {
       console.log("✅ Socket connected:", socket.id);
       setIsConnected(true);
-      socket.emit("join-course", { courseId, batchId });
+      socket.emit("join-course", {
+        courseId,
+        batchId,
+        learnerProfileId: activeProfile?.id,
+      });
     });
 
     socket.on("disconnect", (reason: string) => {

@@ -14,6 +14,7 @@ import {
 import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
 import type { ChatMessage } from "@/types/chat";
+import Image from "next/image";
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -185,18 +186,44 @@ function ChatContent() {
                         </p>
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-[#22A146] flex items-center justify-center shrink-0">
-                      <span className="text-[13px] font-bold text-[#0C1F33]">
-                        {getInitials(displayName)}
-                      </span>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                      {/* Self message avatar */}
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                        {activeProfile?.avatarUrl ? (
+                          <Image
+                            src={activeProfile.avatarUrl}
+                            alt={activeProfile.displayName}
+                            width={32}
+                            height={32}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <span className="text-[13px] font-bold text-[#0C1F33] bg-[#E3E8EF]">
+                            {getInitials(displayName)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-end gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#E3E8EF] flex items-center justify-center shrink-0">
-                      <span className="text-[13px] font-bold text-[#0C1F33]">
-                        {getInitials(msg.displayName)}
-                      </span>
+                      {/* Other message avatar */}
+                      <div className="w-8 h-8 rounded-full bg-[#E3E8EF] flex items-center justify-center shrink-0 overflow-hidden">
+                        {msg.avatarUrl ? (
+                          <Image
+                            src={msg.avatarUrl}
+                            alt={msg.displayName}
+                            width={32}
+                            height={32}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <span className="text-[13px] font-bold text-[#0C1F33]">
+                            {getInitials(msg.displayName)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 max-w-[564px]">
                       <div className="flex items-center gap-2 mb-1">
