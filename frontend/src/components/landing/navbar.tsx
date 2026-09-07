@@ -23,6 +23,7 @@ export function Navbar() {
   const { activeProfile, setActiveProfile } = useProfileStore();
   const logoutMutation = useLogoutMutation();
 
+  // Restore session on mount
   useSessionRestore();
 
   const [showDropdown, setShowDropdown] = useState(false);
@@ -42,13 +43,44 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const getRole = (): string | null => {
+    if (!user?.role) return null;
+    if (typeof user.role === "string") return user.role;
+    if (typeof user.role === "object" && user.role.name) return user.role.name;
+    return null;
+  };
+
+  const userRole = getRole();
+
+  // Determine dashboard URL based on role
+  const getDashboardUrl = (): string => {
+    if (userRole === "Admin") return "/admin/dashboard";
+    if (userRole === "Instructor") return "/instructor/dashboard";
+    return "/dashboard";
+  };
+
+  // Determine login URL based on role
+  const getLoginUrl = (): string => {
+    if (userRole === "Admin") return "/admin/login";
+    if (userRole === "Instructor") return "/instructor/login";
+    return "/login";
+  };
+
   const handleLogout = () => {
     setShowDropdown(false);
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
         setActiveProfile(null);
         localStorage.removeItem("activeProfile");
-        router.push("/login");
+
+        // Redirect based on role
+        if (userRole === "Admin") {
+          router.push("/admin/login");
+        } else if (userRole === "Instructor") {
+          router.push("/instructor/login");
+        } else {
+          router.push("/login");
+        }
       },
     });
   };
@@ -58,6 +90,11 @@ export function Navbar() {
     setActiveProfile(null);
     localStorage.removeItem("activeProfile");
     router.push("/profiles");
+  };
+
+  const handleDashboardClick = () => {
+    setShowDropdown(false);
+    router.push(getDashboardUrl());
   };
 
   const isLoggedIn = !!user;
@@ -97,13 +134,12 @@ export function Navbar() {
 
       <div className="flex items-center gap-4">
         {isLoading ? (
-          // Show skeleton/placeholder while loading
           <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
         ) : isLoggedIn ? (
           <>
             {/* Dashboard Button */}
             <Link
-              href="/dashboard"
+              href={getDashboardUrl()}
               className="hidden sm:flex items-center gap-2 text-sm font-medium text-brand-navy hover:text-green transition-colors"
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -116,10 +152,20 @@ export function Navbar() {
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
               >
-                {activeProfile?.avatarUrl ? (
+                {activeProfile?.avatarUrl &&
+                userRole !== "Admin" &&
+                userRole !== "Instructor" ? (
                   <Image
                     src={activeProfile.avatarUrl}
                     alt={activeProfile.displayName}
+                    width={36}
+                    height={36}
+                    className="rounded-full object-cover"
+                  />
+                ) : user?.avatarUrl ? (
+                  <Image
+                    src={user.avatarUrl}
+                    alt={user.firstName}
                     width={36}
                     height={36}
                     className="rounded-full object-cover"
@@ -143,53 +189,70 @@ export function Navbar() {
                   {/* Profile Info */}
                   <div className="px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
                     <p className="text-sm font-semibold text-[#12304E]">
-                      {activeProfile?.displayName ?? user?.firstName}
+                      {userRole === "Instructor" || userRole === "Admin"
+                        ? `${user?.firstName} ${user?.lastName ?? ""}`.trim()
+                        : (activeProfile?.displayName ?? user?.firstName)}
                     </p>
                     <p className="text-xs text-[#64748B]">{user?.email}</p>
-                    {activeProfile && (
-                      <span
-                        className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          activeProfile.isActive
-                            ? "bg-green-50 text-[#22A146]"
-                            : "bg-orange-50 text-orange-600"
-                        }`}
-                      >
-                        {activeProfile.isActive ? "Active" : "No Seat"}
+                    {userRole === "Admin" && (
+                      <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#B8912F]/10 text-[#B8912F]">
+                        ADMIN
                       </span>
                     )}
+                    {userRole === "Instructor" && (
+                      <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#22A146]/10 text-[#22A146]">
+                        INSTRUCTOR
+                      </span>
+                    )}
+                    {userRole !== "Admin" &&
+                      userRole !== "Instructor" &&
+                      activeProfile && (
+                        <span
+                          className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            activeProfile.isActive
+                              ? "bg-green-50 text-[#22A146]"
+                              : "bg-orange-50 text-orange-600"
+                          }`}
+                        >
+                          {activeProfile.isActive ? "Active" : "No Seat"}
+                        </span>
+                      )}
                   </div>
 
                   {/* Menu Items */}
                   <div className="py-2">
                     <button
-                      onClick={() => {
-                        router.push("/dashboard");
-                        setShowDropdown(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50 transition-colors"
+                      onClick={handleDashboardClick}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
                     >
                       <LayoutDashboard className="w-4 h-4 text-[#64748B]" />
                       Dashboard
                     </button>
 
-                    <button
-                      onClick={() => {
-                        router.push("/courses");
-                        setShowDropdown(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50 transition-colors"
-                    >
-                      <BookOpen className="w-4 h-4 text-[#64748B]" />
-                      My Courses
-                    </button>
+                    {/* My Courses — only for learner */}
+                    {userRole !== "Admin" && userRole !== "Instructor" && (
+                      <button
+                        onClick={() => {
+                          router.push("/courses");
+                          setShowDropdown(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
+                      >
+                        <BookOpen className="w-4 h-4 text-[#64748B]" />
+                        My Courses
+                      </button>
+                    )}
 
-                    <button
-                      onClick={handleSwitchProfile}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50 transition-colors"
-                    >
-                      <User className="w-4 h-4 text-[#64748B]" />
-                      Switch Profile
-                    </button>
+                    {/* Switch Profile — only for learner */}
+                    {userRole !== "Admin" && userRole !== "Instructor" && (
+                      <button
+                        onClick={handleSwitchProfile}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
+                      >
+                        <User className="w-4 h-4 text-[#64748B]" />
+                        Switch Profile
+                      </button>
+                    )}
                   </div>
 
                   {/* Logout */}
@@ -197,7 +260,7 @@ export function Navbar() {
                     <button
                       onClick={handleLogout}
                       disabled={logoutMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
                       <LogOut className="w-4 h-4" />
                       {logoutMutation.isPending ? "Logging out..." : "Log out"}
