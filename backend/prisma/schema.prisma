@@ -246,7 +246,7 @@ model CourseRating {
   course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   accountId     String
   account       User      @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  learnerProfileId String?  // NEW: Which learner profile the rating is for
+  learnerProfileId String?
   learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: SetNull)
   rating        Int
   review        String?
@@ -254,7 +254,7 @@ model CourseRating {
 
   createdAt     DateTime  @default(now())
 
-  @@unique([courseId, accountId])
+  @@unique([courseId, learnerProfileId])
 }
 
 model Material {

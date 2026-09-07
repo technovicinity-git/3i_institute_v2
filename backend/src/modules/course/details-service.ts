@@ -78,12 +78,12 @@ export class CourseDetailsService {
       if (r.account) {
         reviewerName = `${r.account.firstName} ${r.account.lastName}`.trim();
       }
-
       if (
         r.learnerProfile &&
         r.learnerProfile.displayName !== r.account?.firstName
       ) {
-        reviewerName = `${r.account?.firstName ?? "Guardian"} (on behalf of ${r.learnerProfile.displayName})`;
+        // reviewerName = `${r.account?.firstName ?? "Guardian"} (on behalf of ${r.learnerProfile.displayName})`;
+        reviewerName = r.learnerProfile.displayName;
       }
 
       return {
