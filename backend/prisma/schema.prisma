@@ -121,6 +121,7 @@ model User {
   courses          Course[]
   subscriptions    Subscription[]
   waivers          Waiver[]
+  courseRatings CourseRating[]
 
   stripeCustomerId   String?
   billingContactName  String?
@@ -175,6 +176,7 @@ model LearnerProfile {
   nameLocked    Boolean   @default(false)
   isActive      Boolean   @default(false)  // NEW: true when seat assigned
   wishlistItems   WishlistItem[]
+   courseRatings CourseRating[]
 
   seats         Seat[]
 
@@ -243,6 +245,9 @@ model CourseRating {
   courseId      String
   course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   accountId     String
+  account       User      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  learnerProfileId String?  // NEW: Which learner profile the rating is for
+  learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: SetNull)
   rating        Int
   review        String?
   hidden        Boolean   @default(false)

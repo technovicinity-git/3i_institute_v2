@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { RateReviewModal } from "@/components/review/rate-review-modal";
+import { useAuthStore } from "@/stores/auth-store";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -26,6 +29,8 @@ import { useCourseDetails } from "@/hooks/use-course-details";
 import { useProfileStore } from "@/stores/profile-store";
 
 export default function CourseDetailsPage() {
+  const [showRateModal, setShowRateModal] = useState(false);
+  const { user } = useAuthStore();
   const params = useParams();
   const courseId = params.id as string;
   const { activeProfile } = useProfileStore();
@@ -339,7 +344,7 @@ export default function CourseDetailsPage() {
                 {/* Rating summary */}
                 <div className="bg-[#FBF9F4] border border-[#E3E8EF] rounded-xl p-6 flex flex-col items-center justify-center min-w-[140px]">
                   <span className="font-serif text-[56px] text-[#B8912F]">
-                    {course.ratingSummary.average}
+                    {course.ratingSummary.average || "—"}
                   </span>
                   <div className="flex gap-0.5 mb-1">
                     {[...Array(5)].map((_, i) => (
@@ -379,30 +384,47 @@ export default function CourseDetailsPage() {
                 </div>
               </div>
 
+              {/* Rate & Review CTA */}
+              {course.isEnrolled && (
+                <div className="mb-6 flex items-center gap-4 bg-[#F9F6F0] border border-[#E3E8EF] rounded-lg px-5 py-4 flex-wrap">
+                  <button
+                    onClick={() => setShowRateModal(true)}
+                    className="px-5 py-3 bg-white border border-[#0C1F33] rounded-lg text-[15px] font-semibold text-[#0C1F33] hover:bg-gray-50 transition-colors"
+                  >
+                    Rate & review
+                  </button>
+                  <span className="text-[13px] text-[#475569]">
+                    You&apos;re enrolled in this course
+                  </span>
+                </div>
+              )}
+
               {/* Individual reviews */}
               {course.reviews.length > 0 ? (
-                <div className="divide-y divide-[#E3E8EF]">
+                <div className="space-y-4">
                   {course.reviews.map((review) => (
-                    <div key={review.id} className="py-6 first:pt-0">
-                      <p className="text-[15px] font-bold text-[#0C1F33]">
-                        {review.name}
-                      </p>
-                      <p className="text-[13px] text-[#64748B] mb-2">
-                        {review.role}
-                      </p>
-                      <div className="flex gap-0.5 mb-2">
-                        {[...Array(5)].map((_, j) => (
-                          <Star
-                            key={j}
-                            className={`w-3 h-3 ${
-                              j < review.rating
-                                ? "text-[#B8912F] fill-[#B8912F]"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
+                    <div
+                      key={review.id}
+                      className="bg-white border border-[#E3E8EF] rounded-xl px-6 py-5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-semibold text-[#0C1F33]">
+                          {review.name}
+                        </span>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, j) => (
+                            <Star
+                              key={j}
+                              className={`w-3 h-3 ${
+                                j < review.rating
+                                  ? "text-[#B8912F] fill-[#B8912F]"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <p className="text-sm text-[#0C1F33] leading-6">
+                      <p className="mt-3 text-[15px] text-[#475569] leading-[22px]">
                         {review.text}
                       </p>
                     </div>
@@ -720,6 +742,17 @@ export default function CourseDetailsPage() {
             </div>
           </div>
         </section>
+      )}
+
+      {showRateModal && (
+        <RateReviewModal
+          courseId={course.id}
+          courseTitle={course.title}
+          learnerName={activeProfile?.displayName ?? "Learner"}
+          accountName={`${user?.firstName ?? "Parent"} ${user?.lastName ?? ""}`.trim()}
+          learnerProfileId={activeProfile?.id}
+          onClose={() => setShowRateModal(false)}
+        />
       )}
     </main>
   );

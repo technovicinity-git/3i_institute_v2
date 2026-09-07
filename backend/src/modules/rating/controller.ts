@@ -8,7 +8,11 @@ export class RatingController {
     try {
       const accountId = req.user?.sub!;
       const input = createRatingSchema.parse(req.body);
-      const rating = await ratingService.create(accountId, input);
+      const learnerProfileId = req.body?.learnerProfileId as string | undefined;
+      const rating = await ratingService.create(accountId, {
+        ...input,
+        learnerProfileId,
+      });
       sendSuccess(res, rating, 201, "Rating submitted");
     } catch (error) {
       next(error);
