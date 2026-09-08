@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Calendar } from "lucide-react";
+import { BookOpen, Calendar, FileText } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 
@@ -78,7 +78,7 @@ export default function MyCoursesPage() {
           {courses.map((course) => (
             <div
               key={course.id}
-              onClick={() => router.push(`/courses/${course.courseId}`)}
+              // onClick={() => router.push(`/courses/${course.courseId}`)}
               className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
             >
               {/* Thumbnail */}
@@ -152,13 +152,23 @@ export default function MyCoursesPage() {
                   </div>
                 )}
 
-                {/* Resume button */}
-                <Link
-                  href={`/courses/${course.courseId}`}
-                  className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
-                >
-                  {course.progress > 0 ? "Resume" : "Start Course"}
-                </Link>
+                <div className="flex flex-col gap-2">
+                  {/* Resume button */}
+                  <Link
+                    href={`/courses/${course.courseId}`}
+                    className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
+                  >
+                    {course.progress > 0 ? "Resume" : "Start Course"}
+                  </Link>
+                  {/* View Exams button */}
+                  <Link
+                    href={`/my-courses/${course.courseId}/exams`}
+                    className="w-full py-2.5 border border-[#12304E] text-[#12304E] text-sm font-semibold rounded-lg text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    View Exams
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

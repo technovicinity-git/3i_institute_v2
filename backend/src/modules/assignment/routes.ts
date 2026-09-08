@@ -105,4 +105,53 @@ router.post(
   assignmentController.gradeSubmission,
 );
 
+/**
+ * @swagger
+ * /api/v1/assignments/course/{courseId}:
+ *   get:
+ *     tags: [Assignments]
+ *     summary: Get course assignments for learner
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: query
+ *         name: learnerProfileId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Assignments list
+ */
+router.get(
+  "/course/:courseId",
+  authenticate,
+  assignmentController.getCourseAssignmentsForLearner,
+);
+
+/**
+ * @swagger
+ * /api/v1/assignments/submit:
+ *   post:
+ *     tags: [Assignments]
+ *     summary: Submit assignment
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [assignmentId, learnerProfileId, content]
+ *             properties:
+ *               assignmentId: { type: string, format: uuid }
+ *               learnerProfileId: { type: string, format: uuid }
+ *               content: { type: string }
+ *               fileUrl: { type: string }
+ *     responses:
+ *       201:
+ *         description: Assignment submitted
+ */
+router.post("/submit", authenticate, assignmentController.submitAssignment);
+
 export { router as instructorAssignmentRoutes };
