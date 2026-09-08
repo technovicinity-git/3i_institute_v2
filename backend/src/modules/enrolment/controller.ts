@@ -66,6 +66,36 @@ export class EnrolmentController {
       next(error);
     }
   };
+
+  getLearnerCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+
+      if (!learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId is required",
+          },
+        });
+        return;
+      }
+
+      const courses = await enrolmentService.getLearnerEnrolledCourses(
+        accountId,
+        learnerProfileId,
+      );
+      sendSuccess(res, courses, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const enrolmentController = new EnrolmentController();

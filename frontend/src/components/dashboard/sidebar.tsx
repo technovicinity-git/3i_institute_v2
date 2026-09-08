@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "My Courses", icon: BookOpen, href: "/courses" },
+  { label: "My Courses", icon: BookOpen, href: "/my-courses" },
   { label: "Live Classes", icon: Video, href: "/live-classes" },
   { label: "Assignments", icon: ClipboardList, href: "/assignments" },
   { label: "Exams", icon: FileText, href: "/exams" },

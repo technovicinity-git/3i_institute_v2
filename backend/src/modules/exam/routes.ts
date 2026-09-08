@@ -242,4 +242,40 @@ router.post(
   examController.gradeWrittenAnswer,
 );
 
+/**
+ * @swagger
+ * /api/v1/exams/{examId}/questions:
+ *   get:
+ *     tags: [Exams]
+ *     summary: Get exam questions for learner (without answers)
+ *     parameters:
+ *       - in: path
+ *         name: examId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Exam questions
+ */
+router.get(
+  "/:examId/questions",
+  authenticate,
+  authorize("exams.attempt"),
+  examController.getExamQuestions,
+);
+
+router.get(
+  "/attempts",
+  authenticate,
+  authorize("exams.attempt"),
+  examController.getMyAttempts,
+);
+
+router.get(
+  "/result",
+  authenticate,
+  authorize("exams.attempt"),
+  examController.getExamResult,
+);
+
 export { router as examRoutes };
