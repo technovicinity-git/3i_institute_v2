@@ -183,11 +183,42 @@ export class ExamService {
     return exam;
   }
 
-  async getCourseExams(courseId: string) {
-    return prisma.exam.findMany({
+  async getCourseExams(courseId: string, learnerProfileId?: string) {
+    const exams = await prisma.exam.findMany({
       where: { courseId },
       orderBy: { createdAt: "desc" },
     });
+
+    if (!learnerProfileId) {
+      return exams;
+    }
+
+    // Get learner's attempts for these exams
+    const attempts = await prisma.examAttempt.findMany({
+      where: {
+        examId: { in: exams.map((e) => e.id) },
+        learnerProfileId,
+      },
+      orderBy: { score: "desc" },
+    });
+
+    const examsWithAttempts = exams.map((exam) => {
+      const examAttempts = attempts.filter((a) => a.examId === exam.id);
+      const bestAttempt = examAttempts[0] ?? null;
+
+      return {
+        ...exam,
+        attemptCount: examAttempts.length,
+        lastAttemptAt:
+          examAttempts.length > 0
+            ? examAttempts[examAttempts.length - 1]!.createdAt
+            : null,
+        bestScore: bestAttempt?.score ?? null,
+        passed: bestAttempt?.passed ?? null,
+      };
+    });
+
+    return examsWithAttempts;
   }
 
   async getExamById(examId: string) {
@@ -430,6 +461,124 @@ export class ExamService {
       graded: attempt.graded,
       startedAt: attempt.startedAt,
       submittedAt: attempt.submittedAt,
+    };
+  }
+
+  async getExamQuestionsForLearner(examId: string) {
+    const exam = await prisma.exam.findUnique({
+      where: { id: examId },
+    });
+
+    if (!exam) {
+      throw new NotFoundError("Exam not found");
+    }
+
+    // Get question IDs from exam
+    const examQuestions = exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+
+    // Fetch full question details
+    const questions = await prisma.question.findMany({
+      where: {
+        id: { in: examQuestions.map((q) => q.questionId) },
+      },
+      select: {
+        id: true,
+        type: true,
+        question: true,
+        options: true,
+        correctAnswer: true, // Include for auto-grading
+        marks: true,
+        difficulty: true,
+      },
+    });
+
+    // Return questions WITHOUT correctAnswer for learner
+    const learnerQuestions = questions.map((question) => ({
+      id: question.id,
+      type: question.type,
+      question: question.question,
+      options: question.options,
+      marks: question.marks,
+      difficulty: question.difficulty,
+    }));
+
+    return learnerQuestions;
+  }
+
+  async getMyAttempts(examId: string, learnerProfileId: string) {
+    const attempts = await prisma.examAttempt.findMany({
+      where: {
+        examId,
+        learnerProfileId,
+      },
+      orderBy: { attemptNumber: "desc" },
+    });
+
+    return attempts;
+  }
+
+  async getExamResult(examId: string, learnerProfileId: string) {
+    const exam = await prisma.exam.findUnique({
+      where: { id: examId },
+      select: {
+        id: true,
+        title: true,
+        passMark: true,
+        totalMarks: true,
+        type: true,
+      },
+    });
+
+    if (!exam) {
+      throw new NotFoundError("Exam not found");
+    }
+
+    const attempts = await prisma.examAttempt.findMany({
+      where: {
+        examId,
+        learnerProfileId,
+      },
+      orderBy: { attemptNumber: "asc" },
+    });
+
+    const bestAttempt =
+      attempts
+        .filter((a) => a.score !== null)
+        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] ?? null;
+
+    return {
+      exam,
+      attempts: attempts.map((a) => ({
+        id: a.id,
+        examId: a.examId,
+        examTitle: exam.title,
+        learnerProfileId: a.learnerProfileId,
+        attemptNumber: a.attemptNumber,
+        score: a.score,
+        totalMarks: a.totalMarks,
+        passed: a.passed,
+        graded: a.graded,
+        startedAt: a.startedAt,
+        submittedAt: a.submittedAt,
+      })),
+      bestAttempt: bestAttempt
+        ? {
+            id: bestAttempt.id,
+            examId: bestAttempt.examId,
+            examTitle: exam.title,
+            learnerProfileId: bestAttempt.learnerProfileId,
+            attemptNumber: bestAttempt.attemptNumber,
+            score: bestAttempt.score,
+            totalMarks: bestAttempt.totalMarks,
+            passed: bestAttempt.passed,
+            graded: bestAttempt.graded,
+            startedAt: bestAttempt.startedAt,
+            submittedAt: bestAttempt.submittedAt,
+          }
+        : null,
     };
   }
 }

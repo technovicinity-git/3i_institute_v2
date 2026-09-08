@@ -82,8 +82,12 @@ export class ExamController {
 
   getCourseExams = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const courseId = req.params["courseId"] as string;
+      const learnerProfileId = req.query["learnerProfileId"] as
+        string | undefined;
       const exams = await examService.getCourseExams(
-        req.params["courseId"] as string,
+        courseId,
+        learnerProfileId,
       );
       sendSuccess(res, exams, 200);
     } catch (error) {
@@ -157,6 +161,69 @@ export class ExamController {
         input,
       );
       sendSuccess(res, question, 200, "Question updated");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getExamQuestions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const examId = req.params["examId"] as string;
+      const questions = await examService.getExamQuestionsForLearner(examId);
+      sendSuccess(res, questions, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getMyAttempts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.query["examId"] as string;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+
+      if (!examId || !learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "examId and learnerProfileId are required",
+          },
+        });
+        return;
+      }
+
+      const attempts = await examService.getMyAttempts(
+        examId,
+        learnerProfileId,
+      );
+      sendSuccess(res, attempts, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getExamResult = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.query["examId"] as string;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+
+      if (!examId || !learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "examId and learnerProfileId are required",
+          },
+        });
+        return;
+      }
+
+      const result = await examService.getExamResult(examId, learnerProfileId);
+      sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
     }

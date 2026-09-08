@@ -3,14 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  BookOpen,
-  Clock,
-  Video,
-  CheckCircle,
-  ChevronRight,
-  Calendar,
-} from "lucide-react";
+import { BookOpen, Calendar } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 
