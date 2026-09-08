@@ -236,6 +236,115 @@ export class EnrolmentService {
 
     return waitlist;
   }
+  async getLearnerEnrolledCourses(accountId: string, learnerProfileId: string) {
+    // Verify profile belongs to account
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    // Get all enrolments for this profile
+    const enrolments = await prisma.enrolment.findMany({
+      where: {
+        learnerProfileId,
+        waitlisted: false,
+      },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            materials: {
+              select: { id: true },
+            },
+            batches: {
+              where: { status: { in: ["UPCOMING", "ACTIVE"] } },
+              include: {
+                sessions: {
+                  where: { scheduledAt: { gte: new Date() } },
+                  orderBy: { scheduledAt: "asc" },
+                  take: 1,
+                },
+              },
+              take: 1,
+            },
+          },
+        },
+        batch: true,
+      },
+      orderBy: { enrolledAt: "desc" },
+    });
+
+    // Get progress for all materials
+    const materialProgress = await prisma.materialProgress.findMany({
+      where: {
+        learnerProfileId,
+        material: {
+          courseId: { in: enrolments.map((e) => e.courseId) },
+        },
+      },
+    });
+
+    const courses = enrolments.map((enrolment) => {
+      const course = enrolment.course;
+      const courseMaterials = course.materials;
+      const completedMaterials = materialProgress.filter(
+        (mp) =>
+          mp.completed && courseMaterials.some((m) => m.id === mp.materialId),
+      );
+
+      const progress =
+        courseMaterials.length > 0
+          ? Math.round(
+              (completedMaterials.length / courseMaterials.length) * 100,
+            )
+          : 0;
+
+      const activeBatch = course.batches[0] ?? null;
+      const nextSession = activeBatch?.sessions[0] ?? null;
+
+      return {
+        id: enrolment.id,
+        courseId: course.id,
+        title: course.title,
+        summary: course.summary,
+        thumbnailUrl: course.thumbnailUrl,
+        category: course.category,
+        level: course.level,
+        type: course.type,
+        instructor: {
+          id: course.instructor.id,
+          name: `${course.instructor.firstName} ${course.instructor.lastName}`,
+        },
+        progress,
+        totalMaterials: courseMaterials.length,
+        completedMaterials: completedMaterials.length,
+        batchName: enrolment.batch?.name ?? activeBatch?.name ?? null,
+        nextSession: nextSession
+          ? {
+              title: nextSession.title,
+              scheduledAt: nextSession.scheduledAt,
+            }
+          : null,
+        enrolledAt: enrolment.enrolledAt,
+        isCompleted: progress === 100,
+      };
+    });
+
+    return courses;
+  }
 }
 
 export const enrolmentService = new EnrolmentService();

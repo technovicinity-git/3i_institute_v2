@@ -94,4 +94,25 @@ router.get(
   enrolmentController.getWaitlist,
 );
 
+/**
+ * @swagger
+ * /api/v1/learners/courses:
+ *   get:
+ *     tags: [Enrolments]
+ *     summary: Get learner's enrolled courses
+ *     parameters:
+ *       - in: query
+ *         name: learnerProfileId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Enrolled courses with progress
+ */
+router.get(
+  "/learner/courses",
+  authenticate,
+  enrolmentController.getLearnerCourses,
+);
+
 export { router as enrolmentRoutes };
