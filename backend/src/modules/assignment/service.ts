@@ -170,6 +170,126 @@ export class AssignmentService {
 
     return updated;
   }
+
+  async getCourseAssignmentsForLearner(
+    accountId: string,
+    courseId: string,
+    learnerProfileId: string,
+  ) {
+    // Verify profile belongs to account
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    const assignments = await prisma.assignment.findMany({
+      where: {
+        courseId,
+        status: "PUBLISHED",
+      },
+      include: {
+        submissions: {
+          where: { learnerProfileId },
+          take: 1,
+        },
+        course: {
+          select: { title: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return assignments.map((assignment) => {
+      const submission = assignment.submissions[0] ?? null;
+      return {
+        id: assignment.id,
+        courseId: assignment.courseId,
+        courseTitle: assignment.course.title,
+        title: assignment.title,
+        description: assignment.description,
+        dueDate: assignment.dueDate,
+        totalMarks: assignment.totalMarks,
+        status: assignment.status,
+        submitted: !!submission,
+        submission: submission
+          ? {
+              id: submission.id,
+              content: submission.content,
+              fileUrl: submission.fileUrl,
+              marksAwarded: submission.marksAwarded,
+              feedback: submission.feedback,
+              graded: submission.graded,
+              submittedAt: submission.submittedAt,
+            }
+          : null,
+        createdAt: assignment.createdAt,
+      };
+    });
+  }
+
+  async submitAssignment(
+    accountId: string,
+    input: {
+      assignmentId: string;
+      learnerProfileId: string;
+      content: string;
+      fileUrl?: string;
+    },
+  ) {
+    // Verify profile belongs to account
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: input.learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    // Verify assignment exists
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: input.assignmentId },
+    });
+
+    if (!assignment) {
+      throw new NotFoundError("Assignment not found");
+    }
+
+    // Check if already submitted
+    const existing = await prisma.assignmentSubmission.findUnique({
+      where: {
+        assignmentId_learnerProfileId: {
+          assignmentId: input.assignmentId,
+          learnerProfileId: input.learnerProfileId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new ValidationError("Assignment already submitted");
+    }
+
+    const submission = await prisma.assignmentSubmission.create({
+      data: {
+        assignmentId: input.assignmentId,
+        learnerProfileId: input.learnerProfileId,
+        content: input.content,
+        fileUrl: input.fileUrl ?? null,
+      },
+    });
+
+    return submission;
+  }
 }
 
 export const assignmentService = new AssignmentService();

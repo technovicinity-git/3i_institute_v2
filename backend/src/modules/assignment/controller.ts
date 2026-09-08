@@ -72,6 +72,62 @@ export class AssignmentController {
       next(error);
     }
   };
+
+  getCourseAssignmentsForLearner = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const courseId = req.params["courseId"] as string;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+
+      if (!learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId is required",
+          },
+        });
+        return;
+      }
+
+      const assignments =
+        await assignmentService.getCourseAssignmentsForLearner(
+          accountId,
+          courseId,
+          learnerProfileId,
+        );
+      sendSuccess(res, assignments, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  submitAssignment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const input = z
+        .object({
+          assignmentId: z.string().uuid(),
+          learnerProfileId: z.string().uuid(),
+          content: z.string().min(1, "Content is required"),
+          fileUrl: z.string().url().optional(),
+        })
+        .parse(req.body);
+
+      const result = await assignmentService.submitAssignment(accountId, input);
+      sendSuccess(res, result, 201, "Assignment submitted");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const assignmentController = new AssignmentController();
