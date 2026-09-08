@@ -340,6 +340,7 @@ export class EnrolmentService {
           : null,
         enrolledAt: enrolment.enrolledAt,
         isCompleted: progress === 100,
+        firstLessonId: courseMaterials[0]?.id ?? null,
       };
     });
 

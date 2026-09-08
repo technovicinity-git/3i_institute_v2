@@ -23,6 +23,7 @@ export interface EnrolledCourse {
   } | null;
   enrolledAt: string;
   isCompleted: boolean;
+  firstLessonId: string | null;
 }
 
 export const learnerCoursesService = {

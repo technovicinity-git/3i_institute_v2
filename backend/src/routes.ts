@@ -23,6 +23,7 @@ import { wishlistRoutes } from "#/modules/wishlist/routes";
 import { instructorAssignmentRoutes } from "#/modules/assignment/routes";
 import { adminRoutes } from "#/modules/admin/routes";
 import { learnerAssignmentRoutes } from "#/modules/assignment/learner-routes";
+import { noteRoutes } from "#/modules/note/routes";
 
 const router: Router = Router();
 
@@ -50,6 +51,7 @@ router.use("/wishlist", wishlistRoutes);
 router.use("/instructors/assignments", instructorAssignmentRoutes);
 router.use("/admin", adminRoutes);
 router.use("/assignments", learnerAssignmentRoutes);
+router.use("/notes", noteRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);

@@ -1,0 +1,440 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Play,
+  Pause,
+  SkipForward,
+  Volume2,
+  Subtitles,
+  Settings,
+  Maximize,
+  Edit3,
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  User,
+  Save,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useProfileStore } from "@/stores/profile-store";
+import {
+  useCourseContent,
+  useLessonNotes,
+  useSaveNoteMutation,
+  useUpdateProgressMutation,
+} from "@/hooks/use-lesson";
+
+export default function LessonPage() {
+  const params = useParams();
+  const router = useRouter();
+  const courseId = params.id as string;
+  const lessonId = params.lessonId as string;
+
+  const { activeProfile } = useProfileStore();
+  const { data: courseContent, isLoading } = useCourseContent(courseId);
+  const { data: noteData } = useLessonNotes(activeProfile?.id ?? "", lessonId);
+  const saveNoteMutation = useSaveNoteMutation();
+  const updateProgressMutation = useUpdateProgressMutation();
+
+  const [activeTab, setActiveTab] = useState<"overview" | "notes">("overview");
+  const [expandedModule, setExpandedModule] = useState<string>("module-1");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [noteSaved, setNoteSaved] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoRef = useRef<HTMLDivElement>(null);
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load existing note
+  useEffect(() => {
+    if (noteData?.details?.content) {
+      setNotes(noteData.details.content);
+    }
+  }, [noteData]);
+
+  // Find current lesson
+  const currentLesson = courseContent?.modules
+    .flatMap((m) => m.lessons)
+    .find((l) => l.id === lessonId);
+
+  const handleSaveNote = () => {
+    if (!activeProfile || !notes.trim()) {
+      toast.error("Note cannot be empty");
+      return;
+    }
+
+    saveNoteMutation.mutate(
+      {
+        learnerProfileId: activeProfile.id,
+        materialId: lessonId,
+        content: notes.trim(),
+      },
+      {
+        onSuccess: () => {
+          setNoteSaved(true);
+          setTimeout(() => setNoteSaved(false), 2000);
+        },
+      },
+    );
+  };
+
+  const handleProgressUpdate = (seconds: number, position: number) => {
+    if (!activeProfile) return;
+
+    updateProgressMutation.mutate({
+      learnerProfileId: activeProfile.id,
+      materialId: lessonId,
+      watchedSeconds: seconds,
+      lastPosition: position,
+    });
+  };
+
+  const togglePlayback = () => {
+    setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      // Start progress tracking
+      progressTimerRef.current = setInterval(() => {
+        setProgress((prev) => Math.min(100, prev + 0.1));
+      }, 1000);
+    } else {
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    }
+  };
+
+  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(
+      0,
+      Math.min(100, ((e.clientX - rect.left) / rect.width) * 100),
+    );
+    setProgress(pct);
+  };
+
+  const cyclePlaybackSpeed = () => {
+    const speeds = [1, 1.25, 1.5, 2];
+    const currentIndex = speeds.indexOf(playbackSpeed);
+    const nextSpeed = speeds[(currentIndex + 1) % speeds.length]!;
+    setPlaybackSpeed(nextSpeed);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      videoRef.current?.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  if (isLoading || !courseContent) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#FBF9F4]">
+        <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex h-screen min-h-0 bg-[#FBF9F4] overflow-hidden"
+      style={{ fontFamily: "'Figtree', sans-serif" }}
+    >
+      {/* LEFT: Video + Lesson */}
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center justify-between h-16 px-6 bg-[#12304E] shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
+            <button
+              onClick={() => router.push(`/my-courses/${courseId}`)}
+              className="shrink-0 text-white/80 hover:text-white"
+            >
+              <ArrowLeft className="w-[18px] h-[18px]" />
+            </button>
+            <span className="text-base font-semibold text-white truncate">
+              {courseContent.courseTitle}
+            </span>
+          </div>
+          <div className="hidden md:flex items-center gap-3 shrink-0">
+            <span className="text-[13px] text-white/90">
+              {Math.round(courseContent.progress)}% complete
+            </span>
+            <div className="w-56 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#22A146] rounded-full"
+                style={{ width: `${courseContent.progress}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <button className="text-white/80 hover:text-white">
+              <Edit3 className="w-[18px] h-[18px]" />
+            </button>
+            <button className="text-white/80 hover:text-white">
+              <Bookmark className="w-[18px] h-[18px]" />
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className="text-white/80 hover:text-white"
+            >
+              <Maximize className="w-[18px] h-[18px]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {/* Video */}
+          <div
+            ref={videoRef}
+            className="relative w-full aspect-video bg-[#111] overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2c3e50] via-[#34495e] to-[#1a1a2e]" />
+            <button
+              onClick={togglePlayback}
+              className="absolute inset-0 flex items-center justify-center z-10 group"
+            >
+              <div className="w-20 h-20 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-all">
+                {isPlaying ? (
+                  <Pause className="w-8 h-8 text-white" fill="white" />
+                ) : (
+                  <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                )}
+              </div>
+            </button>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-4 h-[42px] px-6 bg-[#12304E] shrink-0">
+            <div className="flex items-center gap-4 shrink-0">
+              <button
+                onClick={togglePlayback}
+                className="text-white/80 hover:text-white"
+              >
+                {isPlaying ? (
+                  <Pause className="w-[18px] h-[18px]" />
+                ) : (
+                  <Play className="w-[18px] h-[18px]" />
+                )}
+              </button>
+              <button className="text-white/80 hover:text-white">
+                <SkipForward className="w-[18px] h-[18px]" />
+              </button>
+              <span className="text-[13px] text-white">
+                {currentLesson?.duration
+                  ? `${Math.floor(currentLesson.duration / 60)}:${String(currentLesson.duration % 60).padStart(2, "0")}`
+                  : "00:00"}
+              </span>
+            </div>
+
+            <div
+              onClick={handleScrub}
+              className="flex-1 relative flex items-center cursor-pointer group h-6"
+            >
+              <div className="w-full h-1.5 bg-white/30 rounded-full">
+                <div
+                  className="h-full bg-[#22A146] rounded-full"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <button className="text-white/80 hover:text-white">
+                <Volume2 className="w-[18px] h-[18px]" />
+              </button>
+              <button
+                onClick={cyclePlaybackSpeed}
+                className="text-[13px] font-semibold text-white/90"
+              >
+                {playbackSpeed}x
+              </button>
+              <button className="text-white/80 hover:text-white">
+                <Subtitles className="w-[18px] h-[18px]" />
+              </button>
+              <button className="text-white/80 hover:text-white">
+                <Settings className="w-[18px] h-[18px]" />
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="text-white/80 hover:text-white"
+              >
+                <Maximize className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+          </div>
+
+          {/* Lesson detail */}
+          <section className="w-full bg-[#FBF9F4]">
+            <div className="px-6 sm:px-8 pt-6 pb-12">
+              <div className="w-full max-w-4xl mx-auto">
+                <h1
+                  className="text-[28px] sm:text-[32px] text-[#0C1F33]"
+                  style={{ fontFamily: "'Marcellus', serif" }}
+                >
+                  {currentLesson?.title ?? "Lesson"}
+                </h1>
+                <p className="mt-2 text-[13px] text-[#475569]">
+                  Course: {courseContent.courseTitle}
+                </p>
+
+                {/* Tabs */}
+                <div className="flex mt-6 border-b border-[#E3E8EF]">
+                  <button
+                    onClick={() => setActiveTab("overview")}
+                    className={`px-2 py-3 mr-6 text-[15px] border-b-2 transition-colors ${
+                      activeTab === "overview"
+                        ? "text-[#157A34] border-[#157A34]"
+                        : "text-[#475569] border-transparent"
+                    }`}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("notes")}
+                    className={`px-2 py-3 text-[15px] border-b-2 transition-colors ${
+                      activeTab === "notes"
+                        ? "text-[#157A34] border-[#157A34]"
+                        : "text-[#475569] border-transparent"
+                    }`}
+                  >
+                    Notes
+                  </button>
+                </div>
+
+                {/* Overview */}
+                {activeTab === "overview" && (
+                  <div className="pt-6">
+                    <p className="text-base leading-6 text-[#0C1F33]">
+                      This lesson covers {currentLesson?.title}. Watch the video
+                      and take notes as needed.
+                    </p>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {activeTab === "notes" && (
+                  <div className="pt-6 space-y-4">
+                    <p className="text-[13px] text-[#475569]">
+                      Add personal notes for this lesson.
+                    </p>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Start typing your notes here..."
+                      className="w-full min-h-[200px] px-4 py-3 bg-white border border-[#E3E8EF] rounded-lg text-base text-[#0C1F33] placeholder-[#64748B] resize-y focus:outline-none focus:ring-2 focus:ring-[#22A146]/30"
+                    />
+                    <button
+                      onClick={handleSaveNote}
+                      disabled={saveNoteMutation.isPending || !notes.trim()}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saveNoteMutation.isPending ? "Saving..." : "Save Note"}
+                    </button>
+                    {noteSaved && (
+                      <p className="text-[12px] text-[#157A34]">✓ Note saved</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* RIGHT: Sidebar */}
+      <aside className="w-[432px] shrink-0 bg-white border-l border-[#E3E8EF] flex flex-col overflow-hidden hidden lg:flex">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E3E8EF] shrink-0">
+          <h2
+            className="text-xl text-[#0C1F33]"
+            style={{ fontFamily: "'Marcellus', serif" }}
+          >
+            Course content
+          </h2>
+          <button className="w-10 h-5 rounded-full border border-[#E3E8EF] flex items-center justify-center">
+            <User className="w-[18px] h-[18px] text-[#0C1F33]" />
+          </button>
+        </div>
+
+        <div className="px-6 py-3 shrink-0">
+          <span className="text-[13px] text-[#475569]">
+            {courseContent.totalLessons} lessons
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {courseContent.modules.map((mod) => (
+            <div key={mod.id} className="border-b border-[#E3E8EF]">
+              <button
+                onClick={() =>
+                  setExpandedModule(expandedModule === mod.id ? "" : mod.id)
+                }
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF8]"
+              >
+                <p className="text-sm font-medium text-[#0C1F33]">
+                  {mod.title}
+                </p>
+                {expandedModule === mod.id ? (
+                  <ChevronUp className="w-4 h-4 text-[#475569]" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[#475569]" />
+                )}
+              </button>
+
+              {expandedModule === mod.id && (
+                <div className="border-t border-[#E3E8EF]">
+                  {mod.lessons.map((lesson) => (
+                    <button
+                      key={lesson.id}
+                      onClick={() =>
+                        router.push(
+                          `/my-courses/${courseId}/lessons/${lesson.id}`,
+                        )
+                      }
+                      className={`w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-[#FAFAF8] ${
+                        lesson.id === lessonId
+                          ? "bg-[#F2FBF4] border-l-[3px] border-l-[#22A146]"
+                          : "border-l-[3px] border-l-transparent"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                          lesson.id === lessonId
+                            ? "bg-[#157A34]"
+                            : "border-2 border-[#E3E8EF]"
+                        }`}
+                      >
+                        {lesson.id === lessonId && (
+                          <Play
+                            className="w-[10px] h-[10px] text-white ml-[1px]"
+                            fill="white"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#0C1F33] truncate">
+                          {lesson.title}
+                        </p>
+                        <p className="text-xs text-[#475569] mt-1">
+                          {lesson.duration
+                            ? `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, "0")}`
+                            : "--:--"}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
+}

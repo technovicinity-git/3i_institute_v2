@@ -354,6 +354,53 @@ export class MaterialService {
 
     return "unknown";
   }
+
+  async getCourseContentForLearner(courseId: string) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    const materials = await prisma.material.findMany({
+      where: { courseId },
+      orderBy: { order: "asc" },
+    });
+
+    // Group materials into modules (for now, each material is a lesson)
+    const lessons = materials.map((material) => ({
+      id: material.id,
+      title: material.title,
+      type: material.type,
+      url: material.url,
+      duration: material.duration,
+      order: material.order,
+      captionUrl: material.captionUrl,
+    }));
+
+    return {
+      courseId: course.id,
+      courseTitle: course.title,
+      modules: [
+        {
+          id: "module-1",
+          title: "Course Content",
+          order: 0,
+          lessons,
+        },
+      ],
+      totalLessons: lessons.length,
+      totalDurationMinutes:
+        lessons.reduce((sum, lesson) => sum + (lesson.duration ?? 0), 0) / 60,
+      progress: 0,
+    };
+  }
 }
 
 export const materialService = new MaterialService();
