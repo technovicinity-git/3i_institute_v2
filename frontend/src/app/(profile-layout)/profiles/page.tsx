@@ -66,7 +66,7 @@ export default function ProfilesPage() {
     setShowPinScreen(false);
     // Use router.push with a small delay to ensure state is set
     setTimeout(() => {
-      router.push("/dashboard");
+      router.push("/courses");
     }, 100);
   };
   if (isLoading) {
@@ -213,7 +213,7 @@ function PinEntryScreen({
               setActiveProfile(profile);
               setIsVerifying(false);
               toast.success(`Welcome, ${profile.displayName}!`);
-              router.push("/dashboard");
+              router.push("/courses");
             },
             onError: () => {
               setIsVerifying(false);
