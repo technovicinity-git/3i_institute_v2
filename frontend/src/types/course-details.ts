@@ -81,4 +81,5 @@ export interface CourseDetails {
   enrolmentCount: number;
   isEnrolled: boolean;
   enrolmentBatchId: string | null;
+  firstLessonId: string | null;
 }

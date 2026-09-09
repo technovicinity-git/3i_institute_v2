@@ -59,8 +59,8 @@ export default function LessonPage() {
 
   // Find current lesson
   const currentLesson = courseContent?.modules
-    .flatMap((m) => m.lessons)
-    .find((l) => l.id === lessonId);
+    ?.flatMap((m) => m.lessons)
+    ?.find((l) => l.id === lessonId);
 
   const handleSaveNote = () => {
     if (!activeProfile || !notes.trim()) {
@@ -364,12 +364,12 @@ export default function LessonPage() {
 
         <div className="px-6 py-3 shrink-0">
           <span className="text-[13px] text-[#475569]">
-            {courseContent.totalLessons} lessons
+            {courseContent?.totalLessons} lessons
           </span>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {courseContent.modules.map((mod) => (
+          {courseContent?.modules?.map((mod) => (
             <div key={mod.id} className="border-b border-[#E3E8EF]">
               <button
                 onClick={() =>
