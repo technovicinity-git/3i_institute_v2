@@ -16,15 +16,23 @@ export class NoteService {
       throw new NotFoundError("Learner profile not found");
     }
 
-    const note = await prisma.auditLog.findFirst({
+    // Get ALL notes for this material under this account
+    const notes = await prisma.auditLog.findMany({
       where: {
         userId: accountId,
         action: "LESSON_NOTE",
         resourceId: materialId,
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    return note;
+    // Filter by learnerProfileId from details
+    const learnerNote = notes.find((note) => {
+      const details = note.details as any;
+      return details?.learnerProfileId === learnerProfileId;
+    });
+
+    return learnerNote ?? null;
   }
 
   async saveNote(
@@ -41,8 +49,8 @@ export class NoteService {
       throw new NotFoundError("Learner profile not found");
     }
 
-    // Check if note exists
-    const existing = await prisma.auditLog.findFirst({
+    // Find existing note for THIS specific learner profile
+    const existingNotes = await prisma.auditLog.findMany({
       where: {
         userId: accountId,
         action: "LESSON_NOTE",
@@ -50,9 +58,14 @@ export class NoteService {
       },
     });
 
-    if (existing) {
+    const existingNote = existingNotes.find((note) => {
+      const details = note.details as any;
+      return details?.learnerProfileId === learnerProfileId;
+    });
+
+    if (existingNote) {
       return prisma.auditLog.update({
-        where: { id: existing.id },
+        where: { id: existingNote.id },
         data: {
           details: {
             learnerProfileId,
