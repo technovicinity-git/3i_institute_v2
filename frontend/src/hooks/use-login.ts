@@ -15,7 +15,7 @@ export function useLoginMutation() {
       setUser(data.user);
       setAccessToken(data.accessToken);
       toast.success(`Welcome back, ${data.user.firstName}!`);
-      router.push("/courses");
+      router.push("/profiles");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
