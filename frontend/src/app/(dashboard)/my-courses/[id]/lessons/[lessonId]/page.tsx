@@ -2,22 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Play,
-  Pause,
-  SkipForward,
-  Volume2,
-  Subtitles,
-  Settings,
-  Maximize,
-  Edit3,
-  Bookmark,
-  ChevronDown,
-  ChevronUp,
-  User,
-  Save,
-} from "lucide-react";
+import { ArrowLeft, Maximize, Edit3, Bookmark, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
 import {
@@ -28,6 +13,7 @@ import {
   useLessonVideoUrl,
 } from "@/hooks/use-lesson";
 import { VideoPlayer } from "@/components/lesson/video-player";
+import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
 
 export default function LessonPage() {
   const params = useParams();
@@ -367,93 +353,13 @@ export default function LessonPage() {
           </section>
         </div>
       </div>
-
       {/* RIGHT: Sidebar */}
-      <aside className="w-[432px] shrink-0 bg-white border-l border-[#E3E8EF] flex flex-col overflow-hidden hidden lg:flex">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E3E8EF] shrink-0">
-          <h2
-            className="text-xl text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
-          >
-            Course content
-          </h2>
-          <button className="w-10 h-5 rounded-full border border-[#E3E8EF] flex items-center justify-center">
-            <User className="w-[18px] h-[18px] text-[#0C1F33]" />
-          </button>
-        </div>
-
-        <div className="px-6 py-3 shrink-0">
-          <span className="text-[13px] text-[#475569]">
-            {courseContent?.totalLessons} lessons
-          </span>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {courseContent?.modules?.map((mod) => (
-            <div key={mod.id} className="border-b border-[#E3E8EF]">
-              <button
-                onClick={() =>
-                  setExpandedModule(expandedModule === mod.id ? "" : mod.id)
-                }
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF8]"
-              >
-                <p className="text-sm font-medium text-[#0C1F33]">
-                  {mod.title}
-                </p>
-                {expandedModule === mod.id ? (
-                  <ChevronUp className="w-4 h-4 text-[#475569]" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-[#475569]" />
-                )}
-              </button>
-
-              {expandedModule === mod.id && (
-                <div className="border-t border-[#E3E8EF]">
-                  {mod.lessons.map((lesson) => (
-                    <button
-                      key={lesson.id}
-                      onClick={() =>
-                        router.push(
-                          `/my-courses/${courseId}/lessons/${lesson.id}`,
-                        )
-                      }
-                      className={`w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-[#FAFAF8] ${
-                        lesson.id === lessonId
-                          ? "bg-[#F2FBF4] border-l-[3px] border-l-[#22A146]"
-                          : "border-l-[3px] border-l-transparent"
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                          lesson.id === lessonId
-                            ? "bg-[#157A34]"
-                            : "border-2 border-[#E3E8EF]"
-                        }`}
-                      >
-                        {lesson.id === lessonId && (
-                          <Play
-                            className="w-[10px] h-[10px] text-white ml-[1px]"
-                            fill="white"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#0C1F33] truncate">
-                          {lesson.title}
-                        </p>
-                        <p className="text-xs text-[#475569] mt-1">
-                          {lesson.duration
-                            ? `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, "0")}`
-                            : "--:--"}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      <aside className="w-[380px] shrink-0 bg-white border-l border-[#E3E8EF] flex flex-col overflow-hidden hidden lg:flex">
+        <CourseContentSidebar
+          courseId={courseId}
+          currentLessonId={lessonId}
+          courseContent={courseContent}
+        />
       </aside>
     </div>
   );

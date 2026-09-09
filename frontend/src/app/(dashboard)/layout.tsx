@@ -64,8 +64,13 @@ export default function DashboardLayout({
 
   if (profilesLoading && !activeProfile) {
     return (
-      <div className="flex h-screen bg-[#FBF9F4] items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+      <div className="flex h-screen overflow-hidden bg-[#FBF9F4]">
+        <div className="hidden lg:block shrink-0 overflow-y-auto" />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="flex items-center justify-center flex-1 overflow-y-auto">
+            <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }

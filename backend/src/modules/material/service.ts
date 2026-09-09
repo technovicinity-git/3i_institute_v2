@@ -399,6 +399,9 @@ export class MaterialService {
       select: {
         id: true,
         title: true,
+        totalModules: true,
+        totalLessons: true,
+        totalDurationMinutes: true,
       },
     });
 
@@ -411,31 +414,37 @@ export class MaterialService {
       orderBy: { order: "asc" },
     });
 
-    // Group materials into modules (for now, each material is a lesson)
-    const lessons = materials.map((material) => ({
-      id: material.id,
-      title: material.title,
-      type: material.type,
-      url: material.url,
-      duration: material.duration,
-      order: material.order,
-      captionUrl: material.captionUrl,
-    }));
+    // Group materials into modules
+    // For now, split materials into chunks of 5 as "modules"
+    const moduleSize = 5;
+    const modules = [];
+
+    for (let i = 0; i < materials.length; i += moduleSize) {
+      const moduleMaterials = materials.slice(i, i + moduleSize);
+      modules.push({
+        id: `module-${Math.floor(i / moduleSize) + 1}`,
+        title: `Module ${Math.floor(i / moduleSize) + 1}`,
+        order: Math.floor(i / moduleSize),
+        lessons: moduleMaterials.map((material) => ({
+          id: material.id,
+          title: material.title,
+          type: material.type,
+          url: material.url,
+          duration: material.duration,
+          order: material.order,
+          captionUrl: material.captionUrl,
+        })),
+      });
+    }
 
     return {
       courseId: course.id,
       courseTitle: course.title,
-      modules: [
-        {
-          id: "module-1",
-          title: "Course Content",
-          order: 0,
-          lessons,
-        },
-      ],
-      totalLessons: lessons.length,
+      modules,
+      totalLessons: materials.length,
       totalDurationMinutes:
-        lessons.reduce((sum, lesson) => sum + (lesson.duration ?? 0), 0) / 60,
+        course.totalDurationMinutes ||
+        materials.reduce((sum, m) => sum + (m.duration ?? 0), 0) / 60,
       progress: 0,
     };
   }
