@@ -6,12 +6,14 @@ import { Play, Pause, Volume2, Maximize, SkipForward } from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
+  initialPosition?: number;
   onProgress?: (seconds: number, position: number) => void;
   onComplete?: () => void;
 }
 
 export function VideoPlayer({
   videoUrl,
+  initialPosition,
   onProgress,
   onComplete,
 }: VideoPlayerProps) {
@@ -30,6 +32,10 @@ export function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoUrl) return;
+
+    if (initialPosition && initialPosition > 0) {
+      video.currentTime = initialPosition;
+    }
 
     let hls: Hls | null = null;
 

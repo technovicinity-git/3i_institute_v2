@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Maximize, Edit3, Bookmark, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import {
   useSaveNoteMutation,
   useUpdateProgressMutation,
   useLessonVideoUrl,
+  useMaterialProgress,
 } from "@/hooks/use-lesson";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
@@ -37,9 +38,46 @@ export default function LessonPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: videoUrlData, isLoading: videoLoading } =
     useLessonVideoUrl(lessonId);
+  const { data: progressData } = useMaterialProgress(
+    activeProfile?.id ?? "",
+    lessonId,
+  );
+
+  // Debounced progress update
+  const handleProgressUpdate = useCallback(
+    (seconds: number, position: number) => {
+      if (!activeProfile) return;
+
+      // Clear existing debounce
+      if (progressDebounceRef.current) {
+        clearTimeout(progressDebounceRef.current);
+      }
+
+      // Debounce — send progress every 5 seconds
+      progressDebounceRef.current = setTimeout(() => {
+        updateProgressMutation.mutate({
+          learnerProfileId: activeProfile.id,
+          materialId: lessonId,
+          watchedSeconds: Math.floor(seconds),
+          lastPosition: Math.floor(position),
+        });
+      }, 5000);
+    },
+    [activeProfile, lessonId, updateProgressMutation],
+  );
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (progressDebounceRef.current) {
+        clearTimeout(progressDebounceRef.current);
+      }
+    };
+  }, []);
 
   // Load existing note
   useEffect(() => {
@@ -72,17 +110,6 @@ export default function LessonPage() {
         },
       },
     );
-  };
-
-  const handleProgressUpdate = (seconds: number, position: number) => {
-    if (!activeProfile) return;
-
-    updateProgressMutation.mutate({
-      learnerProfileId: activeProfile.id,
-      materialId: lessonId,
-      watchedSeconds: seconds,
-      lastPosition: position,
-    });
   };
 
   const togglePlayback = () => {
@@ -142,7 +169,7 @@ export default function LessonPage() {
         <div className="flex items-center justify-between h-16 px-6 bg-[#12304E] shrink-0">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => router.push(`/my-courses/${courseId}`)}
+              onClick={() => router.back()}
               className="shrink-0 text-white/80 hover:text-white"
             >
               <ArrowLeft className="w-[18px] h-[18px]" />
@@ -188,16 +215,8 @@ export default function LessonPage() {
           ) : videoUrlData?.url ? (
             <VideoPlayer
               videoUrl={videoUrlData.url}
-              onProgress={(seconds, position) => {
-                if (activeProfile) {
-                  updateProgressMutation.mutate({
-                    learnerProfileId: activeProfile.id,
-                    materialId: lessonId,
-                    watchedSeconds: Math?.floor(seconds) || 0,
-                    lastPosition: Math?.floor(position) || 0,
-                  });
-                }
-              }}
+              initialPosition={progressData?.lastPosition ?? 0}
+              onProgress={handleProgressUpdate}
               onComplete={() => {
                 if (activeProfile) {
                   updateProgressMutation.mutate({

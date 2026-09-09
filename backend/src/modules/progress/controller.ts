@@ -32,6 +32,38 @@ export class ProgressController {
       next(error);
     }
   };
+
+  getMaterialProgress = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+      const materialId = req.query["materialId"] as string;
+
+      if (!learnerProfileId || !materialId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId and materialId are required",
+          },
+        });
+        return;
+      }
+
+      const progress = await progressService.getMaterialProgress(
+        accountId,
+        learnerProfileId,
+        materialId,
+      );
+      sendSuccess(res, progress, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const progressController = new ProgressController();

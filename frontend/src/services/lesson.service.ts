@@ -109,7 +109,7 @@ export const lessonService = {
 
   getProgress: async (learnerProfileId: string, materialId: string) => {
     const response = await apiClient.get(
-      `/progress?learnerProfileId=${learnerProfileId}&materialId=${materialId}`,
+      `/progress/material?learnerProfileId=${learnerProfileId}&materialId=${materialId}`,
     );
     return response.data.data;
   },

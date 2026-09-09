@@ -175,6 +175,35 @@ export class ProgressService {
     if (totalMaterials === 0) return 0;
     return Math.round((completedMaterials / totalMaterials) * 100);
   }
+
+  async getMaterialProgress(
+    accountId: string,
+    learnerProfileId: string,
+    materialId: string,
+  ) {
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    const progress = await prisma.materialProgress.findUnique({
+      where: {
+        materialId_learnerProfileId: {
+          materialId,
+          learnerProfileId,
+        },
+      },
+    });
+
+    return progress;
+  }
 }
 
 export const progressService = new ProgressService();

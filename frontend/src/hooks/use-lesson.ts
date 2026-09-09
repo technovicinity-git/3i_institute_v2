@@ -76,3 +76,14 @@ export function useLessonVideoUrl(materialId: string) {
     staleTime: 50 * 60 * 1000, // 50 min (URL expires in 60 min)
   });
 }
+
+export function useMaterialProgress(
+  learnerProfileId: string,
+  materialId: string,
+) {
+  return useQuery({
+    queryKey: ["material-progress", learnerProfileId, materialId],
+    queryFn: () => lessonService.getProgress(learnerProfileId, materialId),
+    enabled: !!learnerProfileId && !!materialId,
+  });
+}
