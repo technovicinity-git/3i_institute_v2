@@ -67,3 +67,12 @@ export function useUpdateProgressMutation() {
     },
   });
 }
+
+export function useLessonVideoUrl(materialId: string) {
+  return useQuery({
+    queryKey: ["lesson-video-url", materialId],
+    queryFn: () => lessonService.getSignedUrl(materialId),
+    enabled: !!materialId,
+    staleTime: 50 * 60 * 1000, // 50 min (URL expires in 60 min)
+  });
+}

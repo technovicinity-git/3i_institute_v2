@@ -64,9 +64,9 @@ export class MaterialController {
 
   getSignedUrl = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const instructorId = req.user?.sub!;
+      const userId = req.user?.sub!;
       const result = await materialService.getSignedMaterialUrl(
-        instructorId,
+        userId,
         req.params["id"] as string,
       );
       sendSuccess(res, result, 200);
