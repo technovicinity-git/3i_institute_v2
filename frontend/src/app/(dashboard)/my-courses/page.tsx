@@ -154,12 +154,25 @@ export default function MyCoursesPage() {
 
                 <div className="flex flex-col gap-2">
                   {/* Resume button */}
-                  <Link
-                    href={`/courses/${course.courseId}`}
-                    className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
-                  >
-                    {course.progress > 0 ? "Resume" : "Start Course"}
-                  </Link>
+                  {course.firstLessonId ? (
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/my-courses/${course.courseId}/lessons/${course.firstLessonId}`,
+                        )
+                      }
+                      className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
+                    >
+                      {course.progress > 0 ? "Resume" : "Start Course"}
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg text-center cursor-not-allowed"
+                    >
+                      No lessons available yet
+                    </button>
+                  )}
                   {/* View Exams button */}
                   <Link
                     href={`/my-courses/${course.courseId}/exams`}

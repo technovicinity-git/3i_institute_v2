@@ -475,6 +475,21 @@ export default function CourseDetailsPage() {
 
                     {course.isEnrolled ? (
                       <>
+                        {course.firstLessonId ? (
+                          <Link
+                            href={`/my-courses/${course.id}/lessons/${course.firstLessonId}`}
+                            className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
+                          >
+                            Start Learning
+                          </Link>
+                        ) : (
+                          <button
+                            disabled
+                            className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
+                          >
+                            Lessons coming soon
+                          </button>
+                        )}
                         {/* Chat Room Button */}
                         <Link
                           href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent("Your Batch")}`}

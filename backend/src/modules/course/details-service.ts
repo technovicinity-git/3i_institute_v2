@@ -261,6 +261,7 @@ export class CourseDetailsService {
       enrolmentCount: course._count.enrolments,
       isEnrolled,
       enrolmentBatchId,
+      firstLessonId: course.materials[0]?.id ?? null,
     };
   }
 }
