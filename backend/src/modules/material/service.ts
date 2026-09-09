@@ -215,7 +215,7 @@ export class MaterialService {
    * Get signed URL for material access (short-expiry)
    * FR-MAT-05: No permanent URL ever exposed
    */
-  async getSignedMaterialUrl(instructorId: string, materialId: string) {
+  async getSignedMaterialUrl(userId: string, materialId: string) {
     const material = await prisma.material.findUnique({
       where: { id: materialId },
       include: { course: true },
@@ -225,17 +225,55 @@ export class MaterialService {
       throw new NotFoundError("Material not found");
     }
 
-    if (material.course.instructorId !== instructorId) {
-      throw new ForbiddenError("Access denied");
+    // Check if user is the instructor
+    const isInstructor = material.course.instructorId === userId;
+
+    // Check if user is an admin
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    const isAdmin = user?.role?.name === "Admin";
+
+    // Check if user has an enrolled learner profile for this course
+    let isEnrolled = false;
+
+    if (!isInstructor && !isAdmin) {
+      // Get all learner profiles under this account
+      const learnerProfiles = await prisma.learnerProfile.findMany({
+        where: {
+          accountId: userId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      const learnerProfileIds = learnerProfiles.map((lp) => lp.id);
+
+      if (learnerProfileIds.length > 0) {
+        const enrolment = await prisma.enrolment.findFirst({
+          where: {
+            learnerProfileId: { in: learnerProfileIds },
+            courseId: material.courseId,
+            waitlisted: false,
+          },
+        });
+
+        isEnrolled = !!enrolment;
+      }
+    }
+
+    // Allow instructor, admin, or enrolled learner
+    if (!isInstructor && !isAdmin && !isEnrolled) {
+      throw new ForbiddenError("You are not enrolled in this course");
     }
 
     if (material.type === "video") {
-      // Generate signed HLS URL
       const signedUrl = await bunnyStream.getSignedUrl(material.url, 3600);
       return { url: signedUrl, expiresIn: 3600 };
     }
 
-    // Documents/audio — generate signed storage URL
     const signedUrl = await storageService.getSignedUrl(material.url, 3600);
     return { url: signedUrl, expiresIn: 3600 };
   }

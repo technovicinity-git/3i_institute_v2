@@ -87,4 +87,11 @@ export const lessonService = {
     );
     return response.data.data;
   },
+
+  getSignedUrl: async (
+    materialId: string,
+  ): Promise<{ url: string; expiresIn: number }> => {
+    const response = await apiClient.get(`/materials/${materialId}/signed-url`);
+    return response.data.data;
+  },
 };

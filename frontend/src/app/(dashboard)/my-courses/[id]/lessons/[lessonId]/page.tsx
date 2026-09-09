@@ -25,7 +25,9 @@ import {
   useLessonNotes,
   useSaveNoteMutation,
   useUpdateProgressMutation,
+  useLessonVideoUrl,
 } from "@/hooks/use-lesson";
+import { VideoPlayer } from "@/components/lesson/video-player";
 
 export default function LessonPage() {
   const params = useParams();
@@ -49,6 +51,9 @@ export default function LessonPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { data: videoUrlData, isLoading: videoLoading } =
+    useLessonVideoUrl(lessonId);
 
   // Load existing note
   useEffect(() => {
@@ -162,7 +167,7 @@ export default function LessonPage() {
           </div>
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <span className="text-[13px] text-white/90">
-              {Math.round(courseContent.progress)}% complete
+              {Math?.round(courseContent.progress) || 0}% complete
             </span>
             <div className="w-56 h-1.5 bg-white/20 rounded-full overflow-hidden">
               <div
@@ -190,27 +195,42 @@ export default function LessonPage() {
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Video */}
-          <div
-            ref={videoRef}
-            className="relative w-full aspect-video bg-[#111] overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2c3e50] via-[#34495e] to-[#1a1a2e]" />
-            <button
-              onClick={togglePlayback}
-              className="absolute inset-0 flex items-center justify-center z-10 group"
-            >
-              <div className="w-20 h-20 rounded-full bg-black/50 flex items-center justify-center group-hover:bg-black/70 transition-all">
-                {isPlaying ? (
-                  <Pause className="w-8 h-8 text-white" fill="white" />
-                ) : (
-                  <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                )}
-              </div>
-            </button>
-          </div>
+          {videoLoading ? (
+            <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full border-4 border-white border-t-transparent animate-spin" />
+            </div>
+          ) : videoUrlData?.url ? (
+            <VideoPlayer
+              videoUrl={videoUrlData.url}
+              onProgress={(seconds, position) => {
+                if (activeProfile) {
+                  updateProgressMutation.mutate({
+                    learnerProfileId: activeProfile.id,
+                    materialId: lessonId,
+                    watchedSeconds: Math?.floor(seconds) || 0,
+                    lastPosition: Math?.floor(position) || 0,
+                  });
+                }
+              }}
+              onComplete={() => {
+                if (activeProfile) {
+                  updateProgressMutation.mutate({
+                    learnerProfileId: activeProfile.id,
+                    materialId: lessonId,
+                    watchedSeconds: 999999,
+                    lastPosition: 0,
+                  });
+                }
+              }}
+            />
+          ) : (
+            <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
+              <p className="text-white/60 text-sm">Video unavailable</p>
+            </div>
+          )}
 
           {/* Controls */}
-          <div className="flex items-center gap-4 h-[42px] px-6 bg-[#12304E] shrink-0">
+          {/* <div className="flex items-center gap-4 h-[42px] px-6 bg-[#12304E] shrink-0">
             <div className="flex items-center gap-4 shrink-0">
               <button
                 onClick={togglePlayback}
@@ -267,7 +287,7 @@ export default function LessonPage() {
                 <Maximize className="w-[18px] h-[18px]" />
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Lesson detail */}
           <section className="w-full bg-[#FBF9F4]">
