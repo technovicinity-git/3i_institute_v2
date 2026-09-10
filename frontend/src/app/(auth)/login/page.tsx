@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useLoginMutation } from "@/hooks/use-login";
 import { GoogleButton } from "@/components/social/google-button";
 import { AppleButton } from "@/components/social/apple-button";
+import { LandingLogo } from "@/components/landing/logo";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -39,13 +41,17 @@ export default function LoginPage() {
     <div className="min-h-screen bg-surface flex flex-col relative">
       {/* Desktop branding */}
       <div className="hidden sm:flex absolute top-8 left-8 items-center gap-2">
-        <Logo size="sm" />
+        <Link href="/" className="flex items-center gap-2">
+          <LandingLogo asLink={false} size="sm" textColor="dark" />
+        </Link>
       </div>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 w-full max-w-md mx-auto">
         {/* Mobile logo */}
         <header className="mb-8 flex items-center gap-2 sm:hidden">
-          <Logo size="md" />
+          <Link href="/" className="flex items-center gap-2">
+            <LandingLogo asLink={false} size="sm" textColor="dark" />
+          </Link>
         </header>
 
         <div className="w-full bg-white rounded-card shadow-card border border-surface-high p-8 sm:p-10">
