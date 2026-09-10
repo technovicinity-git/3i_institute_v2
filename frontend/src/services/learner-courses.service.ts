@@ -16,6 +16,8 @@ export interface EnrolledCourse {
   progress: number;
   totalMaterials: number;
   completedMaterials: number;
+  firstLessonId: string | null;
+  continueLessonId: string | null;
   batchName: string | null;
   nextSession: {
     title: string;
@@ -23,7 +25,6 @@ export interface EnrolledCourse {
   } | null;
   enrolledAt: string;
   isCompleted: boolean;
-  firstLessonId: string | null;
 }
 
 export const learnerCoursesService = {

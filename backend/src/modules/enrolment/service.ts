@@ -267,6 +267,7 @@ export class EnrolmentService {
               },
             },
             materials: {
+              orderBy: { order: "asc" },
               select: { id: true },
             },
             batches: {
@@ -300,10 +301,14 @@ export class EnrolmentService {
     const courses = enrolments.map((enrolment) => {
       const course = enrolment.course;
       const courseMaterials = course.materials;
-      const completedMaterials = materialProgress.filter(
-        (mp) =>
-          mp.completed && courseMaterials.some((m) => m.id === mp.materialId),
+      const courseMaterialIds = courseMaterials.map((m) => m.id);
+
+      // Filter progress to this course
+      const courseProgress = materialProgress.filter((mp) =>
+        courseMaterialIds.includes(mp.materialId),
       );
+
+      const completedMaterials = courseProgress.filter((mp) => mp.completed);
 
       const progress =
         courseMaterials.length > 0
@@ -311,6 +316,27 @@ export class EnrolmentService {
               (completedMaterials.length / courseMaterials.length) * 100,
             )
           : 0;
+
+      // Find the continue lesson:
+      // 1. First incomplete material (in order)
+      // 2. Or last incomplete material with progress
+      // 3. Or first material if none started
+      let continueLessonId: string | null = null;
+
+      if (courseMaterials.length > 0) {
+        // Find first incomplete material
+        const firstIncomplete = courseMaterials.find((m) => {
+          const mp = courseProgress.find((p) => p.materialId === m.id);
+          return !mp || !mp.completed;
+        });
+
+        if (firstIncomplete) {
+          continueLessonId = firstIncomplete.id;
+        } else {
+          // All complete — go to first lesson
+          continueLessonId = courseMaterials[0]?.id ?? null;
+        }
+      }
 
       const activeBatch = course.batches[0] ?? null;
       const nextSession = activeBatch?.sessions[0] ?? null;
@@ -331,6 +357,8 @@ export class EnrolmentService {
         progress,
         totalMaterials: courseMaterials.length,
         completedMaterials: completedMaterials.length,
+        firstLessonId: courseMaterials[0]?.id ?? null,
+        continueLessonId, // NEW: lesson to resume from
         batchName: enrolment.batch?.name ?? activeBatch?.name ?? null,
         nextSession: nextSession
           ? {
@@ -340,7 +368,6 @@ export class EnrolmentService {
           : null,
         enrolledAt: enrolment.enrolledAt,
         isCompleted: progress === 100,
-        firstLessonId: courseMaterials[0]?.id ?? null,
       };
     });
 
