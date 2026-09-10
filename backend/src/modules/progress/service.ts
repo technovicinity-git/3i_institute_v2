@@ -40,9 +40,11 @@ export class ProgressService {
     }
 
     // FR-CERT-03: Video completes when ≥90% watched
+    // If completed flag is explicitly passed, honor it
     let completed = input.completed ?? false;
 
-    if (input.watchedSeconds !== undefined && material.duration) {
+    // If watchedSeconds provided and material has duration, calculate completion
+    if (!completed && input.watchedSeconds !== undefined && material.duration) {
       const watchedPercentage =
         (input.watchedSeconds / material.duration) * 100;
       completed = watchedPercentage >= 90;

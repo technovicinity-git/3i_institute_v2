@@ -23,21 +23,22 @@ export default function LessonPage() {
   const lessonId = params.lessonId as string;
 
   const { activeProfile } = useProfileStore();
-  const { data: courseContent, isLoading } = useCourseContent(courseId);
+  const { data: courseContent, isLoading } = useCourseContent(
+    courseId,
+    activeProfile?.id,
+  );
+
   const { data: noteData } = useLessonNotes(activeProfile?.id ?? "", lessonId);
   const saveNoteMutation = useSaveNoteMutation();
   const updateProgressMutation = useUpdateProgressMutation();
 
   const [activeTab, setActiveTab] = useState<"overview" | "notes">("overview");
-  const [expandedModule, setExpandedModule] = useState<string>("module-1");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+
   const [notes, setNotes] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const videoRef = useRef<HTMLDivElement>(null);
-  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const progressDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: videoUrlData, isLoading: videoLoading } =
@@ -52,18 +53,22 @@ export default function LessonPage() {
     (seconds: number, position: number) => {
       if (!activeProfile) return;
 
-      // Clear existing debounce
       if (progressDebounceRef.current) {
         clearTimeout(progressDebounceRef.current);
       }
 
-      // Debounce — send progress every 5 seconds
       progressDebounceRef.current = setTimeout(() => {
+        // Check if we should mark as complete (90% of video duration)
+        const videoElement = document.querySelector("video");
+        const videoDuration = videoElement?.duration ?? 0;
+        const isComplete = videoDuration > 0 && seconds >= videoDuration * 0.9;
+
         updateProgressMutation.mutate({
           learnerProfileId: activeProfile.id,
           materialId: lessonId,
           watchedSeconds: Math.floor(seconds),
           lastPosition: Math.floor(position),
+          completed: isComplete,
         });
       }, 5000);
     },
@@ -82,6 +87,7 @@ export default function LessonPage() {
   // Load existing note
   useEffect(() => {
     if (noteData?.details?.content) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotes(noteData.details.content);
     }
   }, [noteData]);
@@ -112,41 +118,11 @@ export default function LessonPage() {
     );
   };
 
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) {
-      // Start progress tracking
-      progressTimerRef.current = setInterval(() => {
-        setProgress((prev) => Math.min(100, prev + 0.1));
-      }, 1000);
-    } else {
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    }
-  };
-
-  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(
-      0,
-      Math.min(100, ((e.clientX - rect.left) / rect.width) * 100),
-    );
-    setProgress(pct);
-  };
-
-  const cyclePlaybackSpeed = () => {
-    const speeds = [1, 1.25, 1.5, 2];
-    const currentIndex = speeds.indexOf(playbackSpeed);
-    const nextSpeed = speeds[(currentIndex + 1) % speeds.length]!;
-    setPlaybackSpeed(nextSpeed);
-  };
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       videoRef.current?.requestFullscreen?.();
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen();
-      setIsFullscreen(false);
     }
   };
 
@@ -178,13 +154,14 @@ export default function LessonPage() {
               {courseContent.courseTitle}
             </span>
           </div>
+
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <span className="text-[13px] text-white/90">
               {Math?.round(courseContent.progress) || 0}% complete
             </span>
-            <div className="w-56 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-[#22A146] rounded-full"
+                className="h-full bg-[#22A146] rounded-full transition-all"
                 style={{ width: `${courseContent.progress}%` }}
               />
             </div>
@@ -222,8 +199,10 @@ export default function LessonPage() {
                   updateProgressMutation.mutate({
                     learnerProfileId: activeProfile.id,
                     materialId: lessonId,
-                    watchedSeconds: 999999,
+                    watchedSeconds:
+                      Math.floor(progressData?.watchedSeconds ?? 0) + 999,
                     lastPosition: 0,
+                    completed: true,
                   });
                 }
               }}
@@ -233,66 +212,6 @@ export default function LessonPage() {
               <p className="text-white/60 text-sm">Video unavailable</p>
             </div>
           )}
-
-          {/* Controls */}
-          {/* <div className="flex items-center gap-4 h-[42px] px-6 bg-[#12304E] shrink-0">
-            <div className="flex items-center gap-4 shrink-0">
-              <button
-                onClick={togglePlayback}
-                className="text-white/80 hover:text-white"
-              >
-                {isPlaying ? (
-                  <Pause className="w-[18px] h-[18px]" />
-                ) : (
-                  <Play className="w-[18px] h-[18px]" />
-                )}
-              </button>
-              <button className="text-white/80 hover:text-white">
-                <SkipForward className="w-[18px] h-[18px]" />
-              </button>
-              <span className="text-[13px] text-white">
-                {currentLesson?.duration
-                  ? `${Math.floor(currentLesson.duration / 60)}:${String(currentLesson.duration % 60).padStart(2, "0")}`
-                  : "00:00"}
-              </span>
-            </div>
-
-            <div
-              onClick={handleScrub}
-              className="flex-1 relative flex items-center cursor-pointer group h-6"
-            >
-              <div className="w-full h-1.5 bg-white/30 rounded-full">
-                <div
-                  className="h-full bg-[#22A146] rounded-full"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 shrink-0">
-              <button className="text-white/80 hover:text-white">
-                <Volume2 className="w-[18px] h-[18px]" />
-              </button>
-              <button
-                onClick={cyclePlaybackSpeed}
-                className="text-[13px] font-semibold text-white/90"
-              >
-                {playbackSpeed}x
-              </button>
-              <button className="text-white/80 hover:text-white">
-                <Subtitles className="w-[18px] h-[18px]" />
-              </button>
-              <button className="text-white/80 hover:text-white">
-                <Settings className="w-[18px] h-[18px]" />
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="text-white/80 hover:text-white"
-              >
-                <Maximize className="w-[18px] h-[18px]" />
-              </button>
-            </div>
-          </div> */}
 
           {/* Lesson detail */}
           <section className="w-full bg-[#FBF9F4]">
