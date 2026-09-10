@@ -39,6 +39,34 @@ export class ProgressService {
       throw new ValidationError("Learner is not enrolled in this course");
     }
 
+    // Fetch existing progress to preserve completion status
+    const existingProgress = await prisma.materialProgress.findUnique({
+      where: {
+        materialId_learnerProfileId: {
+          materialId: input.materialId,
+          learnerProfileId: input.learnerProfileId,
+        },
+      },
+    });
+
+    // If already completed, never revert to false
+    if (existingProgress?.completed) {
+      // Only update watchedSeconds/lastPosition, keep completed=true
+      const progress = await prisma.materialProgress.update({
+        where: { id: existingProgress.id },
+        data: {
+          ...(input.watchedSeconds !== undefined && {
+            watchedSeconds: input.watchedSeconds,
+          }),
+          ...(input.lastPosition !== undefined && {
+            lastPosition: input.lastPosition,
+          }),
+          // completed stays true
+        },
+      });
+      return progress;
+    }
+
     // FR-CERT-03: Video completes when ≥90% watched
     // If completed flag is explicitly passed, honor it
     let completed = input.completed ?? false;
