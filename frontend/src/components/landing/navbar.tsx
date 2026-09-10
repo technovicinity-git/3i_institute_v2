@@ -137,15 +137,6 @@ export function Navbar() {
           <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
         ) : isLoggedIn ? (
           <>
-            {/* Dashboard Button */}
-            <Link
-              href={getDashboardUrl()}
-              className="hidden sm:flex items-center gap-2 text-sm font-medium text-brand-navy hover:text-green transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Dashboard
-            </Link>
-
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
