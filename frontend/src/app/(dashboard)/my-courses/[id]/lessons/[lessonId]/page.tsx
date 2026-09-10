@@ -142,7 +142,7 @@ export default function LessonPage() {
       {/* LEFT: Video + Lesson */}
       <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between h-16 px-6 bg-[#12304E] shrink-0">
+        {/* <div className="flex items-center justify-between h-16 px-6 bg-[#12304E] shrink-0">
           <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => router.back()}
@@ -180,10 +180,10 @@ export default function LessonPage() {
               <Maximize className="w-[18px] h-[18px]" />
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Scrollable content */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 pl-4 pt-4 min-h-0 overflow-y-auto">
           {/* Video */}
           {videoLoading ? (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
