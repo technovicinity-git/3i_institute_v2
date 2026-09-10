@@ -144,7 +144,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <Link
-                    href={`/courses/${course.id}`}
+                    href={`/my-courses`}
                     className="px-4 py-2 bg-[#12304E] text-white text-[12px] font-semibold rounded-lg hover:bg-[#1a4268]"
                   >
                     Resume

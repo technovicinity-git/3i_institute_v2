@@ -82,4 +82,7 @@ export interface CourseDetails {
   isEnrolled: boolean;
   enrolmentBatchId: string | null;
   firstLessonId: string | null;
+  continueLessonId: string | null;
+  isCompleted: boolean;
+  lastWatchedLessonId: string | null;
 }

@@ -179,6 +179,9 @@ export class CourseDetailsService {
 
     let isEnrolled = false;
     let enrolmentBatchId: string | null = null;
+    let continueLessonId: string | null = null;
+    let lastWatchedLessonId: string | null = null;
+    let isCompleted = false;
 
     if (learnerProfileId) {
       const enrolment = await prisma.enrolment.findFirst({
@@ -192,6 +195,36 @@ export class CourseDetailsService {
       if (enrolment) {
         isEnrolled = true;
         enrolmentBatchId = enrolment.batchId;
+
+        if (course.materials.length > 0) {
+          const materialIds = course.materials.map((m) => m.id);
+
+          const progressRecords = await prisma.materialProgress.findMany({
+            where: {
+              learnerProfileId,
+              materialId: { in: materialIds },
+            },
+            orderBy: { updatedAt: "desc" },
+          });
+
+          // Find last watched lesson (most recently updated, with position > 0)
+          const lastWatched = progressRecords.find(
+            (p) => p.lastPosition > 0 && !p.completed,
+          );
+          lastWatchedLessonId = lastWatched?.materialId ?? null;
+
+          // Find first incomplete lesson
+          const firstIncomplete = course.materials.find((m) => {
+            const progress = progressRecords.find((p) => p.materialId === m.id);
+            return !progress || !progress.completed;
+          });
+
+          continueLessonId =
+            firstIncomplete?.id ?? course.materials[0]?.id ?? null;
+
+          // Course completed if no incomplete lessons
+          isCompleted = !firstIncomplete;
+        }
       }
     }
 
@@ -262,6 +295,9 @@ export class CourseDetailsService {
       isEnrolled,
       enrolmentBatchId,
       firstLessonId: course.materials[0]?.id ?? null,
+      continueLessonId,
+      lastWatchedLessonId,
+      isCompleted,
     };
   }
 }
