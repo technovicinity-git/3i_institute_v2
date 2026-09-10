@@ -23,6 +23,7 @@ import {
   Users,
   GraduationCap,
   Monitor,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCourseDetails } from "@/hooks/use-course-details";
@@ -475,12 +476,25 @@ export default function CourseDetailsPage() {
 
                     {course.isEnrolled ? (
                       <>
-                        {course.firstLessonId ? (
+                        {course.continueLessonId ? (
                           <Link
-                            href={`/my-courses/${course.id}/lessons/${course.firstLessonId}`}
-                            className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
+                            href={`/my-courses/${course.id}/lessons/${
+                              course.lastWatchedLessonId && !course.isCompleted
+                                ? course.lastWatchedLessonId
+                                : course.continueLessonId
+                            }`}
+                            className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center flex items-center justify-center gap-2"
                           >
-                            Start Learning
+                            {course.isCompleted ? (
+                              "Review Course"
+                            ) : course.lastWatchedLessonId ? (
+                              <>
+                                <Play className="w-4 h-4" />
+                                Continue Learning
+                              </>
+                            ) : (
+                              "Start Learning"
+                            )}
                           </Link>
                         ) : (
                           <button
