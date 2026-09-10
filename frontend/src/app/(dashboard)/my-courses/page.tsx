@@ -154,11 +154,11 @@ export default function MyCoursesPage() {
 
                 <div className="flex flex-col gap-2">
                   {/* Resume button */}
-                  {course.firstLessonId ? (
+                  {course.continueLessonId ? (
                     <button
                       onClick={() =>
                         router.push(
-                          `/my-courses/${course.courseId}/lessons/${course.firstLessonId}`,
+                          `/my-courses/${course.courseId}/lessons/${course.continueLessonId}`,
                         )
                       }
                       className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
