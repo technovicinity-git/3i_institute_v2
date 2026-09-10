@@ -51,4 +51,6 @@ router.post(
   progressController.update,
 );
 
+router.get("/material", authenticate, progressController.getMaterialProgress);
+
 export { router as progressRoutes };

@@ -110,6 +110,7 @@ export function CourseContentSidebar({
               {isExpanded && moduleLessons.length > 0 && (
                 <div className="border-t border-[#E3E8EF] bg-[#FBF9F4]">
                   {moduleLessons.map((lesson, lessonIndex) => {
+                    const isCompleted = lesson.completed;
                     const isCurrent = lesson.id === currentLessonId;
 
                     return (
@@ -126,13 +127,36 @@ export function CourseContentSidebar({
                             : "border-l-[3px] border-l-transparent hover:bg-[#FAFAF8]"
                         }`}
                       >
-                        <div
+                        {/* <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                             isCurrent
                               ? "bg-[#157A34]"
                               : "border-2 border-[#E3E8EF]"
                           }`}
                         >
+                          {isCurrent && (
+                            <Play
+                              className="w-[10px] h-[10px] text-white ml-[1px]"
+                              fill="white"
+                            />
+                          )}
+                        </div> */}
+
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                            isCompleted
+                              ? "bg-[#22A146]"
+                              : isCurrent
+                                ? "bg-[#157A34]"
+                                : "border-2 border-[#E3E8EF]"
+                          }`}
+                        >
+                          {isCompleted && !isCurrent && (
+                            <CheckCircle
+                              className="w-3 h-3 text-white"
+                              strokeWidth={3}
+                            />
+                          )}
                           {isCurrent && (
                             <Play
                               className="w-[10px] h-[10px] text-white ml-[1px]"
@@ -152,7 +176,20 @@ export function CourseContentSidebar({
                             <span className="text-xs text-[#64748B] mr-1">
                               {lessonIndex + 1}.
                             </span>
-                            {lesson.title}
+                            <p
+                              className={`text-sm truncate ${
+                                isCompleted
+                                  ? "text-[#22A146]"
+                                  : isCurrent
+                                    ? "font-semibold text-[#0C1F33]"
+                                    : "text-[#0C1F33]"
+                              }`}
+                            >
+                              <span className="text-xs text-[#64748B] mr-1">
+                                {lessonIndex + 1}.
+                              </span>
+                              {lesson.title}
+                            </p>
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-[#64748B]">

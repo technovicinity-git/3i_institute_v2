@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "@/lib/api-client";
 
 export interface Lesson {
@@ -9,6 +8,7 @@ export interface Lesson {
   duration: number | null;
   order: number;
   captionUrl: string | null;
+  completed: boolean;
 }
 
 export interface Module {
@@ -25,6 +25,7 @@ export interface CourseLessonPage {
   totalLessons: number;
   totalDurationMinutes: number;
   progress: number;
+  completedLessons: number;
 }
 
 export interface LessonNote {
@@ -42,11 +43,24 @@ export interface VideoProgress {
 }
 
 export const lessonService = {
-  getCourseContent: async (courseId: string): Promise<CourseLessonPage> => {
-    const response = await apiClient.get(`/materials/course/${courseId}`);
-    const materials = response.data.data; // Array of materials
+  getCourseContent: async (
+    courseId: string,
+    learnerProfileId?: string,
+  ): Promise<CourseLessonPage> => {
+    const params = learnerProfileId
+      ? `?learnerProfileId=${learnerProfileId}`
+      : "";
+    const response = await apiClient.get(
+      `/materials/course/${courseId}${params}`,
+    );
 
-    // Transform into CourseLessonPage format
+    // If response is already in CourseLessonPage format (has modules property)
+    if (response.data.data?.modules) {
+      return response.data.data;
+    }
+
+    // Otherwise transform the array
+    const materials = response.data.data;
     const moduleSize = 5;
     const modules = [];
 
@@ -62,13 +76,12 @@ export const lessonService = {
 
     return {
       courseId,
-      courseTitle: "Course", // Will be replaced
+      courseTitle: "Course Content",
       modules,
       totalLessons: materials.length,
-      totalDurationMinutes:
-        materials.reduce((sum: number, m: any) => sum + (m.duration ?? 0), 0) /
-        60,
+      totalDurationMinutes: 0,
       progress: 0,
+      completedLessons: 0,
     };
   },
 
@@ -97,19 +110,21 @@ export const lessonService = {
     materialId: string,
     watchedSeconds: number,
     lastPosition: number,
+    completed?: boolean,
   ) => {
     const response = await apiClient.post("/progress", {
       learnerProfileId,
       materialId,
       watchedSeconds,
       lastPosition,
+      completed,
     });
     return response.data.data;
   },
 
   getProgress: async (learnerProfileId: string, materialId: string) => {
     const response = await apiClient.get(
-      `/progress?learnerProfileId=${learnerProfileId}&materialId=${materialId}`,
+      `/progress/material?learnerProfileId=${learnerProfileId}&materialId=${materialId}`,
     );
     return response.data.data;
   },

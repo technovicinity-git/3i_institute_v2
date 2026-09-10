@@ -40,9 +40,11 @@ export class ProgressService {
     }
 
     // FR-CERT-03: Video completes when ≥90% watched
+    // If completed flag is explicitly passed, honor it
     let completed = input.completed ?? false;
 
-    if (input.watchedSeconds !== undefined && material.duration) {
+    // If watchedSeconds provided and material has duration, calculate completion
+    if (!completed && input.watchedSeconds !== undefined && material.duration) {
       const watchedPercentage =
         (input.watchedSeconds / material.duration) * 100;
       completed = watchedPercentage >= 90;
@@ -174,6 +176,35 @@ export class ProgressService {
 
     if (totalMaterials === 0) return 0;
     return Math.round((completedMaterials / totalMaterials) * 100);
+  }
+
+  async getMaterialProgress(
+    accountId: string,
+    learnerProfileId: string,
+    materialId: string,
+  ) {
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    const progress = await prisma.materialProgress.findUnique({
+      where: {
+        materialId_learnerProfileId: {
+          materialId,
+          learnerProfileId,
+        },
+      },
+    });
+
+    return progress;
   }
 }
 

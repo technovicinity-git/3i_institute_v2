@@ -393,7 +393,10 @@ export class MaterialService {
     return "unknown";
   }
 
-  async getCourseContentForLearner(courseId: string) {
+  async getCourseContentForLearner(
+    courseId: string,
+    learnerProfileId?: string,
+  ) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
@@ -414,8 +417,22 @@ export class MaterialService {
       orderBy: { order: "asc" },
     });
 
+    // Get completed progress for this learner
+    let completedMaterialIds: Set<string> = new Set();
+
+    if (learnerProfileId) {
+      const progressRecords = await prisma.materialProgress.findMany({
+        where: {
+          learnerProfileId,
+          materialId: { in: materials.map((m) => m.id) },
+          completed: true,
+        },
+        select: { materialId: true },
+      });
+      completedMaterialIds = new Set(progressRecords.map((p) => p.materialId));
+    }
+
     // Group materials into modules
-    // For now, split materials into chunks of 5 as "modules"
     const moduleSize = 5;
     const modules = [];
 
@@ -433,19 +450,29 @@ export class MaterialService {
           duration: material.duration,
           order: material.order,
           captionUrl: material.captionUrl,
+          completed: completedMaterialIds.has(material.id),
         })),
       });
     }
+
+    // Calculate progress
+    const totalLessons = materials.length;
+    const completedLessons = completedMaterialIds.size;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
 
     return {
       courseId: course.id,
       courseTitle: course.title,
       modules,
-      totalLessons: materials.length,
+      totalLessons,
       totalDurationMinutes:
         course.totalDurationMinutes ||
         materials.reduce((sum, m) => sum + (m.duration ?? 0), 0) / 60,
-      progress: 0,
+      progress,
+      completedLessons,
     };
   }
 }

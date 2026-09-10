@@ -53,10 +53,14 @@ export class MaterialController {
     next: NextFunction,
   ) => {
     try {
-      const materials = await materialService.getCourseMaterials(
-        req.params["courseId"] as string,
+      const courseId = req.params["courseId"] as string;
+      const learnerProfileId = req.query["learnerProfileId"] as
+        string | undefined;
+      const result = await materialService.getCourseContentForLearner(
+        courseId,
+        learnerProfileId,
       );
-      sendSuccess(res, materials, 200);
+      sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
     }

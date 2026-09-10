@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { lessonService } from "@/services/lesson.service";
 
-export function useCourseContent(courseId: string) {
+export function useCourseContent(courseId: string, learnerProfileId?: string) {
   return useQuery({
-    queryKey: ["course-content", courseId],
-    queryFn: () => lessonService.getCourseContent(courseId),
+    queryKey: ["course-content", courseId, learnerProfileId],
+    queryFn: () => lessonService.getCourseContent(courseId, learnerProfileId),
     enabled: !!courseId,
   });
 }
@@ -50,17 +50,20 @@ export function useUpdateProgressMutation() {
       materialId,
       watchedSeconds,
       lastPosition,
+      completed,
     }: {
       learnerProfileId: string;
       materialId: string;
       watchedSeconds: number;
       lastPosition: number;
+      completed?: boolean;
     }) =>
       lessonService.updateProgress(
         learnerProfileId,
         materialId,
         watchedSeconds,
         lastPosition,
+        completed,
       ),
     onError: () => {
       // Silent fail for progress updates
@@ -74,5 +77,16 @@ export function useLessonVideoUrl(materialId: string) {
     queryFn: () => lessonService.getSignedUrl(materialId),
     enabled: !!materialId,
     staleTime: 50 * 60 * 1000, // 50 min (URL expires in 60 min)
+  });
+}
+
+export function useMaterialProgress(
+  learnerProfileId: string,
+  materialId: string,
+) {
+  return useQuery({
+    queryKey: ["material-progress", learnerProfileId, materialId],
+    queryFn: () => lessonService.getProgress(learnerProfileId, materialId),
+    enabled: !!learnerProfileId && !!materialId,
   });
 }
