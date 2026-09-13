@@ -511,33 +511,38 @@ export default function CourseDetailsPage() {
 
                     {course.isEnrolled ? (
                       <>
-                        {course.continueLessonId ? (
-                          <Link
-                            href={`/my-courses/${course.id}/lessons/${
-                              course.lastWatchedLessonId && !course.isCompleted
-                                ? course.lastWatchedLessonId
-                                : course.continueLessonId
-                            }`}
-                            className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center flex items-center justify-center gap-2"
-                          >
-                            {course.isCompleted ? (
-                              "Review Course"
-                            ) : course.lastWatchedLessonId ? (
-                              <>
-                                <Play className="w-4 h-4" />
-                                Continue Learning
-                              </>
+                        {course?.type === "REGULAR" && (
+                          <>
+                            {course.continueLessonId ? (
+                              <Link
+                                href={`/my-courses/${course.id}/lessons/${
+                                  course.lastWatchedLessonId &&
+                                  !course.isCompleted
+                                    ? course.lastWatchedLessonId
+                                    : course.continueLessonId
+                                }`}
+                                className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center flex items-center justify-center gap-2"
+                              >
+                                {course.isCompleted ? (
+                                  "Review Course"
+                                ) : course.lastWatchedLessonId ? (
+                                  <>
+                                    <Play className="w-4 h-4" />
+                                    Continue Learning
+                                  </>
+                                ) : (
+                                  "Start Learning"
+                                )}
+                              </Link>
                             ) : (
-                              "Start Learning"
+                              <button
+                                disabled
+                                className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
+                              >
+                                Lessons coming soon
+                              </button>
                             )}
-                          </Link>
-                        ) : (
-                          <button
-                            disabled
-                            className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
-                          >
-                            Lessons coming soon
-                          </button>
+                          </>
                         )}
                         {/* Chat Room Button */}
                         {course.type !== "REGULAR" && (
