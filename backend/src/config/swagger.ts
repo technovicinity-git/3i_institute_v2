@@ -18,7 +18,7 @@ const options: swaggerJsdoc.Options = {
       {
         url:
           env.NODE_ENV === "production"
-            ? "https://api.3iinstitute.edu"
+            ? "https://threei-institute-v2.onrender.com"
             : `http://localhost:${env.PORT}`,
         description:
           env.NODE_ENV === "production" ? "Production" : "Development",

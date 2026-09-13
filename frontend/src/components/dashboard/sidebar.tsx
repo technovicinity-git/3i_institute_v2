@@ -22,7 +22,7 @@ const navItems = [
   { label: "Assignments", icon: ClipboardList, href: "/assignments" },
   { label: "Exams", icon: FileText, href: "/exams" },
   { label: "Certificates", icon: Award, href: "/certificates" },
-  { label: "Notes", icon: StickyNote, href: "/notes" },
+  // { label: "Notes", icon: StickyNote, href: "/notes" },
   { label: "Wishlist", icon: Heart, href: "/wishlist" },
 ];
 
