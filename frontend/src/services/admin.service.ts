@@ -26,6 +26,9 @@ export interface AdminInstructor {
   bio: string | null;
   avatarUrl: string | null;
   courseCount: number;
+  _count: {
+    courses: number;
+  };
   createdAt: string;
 }
 
