@@ -182,13 +182,17 @@ export default function InstructorCoursesPage() {
                       <Edit className="w-4 h-4" />
                       Edit
                     </Link>
-                    <Link
-                      href={`/instructor/courses/${course.id}/materials`}
-                      className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
-                    >
-                      <Video className="w-4 h-4" />
-                      Materials
-                    </Link>
+
+                    {course.type === "REGULAR" && (
+                      <Link
+                        href={`/instructor/courses/${course.id}/materials`}
+                        className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
+                      >
+                        <Video className="w-4 h-4" />
+                        Materials
+                      </Link>
+                    )}
+
                     <Link
                       href={`/instructor/courses/${course.id}/batches`}
                       className="flex items-center gap-1 text-sm font-semibold text-[#7C3AED] hover:underline"
