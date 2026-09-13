@@ -300,7 +300,7 @@ export default function AdminInstructorsPage() {
                     <div className="flex items-center gap-3 text-sm text-[#64748B]">
                       <span className="flex items-center gap-1">
                         <BookOpen className="w-4 h-4" />
-                        {instructor.courseCount} courses
+                        {instructor?._count?.courses} courses
                       </span>
                       <span className="text-xs text-[#94A3B8]">
                         Joined {formatDate(instructor.createdAt)}
