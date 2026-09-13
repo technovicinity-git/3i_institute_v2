@@ -19,7 +19,7 @@ const createCourseSchema = z.object({
     .max(1000),
   description: z.string().min(10, "Description must be at least 10 characters"),
   category: z.string().min(1, "Category is required"),
-  type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]),
+  type: z.enum(["REGULAR", "ONLINE_CLASS"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
   minimumAge: z.number().int().min(5).max(18),
@@ -313,7 +313,6 @@ export default function CreateCoursePage() {
             >
               <option value="REGULAR">Regular (Self-paced)</option>
               <option value="ONLINE_CLASS">Online Class (Live)</option>
-              <option value="MIXED">Mixed</option>
             </select>
           </div>
 
