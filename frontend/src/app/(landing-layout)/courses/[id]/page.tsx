@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { RateReviewModal } from "@/components/review/rate-review-modal";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -28,14 +28,18 @@ import {
 import { toast } from "sonner";
 import { useCourseDetails } from "@/hooks/use-course-details";
 import { useProfileStore } from "@/stores/profile-store";
+import { useEnrolMutation } from "@/hooks/use-enrolment";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function CourseDetailsPage() {
   const [showRateModal, setShowRateModal] = useState(false);
   const { user } = useAuthStore();
   const params = useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const courseId = params.id as string;
   const { activeProfile } = useProfileStore();
-
+  const enrolMutation = useEnrolMutation();
   const {
     data: course,
     isLoading,
@@ -44,6 +48,37 @@ export default function CourseDetailsPage() {
 
   const [openFaq, setOpenFaq] = useState<number>(0);
   const [openModule, setOpenModule] = useState<number>(0);
+
+  const handleRegularEnrol = () => {
+    if (!activeProfile) {
+      toast.error("Please select a profile first");
+      router.push("/profiles");
+      return;
+    }
+
+    if (!course?.id) {
+      toast.error("Course not available");
+      return;
+    }
+
+    enrolMutation.mutate(
+      {
+        learnerProfileId: activeProfile.id,
+        courseId: course.id, // Now typed as string
+      },
+      {
+        onSuccess: () => {
+          toast.success("Enrolled successfully");
+          // router.push(
+          //   `/my-courses/${course.id}/lessons/${course.continueLessonId}`,
+          // );
+          queryClient.invalidateQueries({
+            queryKey: ["course-details", course.id, activeProfile.id],
+          });
+        },
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -529,7 +564,30 @@ export default function CourseDetailsPage() {
                     ) : (
                       <>
                         {/* Enrol button */}
-                        <Link
+
+                        {!course.isEnrolled &&
+                          (course.type === "REGULAR" ? (
+                            <button
+                              onClick={() => handleRegularEnrol()}
+                              className="w-full py-3 bg-[#22A146] text-white rounded-lg ..."
+                            >
+                              Enrol Now
+                            </button>
+                          ) : (
+                            <Link
+                              href={
+                                activeProfile
+                                  ? `/enrol/batch-selection?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&learnerProfileId=${activeProfile.id}`
+                                  : "/profiles"
+                              }
+                              className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
+                            >
+                              {activeProfile
+                                ? "View Enrolment Options"
+                                : "Select Profile First"}
+                            </Link>
+                          ))}
+                        {/* <Link
                           href={
                             activeProfile
                               ? `/enrol/batch-selection?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&learnerProfileId=${activeProfile.id}`
@@ -540,7 +598,7 @@ export default function CourseDetailsPage() {
                           {activeProfile
                             ? "View Enrolment Options"
                             : "Select Profile First"}
-                        </Link>
+                        </Link> */}
 
                         {/* Wishlist */}
                         <button
