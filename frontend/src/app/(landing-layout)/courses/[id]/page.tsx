@@ -540,13 +540,14 @@ export default function CourseDetailsPage() {
                           </button>
                         )}
                         {/* Chat Room Button */}
-                        <Link
-                          href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent("Your Batch")}`}
-                          className="w-full py-3 bg-[#12304E] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1a4268] transition-colors text-center"
-                        >
-                          Chat Room
-                        </Link>
-
+                        {course.type !== "REGULAR" && (
+                          <Link
+                            href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent("Your Batch")}`}
+                            className="w-full py-3 bg-[#12304E] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1a4268] transition-colors text-center"
+                          >
+                            Chat Room
+                          </Link>
+                        )}
                         {/* Go to Dashboard */}
                         <Link
                           href="/dashboard"
@@ -568,10 +569,18 @@ export default function CourseDetailsPage() {
                         {!course.isEnrolled &&
                           (course.type === "REGULAR" ? (
                             <button
-                              onClick={() => handleRegularEnrol()}
-                              className="w-full py-3 bg-[#22A146] text-white rounded-lg ..."
+                              onClick={handleRegularEnrol}
+                              disabled={enrolMutation.isPending}
+                              className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              Enrol Now
+                              {enrolMutation.isPending ? (
+                                <>
+                                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                  Enrolling...
+                                </>
+                              ) : (
+                                "Enrol Now"
+                              )}
                             </button>
                           ) : (
                             <Link
