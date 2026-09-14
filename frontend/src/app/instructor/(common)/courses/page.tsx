@@ -192,14 +192,15 @@ export default function InstructorCoursesPage() {
                         Materials
                       </Link>
                     )}
-
-                    <Link
-                      href={`/instructor/courses/${course.id}/batches`}
-                      className="flex items-center gap-1 text-sm font-semibold text-[#7C3AED] hover:underline"
-                    >
-                      <Calendar className="w-4 h-4" />
-                      Batches
-                    </Link>
+                    {course.type === "ONLINE_CLASS" && (
+                      <Link
+                        href={`/instructor/courses/${course.id}/batches`}
+                        className="flex items-center gap-1 text-sm font-semibold text-[#7C3AED] hover:underline"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Batches
+                      </Link>
+                    )}
                     <Link
                       href={`/instructor/courses/${course.id}/exams`}
                       className="flex items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline"

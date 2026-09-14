@@ -151,7 +151,7 @@ export default function BatchesPage() {
                       className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline"
                     >
                       <Eye className="w-4 h-4" />
-                      Details
+                      Sessions
                     </Link>
                     <Link
                       href={`/instructor/courses/${courseId}/batches/${batch.id}/edit`}
