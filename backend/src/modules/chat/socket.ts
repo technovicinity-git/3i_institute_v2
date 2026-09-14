@@ -125,7 +125,7 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             return;
           }
 
-          // Get learner profile display name
+          // Determine display name based on sender type
           let displayName = user.email;
 
           if (
@@ -135,24 +135,13 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             // Instructor — use their profile
             const instructor = await prisma.user.findUnique({
               where: { id: user.sub },
-              select: { firstName: true, lastName: true, avatarUrl: true },
+              select: { firstName: true, lastName: true },
             });
             if (instructor) {
               displayName = `${instructor.firstName} ${instructor.lastName}`;
-              avatarUrl = instructor.avatarUrl;
             }
           } else if (socket.data.learnerProfileId) {
             // Learner — use learner profile
-            const profile = await prisma.learnerProfile.findUnique({
-              where: { id: socket.data.learnerProfileId },
-              select: { displayName: true, avatarUrl: true },
-            });
-            if (profile) {
-              displayName = profile.displayName;
-              avatarUrl = profile.avatarUrl;
-            }
-          }
-          if (socket.data.learnerProfileId) {
             const profile = await prisma.learnerProfile.findUnique({
               where: { id: socket.data.learnerProfileId },
               select: { displayName: true },
@@ -162,7 +151,7 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             }
           }
 
-          // Service now returns avatarUrl
+          // Service fetches avatarUrl internally and returns it in the saved message
           const savedMessage = await chatService.sendMessage({
             courseId,
             batchId: batchId ?? null,

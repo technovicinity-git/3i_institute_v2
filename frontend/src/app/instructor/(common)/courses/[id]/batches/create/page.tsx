@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { useCreateBatchMutation } from "@/hooks/use-batches";
+import { useInstructorSessions } from "@/hooks/use-batches";
 
 const sessionSchema = z.object({
   title: z.string().min(1, "Session title is required"),
@@ -29,11 +29,12 @@ export default function CreateBatchPage() {
   const router = useRouter();
   const courseId = params.id as string;
   const createBatchMutation = useCreateBatchMutation();
-
+  const { data: existingSessions } = useInstructorSessions();
   const {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<CreateBatchFormData>({
     resolver: zodResolver(createBatchSchema),
@@ -158,74 +159,103 @@ export default function CreateBatchPage() {
           </div>
 
           <div className="space-y-4">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="border border-[#E3E8EF] rounded-lg p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#64748B]">
-                    Session {index + 1}
-                  </span>
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            {fields.map((field, index) => {
+              const sessionDate = watch(`sessions.${index}.scheduledAt`);
+              const sessionDuration =
+                watch(`sessions.${index}.durationMinutes`) || 60;
+
+              const hasConflict =
+                sessionDate &&
+                existingSessions?.some((existing) => {
+                  const newStart = new Date(sessionDate).getTime();
+                  const newEnd = newStart + sessionDuration * 60 * 1000;
+                  const existingStart = new Date(
+                    existing.scheduledAt,
+                  ).getTime();
+                  const existingEnd =
+                    existingStart + existing.durationMinutes * 60 * 1000;
+                  return newStart < existingEnd && existingStart < newEnd;
+                });
+
+              return (
+                <div
+                  key={field.id}
+                  className={`border rounded-lg p-4 space-y-3 ${
+                    hasConflict
+                      ? "border-yellow-300 bg-yellow-50/30"
+                      : "border-[#E3E8EF]"
+                  }`}
+                >
+                  {hasConflict && (
+                    <div className="flex items-center gap-2 text-xs text-yellow-700 bg-yellow-100 rounded-lg px-3 py-2">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      This session conflicts with an existing scheduled session.
+                    </div>
                   )}
-                </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[#64748B]">
+                      Session {index + 1}
+                    </span>
+                    {fields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1">
-                    Title
-                  </label>
-                  <input
-                    {...register(`sessions.${index}.title`)}
-                    placeholder="e.g. Week 1 - Introduction"
-                    className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold mb-1">
-                      Date & Time
+                      Title
                     </label>
                     <input
-                      type="datetime-local"
-                      {...register(`sessions.${index}.scheduledAt`)}
+                      {...register(`sessions.${index}.title`)}
+                      placeholder="e.g. Week 1 - Introduction"
                       className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Date & Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        {...register(`sessions.${index}.scheduledAt`)}
+                        className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Duration (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        {...register(`sessions.${index}.durationMinutes`, {
+                          valueAsNumber: true,
+                        })}
+                        className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold mb-1">
-                      Duration (minutes)
+                      Meeting Link (optional)
                     </label>
                     <input
-                      type="number"
-                      {...register(`sessions.${index}.durationMinutes`, {
-                        valueAsNumber: true,
-                      })}
+                      {...register(`sessions.${index}.meetingLink`)}
+                      placeholder="https://zoom.us/j/..."
                       className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold mb-1">
-                    Meeting Link (optional)
-                  </label>
-                  <input
-                    {...register(`sessions.${index}.meetingLink`)}
-                    placeholder="https://zoom.us/j/..."
-                    className="w-full px-4 py-2.5 border border-[#E3E8EF] rounded-lg text-sm"
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {errors.sessions && (
             <p className="mt-1 text-xs text-red-600">
