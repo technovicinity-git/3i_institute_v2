@@ -47,7 +47,23 @@ export class MaterialController {
     }
   };
 
+  // For instructor — flat list
   getCourseMaterials = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const courseId = req.params["courseId"] as string;
+      const result = await materialService.getCourseMaterials(courseId);
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // For learner — module-grouped
+  getCourseContent = async (
     req: Request,
     res: Response,
     next: NextFunction,

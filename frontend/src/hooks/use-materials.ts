@@ -63,3 +63,14 @@ export function useDeleteMaterialMutation() {
     },
   });
 }
+
+export function useSignedUrlMutation() {
+  return useMutation({
+    mutationFn: (materialId: string) =>
+      materialService.getSignedUrl(materialId),
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to load video");
+    },
+  });
+}
