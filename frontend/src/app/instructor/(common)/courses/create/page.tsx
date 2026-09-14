@@ -311,8 +311,8 @@ export default function CreateCoursePage() {
               {...register("type")}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
-              <option value="REGULAR">Regular (Self-paced)</option>
-              <option value="ONLINE_CLASS">Online Class (Live)</option>
+              <option value="REGULAR">Regular </option>
+              <option value="ONLINE_CLASS">Online Class</option>
             </select>
           </div>
 
@@ -372,7 +372,7 @@ export default function CreateCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-              Maximum Age (optional)
+              Maximum Age *
             </label>
             <input
               type="number"

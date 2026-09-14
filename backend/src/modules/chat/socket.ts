@@ -45,12 +45,45 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
     // Join course chat room
     socket.on(
       "join-course",
-      (data: {
+      async (data: {
         courseId: string;
         batchId?: string;
         learnerProfileId?: string;
       }) => {
         const { courseId, batchId, learnerProfileId } = data;
+
+        // Verify instructor owns the course OR learner is enrolled
+        const user = socket.data.user;
+
+        const course = await prisma.course.findUnique({
+          where: { id: courseId },
+          select: { instructorId: true },
+        });
+
+        const isInstructor = course?.instructorId === user.sub;
+        const isAdmin = user.role === "Admin";
+
+        // If not instructor/admin, verify learner is enrolled
+        if (!isInstructor && !isAdmin) {
+          if (!learnerProfileId) {
+            socket.emit("error", { message: "learnerProfileId required" });
+            return;
+          }
+
+          const enrolment = await prisma.enrolment.findFirst({
+            where: {
+              learnerProfileId,
+              courseId,
+              ...(batchId ? { batchId } : {}),
+              waitlisted: false,
+            },
+          });
+
+          if (!enrolment) {
+            socket.emit("error", { message: "Not enrolled in this course" });
+            return;
+          }
+        }
         const roomName = batchId
           ? `course:${courseId}:batch:${batchId}`
           : `course:${courseId}`;
@@ -94,6 +127,32 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
 
           // Get learner profile display name
           let displayName = user.email;
+          let avatarUrl = null;
+
+          if (
+            socket.data.isInstructor ||
+            socket.data.isInstructor === undefined
+          ) {
+            // Instructor — use their profile
+            const instructor = await prisma.user.findUnique({
+              where: { id: user.sub },
+              select: { firstName: true, lastName: true, avatarUrl: true },
+            });
+            if (instructor) {
+              displayName = `${instructor.firstName} ${instructor.lastName}`;
+              avatarUrl = instructor.avatarUrl;
+            }
+          } else if (socket.data.learnerProfileId) {
+            // Learner — use learner profile
+            const profile = await prisma.learnerProfile.findUnique({
+              where: { id: socket.data.learnerProfileId },
+              select: { displayName: true, avatarUrl: true },
+            });
+            if (profile) {
+              displayName = profile.displayName;
+              avatarUrl = profile.avatarUrl;
+            }
+          }
           if (socket.data.learnerProfileId) {
             const profile = await prisma.learnerProfile.findUnique({
               where: { id: socket.data.learnerProfileId },

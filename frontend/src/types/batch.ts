@@ -12,7 +12,13 @@ export interface Session {
 export interface Batch {
   id: string;
   courseId: string;
-  courseTitle: string;
+  courseTitle?: string;
+  course?: {
+    id: string;
+    title: string;
+    type: string;
+    minimumAge: number;
+  };
   name: string;
   capacity: number;
   status: BatchStatus;

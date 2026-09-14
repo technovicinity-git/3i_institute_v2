@@ -193,6 +193,16 @@ export default function InstructorCoursesPage() {
                       </Link>
                     )}
 
+                    {course.type === "ONLINE_CLASS" && (
+                      <Link
+                        href={`/courses/${course.id}/materials`}
+                        className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
+                      >
+                        <Video className="w-4 h-4" />
+                        Chat Room
+                      </Link>
+                    )}
+
                     <Link
                       href={`/instructor/courses/${course.id}/batches`}
                       className="flex items-center gap-1 text-sm font-semibold text-[#7C3AED] hover:underline"
