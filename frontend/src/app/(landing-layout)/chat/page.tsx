@@ -1,20 +1,12 @@
 "use client";
 
 import { useState, Suspense, useRef, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import {
-  Calendar,
-  ArrowRight,
-  Flag,
-  Send,
-  Wifi,
-  WifiOff,
-  Loader2,
-} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Flag, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
-import type { ChatMessage } from "@/types/chat";
 import Image from "next/image";
+import { useAuthStore } from "@/stores/auth-store";
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -46,12 +38,12 @@ function getInitials(name: string): string {
 
 function ChatContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const courseId = searchParams.get("courseId") ?? "";
   const courseTitle = searchParams.get("courseTitle") ?? "Course";
   const batchId = searchParams.get("batchId") ?? null;
   const batchName = searchParams.get("batchName") ?? "Batch";
 
+  const { user } = useAuthStore();
   const { activeProfile } = useProfileStore();
   const { messages, isLoading, isConnected, sendMessage, reportMessage } =
     useChat(courseId, batchId);
@@ -98,7 +90,9 @@ function ChatContent() {
     setReportReason("");
   };
 
-  const displayName = activeProfile?.displayName ?? "You";
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+    : (activeProfile?.displayName ?? "You");
 
   return (
     <div className="w-full max-w-[900px] mx-auto bg-white border-x border-[#E3E8EF] min-h-screen flex flex-col">
@@ -149,9 +143,7 @@ function ChatContent() {
           )}
 
           {messages.map((msg, index) => {
-            const isSelf =
-              msg.senderId === activeProfile?.accountId ||
-              msg.displayName === displayName;
+            const isSelf = msg.senderId === user?.id;
 
             // Show date separator
             const showDate =
@@ -197,8 +189,16 @@ function ChatContent() {
                             height={32}
                             className="object-cover w-full h-full"
                           />
+                        ) : user?.avatarUrl ? (
+                          <Image
+                            src={user.avatarUrl}
+                            alt={displayName}
+                            width={32}
+                            height={32}
+                            className="object-cover w-full h-full"
+                          />
                         ) : (
-                          <span className="text-[13px] font-bold text-[#0C1F33] bg-[#E3E8EF]">
+                          <span className="text-[13px] font-bold text-[#0C1F33] bg-[#E3E8EF] w-full h-full flex items-center justify-center">
                             {getInitials(displayName)}
                           </span>
                         )}
