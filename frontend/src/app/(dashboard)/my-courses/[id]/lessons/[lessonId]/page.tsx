@@ -15,10 +15,12 @@ import {
 } from "@/hooks/use-lesson";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const courseId = params.id as string;
   const lessonId = params.lessonId as string;
 
@@ -63,16 +65,28 @@ export default function LessonPage() {
         const videoDuration = videoElement?.duration ?? 0;
         const isComplete = videoDuration > 0 && seconds >= videoDuration * 0.9;
 
-        updateProgressMutation.mutate({
-          learnerProfileId: activeProfile.id,
-          materialId: lessonId,
-          watchedSeconds: Math.floor(seconds),
-          lastPosition: Math.floor(position),
-          completed: isComplete,
-        });
+        updateProgressMutation.mutate(
+          {
+            learnerProfileId: activeProfile.id,
+            materialId: lessonId,
+            watchedSeconds: Math.floor(seconds),
+            lastPosition: Math.floor(position),
+            completed: isComplete,
+          },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["material-progress"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["course-content", courseId, activeProfile.id],
+              });
+            },
+          },
+        );
       }, 5000);
     },
-    [activeProfile, lessonId, updateProgressMutation],
+    [queryClient, activeProfile, lessonId, updateProgressMutation, courseId],
   );
 
   // Cleanup on unmount

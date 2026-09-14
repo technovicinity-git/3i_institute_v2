@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -105,6 +106,7 @@ export default function CourseMaterialsPage() {
   // Simulated progress bar — moves toward 95% while uploading
   useEffect(() => {
     if (uploadVideoMutation.isPending) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUploadProgress(0);
       progressIntervalRef.current = setInterval(() => {
         setUploadProgress((prev) => {
