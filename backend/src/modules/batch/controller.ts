@@ -111,6 +111,34 @@ export class BatchController {
       next(error);
     }
   };
+
+  getInstructorSessions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const sessions = await batchService.getInstructorSessions(instructorId);
+      sendSuccess(res, sessions, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getInstructorBatches = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const batches = await batchService.getInstructorBatches(instructorId);
+      sendSuccess(res, batches, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const batchController = new BatchController();

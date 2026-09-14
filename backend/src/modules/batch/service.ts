@@ -294,6 +294,83 @@ export class BatchService {
       learners,
     };
   }
+
+  async getInstructorSessions(instructorId: string) {
+    const sessions = await prisma.session.findMany({
+      where: {
+        batch: {
+          course: { instructorId },
+        },
+        scheduledAt: { gte: new Date() },
+      },
+      include: {
+        batch: {
+          include: {
+            course: {
+              select: { id: true, title: true },
+            },
+            _count: {
+              select: {
+                enrolments: { where: { waitlisted: false } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    return sessions.map((session) => ({
+      id: session.id,
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      durationMinutes: session.durationMinutes,
+      meetingLink: session.meetingLink,
+      notes: session.notes,
+      batchId: session.batchId,
+      batchName: session.batch.name,
+      courseId: session.batch.course.id,
+      courseTitle: session.batch.course.title,
+      enrolmentCount: session.batch._count.enrolments,
+    }));
+  }
+
+  async getInstructorBatches(instructorId: string) {
+    const batches = await prisma.batch.findMany({
+      where: {
+        course: { instructorId },
+      },
+      include: {
+        course: {
+          select: { id: true, title: true },
+        },
+        _count: {
+          select: {
+            enrolments: { where: { waitlisted: false } },
+            sessions: true,
+          },
+        },
+        sessions: {
+          where: { scheduledAt: { gte: new Date() } },
+          orderBy: { scheduledAt: "asc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return batches.map((batch) => ({
+      id: batch.id,
+      name: batch.name,
+      courseId: batch.course.id,
+      courseTitle: batch.course.title,
+      capacity: batch.capacity,
+      status: batch.status,
+      enrolmentCount: batch._count.enrolments,
+      sessionCount: batch._count.sessions,
+      nextSessionAt: batch.sessions[0]?.scheduledAt ?? null,
+    }));
+  }
 }
 
 export const batchService = new BatchService();

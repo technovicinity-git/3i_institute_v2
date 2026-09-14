@@ -47,3 +47,29 @@ export interface AddSessionInput {
   meetingLink?: string;
   notes?: string;
 }
+
+export interface InstructorSession {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetingLink: string | null;
+  notes: string | null;
+  batchId: string;
+  batchName: string;
+  courseId: string;
+  courseTitle: string;
+  enrolmentCount: number;
+}
+
+export interface InstructorBatch {
+  id: string;
+  name: string;
+  courseId: string;
+  courseTitle: string;
+  capacity: number;
+  status: string;
+  enrolmentCount: number;
+  sessionCount: number;
+  nextSessionAt: string | null;
+}
