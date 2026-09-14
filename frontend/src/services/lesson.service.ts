@@ -51,40 +51,10 @@ export const lessonService = {
       ? `?learnerProfileId=${learnerProfileId}`
       : "";
     const response = await apiClient.get(
-      `/materials/course/${courseId}${params}`,
+      `/materials/course/${courseId}/content${params}`,
     );
-
-    // If response is already in CourseLessonPage format (has modules property)
-    if (response.data.data?.modules) {
-      return response.data.data;
-    }
-
-    // Otherwise transform the array
-    const materials = response.data.data;
-    const moduleSize = 5;
-    const modules = [];
-
-    for (let i = 0; i < materials.length; i += moduleSize) {
-      const moduleMaterials = materials.slice(i, i + moduleSize);
-      modules.push({
-        id: `module-${Math.floor(i / moduleSize) + 1}`,
-        title: `Module ${Math.floor(i / moduleSize) + 1}`,
-        order: Math.floor(i / moduleSize),
-        lessons: moduleMaterials,
-      });
-    }
-
-    return {
-      courseId,
-      courseTitle: "Course Content",
-      modules,
-      totalLessons: materials.length,
-      totalDurationMinutes: 0,
-      progress: 0,
-      completedLessons: 0,
-    };
+    return response.data.data;
   },
-
   getLessonNotes: async (learnerProfileId: string, materialId: string) => {
     const response = await apiClient.get(
       `/notes?learnerProfileId=${learnerProfileId}&materialId=${materialId}`,

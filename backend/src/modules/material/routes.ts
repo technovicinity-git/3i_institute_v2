@@ -114,7 +114,19 @@ router.post(
  *       200:
  *         description: List of materials
  */
-router.get("/course/:courseId", materialController.getCourseMaterials);
+// Instructor — flat list
+router.get(
+  "/course/:courseId",
+  authenticate,
+  materialController.getCourseMaterials,
+);
+
+// Learner — grouped content
+router.get(
+  "/course/:courseId/content",
+  authenticate,
+  materialController.getCourseContent,
+);
 
 /**
  * @swagger

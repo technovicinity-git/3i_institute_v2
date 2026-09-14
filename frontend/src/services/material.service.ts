@@ -49,4 +49,11 @@ export const materialService = {
   deleteMaterial: async (materialId: string): Promise<void> => {
     await apiClient.delete(`/materials/${materialId}`);
   },
+
+  getSignedUrl: async (
+    materialId: string,
+  ): Promise<{ url: string; expiresIn: number }> => {
+    const response = await apiClient.get(`/materials/${materialId}/signed-url`);
+    return response.data.data;
+  },
 };
