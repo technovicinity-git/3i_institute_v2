@@ -106,10 +106,10 @@ export default function BatchDetailsPage() {
     <div className="p-6 md:p-10 max-w-[900px] mx-auto">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/batches`)}
+          onClick={() => router.back()}
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to batches
+          ← Back
         </button>
 
         {isLoading && (

@@ -79,6 +79,19 @@ router.get(
  */
 router.get("/course/:courseId", batchController.getCourseBatches);
 
+router.get(
+  "/instructor/sessions",
+  authenticate,
+  authorize("batches.create"),
+  batchController.getInstructorSessions,
+);
+
+router.get(
+  "/instructor/all",
+  authenticate,
+  authorize("batches.create"),
+  batchController.getInstructorBatches,
+);
 /**
  * @swagger
  * /api/v1/batches/{id}:

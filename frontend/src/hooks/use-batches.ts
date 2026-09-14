@@ -65,3 +65,19 @@ export function useCloseBatchMutation() {
     },
   });
 }
+
+export function useInstructorSessions() {
+  return useQuery({
+    queryKey: ["instructor-sessions"],
+    queryFn: () => batchService.getAllInstructorSessions(),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useInstructorBatches() {
+  return useQuery({
+    queryKey: ["instructor-batches"],
+    queryFn: () => batchService.getInstructorBatches(),
+    staleTime: 60 * 1000,
+  });
+}

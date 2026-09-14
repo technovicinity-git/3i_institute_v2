@@ -4,6 +4,8 @@ import type {
   CreateBatchInput,
   AddSessionInput,
   Session,
+  InstructorSession,
+  InstructorBatch,
 } from "@/types/batch";
 
 export const batchService = {
@@ -43,6 +45,16 @@ export const batchService = {
 
   closeBatch: async (batchId: string): Promise<Batch> => {
     const response = await apiClient.post(`/batches/${batchId}/close`);
+    return response.data.data;
+  },
+
+  getAllInstructorSessions: async (): Promise<InstructorSession[]> => {
+    const response = await apiClient.get("/batches/instructor/sessions");
+    return response.data.data;
+  },
+
+  getInstructorBatches: async (): Promise<InstructorBatch[]> => {
+    const response = await apiClient.get("/batches/instructor/all");
     return response.data.data;
   },
 };
