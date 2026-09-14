@@ -2,11 +2,11 @@
 
 import { useState, Suspense, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Flag, Wifi, WifiOff, Loader2 } from "lucide-react";
+import { ArrowRight, Flag, Wifi, WifiOff, Loader2, Hash } from "lucide-react";
 import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
-import Image from "next/image";
 import { useAuthStore } from "@/stores/auth-store";
+import Image from "next/image";
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -43,8 +43,8 @@ function ChatContent() {
   const batchId = searchParams.get("batchId") ?? null;
   const batchName = searchParams.get("batchName") ?? "Batch";
 
-  const { user } = useAuthStore();
   const { activeProfile } = useProfileStore();
+  const { user } = useAuthStore();
   const { messages, isLoading, isConnected, sendMessage, reportMessage } =
     useChat(courseId, batchId);
 
@@ -54,11 +54,26 @@ function ChatContent() {
   const [reportReason, setReportReason] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (autoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, autoScroll]);
+
+  // Detect user scrolling up
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
+    setAutoScroll(isNearBottom);
+  };
 
   const handleSend = () => {
     if (!newMessage.trim() || sending) return;
@@ -67,6 +82,7 @@ function ChatContent() {
     sendMessage(newMessage);
     setNewMessage("");
     setSending(false);
+    setAutoScroll(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -90,34 +106,47 @@ function ChatContent() {
     setReportReason("");
   };
 
-  const displayName = user?.firstName
-    ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+  // Determine display name based on role
+  const isInstructor =
+    user?.role === "Instructor" ||
+    (typeof user?.role === "object" && user?.role?.name === "Instructor");
+
+  const displayName = isInstructor
+    ? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim()
     : (activeProfile?.displayName ?? "You");
 
   return (
-    <div className="w-full max-w-[900px] mx-auto bg-white border-x border-[#E3E8EF] min-h-screen flex flex-col">
+    <div className="w-full max-w-[900px] mx-auto bg-white border-x border-[#E3E8EF] h-[calc(100vh-73px)] flex flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="px-6 pt-6 pb-4 border-b border-[#E3E8EF]">
+      <div className="px-6 py-5 border-b border-[#E3E8EF] shrink-0 bg-white">
         <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className="text-[24px] sm:text-[32px] leading-[32px] sm:leading-[40px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
-            >
-              {courseTitle} — {batchName}
-            </h1>
-            <p className="mt-1 text-[13px] text-[#475569]">Class chat</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-[#F9F6F0] flex items-center justify-center shrink-0">
+              <Hash className="w-5 h-5 text-[#B8912F]" />
+            </div>
+            <div className="min-w-0">
+              <h1
+                className="text-[20px] sm:text-[24px] leading-tight text-[#0C1F33] truncate"
+                style={{ fontFamily: "'Marcellus', serif" }}
+              >
+                {courseTitle}
+              </h1>
+              <p className="text-[13px] text-[#475569] mt-0.5">
+                {batchName} • Class chat
+              </p>
+            </div>
           </div>
-          {/* Connection status */}
           <span
-            className={`flex items-center gap-1.5 text-xs font-semibold ${
-              isConnected ? "text-[#22A146]" : "text-gray-400"
+            className={`flex items-center gap-1.5 text-xs font-semibold shrink-0 px-3 py-1.5 rounded-full ${
+              isConnected
+                ? "bg-[#22A146]/10 text-[#22A146]"
+                : "bg-gray-100 text-gray-500"
             }`}
           >
             {isConnected ? (
-              <Wifi className="w-4 h-4" />
+              <Wifi className="w-3.5 h-3.5" />
             ) : (
-              <WifiOff className="w-4 h-4" />
+              <WifiOff className="w-3.5 h-3.5" />
             )}
             {isConnected ? "Live" : "Offline"}
           </span>
@@ -131,12 +160,19 @@ function ChatContent() {
         </div>
       )}
 
-      {/* Messages */}
+      {/* Scrollable Messages */}
       {!isLoading && (
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
+        <div
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-1 scroll-smooth"
+        >
           {messages.length === 0 && (
-            <div className="text-center py-10">
-              <p className="text-[#64748B] text-sm">
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="w-16 h-16 rounded-full bg-[#F9F6F0] flex items-center justify-center mb-4">
+                <Hash className="w-8 h-8 text-[#B8912F]" />
+              </div>
+              <p className="text-[#64748B] text-sm max-w-xs">
                 No messages yet. Say hello to your classmates!
               </p>
             </div>
@@ -151,100 +187,109 @@ function ChatContent() {
               new Date(msg.createdAt).toDateString() !==
                 new Date(messages[index - 1]!.createdAt).toDateString();
 
+            // Show sender name only if previous message is from a different user
+            const showSenderName =
+              index === 0 ||
+              messages[index - 1]!.senderId !== msg.senderId ||
+              showDate;
+
             return (
               <div key={msg.id}>
                 {showDate && (
-                  <div className="flex items-center justify-center my-4">
-                    <span className="text-[11px] font-semibold text-[#64748B] bg-[#FBF9F4] px-3 py-1 rounded-full">
+                  <div className="flex items-center justify-center my-6">
+                    <span className="text-[11px] font-semibold text-[#64748B] bg-[#FBF9F4] border border-[#E3E8EF] px-3 py-1 rounded-full">
                       {formatDate(msg.createdAt)}
                     </span>
                   </div>
                 )}
 
                 {isSelf ? (
-                  <div className="flex items-end gap-3 justify-end">
+                  <div className="flex items-end gap-3 justify-end mb-1">
                     <div className="flex-1 max-w-[564px]">
-                      <div className="flex items-center gap-2 mb-1 justify-end">
-                        <span className="text-[13px] text-[#475569]">
-                          {formatTime(msg.createdAt)}
-                        </span>
-                        <span className="text-[15px] font-bold text-[#0C1F33]">
-                          You
-                        </span>
-                      </div>
-                      <div className="bg-[#22A146] rounded-lg px-3 py-3">
-                        <p className="text-base text-[#0C1F33] leading-6">
+                      {showSenderName && (
+                        <div className="flex items-center gap-2 mb-1 justify-end">
+                          <span className="text-[13px] text-[#475569]">
+                            {formatTime(msg.createdAt)}
+                          </span>
+                          <span className="text-[13px] font-bold text-[#0C1F33]">
+                            You
+                          </span>
+                        </div>
+                      )}
+                      <div className="bg-[#22A146] rounded-lg px-3.5 py-2.5">
+                        <p className="text-[15px] text-[#0C1F33] leading-6">
                           {msg.message}
                         </p>
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                      {/* Self message avatar */}
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                        {activeProfile?.avatarUrl ? (
-                          <Image
-                            src={activeProfile.avatarUrl}
-                            alt={activeProfile.displayName}
-                            width={32}
-                            height={32}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : user?.avatarUrl ? (
-                          <Image
-                            src={user.avatarUrl}
-                            alt={displayName}
-                            width={32}
-                            height={32}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <span className="text-[13px] font-bold text-[#0C1F33] bg-[#E3E8EF] w-full h-full flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                      {activeProfile?.avatarUrl ? (
+                        <Image
+                          src={activeProfile.avatarUrl}
+                          alt={activeProfile.displayName}
+                          width={32}
+                          height={32}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : user?.avatarUrl ? (
+                        <Image
+                          src={user.avatarUrl}
+                          alt={displayName}
+                          width={32}
+                          height={32}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#22A146] flex items-center justify-center">
+                          <span className="text-[11px] font-bold text-[#0C1F33]">
                             {getInitials(displayName)}
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#E3E8EF] flex items-center justify-center shrink-0">
-                      {/* Other message avatar */}
-                      <div className="w-8 h-8 rounded-full bg-[#E3E8EF] flex items-center justify-center shrink-0 overflow-hidden">
-                        {msg.avatarUrl ? (
-                          <Image
-                            src={msg.avatarUrl}
-                            alt={msg.displayName}
-                            width={32}
-                            height={32}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <span className="text-[13px] font-bold text-[#0C1F33]">
+                  <div className="flex items-end gap-3 mb-1">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                      {msg.avatarUrl ? (
+                        <Image
+                          src={msg.avatarUrl}
+                          alt={msg.displayName}
+                          width={32}
+                          height={32}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#E3E8EF] flex items-center justify-center">
+                          <span className="text-[11px] font-bold text-[#0C1F33]">
                             {getInitials(msg.displayName)}
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 max-w-[564px]">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[15px] font-bold text-[#0C1F33]">
-                          {msg.displayName}
-                        </span>
-                        <span className="text-[13px] text-[#475569]">
-                          {formatTime(msg.createdAt)}
-                        </span>
-                      </div>
-                      <div className="group relative bg-white border border-[#E3E8EF] rounded-lg px-3 py-3">
-                        <p className="text-base text-[#475569] leading-6">
-                          {msg.message}
-                        </p>
-                        {/* Report button */}
+                      {showSenderName && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[13px] font-bold text-[#0C1F33]">
+                            {msg.displayName}
+                          </span>
+                          <span className="text-[11px] text-[#475569]">
+                            {formatTime(msg.createdAt)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="group relative inline-block max-w-full">
+                        <div className="bg-white border border-[#E3E8EF] rounded-lg px-3.5 py-2.5">
+                          <p className="text-[15px] text-[#0C1F33] leading-6 break-words">
+                            {msg.message}
+                          </p>
+                        </div>
                         <button
                           onClick={() => handleReport(msg.id)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center w-[22px] h-[22px] bg-[#FBF9F4] rounded hover:bg-[#F0EDE6]"
+                          className="absolute -right-8 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center w-7 h-7 bg-white border border-[#E3E8EF] rounded-full hover:bg-[#FBF9F4]"
                           title="Report message"
                         >
-                          <Flag className="w-[14px] h-[14px] text-[#475569]" />
+                          <Flag className="w-3.5 h-3.5 text-[#475569]" />
                         </button>
                       </div>
                     </div>
@@ -258,20 +303,20 @@ function ChatContent() {
       )}
 
       {/* Composer */}
-      <div className="flex items-center gap-3 px-5 py-5 border-t border-[#E3E8EF] bg-white">
+      <div className="flex items-center gap-3 px-5 py-4 border-t border-[#E3E8EF] bg-white shrink-0">
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={isConnected ? "Type a message..." : "Connecting..."}
           disabled={!isConnected}
           className="flex-1 h-[42px] px-4 bg-[#FBF9F4] border border-[#E3E8EF] rounded-lg text-[15px] text-[#0C1F33] placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-[#22A146]/30 focus:border-[#22A146] disabled:opacity-50"
         />
         <button
           onClick={handleSend}
-          disabled={!newMessage.trim() || !isConnected}
-          className="flex items-center gap-2 h-[42px] px-6 bg-[#22A146] hover:bg-[#1B8A3A] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          disabled={!newMessage.trim() || !isConnected || sending}
+          className="flex items-center gap-2 h-[42px] px-5 bg-[#22A146] hover:bg-[#1B8A3A] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="text-[15px] font-semibold text-[#0C1F33]">Send</span>
           <ArrowRight className="w-4 h-4 text-[#0C1F33]" strokeWidth={2} />
@@ -297,7 +342,7 @@ function ChatContent() {
               onChange={(e) => setReportReason(e.target.value)}
               rows={3}
               placeholder="Explain why this message should be reviewed..."
-              className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm mb-4"
+              className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm mb-4 focus:outline-none focus:border-[#22A146]"
             />
             <div className="flex gap-3">
               <button
