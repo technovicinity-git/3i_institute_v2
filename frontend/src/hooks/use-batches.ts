@@ -19,11 +19,17 @@ export function useCreateBatchMutation() {
     mutationFn: (input: CreateBatchInput) => batchService.createBatch(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-batches"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-batches"] });
       toast.success("Batch created successfully");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to create batch");
+      if (message?.toLowerCase().includes("conflict")) {
+        toast.error(message, { duration: 6000 });
+      } else {
+        toast.error(message ?? "Failed to create batch");
+      }
     },
   });
 }
@@ -41,11 +47,17 @@ export function useAddSessionMutation() {
     }) => batchService.addSession(batchId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-batches"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-batches"] });
       toast.success("Session added");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to add session");
+      if (message?.toLowerCase().includes("conflict")) {
+        toast.error(message, { duration: 6000 });
+      } else {
+        toast.error(message ?? "Failed to add session");
+      }
     },
   });
 }

@@ -32,6 +32,48 @@ export class BatchService {
       throw new ValidationError("Regular courses do not have batches");
     }
 
+    // FR: Check for schedule conflicts with existing sessions
+    const existingSessions = await prisma.session.findMany({
+      where: {
+        batch: {
+          course: { instructorId },
+        },
+      },
+      include: {
+        batch: {
+          include: {
+            course: { select: { title: true } },
+          },
+        },
+      },
+    });
+
+    const conflicts: string[] = [];
+
+    for (const newSession of input.sessions) {
+      const newStart = new Date(newSession.scheduledAt).getTime();
+      const newEnd = newStart + newSession.durationMinutes * 60 * 1000;
+
+      for (const existing of existingSessions) {
+        const existingStart = new Date(existing.scheduledAt).getTime();
+        const existingEnd =
+          existingStart + existing.durationMinutes * 60 * 1000;
+
+        // Overlap: newStart < existingEnd AND existingStart < newEnd
+        if (newStart < existingEnd && existingStart < newEnd) {
+          conflicts.push(
+            `"${newSession.title}" conflicts with "${existing.title}" on ${existing.batch.course.title} — ${existing.batch.name}`,
+          );
+        }
+      }
+    }
+
+    if (conflicts.length > 0) {
+      throw new ValidationError(
+        `Schedule conflict detected: ${conflicts.join("; ")}`,
+      );
+    }
+
     const batch = await prisma.batch.create({
       data: {
         courseId: input.courseId,
@@ -156,6 +198,45 @@ export class BatchService {
 
     if (batch.course.instructorId !== instructorId) {
       throw new ForbiddenError("You can only modify your own batches");
+    }
+
+    // Check for conflicts with existing sessions (excluding this batch's own sessions)
+    const existingSessions = await prisma.session.findMany({
+      where: {
+        batch: {
+          course: { instructorId },
+        },
+        NOT: { batchId },
+      },
+      include: {
+        batch: {
+          include: {
+            course: { select: { title: true } },
+          },
+        },
+      },
+    });
+
+    const newStart = new Date(input.scheduledAt).getTime();
+    const newEnd = newStart + input.durationMinutes * 60 * 1000;
+
+    const conflicts: string[] = [];
+
+    for (const existing of existingSessions) {
+      const existingStart = new Date(existing.scheduledAt).getTime();
+      const existingEnd = existingStart + existing.durationMinutes * 60 * 1000;
+
+      if (newStart < existingEnd && existingStart < newEnd) {
+        conflicts.push(
+          `Conflicts with "${existing.title}" on ${existing.batch.course.title} — ${existing.batch.name}`,
+        );
+      }
+    }
+
+    if (conflicts.length > 0) {
+      throw new ValidationError(
+        `Schedule conflict detected: ${conflicts.join("; ")}`,
+      );
     }
 
     const session = await prisma.session.create({
