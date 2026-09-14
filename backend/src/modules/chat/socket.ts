@@ -127,7 +127,6 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
 
           // Get learner profile display name
           let displayName = user.email;
-          let avatarUrl = null;
 
           if (
             socket.data.isInstructor ||
