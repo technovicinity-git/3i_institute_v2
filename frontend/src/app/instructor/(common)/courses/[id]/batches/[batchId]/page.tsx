@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Users, Calendar, Clock, Plus, Video } from "lucide-react";
+import {
+  Users,
+  Calendar,
+  Clock,
+  Plus,
+  Video,
+  MessageSquare,
+} from "lucide-react";
 import { batchService } from "@/services/batch.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -132,13 +139,23 @@ export default function BatchDetailsPage() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setShowAddSession(!showAddSession)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold"
-              >
-                <Plus className="w-4 h-4" />
-                Add Session
-              </button>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(batch.course?.title ?? "Course")}&batchId=${batchId}&batchName=${encodeURIComponent(batch.name)}`}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268]"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Open Chat
+                </Link>
+                <button
+                  onClick={() => setShowAddSession(!showAddSession)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Session
+                </button>
+              </div>
             </div>
 
             {/* Add session form */}
