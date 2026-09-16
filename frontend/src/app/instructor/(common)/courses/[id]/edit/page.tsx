@@ -152,13 +152,15 @@ export default function EditCoursePage() {
         >
           ← Back to courses
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}
         >
           Edit Course
         </h1>
-        <CourseActions courseId={course.id} courseType={course.type} />
       </div>
 
       <form

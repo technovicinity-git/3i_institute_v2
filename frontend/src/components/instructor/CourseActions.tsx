@@ -66,7 +66,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   ];
 
   return (
-    <div className="w-full mt-6">
+    <div className="w-full mt-2 mb-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Navigation */}
         <nav

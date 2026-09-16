@@ -76,6 +76,9 @@ export default function BatchesPage() {
         >
           ← Back to courses
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1
@@ -98,9 +101,6 @@ export default function BatchesPage() {
             Create Batch
           </button>
         </div>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
       </div>
 
       {/* Loading */}
