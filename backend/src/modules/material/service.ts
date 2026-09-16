@@ -118,6 +118,7 @@ export class MaterialService {
         data: {
           courseId: input.courseId,
           title: input.title,
+          description: input.description || null,
           type: "video",
           url: video.guid,
           order: input.order,
@@ -311,10 +312,18 @@ export class MaterialService {
       throw new ForbiddenError("You can only update your own materials");
     }
 
-    return prisma.material.update({
+    const updated = await prisma.material.update({
       where: { id: materialId },
-      data: input,
+      data: {
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.description !== undefined && {
+          description: input.description || null,
+        }),
+        ...(input.order !== undefined && { order: input.order }),
+      },
     });
+
+    return updated;
   }
 
   async delete(instructorId: string, materialId: string) {
@@ -445,6 +454,7 @@ export class MaterialService {
         lessons: moduleMaterials.map((material) => ({
           id: material.id,
           title: material.title,
+          description: material.description ?? null,
           type: material.type,
           url: material.url,
           duration: material.duration,

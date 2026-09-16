@@ -3,6 +3,7 @@ import { apiClient } from "@/lib/api-client";
 export interface Material {
   id: string;
   title: string;
+  description?: string | null;
   type: "video" | "document" | "audio" | "link";
   duration: number | null;
   order: number;
@@ -54,6 +55,14 @@ export const materialService = {
     materialId: string,
   ): Promise<{ url: string; expiresIn: number }> => {
     const response = await apiClient.get(`/materials/${materialId}/signed-url`);
+    return response.data.data;
+  },
+
+  updateMaterial: async (
+    materialId: string,
+    input: { title?: string; description?: string; order?: number },
+  ): Promise<Material> => {
+    const response = await apiClient.patch(`/materials/${materialId}`, input);
     return response.data.data;
   },
 };
