@@ -8,7 +8,7 @@ export interface InstructorCourse {
   thumbnailUrl: string | null;
   coverImageUrl: string | null;
   category: string;
-  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
+  type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;
   minimumAge: number;
@@ -36,7 +36,7 @@ export interface CreateCourseInput {
   thumbnailUrl?: string;
   coverImageUrl?: string;
   category: string;
-  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
+  type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;
   minimumAge: number;

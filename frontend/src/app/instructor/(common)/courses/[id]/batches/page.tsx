@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, Calendar, Clock, Plus, Eye, XCircle } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
+import { CourseActions } from "@/components/instructor/CourseActions";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -48,6 +50,8 @@ export default function BatchesPage() {
   const courseId = params.id as string;
 
   const { data: batches, isLoading, isError } = useCourseBatches(courseId);
+  const { data: courses } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
   const closeBatchMutation = useCloseBatchMutation();
 
   const [confirmClose, setConfirmClose] = useState<string | null>(null);
@@ -94,6 +98,9 @@ export default function BatchesPage() {
             Create Batch
           </button>
         </div>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
       </div>
 
       {/* Loading */}

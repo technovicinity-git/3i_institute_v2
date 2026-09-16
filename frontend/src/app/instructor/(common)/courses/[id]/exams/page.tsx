@@ -4,6 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { FileText, Clock, Plus, CheckCircle, AlertCircle } from "lucide-react";
 import { useCourseExams } from "@/hooks/use-exams";
 import Link from "next/link";
+import { CourseActions } from "@/components/instructor/CourseActions";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 
 function getTypeBadge(type: string) {
   return type === "final"
@@ -18,6 +20,8 @@ export default function ExamsPage() {
 
   const { data: exams, isLoading, isError } = useCourseExams(courseId);
 
+  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
   return (
     <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
       <div className="mb-8">
@@ -49,6 +53,9 @@ export default function ExamsPage() {
             Create Exam
           </button>
         </div>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
       </div>
 
       {isLoading && (
