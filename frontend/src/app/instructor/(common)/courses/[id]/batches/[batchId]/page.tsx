@@ -111,7 +111,6 @@ export default function BatchDetailsPage() {
         >
           ← Back
         </button>
-
         {isLoading && (
           <div className="flex items-center justify-center py-20">
             <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />

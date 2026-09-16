@@ -11,11 +11,8 @@ import {
   Upload,
   Trash2,
   Play,
-  ChevronDown,
-  ChevronUp,
   Search,
   X,
-  Eye,
   AlertCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -30,6 +27,8 @@ import {
   useSignedUrlMutation,
 } from "@/hooks/use-materials";
 import { MaterialPreviewModal } from "@/components/instructor/material-preview-modal";
+import { CourseActions } from "@/components/instructor/CourseActions";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 
 const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -86,7 +85,8 @@ export default function CourseMaterialsPage() {
   // Upload progress simulation
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  const { data: courses } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const captionInputRef = useRef<HTMLInputElement>(null);
 
@@ -220,6 +220,9 @@ export default function CourseMaterialsPage() {
         >
           ← Back to courses
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1
