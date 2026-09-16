@@ -103,7 +103,7 @@ export default function MyCoursesPage() {
                   <span className="text-[10px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
                     {getLevelBadge(course.level)}
                   </span>
-                  {course.isCompleted && (
+                  {course.isCompleted && course.type === "REGULAR" && (
                     <span className="text-[10px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
                       COMPLETED
                     </span>
@@ -123,24 +123,25 @@ export default function MyCoursesPage() {
                   {course.instructor.name}
                 </p>
 
-                {/* Progress */}
-                <div className="mt-auto">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold text-[#22A146]">
-                      {course.completedMaterials}/{course.totalMaterials}{" "}
-                      lessons
-                    </span>
-                    <span className="text-xs font-semibold text-[#0C1F33]">
-                      {course.progress}%
-                    </span>
+                {course.type === "REGULAR" && (
+                  <div className="mt-auto">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-semibold text-[#22A146]">
+                        {course.completedMaterials}/{course.totalMaterials}{" "}
+                        lessons
+                      </span>
+                      <span className="text-xs font-semibold text-[#0C1F33]">
+                        {course.progress}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-4">
+                      <div
+                        className="h-full bg-[#22A146] rounded-full"
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-4">
-                    <div
-                      className="h-full bg-[#22A146] rounded-full"
-                      style={{ width: `${course.progress}%` }}
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* Next session */}
                 {course.nextSession && (
@@ -153,25 +154,29 @@ export default function MyCoursesPage() {
                 )}
 
                 <div className="flex flex-col gap-2">
-                  {/* Resume button */}
-                  {course.continueLessonId ? (
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/my-courses/${course.courseId}/lessons/${course.continueLessonId}`,
-                        )
-                      }
-                      className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
-                    >
-                      {course.progress > 0 ? "Resume" : "Start Course"}
-                    </button>
-                  ) : (
-                    <button
-                      disabled
-                      className="w-full py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg text-center cursor-not-allowed"
-                    >
-                      No lessons available yet
-                    </button>
+                  {course.type === "REGULAR" && (
+                    <>
+                      {/* Resume button */}
+                      {course.continueLessonId ? (
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/my-courses/${course.courseId}/lessons/${course.continueLessonId}`,
+                            )
+                          }
+                          className="w-full py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#1a4268]"
+                        >
+                          {course.progress > 0 ? "Resume" : "Start Course"}
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg text-center cursor-not-allowed"
+                        >
+                          No lessons available yet
+                        </button>
+                      )}
+                    </>
                   )}
                   {/* View Exams button */}
                   <Link
