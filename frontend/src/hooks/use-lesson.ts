@@ -65,6 +65,7 @@ export function useUpdateProgressMutation() {
         lastPosition,
         completed,
       ),
+
     onError: () => {
       // Silent fail for progress updates
     },
