@@ -224,7 +224,7 @@ export function Navbar() {
                     {userRole !== "Admin" && userRole !== "Instructor" && (
                       <button
                         onClick={() => {
-                          router.push("/courses");
+                          router.push("/my-courses");
                           setShowDropdown(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
