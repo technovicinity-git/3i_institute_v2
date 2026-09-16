@@ -1,4 +1,4 @@
-export type CourseType = "REGULAR" | "ONLINE_CLASS" | "MIXED";
+export type CourseType = "REGULAR" | "ONLINE_CLASS";
 export type CourseStatus =
   | "DRAFT"
   | "PENDING_REVIEW"
@@ -16,7 +16,7 @@ export interface Course {
   summary: string;
   thumbnailUrl: string | null;
   category: string;
-  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
+  type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;
   minimumAge: number;

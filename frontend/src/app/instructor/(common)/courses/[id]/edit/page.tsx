@@ -11,6 +11,7 @@ import {
   useUpdateCourseMutation,
 } from "@/hooks/use-instructor-courses";
 import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
+import { CourseActions } from "@/components/instructor/CourseActions";
 
 const editCourseSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -25,7 +26,7 @@ const editCourseSchema = z.object({
     .optional()
     .or(z.literal("")),
   category: z.string().min(1, "Category is required"),
-  type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]),
+  type: z.enum(["REGULAR", "ONLINE_CLASS"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
   minimumAge: z.number().int().min(5).max(18),
@@ -92,6 +93,7 @@ export default function EditCoursePage() {
         minimumAge: course.minimumAge,
         maximumAge: course.maximumAge ?? undefined,
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLearningOutcomes(course.learningOutcomes ?? []);
     }
   }, [course, reset]);
@@ -142,7 +144,7 @@ export default function EditCoursePage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[800px] mx-auto">
+    <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
       <div className="mb-8">
         <button
           onClick={() => router.push("/instructor/courses")}
@@ -156,6 +158,7 @@ export default function EditCoursePage() {
         >
           Edit Course
         </h1>
+        <CourseActions courseId={course.id} courseType={course.type} />
       </div>
 
       <form
@@ -249,7 +252,6 @@ export default function EditCoursePage() {
             >
               <option value="REGULAR">Regular (Self-paced)</option>
               <option value="ONLINE_CLASS">Online Class (Live)</option>
-              <option value="MIXED">Mixed</option>
             </select>
           </div>
 
