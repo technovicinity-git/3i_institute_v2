@@ -74,3 +74,26 @@ export function useSignedUrlMutation() {
     },
   });
 }
+
+export function useUpdateMaterialMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      materialId,
+      input,
+    }: {
+      materialId: string;
+      input: { title?: string; description?: string; order?: number };
+    }) => materialService.updateMaterial(materialId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-materials"] });
+      queryClient.invalidateQueries({ queryKey: ["course-content"] });
+      toast.success("Material updated");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to update material");
+    },
+  });
+}

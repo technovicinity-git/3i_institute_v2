@@ -282,6 +282,7 @@ export class CourseDetailsService {
         lessonsList: [
           {
             title: m.title,
+            description: m.description ?? null,
             duration: m.duration
               ? `${Math.floor(m.duration / 60)}:${String(m.duration % 60).padStart(2, "0")}`
               : "00:00",

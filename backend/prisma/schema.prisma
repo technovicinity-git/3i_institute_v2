@@ -262,6 +262,7 @@ model Material {
   courseId      String
   course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title         String
+  description   String?   // NEW: optional overview
   type          String
   url           String
   duration      Int?

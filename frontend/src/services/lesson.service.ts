@@ -3,6 +3,7 @@ import { apiClient } from "@/lib/api-client";
 export interface Lesson {
   id: string;
   title: string;
+  description?: string | null;
   type: string;
   url: string;
   duration: number | null;

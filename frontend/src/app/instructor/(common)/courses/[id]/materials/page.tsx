@@ -14,6 +14,7 @@ import {
   Search,
   X,
   AlertCircle,
+  Edit3,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +30,7 @@ import {
 import { MaterialPreviewModal } from "@/components/instructor/material-preview-modal";
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { EditMaterialModal } from "@/components/instructor/edit-material-modal";
 
 const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -81,6 +83,8 @@ export default function CourseMaterialsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [previewMaterial, setPreviewMaterial] = useState<any>(null);
+  const [videoDescription, setVideoDescription] = useState("");
+  const [editingMaterial, setEditingMaterial] = useState<any>(null);
 
   // Upload progress simulation
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -162,6 +166,7 @@ export default function CourseMaterialsPage() {
     const formData = new FormData();
     formData.append("courseId", courseId);
     formData.append("title", videoTitle);
+    formData.append("description", videoDescription);
     formData.append("order", String(videoOrder));
     formData.append("video", videoFile);
     if (captionFile) {
@@ -173,6 +178,7 @@ export default function CourseMaterialsPage() {
         setVideoFile(null);
         setCaptionFile(null);
         setVideoTitle("");
+        setVideoDescription("");
         setVideoOrder(0);
         setShowUploadVideo(false);
       },
@@ -402,6 +408,22 @@ export default function CourseMaterialsPage() {
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
             />
           </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Overview / Description (optional)
+            </label>
+            <textarea
+              value={videoDescription}
+              onChange={(e) => setVideoDescription(e.target.value)}
+              disabled={uploadVideoMutation.isPending}
+              rows={3}
+              placeholder="Brief overview of this lesson for the course page..."
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
+            />
+            <p className="text-xs text-[#64748B] mt-1">
+              This will appear on the course details page.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -600,6 +622,14 @@ export default function CourseMaterialsPage() {
                   {formatDuration(material.duration)}
                 </span>
 
+                <button
+                  onClick={() => setEditingMaterial(material)}
+                  className="p-2 rounded-lg hover:bg-[#2563EB]/10 text-[#2563EB] transition-colors shrink-0"
+                  title="Edit"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+
                 {/* Preview */}
                 <button
                   onClick={() => handlePreview(material)}
@@ -634,6 +664,13 @@ export default function CourseMaterialsPage() {
         <MaterialPreviewModal
           material={previewMaterial}
           onClose={() => setPreviewMaterial(null)}
+        />
+      )}
+
+      {editingMaterial && (
+        <EditMaterialModal
+          material={editingMaterial}
+          onClose={() => setEditingMaterial(null)}
         />
       )}
     </div>

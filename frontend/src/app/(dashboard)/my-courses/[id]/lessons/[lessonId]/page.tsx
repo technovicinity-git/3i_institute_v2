@@ -268,10 +268,15 @@ export default function LessonPage() {
                 {/* Overview */}
                 {activeTab === "overview" && (
                   <div className="pt-6">
-                    <p className="text-base leading-6 text-[#0C1F33]">
-                      This lesson covers {currentLesson?.title}. Watch the video
-                      and take notes as needed.
-                    </p>
+                    {currentLesson?.description ? (
+                      <p className="text-base leading-6 text-[#0C1F33] whitespace-pre-wrap">
+                        {currentLesson.description}
+                      </p>
+                    ) : (
+                      <p className="text-base leading-6 text-[#64748B] italic">
+                        No overview available for this lesson.
+                      </p>
+                    )}
                   </div>
                 )}
 

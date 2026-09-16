@@ -11,17 +11,19 @@ export const createMaterialSchema = z.object({
 
 export type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
 
-export const updateMaterialSchema = z.object({
-  title: z.string().min(1).max(255).optional(),
-  order: z.number().int().min(0).optional(),
-});
-
-export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
-
 export const uploadVideoSchema = z.object({
   courseId: z.string().uuid("Invalid course ID"),
   title: z.string().min(1, "Title is required").max(255),
+  description: z.string().max(2000).optional().or(z.literal("")),
   order: z.coerce.number().int().min(0).default(0),
 });
 
 export type UploadVideoInput = z.infer<typeof uploadVideoSchema>;
+
+export const updateMaterialSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().max(2000).optional().or(z.literal("")),
+  order: z.coerce.number().int().min(0).optional(),
+});
+
+export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
