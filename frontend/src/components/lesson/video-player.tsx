@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
-import { Play, Pause, Volume2, Maximize, SkipForward } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  SkipForward,
+  SkipBack,
+} from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -13,7 +21,7 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({
   videoUrl,
-  initialPosition,
+  initialPosition = 0,
   onProgress,
   onComplete,
 }: VideoPlayerProps) {
@@ -21,33 +29,35 @@ export function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [buffering, setBuffering] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // HLS setup
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoUrl) return;
-
-    if (initialPosition && initialPosition > 0) {
-      video.currentTime = initialPosition;
-    }
 
     let hls: Hls | null = null;
 
     if (Hls.isSupported()) {
       hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
+        lowLatencyMode: false,
       });
       hls.loadSource(videoUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setDuration(video.duration);
+        if (initialPosition > 0) {
+          video.currentTime = initialPosition;
+        }
       });
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
@@ -59,21 +69,99 @@ export function VideoPlayer({
               hls!.recoverMediaError();
               break;
             default:
+              hls!.destroy();
               break;
           }
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // For Safari — native HLS
       video.src = videoUrl;
+      if (initialPosition > 0) {
+        video.currentTime = initialPosition;
+      }
     }
 
     return () => {
-      if (hls) {
-        hls.destroy();
+      if (hls) hls.destroy();
+    };
+  }, [videoUrl, initialPosition]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if video container is in view (or focused)
+      const video = videoRef.current;
+      if (!video) return;
+
+      // Skip if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      switch (e.key) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlayback();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 5);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 5);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          const newVolUp = Math.min(1, video.volume + 0.1);
+          video.volume = newVolUp;
+          setVolume(newVolUp);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          const newVolDown = Math.max(0, video.volume - 0.1);
+          video.volume = newVolDown;
+          setVolume(newVolDown);
+          break;
+        case "m":
+          e.preventDefault();
+          toggleMute();
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "j":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case "l":
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          break;
       }
     };
-  }, [videoUrl]);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Show controls on mouse move
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) setShowControls(false);
+    }, 3000);
+  };
 
   const togglePlayback = () => {
     const video = videoRef.current;
@@ -86,6 +174,15 @@ export function VideoPlayer({
       video.pause();
       setIsPlaying(false);
     }
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const newMuted = !isMuted;
+    video.muted = newMuted;
+    setIsMuted(newMuted);
   };
 
   const handleTimeUpdate = () => {
@@ -138,6 +235,7 @@ export function VideoPlayer({
   };
 
   const formatTime = (seconds: number): string => {
+    if (isNaN(seconds)) return "00:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
@@ -146,9 +244,10 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video bg-black group"
+      className="relative w-full aspect-video bg-black group overflow-hidden"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Video element */}
       <video
         ref={videoRef}
         className="w-full h-full"
@@ -159,14 +258,14 @@ export function VideoPlayer({
         onClick={togglePlayback}
       />
 
-      {/* Buffering indicator */}
+      {/* Buffering */}
       {buffering && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
           <div className="w-10 h-10 rounded-full border-4 border-white border-t-transparent animate-spin" />
         </div>
       )}
 
-      {/* Big play button (when paused) */}
+      {/* Big play button */}
       {!isPlaying && !buffering && (
         <button
           onClick={togglePlayback}
@@ -178,20 +277,26 @@ export function VideoPlayer({
         </button>
       )}
 
-      {/* Controls bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-12 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Controls */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-3 pt-12 transition-opacity duration-300 ${
+          showControls || !isPlaying ? "opacity-100" : "opacity-0"
+        }`}
+      >
         {/* Progress bar */}
         <div
           onClick={handleSeek}
-          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-2"
+          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-3 relative group/scrub"
         >
           <div
-            className="h-full bg-[#22A146] rounded-full"
+            className="h-full bg-[#22A146] rounded-full relative"
             style={{ width: `${progress}%` }}
-          />
+          >
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover/scrub:opacity-100 transition-opacity" />
+          </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls row */}
         <div className="flex items-center gap-3">
           <button
             onClick={togglePlayback}
@@ -204,23 +309,45 @@ export function VideoPlayer({
             )}
           </button>
 
-          <button className="text-white hover:text-white/80">
-            <SkipForward className="w-4 h-4" />
+          <button
+            onClick={() => {
+              const video = videoRef.current;
+              if (video)
+                video.currentTime = Math.max(0, video.currentTime - 10);
+            }}
+            className="text-white hover:text-white/80"
+            title="Back 10s (J)"
+          >
+            <SkipBack className="w-4 h-4" />
           </button>
 
           <button
             onClick={() => {
               const video = videoRef.current;
-              if (!video) return;
-              setIsMuted(!isMuted);
-              video.muted = !isMuted;
+              if (video)
+                video.currentTime = Math.min(
+                  video.duration,
+                  video.currentTime + 10,
+                );
             }}
             className="text-white hover:text-white/80"
+            title="Forward 10s (L)"
           >
-            <Volume2 className="w-5 h-5" />
+            <SkipForward className="w-4 h-4" />
           </button>
 
-          <span className="text-[12px] text-white">
+          <button
+            onClick={toggleMute}
+            className="text-white hover:text-white/80"
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </button>
+
+          <span className="text-[12px] text-white tabular-nums">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
@@ -228,7 +355,8 @@ export function VideoPlayer({
 
           <button
             onClick={cyclePlaybackSpeed}
-            className="text-[12px] font-semibold text-white"
+            className="text-[12px] font-semibold text-white hover:text-white/80 px-2"
+            title="Playback speed"
           >
             {playbackSpeed}x
           </button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Maximize, Edit3, Bookmark, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
 import {
@@ -49,6 +49,19 @@ export default function LessonPage() {
     activeProfile?.id ?? "",
     lessonId,
   );
+
+  // Flatten all lessons in order
+  const allLessons = courseContent?.modules?.flatMap((m) => m.lessons) ?? [];
+  const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
+  const previousLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < allLessons.length - 1
+      ? allLessons[currentIndex + 1]
+      : null;
+
+  const goToLesson = (targetLessonId: string) => {
+    router.push(`/my-courses/${courseId}/lessons/${targetLessonId}`);
+  };
 
   // Debounced progress update
   const handleProgressUpdate = useCallback(
@@ -204,23 +217,74 @@ export default function LessonPage() {
               <div className="w-10 h-10 rounded-full border-4 border-white border-t-transparent animate-spin" />
             </div>
           ) : videoUrlData?.url ? (
-            <VideoPlayer
-              videoUrl={videoUrlData.url}
-              initialPosition={progressData?.lastPosition ?? 0}
-              onProgress={handleProgressUpdate}
-              onComplete={() => {
-                if (activeProfile) {
-                  updateProgressMutation.mutate({
-                    learnerProfileId: activeProfile.id,
-                    materialId: lessonId,
-                    watchedSeconds:
-                      Math.floor(progressData?.watchedSeconds ?? 0) + 999,
-                    lastPosition: 0,
-                    completed: true,
-                  });
-                }
-              }}
-            />
+            <>
+              <VideoPlayer
+                videoUrl={videoUrlData.url}
+                initialPosition={progressData?.lastPosition ?? 0}
+                onProgress={handleProgressUpdate}
+                onComplete={() => {
+                  if (activeProfile) {
+                    updateProgressMutation.mutate({
+                      learnerProfileId: activeProfile.id,
+                      materialId: lessonId,
+                      watchedSeconds:
+                        Math.floor(progressData?.watchedSeconds ?? 0) + 999,
+                      lastPosition: 0,
+                      completed: true,
+                    });
+                  }
+
+                  // Auto-navigate to next lesson after a short delay
+                  if (nextLesson) {
+                    setTimeout(() => {
+                      router.push(
+                        `/my-courses/${courseId}/lessons/${nextLesson.id}`,
+                      );
+                    }, 1500);
+                  }
+                }}
+              />
+              {/* Previous / Next navigation */}
+              <div className="flex items-center justify-between gap-4 mt-10 pt-6 border-t border-[#E3E8EF]">
+                <button
+                  onClick={() =>
+                    previousLesson && goToLesson(previousLesson.id)
+                  }
+                  disabled={!previousLesson}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                    previousLesson
+                      ? "border border-[#E3E8EF] text-[#0C1F33] hover:bg-gray-50"
+                      : "border border-[#E3E8EF] text-[#94A3B8] cursor-not-allowed opacity-50"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                  {previousLesson && (
+                    <span className="hidden md:inline truncate max-w-[200px] text-[#64748B]">
+                      — {previousLesson.title}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => nextLesson && goToLesson(nextLesson.id)}
+                  disabled={!nextLesson}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                    nextLesson
+                      ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
+                      : "bg-gray-100 text-[#94A3B8] cursor-not-allowed opacity-50"
+                  }`}
+                >
+                  {nextLesson && (
+                    <span className="hidden md:inline truncate max-w-[200px]">
+                      {nextLesson.title} —
+                    </span>
+                  )}
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </>
           ) : (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
               <p className="text-white/60 text-sm">Video unavailable</p>
