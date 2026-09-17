@@ -113,7 +113,7 @@ export default function DashboardNavbar({
                 </button>
                 <button
                   onClick={() => {
-                    router.push("/settings");
+                    router.push("/account-settings");
                     setShowDropdown(false);
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
