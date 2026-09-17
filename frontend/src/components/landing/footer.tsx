@@ -1,4 +1,5 @@
 import { LandingLogo } from "@/components/landing/logo";
+import Link from "next/link";
 export function Footer() {
   return (
     <footer className="bg-brand-navy text-white pt-20 pb-10">
@@ -77,6 +78,11 @@ export function Footer() {
                 <a href="#" className="hover:text-white">
                   Careers
                 </a>
+              </li>
+              <li>
+                <Link href="/instructor/register" className="hover:text-white">
+                  Join as Instructor
+                </Link>
               </li>
             </ul>
           </div>

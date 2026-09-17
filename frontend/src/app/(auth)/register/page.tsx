@@ -13,6 +13,7 @@ import { useRegisterMutation } from "@/hooks/use-register";
 import { GoogleButton } from "@/components/social/google-button";
 import { AppleButton } from "@/components/social/apple-button";
 import { LandingLogo } from "@/components/landing/logo";
+import { Eye, EyeClosed } from "lucide-react";
 
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -189,10 +190,10 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-muted hover:text-primary font-medium"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-muted hover:text-primary font-medium cursor-pointer transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <Eye size={20} /> : <EyeClosed size={20} />}
                 </button>
               </div>
               <p className="mt-1.5 text-[11px] text-muted">

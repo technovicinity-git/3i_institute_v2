@@ -141,10 +141,10 @@ export default function InstructorRegistrationPage() {
         {/* Page Header */}
         <div className="text-center mb-8">
           <h1
-            className="text-[40px] leading-[48px] text-[#0C1F33]"
+            className="flex items-center justify-center gap-2 text-[40px] leading-[48px] text-[#0C1F33]"
             style={{ fontFamily: "'Marcellus', serif" }}
           >
-            Apply to teach at 3i
+            Apply to teach at <LandingLogo size="sm" textColor="dark" />
           </h1>
           <p className="mt-3 text-base text-[#475569]">
             Create your account and submit your teaching application in one

@@ -122,7 +122,7 @@ export default function LoginPage() {
                 >
                   {/* <span className="w-4 h-4 rounded-full bg-muted inline-block" /> */}
 
-                  {showPassword ? <Eye size={16} /> : <EyeClosed />}
+                  {showPassword ? <Eye size={20} /> : <EyeClosed size={20} />}
                 </button>
               </div>
               {errors.password && (
