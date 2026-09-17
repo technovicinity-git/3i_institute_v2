@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar, ChevronDown, Upload, X } from "lucide-react";
+import { Calendar, ChevronDown, Eye, EyeClosed, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useInstructorRegistrationMutation } from "@/hooks/use-instructor-registration";
 import { LandingLogo } from "@/components/landing/logo";
@@ -48,6 +48,7 @@ export default function InstructorRegistrationPage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -235,7 +236,7 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Password */}
-              <div className="space-y-[7px]">
+              <div className="relative space-y-[7px]">
                 <label className="flex items-center gap-1">
                   <span className="text-base font-semibold text-[#0C1F33]">
                     Password
@@ -245,11 +246,17 @@ export default function InstructorRegistrationPage() {
                   </span>
                 </label>
                 <input
-                  type="password"
-                  placeholder="••••••••••••"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
                   className="w-full h-12 px-4 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] text-[#0C1F33]"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary cursor-pointer transition-colors"
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeClosed size={20} />}
+                </button>
                 <p className="text-[13px] text-[#475569]">
                   At least 10 characters
                 </p>
@@ -303,7 +310,6 @@ export default function InstructorRegistrationPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#475569] pointer-events-none" />
                 </div>
                 <p className="text-[13px] text-[#475569]">
                   Available options: English, Bengali, Hindi, Urdu, Arabic
@@ -459,7 +465,6 @@ export default function InstructorRegistrationPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#475569] pointer-events-none" />
                 </div>
               </div>
 
