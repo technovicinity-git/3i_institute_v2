@@ -11,6 +11,7 @@ import { LandingLogo } from "@/components/landing/logo";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
+import { Eye, EyeClosed } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -144,10 +145,9 @@ export default function InstructorLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary cursor-pointer transition-colors"
                 >
-                  <span className="w-4 h-4 rounded-full bg-muted inline-block" />
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <Eye size={20} /> : <EyeClosed size={20} />}
                 </button>
               </div>
               {errors.password && (
