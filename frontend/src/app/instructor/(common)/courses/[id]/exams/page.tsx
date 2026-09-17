@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { FileText, Clock, Plus, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Clock, Plus, CheckCircle } from "lucide-react";
 import { useCourseExams } from "@/hooks/use-exams";
 import Link from "next/link";
 import { CourseActions } from "@/components/instructor/CourseActions";
