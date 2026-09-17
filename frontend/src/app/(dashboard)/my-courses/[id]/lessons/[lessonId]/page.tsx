@@ -259,11 +259,11 @@ export default function LessonPage() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Previous</span>
-                  {previousLesson && (
+                  {/* {previousLesson && (
                     <span className="hidden md:inline truncate max-w-[200px] text-[#64748B]">
                       — {previousLesson.title}
                     </span>
-                  )}
+                  )} */}
                 </button>
 
                 <button
@@ -275,11 +275,11 @@ export default function LessonPage() {
                       : "bg-gray-100 text-[#94A3B8] cursor-not-allowed opacity-50"
                   }`}
                 >
-                  {nextLesson && (
+                  {/* {nextLesson && (
                     <span className="hidden md:inline truncate max-w-[200px]">
                       {nextLesson.title} —
                     </span>
-                  )}
+                  )} */}
                   <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
