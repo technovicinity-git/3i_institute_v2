@@ -16,6 +16,7 @@ export interface Review {
 export interface CurriculumLesson {
   title: string;
   duration: string;
+  description: string | null;
 }
 
 export interface CurriculumModule {

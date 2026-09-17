@@ -297,9 +297,16 @@ export default function CourseDetailsPage() {
                                   className="w-4 h-4 text-[#64748B]"
                                   strokeWidth={2}
                                 />
-                                <span className="text-[15px] text-[#0C1F33]">
-                                  {lesson.title}
-                                </span>
+                                <div className="flex-1">
+                                  <p className="text-[15px] text-[#0C1F33]">
+                                    {lesson.title}
+                                  </p>
+                                  {lesson.description && (
+                                    <p className="text-xs text-[#64748B] mt-1 line-clamp-2">
+                                      {lesson.description}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="text-sm text-[#64748B]">
