@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Calendar, ChevronDown, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useInstructorRegistrationMutation } from "@/hooks/use-instructor-registration";
+import { LandingLogo } from "@/components/landing/logo";
 
 const instructorRegistrationSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -132,9 +133,7 @@ export default function InstructorRegistrationPage() {
     >
       {/* Header */}
       <header className="flex items-center justify-center h-[92px] bg-white border-b border-[#E3E8EF]">
-        <div className="w-11 h-11 rounded-full bg-[#157A34] flex items-center justify-center">
-          <span className="text-white font-bold text-lg">3i</span>
-        </div>
+        <LandingLogo />
       </header>
 
       {/* Main Content */}

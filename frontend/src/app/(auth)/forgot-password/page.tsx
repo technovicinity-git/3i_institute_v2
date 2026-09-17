@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForgotPasswordMutation } from "@/hooks/use-password-reset";
+import { LandingLogo } from "@/components/landing/logo";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -41,8 +42,8 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen bg-surface flex flex-col">
         <main className="flex-1 w-full max-w-[1120px] mx-auto px-5 md:px-10 py-8 md:py-12 lg:py-16 flex items-start md:items-center justify-center">
           <div className="w-full max-w-[520px]">
-            <header className="flex items-center mb-8 md:mb-10">
-              <Logo size="md" />
+            <header className="flex items-center justify-center mb-8 md:mb-10">
+              <LandingLogo />
             </header>
 
             <section className="bg-white rounded-xl border border-outline-variant/40 p-0 md:p-10 flex flex-col">
@@ -91,8 +92,8 @@ export default function ForgotPasswordPage() {
       <main className="flex-1 w-full max-w-[1120px] mx-auto px-5 md:px-10 py-8 md:py-12 lg:py-16 flex items-start md:items-center justify-center">
         <div className="w-full max-w-[520px]">
           {/* Logo */}
-          <header className="flex items-center mb-8 md:mb-10">
-            <Logo size="md" />
+          <header className="flex items-center justify-center mb-8 md:mb-10">
+            <LandingLogo />
           </header>
 
           {/* Card */}

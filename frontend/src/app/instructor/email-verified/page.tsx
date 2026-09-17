@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Check, Clock } from "lucide-react";
+import { LandingLogo } from "@/components/landing/logo";
 
 export default function EmailVerifiedPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function EmailVerifiedPage() {
       {/* Header */}
       <header className="flex items-center h-20 px-6 sm:px-[60px]">
         <div className="w-10 h-10 rounded-full bg-[#157A34] flex items-center justify-center">
-          <span className="text-white font-bold text-sm">3i</span>
+          <LandingLogo />
         </div>
       </header>
 

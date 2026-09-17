@@ -13,6 +13,7 @@ import { GoogleButton } from "@/components/social/google-button";
 import { AppleButton } from "@/components/social/apple-button";
 import { LandingLogo } from "@/components/landing/logo";
 import Link from "next/link";
+import { Eye, EyeClosed } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -116,11 +117,12 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary bg-white px-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary px-1 cursor-pointer transition-colors"
                   tabIndex={-1}
                 >
-                  <span className="w-4 h-4 rounded-full bg-muted inline-block" />
-                  {showPassword ? "Hide" : "Show"}
+                  {/* <span className="w-4 h-4 rounded-full bg-muted inline-block" /> */}
+
+                  {showPassword ? <Eye size={16} /> : <EyeClosed />}
                 </button>
               </div>
               {errors.password && (

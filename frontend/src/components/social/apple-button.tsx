@@ -6,6 +6,7 @@ import { loadAppleScript } from "@/lib/social-auth";
 import { DobModal } from "@/components/social/dob-modal";
 import { useAppleLoginMutation } from "@/hooks/use-apple-auth";
 import { toast } from "sonner";
+import { Button } from "../ui/button";
 
 export function AppleButton() {
   const appleLoginMutation = useAppleLoginMutation();
@@ -95,19 +96,24 @@ export function AppleButton() {
 
   return (
     <>
-      <button
-        type="button"
+      <Button
+        type="submit"
+        className="w-full flex items-center justify-center gap-3 bg-white py-3 rounded-element font-medium hover:bg-green-dark shadow-sm"
         onClick={handleAppleClick}
-        className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
+        // className="w-full flex items-center justify-center gap-3 bg-white border border-primary text-primary py-3 rounded-element font-medium hover:bg-gray-50 transition-colors"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 128 128"
+          id="apple"
+        >
           <path
-            d="M15.42 1.412C16.402 0.22 17.062-1.523 16.883-3.237c-1.468.059-3.327.978-4.347 2.206-0.89 1.077-1.688 2.875-1.472 4.531 1.635.127 3.366-.889 4.356-2.088zm-3.528 5.767c-1.895-.127-3.69 1.054-4.664 1.054-0.975 0-2.484-1.033-4.041-1.01-2.03.023-3.905 1.184-4.945 3.003-2.124 3.682-.544 9.124 1.517 12.115 1.008 1.465 2.197 3.1 3.766 3.045 1.488-.057 2.05-.964 3.843-.964 1.774 0 2.296.964 3.842.942 1.605-.023 2.627-1.466 3.614-2.915 1.144-1.674 1.615-3.295 1.635-3.376-.036-.015-3.162-1.213-3.204-4.821-.036-3.023 2.463-4.475 2.576-4.545-1.425-2.081-3.636-2.366-4.417-2.43z"
-            transform="translate(2, 4)"
-          />
+            d="M97.905 67.885c.174 18.8 16.494 25.057 16.674 25.137-.138.44-2.607 8.916-8.597 17.669-5.178 7.568-10.553 15.108-19.018 15.266-8.318.152-10.993-4.934-20.504-4.934-9.508 0-12.479 4.776-20.354 5.086-8.172.31-14.395-8.185-19.616-15.724-10.668-15.424-18.821-43.585-7.874-62.594 5.438-9.44 15.158-15.417 25.707-15.571 8.024-.153 15.598 5.398 20.503 5.398 4.902 0 14.106-6.676 23.782-5.696 4.051.169 15.421 1.636 22.722 12.324-.587.365-13.566 7.921-13.425 23.639m-15.633-46.166c4.338-5.251 7.258-12.563 6.462-19.836-6.254.251-13.816 4.167-18.301 9.416-4.02 4.647-7.54 12.087-6.591 19.216 6.971.54 14.091-3.542 18.43-8.796"
+            fill="#000000"
+          ></path>
         </svg>
         Continue with Apple
-      </button>
+      </Button>
 
       <DobModal
         isOpen={showDobModal}

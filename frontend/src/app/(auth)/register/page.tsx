@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useRegisterMutation } from "@/hooks/use-register";
 import { GoogleButton } from "@/components/social/google-button";
 import { AppleButton } from "@/components/social/apple-button";
+import { LandingLogo } from "@/components/landing/logo";
 
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -78,7 +79,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-surface flex flex-col items-center py-10 relative px-4">
       {/* Header */}
       <header className="w-full max-w-6xl absolute top-0 left-0 p-8">
-        <Logo size="sm" />
+        <LandingLogo />
       </header>
 
       {/* Main */}
