@@ -207,6 +207,9 @@ export class AdminService {
       prisma.course.findMany({
         where,
         include: {
+          category: {
+            select: { id: true, name: true, slug: true },
+          },
           instructor: {
             select: {
               id: true,
@@ -257,6 +260,13 @@ export class AdminService {
       summary: course.summary,
       thumbnailUrl: course.thumbnailUrl,
       categoryId: course.categoryId,
+      category: course.category
+        ? {
+            id: course.category.id,
+            name: course.category.name,
+            slug: course.category.slug,
+          }
+        : null,
       level: course.level,
       type: course.type,
       language: course.language,

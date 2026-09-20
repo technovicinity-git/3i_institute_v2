@@ -114,7 +114,8 @@ export default function CourseDetailsPage() {
           <div className="max-w-[760px] flex flex-col gap-6">
             {/* Breadcrumbs */}
             <p className="text-[#B8912F] text-sm font-semibold">
-              Courses &gt; {course.category} &gt; {course.title}
+              Courses &gt; {course.category?.name ?? "General"} &gt;{" "}
+              {course.title}
             </p>
 
             {/* Badges */}
