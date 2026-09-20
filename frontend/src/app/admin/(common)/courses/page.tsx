@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
   CheckCircle,
@@ -58,6 +59,7 @@ const STATUS_TABS = [
 ];
 
 export default function AdminCoursesPage() {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<string>("PENDING_REVIEW");
   const [page, setPage] = useState(1);
 
@@ -92,17 +94,32 @@ export default function AdminCoursesPage() {
       switch (action) {
         case "approve":
           approveMutation.mutate(courseId, {
-            onSuccess: () => setConfirmAction(null),
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["admin-all-courses"],
+              });
+              setConfirmAction(null);
+            },
           });
           break;
         case "suspend":
           suspendMutation.mutate(courseId, {
-            onSuccess: () => setConfirmAction(null),
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["admin-all-courses"],
+              });
+              setConfirmAction(null);
+            },
           });
           break;
         case "activate":
           activateMutation.mutate(courseId, {
-            onSuccess: () => setConfirmAction(null),
+            onSuccess: () => {
+              queryClient.invalidateQueries({
+                queryKey: ["admin-all-courses"],
+              });
+              setConfirmAction(null);
+            },
           });
           break;
       }
@@ -118,6 +135,7 @@ export default function AdminCoursesPage() {
       { courseId: rejectModal.id, reason: rejectReason },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-all-courses"] });
           setRejectModal(null);
           setRejectReason("");
         },

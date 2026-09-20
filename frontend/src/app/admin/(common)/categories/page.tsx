@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tags, Plus, Edit3, Trash2, Eye, EyeOff, X } from "lucide-react";
+import { Tags, Plus, Edit3, Trash2, X } from "lucide-react";
 import {
   useCategories,
   useCreateCategoryMutation,
@@ -108,7 +108,7 @@ export default function AdminCategoriesPage() {
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     if (
                       window.confirm(
@@ -129,7 +129,7 @@ export default function AdminCategoriesPage() {
                   }
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
               </div>
             </div>
           ))}
