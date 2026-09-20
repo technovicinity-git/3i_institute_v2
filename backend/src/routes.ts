@@ -24,6 +24,7 @@ import { instructorAssignmentRoutes } from "#/modules/assignment/routes";
 import { adminRoutes } from "#/modules/admin/routes";
 import { learnerAssignmentRoutes } from "#/modules/assignment/learner-routes";
 import { noteRoutes } from "#/modules/note/routes";
+import { categoryRoutes } from "#/modules/category/routes";
 
 const router: Router = Router();
 
@@ -52,6 +53,7 @@ router.use("/instructors/assignments", instructorAssignmentRoutes);
 router.use("/admin", adminRoutes);
 router.use("/assignments", learnerAssignmentRoutes);
 router.use("/notes", noteRoutes);
+router.use("/categories", categoryRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);

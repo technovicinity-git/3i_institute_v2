@@ -193,6 +193,22 @@ model LearnerProfile {
   @@index([accountId])
 }
 
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  courses     Course[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+
 model Course {
   id            String        @id @default(uuid())
   title         String
@@ -200,7 +216,6 @@ model Course {
   description   String
   thumbnailUrl  String?
   coverImageUrl String?
-  category      String
   type          CourseType
   level         String
   language      String        @default("en")
@@ -224,6 +239,9 @@ model Course {
   instructorId  String
   instructor    User          @relation(fields: [instructorId], references: [id])
 
+  categoryId    String?
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   materials     Material[]
   batches       Batch[]
   exams         Exam[]
@@ -236,7 +254,7 @@ model Course {
   updatedAt     DateTime      @updatedAt
 
   @@index([status])
-  @@index([category])
+  @@index([categoryId])
   @@index([minimumAge])
 }
 

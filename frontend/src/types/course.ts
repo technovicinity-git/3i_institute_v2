@@ -15,7 +15,11 @@ export interface Course {
   title: string;
   summary: string;
   thumbnailUrl: string | null;
-  category: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;

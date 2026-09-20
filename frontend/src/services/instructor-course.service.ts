@@ -7,7 +7,12 @@ export interface InstructorCourse {
   description: string;
   thumbnailUrl: string | null;
   coverImageUrl: string | null;
-  category: string;
+  categoryId: string | null;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;
@@ -35,7 +40,7 @@ export interface CreateCourseInput {
   description: string;
   thumbnailUrl?: string;
   coverImageUrl?: string;
-  category: string;
+  categoryId: string;
   type: "REGULAR" | "ONLINE_CLASS";
   level: string;
   language: string;

@@ -36,7 +36,7 @@ export class CourseService {
         summary: input.summary,
         description: input.description,
         thumbnailUrl: input.thumbnailUrl ?? null,
-        category: input.category,
+        categoryId: input.categoryId,
         type: input.type,
         level: input.level,
         language: input.language,
@@ -130,7 +130,7 @@ export class CourseService {
 
     const where: any = {
       status: "PUBLISHED",
-      ...(category && { category }),
+      ...(category && { categoryId: category }),
       ...(level && { level }),
       ...(type && { type }),
       ...(search && {
@@ -181,6 +181,9 @@ export class CourseService {
             instructor: {
               select: { id: true, firstName: true, lastName: true },
             },
+            category: {
+              select: { id: true, name: true, slug: true },
+            },
             _count: {
               select: { enrolments: true },
             },
@@ -225,7 +228,13 @@ export class CourseService {
         title: course.title,
         summary: course.summary,
         thumbnailUrl: course.thumbnailUrl,
-        category: course.category,
+        category: course.category
+          ? {
+              id: course.category.id,
+              name: course.category.name,
+              slug: course.category.slug,
+            }
+          : null,
         type: course.type,
         level: course.level,
         language: course.language,
@@ -338,6 +347,9 @@ export class CourseService {
     const courses = await prisma.course.findMany({
       where: { instructorId },
       include: {
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
         _count: {
           select: { enrolments: true },
         },

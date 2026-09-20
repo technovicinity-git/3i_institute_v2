@@ -10,6 +10,7 @@ import {
   useInstructorCourses,
   useUpdateCourseMutation,
 } from "@/hooks/use-instructor-courses";
+import { useCategories } from "@/hooks/use-categories";
 import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
 import { CourseActions } from "@/components/instructor/CourseActions";
 
@@ -25,7 +26,7 @@ const editCourseSchema = z.object({
     .url("Must be valid URL")
     .optional()
     .or(z.literal("")),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().uuid("Please select a category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
@@ -34,19 +35,6 @@ const editCourseSchema = z.object({
 });
 
 type EditCourseFormData = z.infer<typeof editCourseSchema>;
-
-const CATEGORIES = [
-  "Islamic Studies",
-  "Qur'anic Arabic",
-  "Health Sciences",
-  "Fiqh",
-  "Hadith",
-  "History",
-  "Language",
-  "Art & Culture",
-  "Science",
-  "Mathematics",
-];
 
 const LANGUAGES = [
   { value: "en", label: "English" },
@@ -62,6 +50,7 @@ export default function EditCoursePage() {
   const courseId = params.id as string;
 
   const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const updateMutation = useUpdateCourseMutation();
 
   const course = courses?.find((c) => c.id === courseId);
@@ -86,7 +75,8 @@ export default function EditCoursePage() {
         summary: course.summary,
         description: course.description,
         thumbnailUrl: course.thumbnailUrl ?? "",
-        category: course.category,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        categoryId: (course as any).categoryId ?? course.category?.id ?? "",
         type: course.type,
         level: course.level,
         language: course.language,
@@ -167,11 +157,12 @@ export default function EditCoursePage() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
-        {/* Thumbnail URL */}
+        {/* Thumbnail */}
         <ThumbnailUpload
           courseId={courseId}
           currentThumbnailUrl={course?.thumbnailUrl}
         />
+
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
@@ -222,48 +213,55 @@ export default function EditCoursePage() {
 
         {/* Grid: Category, Type, Level, Language */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Category — dynamic */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Category *
             </label>
             <select
-              {...register("category")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              {...register("categoryId")}
+              disabled={categoriesLoading}
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] disabled:opacity-50"
             >
-              <option value="">Select category</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              <option value="">
+                {categoriesLoading ? "Loading..." : "Select category"}
+              </option>
+              {categories?.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
-            {errors.category && (
+            {errors.categoryId && (
               <p className="mt-1 text-xs text-red-600">
-                {errors.category.message}
+                {errors.categoryId.message}
               </p>
             )}
           </div>
 
+          {/* Course Type */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Course Type *
             </label>
             <select
               {...register("type")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             >
               <option value="REGULAR">Regular (Self-paced)</option>
               <option value="ONLINE_CLASS">Online Class (Live)</option>
+              <option value="MIXED">Mixed</option>
             </select>
           </div>
 
+          {/* Level */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Level *
             </label>
             <select
               {...register("level")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             >
               <option value="">Select level</option>
               <option value="1">Beginner</option>
@@ -277,13 +275,14 @@ export default function EditCoursePage() {
             )}
           </div>
 
+          {/* Language */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Language *
             </label>
             <select
               {...register("language")}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.value} value={lang.value}>
@@ -303,7 +302,7 @@ export default function EditCoursePage() {
             <input
               type="number"
               {...register("minimumAge", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
             {errors.minimumAge && (
               <p className="mt-1 text-xs text-red-600">
@@ -318,7 +317,7 @@ export default function EditCoursePage() {
             <input
               type="number"
               {...register("maximumAge", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
           </div>
         </div>
@@ -339,12 +338,12 @@ export default function EditCoursePage() {
                 }
               }}
               placeholder="Add a learning outcome..."
-              className="flex-1 px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              className="flex-1 px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
             <button
               type="button"
               onClick={addOutcome}
-              className="px-4 py-3 border border-[#12304E] rounded-lg"
+              className="px-4 py-3 border border-[#12304E] rounded-lg hover:bg-gray-50"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -371,14 +370,14 @@ export default function EditCoursePage() {
           <button
             type="button"
             onClick={() => router.push("/instructor/courses")}
-            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
+            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
+            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold hover:bg-[#1E9040] disabled:opacity-50"
           >
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </button>
