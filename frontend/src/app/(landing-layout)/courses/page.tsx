@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -12,16 +13,18 @@ import {
   ChevronRight,
   SlidersHorizontal,
   X,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCourses } from "@/hooks/use-courses";
+import { useCategories } from "@/hooks/use-categories";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
-import type { Course, CourseFilters, SortOption } from "@/types/course";
 import {
   useAddToWishlistMutation,
   useRemoveFromWishlistMutation,
 } from "@/hooks/use-wishlist";
+import type { Course, CourseFilters, SortOption } from "@/types/course";
 
 const AGE_BANDS = ["5-8", "9-12", "13-15", "16-17", "18+", "All ages"];
 
@@ -84,15 +87,15 @@ function Checkbox({
 function CourseCard({ course }: { course: Course }) {
   const router = useRouter();
   const { activeProfile } = useProfileStore();
-  const addMutation = useAddToWishlistMutation();
-  const removeMutation = useRemoveFromWishlistMutation();
+  const addWishlist = useAddToWishlistMutation();
+  const removeWishlist = useRemoveFromWishlistMutation();
   const [liked, setLiked] = useState(course.wishlisted);
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!activeProfile) {
-      toast.error("Please login and select a profile first");
+      toast.error("Please select a profile first");
       return;
     }
 
@@ -100,28 +103,23 @@ function CourseCard({ course }: { course: Course }) {
     setLiked(newLiked);
 
     if (newLiked) {
-      addMutation.mutate({
+      addWishlist.mutate({
         learnerProfileId: activeProfile.id,
         courseId: course.id,
       });
     } else {
-      removeMutation.mutate({
+      removeWishlist.mutate({
         learnerProfileId: activeProfile.id,
         courseId: course.id,
       });
     }
   };
 
-  const handleClick = () => {
-    router.push(`/courses/${course.id}`);
-  };
-
   return (
     <div
-      onClick={handleClick}
+      onClick={() => router.push(`/courses/${course.id}`)}
       className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full"
     >
-      {/* Thumbnail */}
       <div className="relative h-[180px] bg-gradient-to-br from-[#12304E] to-[#2a5070] overflow-hidden">
         {course.thumbnailUrl ? (
           <Image
@@ -131,8 +129,8 @@ function CourseCard({ course }: { course: Course }) {
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/30 text-sm">
-            Course Image
+          <div className="w-full h-full flex items-center justify-center text-white/30">
+            <BookOpen className="w-10 h-10" />
           </div>
         )}
         <button
@@ -149,9 +147,7 @@ function CourseCard({ course }: { course: Course }) {
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-4 pt-3 flex flex-col gap-2 flex-grow">
-        {/* Badges */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
             {getLevelBadge(course.level)}
@@ -163,22 +159,17 @@ function CourseCard({ course }: { course: Course }) {
           )}
         </div>
 
-        {/* Title */}
         <h3 className="font-marcellus text-lg text-[#0C1F33] leading-6 min-h-[48px]">
           {course.title}
         </h3>
 
-        {/* Instructor */}
         <p className="text-[15px] text-[#475569]">{course.instructor.name}</p>
 
-        {/* Meta row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[13px] text-[#475569]">
-              {course.category}
+              {course.category?.name ?? "Uncategorized"}
             </span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
             <span className="flex items-center gap-1 text-[13px]">
               <Star className="w-3 h-3 text-[#B8912F] fill-[#B8912F]" />
               <span className="text-[#0C1F33]">
@@ -191,7 +182,6 @@ function CourseCard({ course }: { course: Course }) {
           </div>
         </div>
 
-        {/* Age badge */}
         <span className="self-start text-[11px] font-bold text-[#0C1F33] border border-[#E3E8EF] px-2 py-0.5 rounded-full">
           {getAgeBadge(course.minimumAge)}
         </span>
@@ -215,6 +205,9 @@ export default function CoursesPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
+  // Fetch dynamic categories
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -228,8 +221,7 @@ export default function CoursesPage() {
     page: currentPage,
     limit: 9,
     search: debouncedSearch || undefined,
-    category:
-      selectedCategories.length > 0 ? selectedCategories.join(",") : undefined,
+    category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
     format: selectedTypes.length > 0 ? selectedTypes.join(",") : undefined,
     sortBy,
     ...(activeProfile?.id ? { learnerProfileId: activeProfile.id } : {}),
@@ -264,7 +256,6 @@ export default function CoursesPage() {
       style={{ fontFamily: "'Figtree', sans-serif" }}
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-9 pb-12">
-        {/* Title */}
         <h1
           className="text-[32px] sm:text-[40px] text-[#0C1F33] mb-6"
           style={{ fontFamily: "'Marcellus', serif" }}
@@ -272,12 +263,9 @@ export default function CoursesPage() {
           Courses
         </h1>
 
-        {/* Search Bar */}
+        {/* Search */}
         <div className="flex items-center gap-3 bg-white border border-[#E3E8EF] rounded-lg px-4 py-3.5 mb-6">
-          <Search
-            className="w-[18px] h-[18px] text-[#475569] shrink-0"
-            strokeWidth={2}
-          />
+          <Search className="w-[18px] h-[18px] text-[#475569] shrink-0" />
           <input
             type="text"
             placeholder="Search courses, instructors, topics..."
@@ -290,7 +278,7 @@ export default function CoursesPage() {
           )}
         </div>
 
-        {/* Sort Row */}
+        {/* Sort row */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <span className="text-base text-[#475569]">
@@ -305,7 +293,6 @@ export default function CoursesPage() {
             </button>
           </div>
 
-          {/* Sort dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -341,11 +328,13 @@ export default function CoursesPage() {
           </div>
         </div>
 
-        {/* Two Column Layout */}
+        {/* Layout */}
         <div className="flex gap-6">
-          {/* Filter Panel - Desktop */}
+          {/* Desktop filters */}
           <div className="hidden lg:block w-[280px] shrink-0 self-start sticky top-6">
             <FilterPanel
+              categories={categories ?? []}
+              categoriesLoading={categoriesLoading}
               selectedCategories={selectedCategories}
               setSelectedCategories={setSelectedCategories}
               selectedTypes={selectedTypes}
@@ -359,7 +348,7 @@ export default function CoursesPage() {
             />
           </div>
 
-          {/* Mobile Filter Overlay */}
+          {/* Mobile filters */}
           {mobileFiltersOpen && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <div
@@ -368,6 +357,8 @@ export default function CoursesPage() {
               />
               <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] overflow-y-auto bg-[#FBF9F4] p-4">
                 <FilterPanel
+                  categories={categories ?? []}
+                  categoriesLoading={categoriesLoading}
                   selectedCategories={selectedCategories}
                   setSelectedCategories={setSelectedCategories}
                   selectedTypes={selectedTypes}
@@ -384,9 +375,8 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {/* Right Column */}
+          {/* Cards */}
           <div className="flex-1 min-w-0 flex flex-col gap-8">
-            {/* Loading */}
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -466,6 +456,8 @@ export default function CoursesPage() {
 // ─── Filter Panel ───
 
 interface FilterPanelProps {
+  categories: Array<{ id: string; name: string; courseCount: number }>;
+  categoriesLoading: boolean;
   selectedCategories: string[];
   setSelectedCategories: (v: string[]) => void;
   selectedTypes: string[];
@@ -484,6 +476,8 @@ interface FilterPanelProps {
 }
 
 function FilterPanel({
+  categories,
+  categoriesLoading,
   selectedCategories,
   setSelectedCategories,
   selectedTypes,
@@ -496,16 +490,6 @@ function FilterPanel({
   clearAllFilters,
   onClose,
 }: FilterPanelProps) {
-  const categories = [
-    "Islamic Studies",
-    "Language",
-    "Art & Culture",
-    "Science",
-    "History",
-    "Business",
-    "Mathematics",
-    "Language Arts",
-  ];
   const courseTypes = ["self-paced", "live"];
   const languages = ["en", "bn", "hi", "ur", "ar"];
   const languageLabels: Record<string, string> = {
@@ -536,30 +520,49 @@ function FilterPanel({
       </div>
 
       <div className="flex flex-col gap-4 pt-4">
-        {/* Category */}
+        {/* Category — dynamic */}
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
             Category
           </span>
-          {categories.map((cat) => (
-            <label
-              key={cat}
-              className="flex items-center gap-2.5 py-1 cursor-pointer"
-            >
-              <Checkbox
-                checked={selectedCategories.includes(cat)}
-                onChange={() =>
-                  toggleFilter(selectedCategories, setSelectedCategories, cat)
-                }
-              />
-              <span className="text-[15px] text-[#0C1F33]">{cat}</span>
-            </label>
-          ))}
+          {categoriesLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-5 bg-gray-100 rounded animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            categories.map((cat) => (
+              <label
+                key={cat.id}
+                className="flex items-center gap-2.5 py-1 cursor-pointer"
+              >
+                <Checkbox
+                  checked={selectedCategories.includes(cat.id)}
+                  onChange={() =>
+                    toggleFilter(
+                      selectedCategories,
+                      setSelectedCategories,
+                      cat.id,
+                    )
+                  }
+                />
+                <span className="text-[15px] text-[#0C1F33] flex-1">
+                  {cat.name}
+                </span>
+                <span className="text-[13px] text-[#475569]">
+                  ({cat.courseCount})
+                </span>
+              </label>
+            ))
+          )}
         </div>
 
         <hr className="border-[#E3E8EF]" />
 
-        {/* Course Type */}
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
             Course Type
@@ -584,7 +587,6 @@ function FilterPanel({
 
         <hr className="border-[#E3E8EF]" />
 
-        {/* Age Band */}
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
             Age Band
@@ -610,7 +612,6 @@ function FilterPanel({
 
         <hr className="border-[#E3E8EF]" />
 
-        {/* Language */}
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
             Language
