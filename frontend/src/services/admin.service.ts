@@ -118,7 +118,7 @@ export interface AdminCourse {
   title: string;
   summary: string;
   thumbnailUrl: string | null;
-  category: string;
+  categoryId: string | null;
   level: string;
   type: string;
   language: string;

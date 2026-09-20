@@ -256,7 +256,7 @@ export class AdminService {
       title: course.title,
       summary: course.summary,
       thumbnailUrl: course.thumbnailUrl,
-      category: course.category,
+      categoryId: course.categoryId,
       level: course.level,
       type: course.type,
       language: course.language,

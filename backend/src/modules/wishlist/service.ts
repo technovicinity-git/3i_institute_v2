@@ -158,7 +158,7 @@ export class WishlistService {
           title: course.title,
           summary: course.summary,
           thumbnailUrl: course.thumbnailUrl,
-          category: course.category,
+          categoryId: course.categoryId,
           level: course.level,
           minimumAge: course.minimumAge,
           instructor: {

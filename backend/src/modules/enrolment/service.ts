@@ -259,6 +259,7 @@ export class EnrolmentService {
       include: {
         course: {
           include: {
+            category: { select: { id: true, name: true, slug: true } },
             instructor: {
               select: {
                 id: true,
@@ -347,7 +348,7 @@ export class EnrolmentService {
         title: course.title,
         summary: course.summary,
         thumbnailUrl: course.thumbnailUrl,
-        category: course.category,
+        categoryId: course.categoryId,
         level: course.level,
         type: course.type,
         instructor: {
