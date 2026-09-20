@@ -347,6 +347,9 @@ export class CourseService {
     const courses = await prisma.course.findMany({
       where: { instructorId },
       include: {
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
         _count: {
           select: { enrolments: true },
         },

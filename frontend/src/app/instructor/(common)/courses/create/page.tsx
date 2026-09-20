@@ -286,11 +286,11 @@ export default function CreateCoursePage() {
                 </option>
               ))}
             </select>
-            {/* {errors.category && (
+            {errors.categoryId && (
               <p className="mt-1 text-xs text-red-600">
-                {errors.category.message}
+                {errors.categoryId.message}
               </p>
-            )} */}
+            )}
           </div>
 
           <div>
