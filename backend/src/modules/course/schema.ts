@@ -8,7 +8,7 @@ export const createCourseSchema = z.object({
     .max(1000),
   description: z.string().min(10, "Description must be at least 10 characters"),
   thumbnailUrl: z.string().url("Thumbnail must be a valid URL").optional(),
-  category: z.string().min(1, "Category is required").max(100),
+  categoryId: z.string().uuid("Invalid category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]),
   level: z.string().min(1, "Level is required").max(50),
   language: z.enum(["en", "bn", "hi", "ur", "ar"]).default("en"),

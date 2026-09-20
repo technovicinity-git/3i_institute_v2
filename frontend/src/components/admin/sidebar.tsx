@@ -16,6 +16,7 @@ import {
   Settings,
   BarChart3,
   X,
+  Tags,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { label: "Waivers", icon: AlertTriangle, href: "/admin/waivers" },
   { label: "Moderation", icon: MessageSquare, href: "/admin/moderation" },
   { label: "Reports", icon: BarChart3, href: "/admin/reports" },
+  { label: "Categories", icon: Tags, href: "/admin/categories" },
   { label: "Settings", icon: Settings, href: "/admin/settings" },
 ];
 

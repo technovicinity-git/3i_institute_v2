@@ -261,6 +261,32 @@ async function main(): Promise<void> {
     console.log("ℹ️  Admin user already exists — skipped");
   }
 
+  // ──────────────────────────────────────
+  // Seed default categories
+  // ──────────────────────────────────────
+  const DEFAULT_CATEGORIES = [
+    { name: "Islamic Studies", slug: "islamic-studies", order: 1 },
+    { name: "Qur'anic Arabic", slug: "quranic-arabic", order: 2 },
+    { name: "Health Sciences", slug: "health-sciences", order: 3 },
+    { name: "Fiqh", slug: "fiqh", order: 4 },
+    { name: "Hadith", slug: "hadith", order: 5 },
+    { name: "History", slug: "history", order: 6 },
+    { name: "Language", slug: "language", order: 7 },
+    { name: "Art & Culture", slug: "art-culture", order: 8 },
+    { name: "Science", slug: "science", order: 9 },
+    { name: "Mathematics", slug: "mathematics", order: 10 },
+  ];
+
+  for (const cat of DEFAULT_CATEGORIES) {
+    await prisma.category.upsert({
+      where: { slug: cat.slug },
+      update: {},
+      create: cat,
+    });
+  }
+
+  console.log(`✅ ${DEFAULT_CATEGORIES.length} categories seeded`);
+
   console.log("🎉 Seed complete!");
 }
 

@@ -10,6 +10,7 @@ import { Plus, X, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateCourseMutation } from "@/hooks/use-instructor-courses";
 import { useCourseThumbnailUploadMutation } from "@/hooks/use-avatar-upload";
+import { useCategories } from "@/hooks/use-categories";
 
 const createCourseSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -18,7 +19,7 @@ const createCourseSchema = z.object({
     .min(10, "Summary must be at least 10 characters")
     .max(1000),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().uuid("Please select a category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
@@ -27,19 +28,6 @@ const createCourseSchema = z.object({
 });
 
 type CreateCourseFormData = z.infer<typeof createCourseSchema>;
-
-const CATEGORIES = [
-  "Islamic Studies",
-  "Qur'anic Arabic",
-  "Health Sciences",
-  "Fiqh",
-  "Hadith",
-  "History",
-  "Language",
-  "Art & Culture",
-  "Science",
-  "Mathematics",
-];
 
 const LANGUAGES = [
   { value: "en", label: "English" },
@@ -60,6 +48,8 @@ export default function CreateCoursePage() {
   const [newOutcome, setNewOutcome] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const { data: categories } = useCategories();
 
   const {
     register,
@@ -286,21 +276,21 @@ export default function CreateCoursePage() {
               Category *
             </label>
             <select
-              {...register("category")}
+              {...register("categoryId")}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             >
               <option value="">Select category</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categories?.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
-            {errors.category && (
+            {/* {errors.category && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.category.message}
               </p>
-            )}
+            )} */}
           </div>
 
           <div>
