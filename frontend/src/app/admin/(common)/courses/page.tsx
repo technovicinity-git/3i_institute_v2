@@ -211,7 +211,8 @@ export default function AdminCoursesPage() {
                         </span>
                       </div>
                       <p className="text-xs text-[#64748B] mt-1">
-                        {course.instructor.name} • {course.category} •{" "}
+                        {course.instructor.name} •{" "}
+                        {course.category?.name ?? "Uncategorized"} •{" "}
                         {course.level}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-[#94A3B8]">

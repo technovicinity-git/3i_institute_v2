@@ -119,6 +119,11 @@ export interface AdminCourse {
   summary: string;
   thumbnailUrl: string | null;
   categoryId: string | null;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   level: string;
   type: string;
   language: string;
