@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { LandingLogo } from "@/components/landing/logo";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
+import { Eye, EyeClosed } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -124,7 +125,7 @@ export default function AdminLoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted"
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <Eye /> : <EyeClosed />}
                 </button>
               </div>
               {errors.password && (
