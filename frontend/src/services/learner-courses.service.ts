@@ -6,7 +6,12 @@ export interface EnrolledCourse {
   title: string;
   summary: string;
   thumbnailUrl: string | null;
-  category: string;
+  categoryId: string | null;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   level: string;
   type: string;
   instructor: {

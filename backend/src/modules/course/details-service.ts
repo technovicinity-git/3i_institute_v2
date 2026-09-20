@@ -6,6 +6,9 @@ export class CourseDetailsService {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
+        category: {
+          select: { id: true, name: true, slug: true },
+        },
         instructor: {
           select: {
             id: true,
@@ -123,7 +126,7 @@ export class CourseDetailsService {
       where: {
         id: { not: courseId },
         status: "PUBLISHED",
-        OR: [{ category: course.category }, { level: course.level }],
+        OR: [{ categoryId: course.categoryId }, { level: course.level }],
       },
       include: {
         instructor: {
@@ -235,7 +238,14 @@ export class CourseDetailsService {
       description: course.description,
       thumbnailUrl: course.thumbnailUrl,
       coverImageUrl: course.coverImageUrl ?? course.thumbnailUrl,
-      category: course.category,
+      categoryId: course.categoryId,
+      category: course.category
+        ? {
+            id: course.category.id,
+            name: course.category.name,
+            slug: course.category.slug,
+          }
+        : null,
       type: course.type,
       level: course.level,
       language: course.language,

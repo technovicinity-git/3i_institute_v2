@@ -53,7 +53,11 @@ export interface CourseDetails {
   description: string;
   thumbnailUrl: string | null;
   coverImageUrl: string | null;
-  category: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   type: string;
   level: string;
   language: string;
