@@ -17,7 +17,7 @@ const createCourseSchema = z.object({
   summary: z
     .string()
     .min(10, "Summary must be at least 10 characters")
-    .max(1000),
+    .max(500),
   description: z.string().min(10, "Description must be at least 10 characters"),
   categoryId: z.string().uuid("Please select a category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS"]),
