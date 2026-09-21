@@ -516,6 +516,26 @@ export class BatchService {
       attendanceStatus: session.attendance[0]?.status ?? null,
     }));
   }
+
+  async getNextSession(batchId: string) {
+    const session = await prisma.session.findFirst({
+      where: {
+        batchId,
+        scheduledAt: { gte: new Date() },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    if (!session) return null;
+
+    return {
+      id: session.id,
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      durationMinutes: session.durationMinutes,
+      meetingLink: session.meetingLink,
+    };
+  }
 }
 
 export const batchService = new BatchService();

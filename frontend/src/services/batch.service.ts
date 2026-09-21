@@ -57,4 +57,17 @@ export const batchService = {
     const response = await apiClient.get("/batches/instructor/all");
     return response.data.data;
   },
+
+  getNextSession: async (
+    batchId: string,
+  ): Promise<{
+    id: string;
+    title: string;
+    scheduledAt: string;
+    durationMinutes: number;
+    meetingLink: string | null;
+  } | null> => {
+    const response = await apiClient.get(`/batches/${batchId}/next-session`);
+    return response.data.data;
+  },
 };
