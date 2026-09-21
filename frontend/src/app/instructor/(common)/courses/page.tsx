@@ -220,7 +220,7 @@ export default function InstructorCoursesPage() {
                         <Edit className="w-4 h-4" />
                         Edit
                       </Link>
-
+                      {/* 
                       {course.type === "REGULAR" && (
                         <Link
                           href={`/instructor/courses/${course.id}/materials`}
@@ -247,7 +247,7 @@ export default function InstructorCoursesPage() {
                       >
                         <FileText className="w-4 h-4" />
                         Exams
-                      </Link>
+                      </Link> */}
                     </div>
                   </div>
 
@@ -327,7 +327,7 @@ export default function InstructorCoursesPage() {
                         Edit
                       </Link>
 
-                      {course.type === "REGULAR" && (
+                      {/* {course.type === "REGULAR" && (
                         <Link
                           href={`/instructor/courses/${course.id}/materials`}
                           className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
@@ -353,7 +353,7 @@ export default function InstructorCoursesPage() {
                       >
                         <FileText className="w-4 h-4" />
                         Exams
-                      </Link>
+                      </Link> */}
                     </div>
                   </div>
                 </div>
