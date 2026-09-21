@@ -87,6 +87,12 @@ router.get(
 );
 
 router.get(
+  "/learner/sessions",
+  authenticate,
+  batchController.getLearnerSessions,
+);
+
+router.get(
   "/instructor/all",
   authenticate,
   authorize("batches.create"),
@@ -119,6 +125,13 @@ router.get(
  *       200:
  *         description: Batch updated
  */
+
+router.get(
+  "/:batchId/next-session",
+  authenticate,
+  batchController.getNextSession,
+);
+
 router.get("/:id", batchController.getById);
 router.patch(
   "/:id",

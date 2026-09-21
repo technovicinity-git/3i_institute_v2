@@ -2,7 +2,19 @@
 
 import { useState, Suspense, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Flag, Wifi, WifiOff, Loader2, Hash } from "lucide-react";
+import { useNextSession } from "@/hooks/use-batches";
+import {
+  ArrowRight,
+  Flag,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Hash,
+  Calendar,
+  Clock,
+  ExternalLink,
+  Video,
+} from "lucide-react";
 import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -48,6 +60,8 @@ function ChatContent() {
   const { messages, isLoading, isConnected, sendMessage, reportMessage } =
     useChat(courseId, batchId);
 
+  const { data: nextSession } = useNextSession(batchId ?? "");
+
   const [newMessage, setNewMessage] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
@@ -58,11 +72,11 @@ function ChatContent() {
   const [autoScroll, setAutoScroll] = useState(true);
 
   // Auto-scroll to bottom
-  useEffect(() => {
-    if (autoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, autoScroll]);
+  // useEffect(() => {
+  //   if (autoScroll) {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // }, [messages, autoScroll]);
 
   // Detect user scrolling up
   const handleScroll = () => {
@@ -115,6 +129,38 @@ function ChatContent() {
     ? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim()
     : (activeProfile?.displayName ?? "You");
 
+  function formatSessionTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const isToday =
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate();
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const isTomorrow =
+      date.getFullYear() === tomorrow.getFullYear() &&
+      date.getMonth() === tomorrow.getMonth() &&
+      date.getDate() === tomorrow.getDate();
+
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    if (isToday) return `Today at ${timeStr}`;
+    if (isTomorrow) return `Tomorrow at ${timeStr}`;
+
+    const dateStr2 = date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+    return `${dateStr2} at ${timeStr}`;
+  }
+
   return (
     <div className="w-full max-w-[900px] mx-auto bg-white border-x border-[#E3E8EF] h-[calc(100vh-73px)] flex flex-col overflow-hidden">
       {/* Page Header */}
@@ -152,6 +198,48 @@ function ChatContent() {
           </span>
         </div>
       </div>
+
+      {/* Next session bar */}
+      {nextSession && (
+        <div className="flex items-center gap-3 px-6 py-3 bg-[#F9F6F0] border-b border-[#E3E8EF] shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-[#22A146] flex items-center justify-center shrink-0">
+            <Video className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-[#157A34] uppercase tracking-wide">
+              Next Live Class
+            </p>
+            <p className="text-sm font-semibold text-[#0C1F33] truncate">
+              {nextSession.title}
+            </p>
+            <div className="flex items-center gap-3 mt-0.5 text-xs text-[#64748B] flex-wrap">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {formatSessionTime(nextSession.scheduledAt)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {nextSession.durationMinutes} min
+              </span>
+            </div>
+          </div>
+          {nextSession.meetingLink ? (
+            <a
+              href={nextSession.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#22A146] text-white rounded-lg text-xs font-semibold hover:bg-[#1E9040] shrink-0"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Join
+            </a>
+          ) : (
+            <span className="text-[11px] font-semibold text-yellow-600 px-3 py-2 shrink-0">
+              No link yet
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Loading */}
       {isLoading && (

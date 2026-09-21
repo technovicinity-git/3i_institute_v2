@@ -93,3 +93,12 @@ export function useInstructorBatches() {
     staleTime: 60 * 1000,
   });
 }
+
+export function useNextSession(batchId: string) {
+  return useQuery({
+    queryKey: ["next-session", batchId],
+    queryFn: () => batchService.getNextSession(batchId),
+    enabled: !!batchId,
+    staleTime: 60 * 1000,
+  });
+}

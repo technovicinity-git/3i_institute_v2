@@ -452,6 +452,90 @@ export class BatchService {
       nextSessionAt: batch.sessions[0]?.scheduledAt ?? null,
     }));
   }
+
+  async getLearnerSessions(accountId: string, learnerProfileId: string) {
+    // Verify learner profile belongs to account
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    // Get upcoming sessions from all batches this learner is enrolled in
+    const sessions = await prisma.session.findMany({
+      where: {
+        scheduledAt: { gte: new Date() },
+        batch: {
+          enrolments: {
+            some: {
+              learnerProfileId,
+              waitlisted: false,
+            },
+          },
+          status: { in: ["UPCOMING", "ACTIVE"] },
+        },
+      },
+      include: {
+        batch: {
+          include: {
+            course: {
+              include: {
+                instructor: {
+                  select: { firstName: true, lastName: true },
+                },
+              },
+            },
+          },
+        },
+        attendance: {
+          where: { learnerProfileId },
+          take: 1,
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    return sessions.map((session) => ({
+      id: session.id,
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      durationMinutes: session.durationMinutes,
+      meetingLink: session.meetingLink,
+      notes: session.notes,
+      batchId: session.batchId,
+      batchName: session.batch.name,
+      courseId: session.batch.course.id,
+      courseTitle: session.batch.course.title,
+      instructorName: `${session.batch.course.instructor.firstName} ${session.batch.course.instructor.lastName}`,
+      attendanceStatus: session.attendance[0]?.status ?? null,
+    }));
+  }
+
+  async getNextSession(batchId: string) {
+    const session = await prisma.session.findFirst({
+      where: {
+        batchId,
+        scheduledAt: { gte: new Date() },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    if (!session) return null;
+
+    return {
+      id: session.id,
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      durationMinutes: session.durationMinutes,
+      meetingLink: session.meetingLink,
+    };
+  }
 }
 
 export const batchService = new BatchService();
