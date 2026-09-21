@@ -14,6 +14,7 @@ import {
   Clock,
   ExternalLink,
   Video,
+  GraduationCap,
 } from "lucide-react";
 import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
@@ -72,11 +73,11 @@ function ChatContent() {
   const [autoScroll, setAutoScroll] = useState(true);
 
   // Auto-scroll to bottom
-  // useEffect(() => {
-  //   if (autoScroll) {
-  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   }
-  // }, [messages, autoScroll]);
+  useEffect(() => {
+    if (autoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, autoScroll]);
 
   // Detect user scrolling up
   const handleScroll = () => {
@@ -267,7 +268,9 @@ function ChatContent() {
           )}
 
           {messages.map((msg, index) => {
-            const isSelf = msg.senderId === user?.id;
+            const isSelf = msg.learnerProfileId
+              ? msg.learnerProfileId === activeProfile?.id
+              : msg.senderId === user?.id;
 
             // Show date separator
             const showDate =
@@ -348,8 +351,16 @@ function ChatContent() {
                           className="object-cover w-full h-full"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[#E3E8EF] flex items-center justify-center">
-                          <span className="text-[11px] font-bold text-[#0C1F33]">
+                        <div
+                          className={`w-full h-full flex items-center justify-center ${
+                            msg.isInstructor ? "bg-[#22A146]" : "bg-[#E3E8EF]"
+                          }`}
+                        >
+                          <span
+                            className={`text-[11px] font-bold ${
+                              msg.isInstructor ? "text-white" : "text-[#0C1F33]"
+                            }`}
+                          >
                             {getInitials(msg.displayName)}
                           </span>
                         </div>
@@ -361,13 +372,25 @@ function ChatContent() {
                           <span className="text-[13px] font-bold text-[#0C1F33]">
                             {msg.displayName}
                           </span>
+                          {msg.isInstructor && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#22A146] text-white">
+                              <GraduationCap className="w-2.5 h-2.5" />
+                              INSTRUCTOR
+                            </span>
+                          )}
                           <span className="text-[11px] text-[#475569]">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
                       )}
                       <div className="group relative inline-block max-w-full">
-                        <div className="bg-white border border-[#E3E8EF] rounded-lg px-3.5 py-2.5">
+                        <div
+                          className={`rounded-lg px-3.5 py-2.5 border ${
+                            msg.isInstructor
+                              ? "bg-[#F2FBF4] border-[#22A146]/30"
+                              : "bg-white border-[#E3E8EF]"
+                          }`}
+                        >
                           <p className="text-[15px] text-[#0C1F33] leading-6 break-words">
                             {msg.message}
                           </p>

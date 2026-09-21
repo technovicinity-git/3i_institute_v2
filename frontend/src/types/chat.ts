@@ -5,9 +5,11 @@ export interface ChatMessage {
   senderId: string;
   senderType: "ACCOUNT" | "GUARDIAN";
   displayName: string;
+  learnerProfileId?: string | null; // NEW
   message: string;
-  createdAt: string;
   avatarUrl?: string | null;
+  isInstructor?: boolean;
+  createdAt: string;
 }
 
 export interface ChatRoomInfo {
