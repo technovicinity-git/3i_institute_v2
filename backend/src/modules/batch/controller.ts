@@ -139,6 +139,36 @@ export class BatchController {
       next(error);
     }
   };
+
+  getLearnerSessions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+
+      if (!learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId is required",
+          },
+        });
+        return;
+      }
+
+      const sessions = await batchService.getLearnerSessions(
+        accountId,
+        learnerProfileId,
+      );
+      sendSuccess(res, sessions, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const batchController = new BatchController();

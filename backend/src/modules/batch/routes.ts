@@ -87,6 +87,12 @@ router.get(
 );
 
 router.get(
+  "/learner/sessions",
+  authenticate,
+  batchController.getLearnerSessions,
+);
+
+router.get(
   "/instructor/all",
   authenticate,
   authorize("batches.create"),
