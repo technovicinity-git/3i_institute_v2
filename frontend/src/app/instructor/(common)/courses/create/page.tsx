@@ -362,11 +362,14 @@ export default function CreateCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-              Maximum Age *
+              Maximum Age (Optional)
             </label>
             <input
               type="number"
-              {...register("maximumAge", { valueAsNumber: true })}
+              {...register("maximumAge", {
+                setValueAs: (value) =>
+                  value === "" ? undefined : Number(value),
+              })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
           </div>
