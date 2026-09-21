@@ -120,9 +120,9 @@ export default function CourseDetailsPage() {
 
             {/* Badges */}
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold text-[#B8912F] bg-[#B8912F]/[0.08] px-2 py-1 rounded">
+              {/* <span className="text-[11px] font-bold text-[#B8912F] bg-[#B8912F]/[0.08] px-2 py-1 rounded">
                 {course.level}
-              </span>
+              </span> */}
               <span className="text-[11px] font-semibold text-[#B8912F] border border-[#B8912F] px-2.5 py-1 rounded-full">
                 Included with membership
               </span>
@@ -248,10 +248,10 @@ export default function CourseDetailsPage() {
                       Curriculum
                     </h2>
                   </div>
-                  <p className="text-[15px] font-semibold text-[#0C1F33]">
+                  {/* <p className="text-[15px] font-semibold text-[#0C1F33]">
                     {course.totalModules} modules • {course.totalLessons}{" "}
                     lessons
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="space-y-3">
@@ -276,17 +276,17 @@ export default function CourseDetailsPage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="text-sm text-[#64748B]">
-                            {mod.lessons} lessons • {mod.duration}
+                            {mod.duration}
                           </span>
-                          {openModule === idx ? (
+                          {/* {openModule === idx ? (
                             <ChevronUp className="w-5 h-5 text-[#64748B]" />
                           ) : (
                             <ChevronDown className="w-5 h-5 text-[#64748B]" />
-                          )}
+                          )} */}
                         </div>
                       </button>
 
-                      {openModule === idx && (
+                      {/* {openModule === idx && (
                         <div className="bg-white divide-y divide-[#E3E8EF]">
                           {mod.lessonsList.map((lesson, li) => (
                             <div
@@ -320,7 +320,7 @@ export default function CourseDetailsPage() {
                             </div>
                           ))}
                         </div>
-                      )}
+                      )} */}
                     </div>
                   ))}
                 </div>
