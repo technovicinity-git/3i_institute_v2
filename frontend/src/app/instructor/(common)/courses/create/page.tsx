@@ -17,7 +17,7 @@ const createCourseSchema = z.object({
   summary: z
     .string()
     .min(10, "Summary must be at least 10 characters")
-    .max(1000),
+    .max(500),
   description: z.string().min(10, "Description must be at least 10 characters"),
   categoryId: z.string().uuid("Please select a category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS"]),
@@ -362,11 +362,14 @@ export default function CreateCoursePage() {
           </div>
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-              Maximum Age *
+              Maximum Age (Optional)
             </label>
             <input
               type="number"
-              {...register("maximumAge", { valueAsNumber: true })}
+              {...register("maximumAge", {
+                setValueAs: (value) =>
+                  value === "" ? undefined : Number(value),
+              })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
           </div>

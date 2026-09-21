@@ -247,7 +247,7 @@ export default function BatchDetailsPage() {
                         {session.durationMinutes} min
                       </p>
                     </div>
-                    {session.meetingLink && (
+                    {session.meetingLink && !isPast && (
                       <a
                         href={session.meetingLink}
                         target="_blank"

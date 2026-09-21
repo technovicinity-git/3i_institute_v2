@@ -97,7 +97,11 @@ export function useChat(courseId: string, batchId: string | null) {
     if (socket.connected) {
       console.log("Socket already connected, joining room");
       setIsConnected(true);
-      socket.emit("join-course", { courseId, batchId });
+      socket.emit("join-course", {
+        courseId,
+        batchId,
+        learnerProfileId: activeProfile?.id,
+      });
     }
 
     return () => {
@@ -105,7 +109,7 @@ export function useChat(courseId: string, batchId: string | null) {
         socket.emit("leave-course");
       }
     };
-  }, [courseId, batchId, accessToken]);
+  }, [courseId, batchId, accessToken, activeProfile?.id]);
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -119,9 +123,10 @@ export function useChat(courseId: string, batchId: string | null) {
         courseId,
         batchId,
         message: text.trim(),
+        learnerProfileId: activeProfile?.id, // NEW
       });
     },
-    [courseId, batchId],
+    [courseId, batchId, activeProfile?.id],
   );
 
   const reportMessage = useCallback(

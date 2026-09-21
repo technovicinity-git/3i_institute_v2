@@ -316,8 +316,11 @@ export default function EditCoursePage() {
             </label>
             <input
               type="number"
-              {...register("maximumAge", { valueAsNumber: true })}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+              {...register("maximumAge", {
+                setValueAs: (value) =>
+                  value === "" ? undefined : Number(value),
+              })}
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
           </div>
         </div>

@@ -109,9 +109,14 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
     // Send message
     socket.on(
       "send-message",
-      async (data: { courseId: string; batchId?: string; message: string }) => {
+      async (data: {
+        courseId: string;
+        batchId?: string;
+        message: string;
+        learnerProfileId?: string;
+      }) => {
         try {
-          const { courseId, batchId, message } = data;
+          const { courseId, batchId, message, learnerProfileId } = data;
 
           if (!message || message.trim().length === 0) {
             socket.emit("error", { message: "Message cannot be empty" });
@@ -125,33 +130,37 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             return;
           }
 
-          // Determine display name based on sender type
+          const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            select: { instructorId: true },
+          });
+
+          const isInstructor = course?.instructorId === user.sub;
+
           let displayName = user.email;
 
-          if (
-            socket.data.isInstructor ||
-            socket.data.isInstructor === undefined
-          ) {
-            // Instructor — use their profile
+          if (isInstructor) {
             const instructor = await prisma.user.findUnique({
               where: { id: user.sub },
               select: { firstName: true, lastName: true },
             });
             if (instructor) {
-              displayName = `${instructor.firstName} ${instructor.lastName}`;
+              displayName =
+                `${instructor.firstName} ${instructor.lastName}`.trim();
             }
-          } else if (socket.data.learnerProfileId) {
-            // Learner — use learner profile
-            const profile = await prisma.learnerProfile.findUnique({
-              where: { id: socket.data.learnerProfileId },
-              select: { displayName: true },
-            });
-            if (profile) {
-              displayName = profile.displayName;
+          } else {
+            const profileId = learnerProfileId ?? socket.data.learnerProfileId;
+            if (profileId) {
+              const profile = await prisma.learnerProfile.findUnique({
+                where: { id: profileId },
+                select: { displayName: true },
+              });
+              if (profile) {
+                displayName = profile.displayName;
+              }
             }
           }
 
-          // Service fetches avatarUrl internally and returns it in the saved message
           const savedMessage = await chatService.sendMessage({
             courseId,
             batchId: batchId ?? null,
@@ -159,6 +168,9 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             senderType: "ACCOUNT",
             displayName,
             message: message.trim(),
+            learnerProfileId: isInstructor
+              ? null
+              : (learnerProfileId ?? socket.data.learnerProfileId),
           });
 
           const roomName = batchId
