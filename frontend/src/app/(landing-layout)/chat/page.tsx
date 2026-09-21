@@ -58,11 +58,11 @@ function ChatContent() {
   const [autoScroll, setAutoScroll] = useState(true);
 
   // Auto-scroll to bottom
-  useEffect(() => {
-    if (autoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, autoScroll]);
+  // useEffect(() => {
+  //   if (autoScroll) {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // }, [messages, autoScroll]);
 
   // Detect user scrolling up
   const handleScroll = () => {
