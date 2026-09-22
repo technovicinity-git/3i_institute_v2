@@ -97,3 +97,20 @@ export function useUpdateMaterialMutation() {
     },
   });
 }
+
+export function useUploadDocumentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      materialService.uploadDocument(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-materials"] });
+      toast.success("Document uploaded");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to upload document");
+    },
+  });
+}

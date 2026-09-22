@@ -19,6 +19,14 @@ const upload = multer({
   },
 });
 
+const uploadDocument = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+    files: 1,
+  },
+});
+
 /**
  * @swagger
  * /api/v1/materials:
@@ -96,6 +104,45 @@ router.post(
     { name: "captions", maxCount: 1 },
   ]),
   materialController.uploadVideo,
+);
+
+/**
+ * @swagger
+ * /api/v1/materials/upload-document:
+ *   post:
+ *     tags: [Materials]
+ *     summary: Upload a document (PDF, DOC, PPT)
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: courseId
+ *         type: string
+ *         required: true
+ *       - in: formData
+ *         name: title
+ *         type: string
+ *         required: true
+ *       - in: formData
+ *         name: description
+ *         type: string
+ *       - in: formData
+ *         name: order
+ *         type: integer
+ *       - in: formData
+ *         name: document
+ *         type: file
+ *         required: true
+ *     responses:
+ *       201:
+ *         description: Document uploaded
+ */
+router.post(
+  "/upload-document",
+  authenticate,
+  authorize("materials.upload"),
+  uploadDocument.fields([{ name: "document", maxCount: 1 }]),
+  materialController.uploadDocument,
 );
 
 /**

@@ -91,3 +91,12 @@ export function useMaterialProgress(
     enabled: !!learnerProfileId && !!materialId,
   });
 }
+
+export function useLessonMaterialUrl(materialId: string) {
+  return useQuery({
+    queryKey: ["lesson-material-url", materialId],
+    queryFn: () => lessonService.getSignedUrl(materialId),
+    enabled: !!materialId,
+    staleTime: 50 * 60 * 1000, // 50 min
+  });
+}

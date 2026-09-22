@@ -119,6 +119,38 @@ export class MaterialController {
       next(error);
     }
   };
+  uploadDocument = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const files = (req as any).files;
+      const file = files?.document?.[0];
+
+      if (!file) {
+        throw new ValidationError("Document file is required");
+      }
+
+      const { courseId, title, order, description } = req.body;
+
+      if (!courseId || !title) {
+        throw new ValidationError("courseId and title are required");
+      }
+
+      const material = await materialService.uploadDocument(
+        instructorId,
+        courseId,
+        title,
+        Number(order) || 0,
+        description || undefined,
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+      );
+
+      sendSuccess(res, material, 201, "Document uploaded");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const materialController = new MaterialController();

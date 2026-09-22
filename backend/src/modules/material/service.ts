@@ -11,10 +11,9 @@ import type {
   UpdateMaterialInput,
   UploadVideoInput,
 } from "#/modules/material/schema";
+import { cloudinary } from "#/lib/cloudinary";
 
 const MAX_VIDEO_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
-const MAX_AUDIO_SIZE = 500 * 1024 * 1024; // 500MB
-const MAX_DOCUMENT_SIZE = 100 * 1024 * 1024; // 100MB
 
 export class MaterialService {
   async create(instructorId: string, input: CreateMaterialInput) {
@@ -139,146 +138,6 @@ export class MaterialService {
     }
   }
 
-  /**
-   * Upload a document/audio/image to private storage
-   * FR-MAT-03: File type validated server-side by content inspection
-   * FR-MAT-07: Web renders in browser viewer, no download
-   */
-  async uploadDocument(
-    instructorId: string,
-    courseId: string,
-    title: string,
-    type: "document" | "audio",
-    fileBuffer: Buffer,
-    originalFilename: string,
-    order: number = 0,
-  ) {
-    // Verify course ownership
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-    });
-
-    if (!course) {
-      throw new NotFoundError("Course not found");
-    }
-
-    if (course.instructorId !== instructorId) {
-      throw new ForbiddenError("You can only upload to your own courses");
-    }
-
-    // Validate size limits
-    const maxSize = type === "audio" ? MAX_AUDIO_SIZE : MAX_DOCUMENT_SIZE;
-    if (fileBuffer.length > maxSize) {
-      throw new ValidationError(
-        `${type} file exceeds ${maxSize / (1024 * 1024)}MB limit`,
-      );
-    }
-
-    if (fileBuffer.length === 0) {
-      throw new ValidationError("File is empty");
-    }
-
-    // Content-type inspection (FR-MAT-03)
-    const detectedType = this.detectFileType(fileBuffer);
-    const expectedType = type === "audio" ? "audio" : "document";
-
-    if (detectedType !== expectedType) {
-      throw new ValidationError(
-        `File content does not match declared type (expected ${expectedType}, got ${detectedType})`,
-      );
-    }
-
-    // Upload to private storage
-    const key = storageService.generateKey(
-      type === "audio" ? "course-audio" : "course-documents",
-      originalFilename,
-    );
-
-    const contentType = type === "audio" ? "audio/mpeg" : "application/pdf";
-
-    await storageService.uploadFile(fileBuffer, key, contentType);
-
-    // Create material record
-    const material = await prisma.material.create({
-      data: {
-        courseId,
-        title,
-        type,
-        url: key,
-        order,
-      },
-    });
-
-    return material;
-  }
-
-  /**
-   * Get signed URL for material access (short-expiry)
-   * FR-MAT-05: No permanent URL ever exposed
-   */
-  async getSignedMaterialUrl(userId: string, materialId: string) {
-    const material = await prisma.material.findUnique({
-      where: { id: materialId },
-      include: { course: true },
-    });
-
-    if (!material) {
-      throw new NotFoundError("Material not found");
-    }
-
-    // Check if user is the instructor
-    const isInstructor = material.course.instructorId === userId;
-
-    // Check if user is an admin
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { role: true },
-    });
-
-    const isAdmin = user?.role?.name === "Admin";
-
-    // Check if user has an enrolled learner profile for this course
-    let isEnrolled = false;
-
-    if (!isInstructor && !isAdmin) {
-      // Get all learner profiles under this account
-      const learnerProfiles = await prisma.learnerProfile.findMany({
-        where: {
-          accountId: userId,
-          deletedAt: null,
-        },
-        select: { id: true },
-      });
-
-      const learnerProfileIds = learnerProfiles.map((lp) => lp.id);
-
-      if (learnerProfileIds.length > 0) {
-        const enrolment = await prisma.enrolment.findFirst({
-          where: {
-            learnerProfileId: { in: learnerProfileIds },
-            courseId: material.courseId,
-            waitlisted: false,
-          },
-        });
-
-        isEnrolled = !!enrolment;
-      }
-    }
-
-    // Allow instructor, admin, or enrolled learner
-    if (!isInstructor && !isAdmin && !isEnrolled) {
-      throw new ForbiddenError("You are not enrolled in this course");
-    }
-
-    if (material.type === "video") {
-      const signedUrl = await bunnyStream.getSignedUrl(material.url, 3600);
-      return { url: signedUrl, expiresIn: 3600 };
-    }
-
-    const signedUrl = await storageService.getSignedUrl(material.url, 3600);
-    return { url: signedUrl, expiresIn: 3600 };
-  }
-
   async getCourseMaterials(courseId: string) {
     return prisma.material.findMany({
       where: { courseId },
@@ -353,53 +212,6 @@ export class MaterialService {
     await prisma.material.delete({
       where: { id: materialId },
     });
-  }
-
-  /**
-   * Detect file type by magic bytes (server-side content inspection)
-   */
-  private detectFileType(
-    buffer: Buffer,
-  ): "audio" | "document" | "image" | "unknown" {
-    if (buffer.length < 4) return "unknown";
-
-    // Check for PDF
-    if (
-      buffer[0] === 0x25 &&
-      buffer[1] === 0x50 &&
-      buffer[2] === 0x44 &&
-      buffer[3] === 0x46
-    ) {
-      return "document";
-    }
-
-    // Check for MP3 (ID3 tag)
-    if (
-      (buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33) || // ID3
-      (buffer.length >= 2 &&
-        buffer[0] === 0xff &&
-        buffer[1] !== undefined &&
-        (buffer[1] & 0xe0) === 0xe0) // MPEG sync
-    ) {
-      return "audio";
-    }
-
-    // Check for PNG
-    if (
-      buffer[0] === 0x89 &&
-      buffer[1] === 0x50 &&
-      buffer[2] === 0x4e &&
-      buffer[3] === 0x47
-    ) {
-      return "image";
-    }
-
-    // Check for JPEG
-    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-      return "image";
-    }
-
-    return "unknown";
   }
 
   async getCourseContentForLearner(
@@ -484,6 +296,186 @@ export class MaterialService {
       progress,
       completedLessons,
     };
+  }
+  async uploadDocument(
+    instructorId: string,
+    courseId: string,
+    title: string,
+    order: number,
+    description: string | undefined,
+    fileBuffer: Buffer,
+    originalFilename: string,
+    mimetype: string,
+  ) {
+    // Verify course ownership
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    if (course.instructorId !== instructorId) {
+      throw new ForbiddenError("You can only upload to your own courses");
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ];
+
+    if (!allowedTypes.includes(mimetype)) {
+      throw new ValidationError(
+        "Invalid file type. Allowed: PDF, DOC, DOCX, PPT, PPTX",
+      );
+    }
+
+    // Max 50MB
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (fileBuffer.length > MAX_SIZE) {
+      throw new ValidationError("File exceeds 50MB limit");
+    }
+
+    // Extract extension from original filename
+    const ext = originalFilename.split(".").pop()?.toLowerCase() ?? "pdf";
+
+    // Upload to Cloudinary as raw resource
+    const result = await new Promise<any>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: `course-documents/${courseId}`,
+          resource_type: "raw",
+          public_id: `${Date.now()}-${originalFilename.replace(/\.[^.]+$/, "")}.${ext}`, // ← Include extension
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(result);
+        },
+      );
+      uploadStream.end(fileBuffer);
+    });
+
+    // Create material record
+    const material = await prisma.material.create({
+      data: {
+        courseId,
+        title,
+        description: description || null,
+        type: "document",
+        url: result.public_id, // Store Cloudinary public_id
+        order,
+      },
+    });
+
+    return material;
+  }
+
+  async getSignedMaterialUrl(userId: string, materialId: string) {
+    const material = await prisma.material.findUnique({
+      where: { id: materialId },
+      include: { course: true },
+    });
+
+    if (!material) {
+      throw new NotFoundError("Material not found");
+    }
+
+    // Access check (instructor, admin, or enrolled learner)
+    const isInstructor = material.course.instructorId === userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+    const isAdmin = user?.role?.name === "Admin";
+
+    let isEnrolled = false;
+    if (!isInstructor && !isAdmin) {
+      const learnerProfiles = await prisma.learnerProfile.findMany({
+        where: { accountId: userId, deletedAt: null },
+        select: { id: true },
+      });
+      const profileIds = learnerProfiles.map((lp) => lp.id);
+
+      if (profileIds.length > 0) {
+        const enrolment = await prisma.enrolment.findFirst({
+          where: {
+            learnerProfileId: { in: profileIds },
+            courseId: material.courseId,
+            waitlisted: false,
+          },
+        });
+        isEnrolled = !!enrolment;
+      }
+    }
+
+    if (!isInstructor && !isAdmin && !isEnrolled) {
+      throw new ForbiddenError("You are not enrolled in this course");
+    }
+
+    // Video — Bunny Stream
+    if (material.type === "video") {
+      const signedUrl = await bunnyStream.getSignedUrl(material.url, 3600);
+      return { url: signedUrl, expiresIn: 3600, contentType: "video" };
+    }
+
+    // Document — Cloudinary authenticated URL
+    if (material.type === "document") {
+      // Generate a signed URL that expires in 1 hour
+      const expiresAt = Math.floor(Date.now() / 1000) + 3600;
+
+      const signedUrl = cloudinary.utils.private_download_url(
+        material.url,
+        "pdf", // format — Cloudinary uses this for delivery
+        {
+          resource_type: "raw",
+          type: "upload",
+          expires_at: expiresAt,
+          attachment: false, // ensures inline view, not download
+        },
+      );
+
+      return {
+        url: signedUrl,
+        expiresIn: 3600,
+        contentType: "document",
+        mimeType: this.getMimeTypeFromPublicId(material.url),
+      };
+    }
+
+    // Audio — signed Cloudinary URL
+    if (material.type === "audio") {
+      const signedUrl = cloudinary.url(material.url, {
+        resource_type: "video",
+        sign_url: true,
+        type: "upload",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      });
+      return { url: signedUrl, expiresIn: 3600, contentType: "audio" };
+    }
+
+    // Link
+    return { url: material.url, expiresIn: 3600, contentType: "link" };
+  }
+
+  private getMimeTypeFromPublicId(publicId: string): string {
+    const ext = publicId.split(".").pop()?.toLowerCase() ?? "";
+    const map: Record<string, string> = {
+      pdf: "application/pdf",
+      doc: "application/msword",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ppt: "application/vnd.ms-powerpoint",
+      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    };
+    return map[ext] ?? "application/pdf";
   }
 }
 
