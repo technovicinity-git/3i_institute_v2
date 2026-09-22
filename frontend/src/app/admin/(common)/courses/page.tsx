@@ -272,11 +272,18 @@ export default function AdminCoursesPage() {
                               : "border border-[#22A146] text-[#22A146] hover:bg-green-50"
                           }`}
                         >
-                          <CheckCircle className="w-3.5 h-3.5" />
                           {confirmAction?.id === course.id &&
-                          confirmAction.action === "approve"
-                            ? "Confirm?"
-                            : "Approve"}
+                          approveMutation.isPending ? (
+                            "Approving..."
+                          ) : (
+                            <>
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {confirmAction?.id === course.id &&
+                              confirmAction.action === "approve"
+                                ? "Confirm?"
+                                : "Approve"}
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => handleAction(course.id, "reject")}
