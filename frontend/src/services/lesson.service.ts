@@ -102,7 +102,12 @@ export const lessonService = {
 
   getSignedUrl: async (
     materialId: string,
-  ): Promise<{ url: string; expiresIn: number }> => {
+  ): Promise<{
+    url: string;
+    expiresIn: number;
+    contentType: string;
+    mimeType?: string;
+  }> => {
     const response = await apiClient.get(`/materials/${materialId}/signed-url`);
     return response.data.data;
   },

@@ -10,12 +10,13 @@ import {
   useLessonNotes,
   useSaveNoteMutation,
   useUpdateProgressMutation,
-  useLessonVideoUrl,
+  useLessonMaterialUrl,
   useMaterialProgress,
 } from "@/hooks/use-lesson";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
 import { useQueryClient } from "@tanstack/react-query";
+import { DocumentViewer } from "@/components/lesson/document-viewer";
 
 export default function LessonPage() {
   const params = useParams();
@@ -39,16 +40,15 @@ export default function LessonPage() {
   const [notes, setNotes] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
 
-  const videoRef = useRef<HTMLDivElement>(null);
-
   const progressDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: videoUrlData, isLoading: videoLoading } =
-    useLessonVideoUrl(lessonId);
   const { data: progressData } = useMaterialProgress(
     activeProfile?.id ?? "",
     lessonId,
   );
+
+  const { data: materialUrlData, isLoading: materialLoading } =
+    useLessonMaterialUrl(lessonId);
 
   // Flatten all lessons in order
   const allLessons = courseContent?.modules?.flatMap((m) => m.lessons) ?? [];
@@ -145,14 +145,6 @@ export default function LessonPage() {
     );
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      videoRef.current?.requestFullscreen?.();
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
   if (isLoading || !courseContent) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#FBF9F4]">
@@ -168,128 +160,104 @@ export default function LessonPage() {
     >
       {/* LEFT: Video + Lesson */}
       <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        {/* <div className="flex items-center justify-between h-16 px-6 bg-[#12304E] shrink-0">
-          <div className="flex items-center gap-4 min-w-0">
-            <button
-              onClick={() => router.back()}
-              className="shrink-0 text-white/80 hover:text-white"
-            >
-              <ArrowLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="text-base font-semibold text-white truncate">
-              {courseContent.courseTitle}
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-3 shrink-0">
-            <span className="text-[13px] text-white/90">
-              {Math?.round(courseContent.progress) || 0}% complete
-            </span>
-            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden mt-2">
-              <div
-                className="h-full bg-[#22A146] rounded-full transition-all"
-                style={{ width: `${courseContent.progress}%` }}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
-            <button className="text-white/80 hover:text-white">
-              <Edit3 className="w-[18px] h-[18px]" />
-            </button>
-            <button className="text-white/80 hover:text-white">
-              <Bookmark className="w-[18px] h-[18px]" />
-            </button>
-            <button
-              onClick={toggleFullscreen}
-              className="text-white/80 hover:text-white"
-            >
-              <Maximize className="w-[18px] h-[18px]" />
-            </button>
-          </div>
-        </div> */}
-
         {/* Scrollable content */}
         <div className="flex-1 pl-4 pt-4 min-h-0 overflow-y-auto">
           {/* Video */}
-          {videoLoading ? (
+          {/* Media content */}
+          {materialLoading ? (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
               <div className="w-10 h-10 rounded-full border-4 border-white border-t-transparent animate-spin" />
             </div>
-          ) : videoUrlData?.url ? (
-            <>
-              <VideoPlayer
-                videoUrl={videoUrlData.url}
-                initialPosition={progressData?.lastPosition ?? 0}
-                onProgress={handleProgressUpdate}
-                onComplete={() => {
-                  if (activeProfile) {
-                    updateProgressMutation.mutate({
-                      learnerProfileId: activeProfile.id,
-                      materialId: lessonId,
-                      watchedSeconds:
-                        Math.floor(progressData?.watchedSeconds ?? 0) + 999,
-                      lastPosition: 0,
-                      completed: true,
-                    });
-                  }
-
-                  // Auto-navigate to next lesson after a short delay
-                  if (nextLesson) {
-                    setTimeout(() => {
-                      router.push(
-                        `/my-courses/${courseId}/lessons/${nextLesson.id}`,
-                      );
-                    }, 1500);
-                  }
-                }}
-              />
-              {/* Previous / Next navigation */}
-              <div className="flex items-center justify-between gap-4 mt-10 pt-6 border-t border-[#E3E8EF]">
-                <button
-                  onClick={() =>
-                    previousLesson && goToLesson(previousLesson.id)
-                  }
-                  disabled={!previousLesson}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                    previousLesson
-                      ? "border border-[#E3E8EF] text-[#0C1F33] hover:bg-gray-50"
-                      : "border border-[#E3E8EF] text-[#94A3B8] cursor-not-allowed opacity-50"
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Previous</span>
-                  {/* {previousLesson && (
-                    <span className="hidden md:inline truncate max-w-[200px] text-[#64748B]">
-                      — {previousLesson.title}
-                    </span>
-                  )} */}
-                </button>
-
-                <button
-                  onClick={() => nextLesson && goToLesson(nextLesson.id)}
-                  disabled={!nextLesson}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                    nextLesson
-                      ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
-                      : "bg-gray-100 text-[#94A3B8] cursor-not-allowed opacity-50"
-                  }`}
-                >
-                  {/* {nextLesson && (
-                    <span className="hidden md:inline truncate max-w-[200px]">
-                      {nextLesson.title} —
-                    </span>
-                  )} */}
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </>
-          ) : (
+          ) : !materialUrlData?.url ? (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
-              <p className="text-white/60 text-sm">Video unavailable</p>
+              <p className="text-white/60 text-sm">Content unavailable</p>
             </div>
+          ) : materialUrlData.contentType === "document" ? (
+            /* Document — inline PDF viewer, no download */
+            <div className="w-full rounded-lg border border-[#E3E8EF] bg-white overflow-hidden">
+              <iframe
+                src={`${materialUrlData.url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                className="w-full h-[75vh]"
+                title={currentLesson?.title ?? "Document"}
+              />
+              <div className="px-4 py-3 bg-[#FBF9F4] border-t border-[#E3E8EF] text-xs text-[#64748B] text-center">
+                Read-only preview • Please read through the document
+              </div>
+            </div>
+          ) : (
+            /* Video */
+            <VideoPlayer
+              videoUrl={materialUrlData.url}
+              initialPosition={progressData?.lastPosition ?? 0}
+              onProgress={handleProgressUpdate}
+              onComplete={() => {
+                if (activeProfile) {
+                  updateProgressMutation.mutate({
+                    learnerProfileId: activeProfile.id,
+                    materialId: lessonId,
+                    watchedSeconds:
+                      Math.floor(progressData?.watchedSeconds ?? 0) + 999,
+                    lastPosition: 0,
+                    completed: true,
+                  });
+                }
+
+                if (nextLesson) {
+                  setTimeout(() => {
+                    router.push(
+                      `/my-courses/${courseId}/lessons/${nextLesson.id}`,
+                    );
+                  }, 1500);
+                }
+              }}
+            />
           )}
+
+          {/* Auto-mark document complete after 30 seconds */}
+          {materialUrlData?.contentType === "document" && (
+            <DocumentCompletionTracker
+              activeProfileId={activeProfile?.id}
+              materialId={lessonId}
+              courseId={courseId}
+              onComplete={() => {
+                queryClient.invalidateQueries({
+                  queryKey: ["material-progress"],
+                });
+                queryClient.invalidateQueries({
+                  queryKey: ["course-content", courseId, activeProfile?.id],
+                });
+              }}
+            />
+          )}
+
+          {/* Previous / Next navigation */}
+          <div className="flex items-center justify-between gap-4 mt-10 pt-6 border-t border-[#E3E8EF]">
+            <button
+              onClick={() => previousLesson && goToLesson(previousLesson.id)}
+              disabled={!previousLesson}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                previousLesson
+                  ? "border border-[#E3E8EF] text-[#0C1F33] hover:bg-gray-50"
+                  : "border border-[#E3E8EF] text-[#94A3B8] cursor-not-allowed opacity-50"
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            <button
+              onClick={() => nextLesson && goToLesson(nextLesson.id)}
+              disabled={!nextLesson}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                nextLesson
+                  ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
+                  : "bg-gray-100 text-[#94A3B8] cursor-not-allowed opacity-50"
+              }`}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* Lesson detail */}
           <section className="w-full bg-[#FBF9F4]">
@@ -384,4 +352,49 @@ export default function LessonPage() {
       </aside>
     </div>
   );
+}
+
+function DocumentCompletionTracker({
+  activeProfileId,
+  materialId,
+  courseId,
+  onComplete,
+}: {
+  activeProfileId?: string;
+  materialId: string;
+  courseId: string;
+  onComplete: () => void;
+}) {
+  const updateProgressMutation = useUpdateProgressMutation();
+
+  useEffect(() => {
+    if (!activeProfileId) return;
+
+    const timer = setTimeout(() => {
+      updateProgressMutation.mutate(
+        {
+          learnerProfileId: activeProfileId,
+          materialId,
+          watchedSeconds: 30,
+          lastPosition: 0,
+          completed: true,
+        },
+        {
+          onSuccess: () => {
+            onComplete();
+          },
+        },
+      );
+    }, 30 * 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    activeProfileId,
+    materialId,
+    courseId,
+    updateProgressMutation,
+    onComplete,
+  ]);
+
+  return null;
 }
