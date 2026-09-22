@@ -540,12 +540,12 @@ export default function CourseMaterialsPage() {
 
           <div>
             <label className="block text-sm font-semibold mb-2">
-              Document File * (PDF, DOC, DOCX, PPT, PPTX — max 50MB)
+              Document File * (PDF — max 50MB)
             </label>
             <input
               ref={documentInputRef}
               type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              accept=".pdf"
               disabled={uploadDocumentMutation.isPending}
               onChange={(e) => setDocumentFile(e.target.files?.[0] ?? null)}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
