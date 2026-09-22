@@ -65,4 +65,14 @@ export const materialService = {
     const response = await apiClient.patch(`/materials/${materialId}`, input);
     return response.data.data;
   },
+  uploadDocument: async (formData: FormData): Promise<Material> => {
+    const response = await apiClient.post(
+      "/materials/upload-document",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data.data;
+  },
 };

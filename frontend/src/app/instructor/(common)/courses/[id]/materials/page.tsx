@@ -3,6 +3,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useUploadDocumentMutation } from "@/hooks/use-materials";
+import { DocumentViewerModal } from "@/components/instructor/document-viewer-modal";
 import {
   Video,
   FileText,
@@ -15,6 +17,7 @@ import {
   X,
   AlertCircle,
   Edit3,
+  FileUp,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,6 +88,13 @@ export default function CourseMaterialsPage() {
   const [previewMaterial, setPreviewMaterial] = useState<any>(null);
   const [videoDescription, setVideoDescription] = useState("");
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
+  const [showUploadDocument, setShowUploadDocument] = useState(false);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentTitle, setDocumentTitle] = useState("");
+  const [documentDescription, setDocumentDescription] = useState("");
+  const [documentOrder, setDocumentOrder] = useState(0);
+  const [documentPreview, setDocumentPreview] = useState<any>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
 
   // Upload progress simulation
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -93,6 +103,8 @@ export default function CourseMaterialsPage() {
   const course = courses?.find((c) => c.id === courseId);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const captionInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadDocumentMutation = useUploadDocumentMutation();
 
   const {
     register,
@@ -152,6 +164,52 @@ export default function CourseMaterialsPage() {
     );
   };
 
+  const handleUploadDocument = () => {
+    if (!documentFile) {
+      toast.error("Please select a document");
+      return;
+    }
+    if (!documentTitle) {
+      toast.error("Please enter a document title");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("courseId", courseId);
+    formData.append("title", documentTitle);
+    formData.append("description", documentDescription);
+    formData.append("order", String(documentOrder));
+    formData.append("document", documentFile);
+
+    uploadDocumentMutation.mutate(formData, {
+      onSuccess: () => {
+        setDocumentFile(null);
+        setDocumentTitle("");
+        setDocumentDescription("");
+        setDocumentOrder(0);
+        setShowUploadDocument(false);
+      },
+    });
+  };
+
+  const handlePreview = async (material: any) => {
+    if (material.type === "video" || material.type === "document") {
+      signedUrlMutation.mutate(material.id, {
+        onSuccess: (data: any) => {
+          if (material.type === "video") {
+            setPreviewMaterial({ ...material, signedUrl: data.url });
+          } else {
+            setDocumentPreview({
+              ...material,
+              signedUrl: data.url,
+              mimeType: data.mimeType ?? "application/pdf",
+            });
+          }
+        },
+      });
+    }
+  };
+
   const handleUploadVideo = () => {
     if (!videoFile) {
       toast.error("Please select a video file");
@@ -191,17 +249,17 @@ export default function CourseMaterialsPage() {
     }
   };
 
-  const handlePreview = async (material: any) => {
-    if (material.type === "video") {
-      signedUrlMutation.mutate(material.id, {
-        onSuccess: (data) => {
-          setPreviewMaterial({ ...material, signedUrl: data.url });
-        },
-      });
-    } else {
-      setPreviewMaterial(material);
-    }
-  };
+  // const handlePreview = async (material: any) => {
+  //   if (material.type === "video") {
+  //     signedUrlMutation.mutate(material.id, {
+  //       onSuccess: (data) => {
+  //         setPreviewMaterial({ ...material, signedUrl: data.url });
+  //       },
+  //     });
+  //   } else {
+  //     setPreviewMaterial(material);
+  //   }
+  // };
 
   const filteredMaterials = materials?.filter((material) => {
     const matchesSearch = material.title
@@ -245,13 +303,16 @@ export default function CourseMaterialsPage() {
           <div className="flex gap-3">
             <button
               onClick={() => {
-                setShowAddForm(!showAddForm);
+                setShowUploadDocument(!showUploadDocument);
                 setShowUploadVideo(false);
+                setShowAddForm(false);
               }}
-              className="px-5 py-2.5 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#7C3AED] text-white rounded-lg text-sm font-semibold hover:bg-[#6D28D9]"
             >
-              Add Material
+              <FileUp className="w-4 h-4" />
+              Upload Document
             </button>
+
             <button
               onClick={() => {
                 setShowUploadVideo(!showUploadVideo);
@@ -306,77 +367,6 @@ export default function CourseMaterialsPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Add Material Form */}
-      {showAddForm && (
-        <form
-          onSubmit={handleSubmit(handleAddMaterial)}
-          className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-4"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0C1F33]">
-              Add Material
-            </h2>
-            <button type="button" onClick={() => setShowAddForm(false)}>
-              <X className="w-5 h-5 text-[#64748B]" />
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Title *
-              </label>
-              <input
-                {...register("title")}
-                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146]"
-              />
-              {errors.title && (
-                <p className="text-xs text-red-600 mt-1">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">Type *</label>
-              <select
-                {...register("type")}
-                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146]"
-              >
-                <option value="link">External Link</option>
-                <option value="document">Document</option>
-                <option value="audio">Audio</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">URL</label>
-            <input
-              {...register("url")}
-              placeholder="https://example.com/resource"
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146]"
-            />
-            {errors.url && (
-              <p className="text-xs text-red-600 mt-1">{errors.url.message}</p>
-            )}
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createMaterialMutation.isPending}
-              className="px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
-            >
-              {createMaterialMutation.isPending ? "Adding..." : "Add Material"}
-            </button>
-          </div>
-        </form>
       )}
 
       {/* Upload Video Form */}
@@ -517,6 +507,107 @@ export default function CourseMaterialsPage() {
             >
               <Upload className="w-4 h-4" />
               {uploadVideoMutation.isPending ? "Uploading..." : "Upload Video"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showUploadDocument && (
+        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[#0C1F33]">
+              Upload Document
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowUploadDocument(false)}
+              disabled={uploadDocumentMutation.isPending}
+              className="text-[#64748B] hover:text-[#0C1F33] disabled:opacity-50"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Document Title *
+            </label>
+            <input
+              value={documentTitle}
+              onChange={(e) => setDocumentTitle(e.target.value)}
+              disabled={uploadDocumentMutation.isPending}
+              placeholder="e.g. Chapter 1 Notes"
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Overview / Description (optional)
+            </label>
+            <textarea
+              value={documentDescription}
+              onChange={(e) => setDocumentDescription(e.target.value)}
+              disabled={uploadDocumentMutation.isPending}
+              rows={3}
+              placeholder="Brief description of this document..."
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Document File * (PDF, DOC, DOCX, PPT, PPTX — max 50MB)
+            </label>
+            <input
+              ref={documentInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              disabled={uploadDocumentMutation.isPending}
+              onChange={(e) => setDocumentFile(e.target.files?.[0] ?? null)}
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
+            />
+            {documentFile && (
+              <p className="mt-1 text-xs text-[#7C3AED]">
+                {documentFile.name} (
+                {(documentFile.size / (1024 * 1024)).toFixed(1)} MB)
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">Order</label>
+            <input
+              type="number"
+              value={documentOrder}
+              onChange={(e) => setDocumentOrder(Number(e.target.value))}
+              disabled={uploadDocumentMutation.isPending}
+              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowUploadDocument(false)}
+              disabled={uploadDocumentMutation.isPending}
+              className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUploadDocument}
+              disabled={
+                uploadDocumentMutation.isPending ||
+                !documentFile ||
+                !documentTitle
+              }
+              className="flex items-center gap-2 px-6 py-3 bg-[#7C3AED] text-white rounded-lg font-semibold disabled:opacity-50"
+            >
+              <FileUp className="w-4 h-4" />
+              {uploadDocumentMutation.isPending
+                ? "Uploading..."
+                : "Upload Document"}
             </button>
           </div>
         </div>
@@ -671,6 +762,13 @@ export default function CourseMaterialsPage() {
         <EditMaterialModal
           material={editingMaterial}
           onClose={() => setEditingMaterial(null)}
+        />
+      )}
+
+      {documentPreview && (
+        <DocumentViewerModal
+          document={documentPreview}
+          onClose={() => setDocumentPreview(null)}
         />
       )}
     </div>
