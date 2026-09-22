@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Edit3,
   FileUp,
+  Eye,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -348,24 +349,6 @@ export default function CourseMaterialsPage() {
               <p className="text-xs text-[#64748B]">Documents</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#22A146]/10 flex items-center justify-center">
-              <Music className="w-5 h-5 text-[#22A146]" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-[#0C1F33]">{audioCount}</p>
-              <p className="text-xs text-[#64748B]">Audio</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#E3E8EF] p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#B8912F]/10 flex items-center justify-center">
-              <LinkIcon className="w-5 h-5 text-[#B8912F]" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-[#0C1F33]">{linkCount}</p>
-              <p className="text-xs text-[#64748B]">Links</p>
-            </div>
-          </div>
         </div>
       )}
 
@@ -634,8 +617,6 @@ export default function CourseMaterialsPage() {
             <option value="all">All Types</option>
             <option value="video">Videos</option>
             <option value="document">Documents</option>
-            <option value="audio">Audio</option>
-            <option value="link">Links</option>
           </select>
         </div>
       )}
@@ -731,7 +712,11 @@ export default function CourseMaterialsPage() {
                   className="p-2 rounded-lg hover:bg-[#22A146]/10 text-[#22A146] transition-colors shrink-0 disabled:opacity-50"
                   title="Preview"
                 >
-                  <Play className="w-4 h-4" />
+                  {material?.type === "video" ? (
+                    <Play className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
 
                 {/* Delete */}
