@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar, ChevronDown, Eye, EyeClosed, Upload, X } from "lucide-react";
+import { Eye, EyeClosed, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useInstructorRegistrationMutation } from "@/hooks/use-instructor-registration";
 import { LandingLogo } from "@/components/landing/logo";

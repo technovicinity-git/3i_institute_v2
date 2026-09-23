@@ -77,14 +77,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center py-10 relative px-4">
-      {/* Header */}
-      <header className="w-full max-w-6xl absolute top-0 left-0 p-8">
-        <LandingLogo />
+    <div className="min-h-screen bg-surface flex flex-col relative">
+      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10">
+        <LandingLogo size="md" />
       </header>
 
       {/* Main */}
-      <main className="w-full flex-grow flex items-center justify-center pt-16 pb-8">
+      <main className="w-full flex-grow flex items-center justify-center pt-16 pb-8 ">
         <AuthCard maxWidth="max-w-[500px]">
           {/* Card Header */}
           <div className="mb-8">
@@ -104,11 +103,8 @@ export default function RegisterPage() {
             noValidate
           >
             {/* First Name */}
-            <div>
-              <Label
-                htmlFor="firstName"
-                className="text-xs font-semibold mb-1.5 block"
-              >
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-sm font-medium">
                 First name
               </Label>
               <Input
@@ -126,11 +122,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Last Name */}
-            <div>
-              <Label
-                htmlFor="lastName"
-                className="text-xs font-semibold mb-1.5 block"
-              >
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-sm font-medium">
                 Last name
               </Label>
               <Input
@@ -148,11 +141,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Email */}
-            <div>
-              <Label
-                htmlFor="email"
-                className="text-xs font-semibold mb-1.5 block"
-              >
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
                 Email address
               </Label>
               <Input
@@ -171,11 +161,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Password */}
-            <div>
-              <Label
-                htmlFor="password"
-                className="text-xs font-semibold mb-1.5 block"
-              >
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
                 Password
               </Label>
               <div className="relative">
@@ -207,11 +194,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Date of Birth */}
-            <div>
-              <Label
-                htmlFor="dateOfBirth"
-                className="text-xs font-semibold mb-1.5 block"
-              >
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth" className="text-sm font-medium">
                 Date of birth
               </Label>
               <Input
@@ -241,8 +225,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Language */}
-            <div>
-              <Label className="text-xs font-semibold mb-2 block">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
                 Preferred Language / ভাষা / भाषा / اردو
               </Label>
               <div
@@ -272,11 +256,7 @@ export default function RegisterPage() {
 
             {/* Submit */}
             <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full bg-green hover:bg-green-dark text-white py-3 rounded-lg shadow-sm"
-                disabled={registerMutation.isPending}
-              >
+              <Button type="submit" disabled={registerMutation.isPending}>
                 {registerMutation.isPending
                   ? "Creating account..."
                   : "Create account"}

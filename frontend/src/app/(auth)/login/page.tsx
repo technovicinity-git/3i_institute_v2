@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,12 +39,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
-      {/* Desktop branding */}
-      <div className="hidden sm:flex absolute top-8 left-8 items-center gap-2">
-        <Link href="/" className="flex items-center gap-2">
-          <LandingLogo asLink={false} size="sm" textColor="dark" />
-        </Link>
-      </div>
+      {/* Logo */}
+      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10">
+        <LandingLogo size="md" />
+      </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 w-full max-w-md mx-auto">
         {/* Mobile logo */}
@@ -55,7 +52,7 @@ export default function LoginPage() {
           </Link>
         </header>
 
-        <div className="w-full bg-white rounded-card shadow-card border border-surface-high p-8 sm:p-10">
+        <div className="w-full bg-white rounded-xl sm:rounded-2xl shadow-card border border-surface-high p-8 sm:p-10">
           {/* Card Header */}
           <div className="mb-8">
             <h1 className="text-[2rem] leading-tight text-primary font-serif mb-2">
@@ -133,11 +130,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <Button
-              type="submit"
-              className="w-full bg-green text-white py-3 rounded-element font-medium hover:bg-green-dark shadow-sm"
-              disabled={loginMutation.isPending}
-            >
+            <Button type="submit" disabled={loginMutation.isPending}>
               {loginMutation.isPending ? "Logging in..." : "Log in"}
             </Button>
           </form>
