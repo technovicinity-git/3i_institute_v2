@@ -8,8 +8,17 @@ import {
   createExamSchema,
   submitExamSchema,
 } from "#/modules/exam/schema";
+import multer from "multer";
 
 const router: Router = Router();
+
+const uploadCsv = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 1,
+  },
+});
 
 // ──────────────────────────────────────
 // Question routes
@@ -53,6 +62,35 @@ router.post(
   authorize("questions.create"),
   validate(createQuestionSchema),
   examController.createQuestion,
+);
+
+/**
+ * @swagger
+ * /api/v1/exams/questions/bulk-import:
+ *   post:
+ *     tags: [Questions]
+ *     summary: Bulk import questions from CSV
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: courseId
+ *         type: string
+ *         required: true
+ *       - in: formData
+ *         name: file
+ *         type: file
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Import result with per-row errors
+ */
+router.post(
+  "/questions/bulk-import",
+  authenticate,
+  authorize("questions.create"),
+  uploadCsv.fields([{ name: "file", maxCount: 1 }]),
+  examController.bulkImportQuestions,
 );
 
 router.get(

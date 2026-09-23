@@ -1,0 +1,6 @@
+type,question,option_a,option_b,option_c,option_d,option_e,correct_answer,suggested_answer,marks,negative_marks,difficulty,explanation
+mcq,What is the meaning of Tawheed?,The Oneness of Allah,The five daily prayers,Fasting in Ramadan,Giving charity,,A,,2,0,easy,Tawheed is the belief in the absolute Oneness of Allah.
+multi_select,Which are pillars of Islam?,Salah,Sawm,Zakat,Wudu,,"A,B,C",,3,1,medium,The five pillars are Shahada Salah Sawm Zakat Hajj.
+true_false,The Quran was revealed over 23 years.,True,False,,,,True,,1,0,easy,It was revealed gradually over 23 years.
+short_answer,Explain Ihsan briefly.,,,,,,,Worshipping Allah as if you see Him and knowing He sees you.,5,0,hard,The highest level of faith.
+essay,Compare the two migrations.,,,,,,,Discuss the migration to Habasha and Hijra with reasons challenges and outcomes.,10,0,hard,Analytical question on early Islamic history.

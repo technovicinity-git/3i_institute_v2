@@ -46,3 +46,26 @@ export function useDeleteQuestionMutation() {
     },
   });
 }
+
+export function useBulkImportQuestionsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ courseId, file }: { courseId: string; file: File }) =>
+      questionService.bulkImport(courseId, file),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["my-questions"] });
+      if (result.failed === 0) {
+        toast.success(`Successfully imported ${result.imported} questions`);
+      } else {
+        toast.warning(
+          `Imported ${result.imported} of ${result.total} questions. ${result.failed} failed.`,
+        );
+      }
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to import questions");
+    },
+  });
+}
