@@ -19,6 +19,7 @@ import {
   Edit3,
   FileUp,
   Eye,
+  ChevronLeft,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import {
   useCourseMaterials,
-  useCreateMaterialMutation,
   useUploadVideoMutation,
   useDeleteMaterialMutation,
   useSignedUrlMutation,
@@ -73,15 +73,14 @@ export default function CourseMaterialsPage() {
   const courseId = params.id as string;
 
   const { data: materials, isLoading, isError } = useCourseMaterials(courseId);
-  const createMaterialMutation = useCreateMaterialMutation();
   const uploadVideoMutation = useUploadVideoMutation();
   const deleteMaterialMutation = useDeleteMaterialMutation();
   const signedUrlMutation = useSignedUrlMutation();
 
-  const [showAddForm, setShowAddForm] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadOption, setUploadOption] =
-    useState<"select" | "document" | "video">("select");
+  const [uploadOption, setUploadOption] = useState<
+    "select" | "document" | "video"
+  >("select");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [captionFile, setCaptionFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
@@ -114,9 +113,6 @@ export default function CourseMaterialsPage() {
   };
 
   const {
-    register,
-    handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<AddMaterialFormData>({
     resolver: zodResolver(addMaterialSchema),
@@ -151,25 +147,7 @@ export default function CourseMaterialsPage() {
       if (progressIntervalRef.current)
         clearInterval(progressIntervalRef.current);
     };
-  }, [uploadVideoMutation.isPending]);
-
-  const handleAddMaterial = (data: AddMaterialFormData) => {
-    createMaterialMutation.mutate(
-      {
-        courseId,
-        title: data.title,
-        type: data.type,
-        url: data.url || undefined,
-        order: Number(data.order) ?? 0,
-      },
-      {
-        onSuccess: () => {
-          reset();
-          setShowAddForm(false);
-        },
-      },
-    );
-  };
+  }, [uploadVideoMutation.isPending, uploadProgress]);
 
   const handleUploadDocument = () => {
     if (!documentFile) {
@@ -256,18 +234,6 @@ export default function CourseMaterialsPage() {
     }
   };
 
-  // const handlePreview = async (material: any) => {
-  //   if (material.type === "video") {
-  //     signedUrlMutation.mutate(material.id, {
-  //       onSuccess: (data) => {
-  //         setPreviewMaterial({ ...material, signedUrl: data.url });
-  //       },
-  //     });
-  //   } else {
-  //     setPreviewMaterial(material);
-  //   }
-  // };
-
   const filteredMaterials = materials?.filter((material) => {
     const matchesSearch = material.title
       .toLowerCase()
@@ -278,18 +244,16 @@ export default function CourseMaterialsPage() {
 
   const videoCount = materials?.filter((m) => m.type === "video").length ?? 0;
   const docCount = materials?.filter((m) => m.type === "document").length ?? 0;
-  const audioCount = materials?.filter((m) => m.type === "audio").length ?? 0;
-  const linkCount = materials?.filter((m) => m.type === "link").length ?? 0;
 
   return (
-    <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
-      {/* Header */}
-      <div className="mb-6">
+    <div className="p-6 md:p-10">
+      <div className="mb-8">
         <button
           onClick={() => router.push("/instructor/courses")}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to courses
+          <ChevronLeft className="w-4 h-4" />
+          Back to courses
         </button>
         {course && (
           <CourseActions courseId={courseId} courseType={course.type} />
