@@ -79,7 +79,9 @@ export default function CourseMaterialsPage() {
   const signedUrlMutation = useSignedUrlMutation();
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showUploadVideo, setShowUploadVideo] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadOption, setUploadOption] =
+    useState<"select" | "document" | "video">("select");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [captionFile, setCaptionFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
@@ -89,7 +91,6 @@ export default function CourseMaterialsPage() {
   const [previewMaterial, setPreviewMaterial] = useState<any>(null);
   const [videoDescription, setVideoDescription] = useState("");
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
-  const [showUploadDocument, setShowUploadDocument] = useState(false);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentTitle, setDocumentTitle] = useState("");
   const [documentDescription, setDocumentDescription] = useState("");
@@ -106,6 +107,11 @@ export default function CourseMaterialsPage() {
   const captionInputRef = useRef<HTMLInputElement>(null);
 
   const uploadDocumentMutation = useUploadDocumentMutation();
+
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+    setUploadOption("select");
+  };
 
   const {
     register,
@@ -188,7 +194,7 @@ export default function CourseMaterialsPage() {
         setDocumentTitle("");
         setDocumentDescription("");
         setDocumentOrder(0);
-        setShowUploadDocument(false);
+        closeUploadModal();
       },
     });
   };
@@ -239,7 +245,7 @@ export default function CourseMaterialsPage() {
         setVideoTitle("");
         setVideoDescription("");
         setVideoOrder(0);
-        setShowUploadVideo(false);
+        closeUploadModal();
       },
     });
   };
@@ -304,25 +310,13 @@ export default function CourseMaterialsPage() {
           <div className="flex gap-3">
             <button
               onClick={() => {
-                setShowUploadDocument(!showUploadDocument);
-                setShowUploadVideo(false);
-                setShowAddForm(false);
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#7C3AED] text-white rounded-lg text-sm font-semibold hover:bg-[#6D28D9]"
-            >
-              <FileUp className="w-4 h-4" />
-              Upload Document
-            </button>
-
-            <button
-              onClick={() => {
-                setShowUploadVideo(!showUploadVideo);
-                setShowAddForm(false);
+                setShowUploadModal(true);
+                setUploadOption("select");
               }}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
             >
               <Upload className="w-4 h-4" />
-              Upload Video
+              Upload
             </button>
           </div>
         </div>
@@ -348,250 +342,6 @@ export default function CourseMaterialsPage() {
               <p className="text-lg font-bold text-[#0C1F33]">{docCount}</p>
               <p className="text-xs text-[#64748B]">Documents</p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Video Form */}
-      {showUploadVideo && (
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0C1F33]">
-              Upload Video
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowUploadVideo(false)}
-              disabled={uploadVideoMutation.isPending}
-              className="text-[#64748B] hover:text-[#0C1F33] disabled:opacity-50"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Video Title *
-            </label>
-            <input
-              value={videoTitle}
-              onChange={(e) => setVideoTitle(e.target.value)}
-              disabled={uploadVideoMutation.isPending}
-              placeholder="e.g. Introduction to Prophetic Medicine"
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Overview / Description (optional)
-            </label>
-            <textarea
-              value={videoDescription}
-              onChange={(e) => setVideoDescription(e.target.value)}
-              disabled={uploadVideoMutation.isPending}
-              rows={3}
-              placeholder="Brief overview of this lesson for the course page..."
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
-            />
-            <p className="text-xs text-[#64748B] mt-1">
-              This will appear on the course details page.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Video File * (MP4, max 4GB)
-              </label>
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*"
-                disabled={uploadVideoMutation.isPending}
-                onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
-                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
-              />
-              {videoFile && (
-                <p className="mt-1 text-xs text-[#22A146]">
-                  {videoFile.name} (
-                  {(videoFile.size / (1024 * 1024)).toFixed(1)} MB)
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Caption File (VTT/SRT)
-              </label>
-              <input
-                ref={captionInputRef}
-                type="file"
-                accept=".vtt,.srt"
-                disabled={uploadVideoMutation.isPending}
-                onChange={(e) => setCaptionFile(e.target.files?.[0] ?? null)}
-                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
-              />
-              {captionFile && (
-                <p className="mt-1 text-xs text-[#22A146]">
-                  {captionFile.name}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">Order</label>
-            <input
-              type="number"
-              value={videoOrder}
-              onChange={(e) => setVideoOrder(Number(e.target.value))}
-              disabled={uploadVideoMutation.isPending}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
-            />
-          </div>
-
-          {/* Progress Bar */}
-          {uploadVideoMutation.isPending && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0C1F33]">
-                  Uploading to Bunny Stream...
-                </span>
-                <span className="text-[#22A146] font-bold">
-                  {Math.round(uploadProgress)}%
-                </span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#22A146] rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-[11px] text-[#64748B]">
-                Please don&apos;t close this window while the video uploads.
-              </p>
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowUploadVideo(false)}
-              disabled={uploadVideoMutation.isPending}
-              className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleUploadVideo}
-              disabled={
-                uploadVideoMutation.isPending || !videoFile || !videoTitle
-              }
-              className="flex items-center gap-2 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
-            >
-              <Upload className="w-4 h-4" />
-              {uploadVideoMutation.isPending ? "Uploading..." : "Upload Video"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showUploadDocument && (
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0C1F33]">
-              Upload Document
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowUploadDocument(false)}
-              disabled={uploadDocumentMutation.isPending}
-              className="text-[#64748B] hover:text-[#0C1F33] disabled:opacity-50"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Document Title *
-            </label>
-            <input
-              value={documentTitle}
-              onChange={(e) => setDocumentTitle(e.target.value)}
-              disabled={uploadDocumentMutation.isPending}
-              placeholder="e.g. Chapter 1 Notes"
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Overview / Description (optional)
-            </label>
-            <textarea
-              value={documentDescription}
-              onChange={(e) => setDocumentDescription(e.target.value)}
-              disabled={uploadDocumentMutation.isPending}
-              rows={3}
-              placeholder="Brief description of this document..."
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Document File * (PDF — max 50MB)
-            </label>
-            <input
-              ref={documentInputRef}
-              type="file"
-              accept=".pdf"
-              disabled={uploadDocumentMutation.isPending}
-              onChange={(e) => setDocumentFile(e.target.files?.[0] ?? null)}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
-            />
-            {documentFile && (
-              <p className="mt-1 text-xs text-[#7C3AED]">
-                {documentFile.name} (
-                {(documentFile.size / (1024 * 1024)).toFixed(1)} MB)
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">Order</label>
-            <input
-              type="number"
-              value={documentOrder}
-              onChange={(e) => setDocumentOrder(Number(e.target.value))}
-              disabled={uploadDocumentMutation.isPending}
-              className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowUploadDocument(false)}
-              disabled={uploadDocumentMutation.isPending}
-              className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleUploadDocument}
-              disabled={
-                uploadDocumentMutation.isPending ||
-                !documentFile ||
-                !documentTitle
-              }
-              className="flex items-center gap-2 px-6 py-3 bg-[#7C3AED] text-white rounded-lg font-semibold disabled:opacity-50"
-            >
-              <FileUp className="w-4 h-4" />
-              {uploadDocumentMutation.isPending
-                ? "Uploading..."
-                : "Upload Document"}
-            </button>
           </div>
         </div>
       )}
@@ -734,6 +484,328 @@ export default function CourseMaterialsPage() {
             ))}
           </div>
         )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={(e) => {
+              if (
+                e.target === e.currentTarget &&
+                !uploadVideoMutation.isPending &&
+                !uploadDocumentMutation.isPending
+              ) {
+                closeUploadModal();
+              }
+            }}
+          />
+          <div className="relative bg-white rounded-xl w-full max-w-[640px] z-10">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E3E8EF]">
+              <h3 className="text-lg font-semibold text-[#0C1F33]">
+                {uploadOption === "select"
+                  ? "Upload Material"
+                  : uploadOption === "document"
+                    ? "Upload Document"
+                    : "Upload Video"}
+              </h3>
+              <div className="flex items-center gap-3">
+                {uploadOption !== "select" && (
+                  <button
+                    type="button"
+                    onClick={() => setUploadOption("select")}
+                    disabled={
+                      uploadVideoMutation.isPending ||
+                      uploadDocumentMutation.isPending
+                    }
+                    className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] disabled:opacity-50"
+                  >
+                    ← Back
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={closeUploadModal}
+                  disabled={
+                    uploadVideoMutation.isPending ||
+                    uploadDocumentMutation.isPending
+                  }
+                  className="text-[#64748B] hover:text-[#0C1F33] disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+              {uploadOption === "select" ? (
+                <div>
+                  <p className="text-sm text-[#64748B] mb-4">
+                    Choose what you would like to upload.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setUploadOption("document")}
+                      className="flex flex-col items-center justify-center gap-3 py-8 border-2 border-[#E3E8EF] rounded-xl hover:border-[#7C3AED] hover:bg-[#7C3AED]/5 transition-colors"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-[#7C3AED]/10 flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-[#7C3AED]" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#0C1F33]">
+                        Document
+                      </p>
+                      <p className="text-xs text-[#64748B]">PDF — max 50MB</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setUploadOption("video")}
+                      className="flex flex-col items-center justify-center gap-3 py-8 border-2 border-[#E3E8EF] rounded-xl hover:border-[#22A146] hover:bg-[#22A146]/5 transition-colors"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-[#22A146]/10 flex items-center justify-center">
+                        <Video className="w-6 h-6 text-[#22A146]" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#0C1F33]">
+                        Video
+                      </p>
+                      <p className="text-xs text-[#64748B]">MP4 — max 4GB</p>
+                    </button>
+                  </div>
+                </div>
+              ) : uploadOption === "document" ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Document Title *
+                    </label>
+                    <input
+                      value={documentTitle}
+                      onChange={(e) => setDocumentTitle(e.target.value)}
+                      disabled={uploadDocumentMutation.isPending}
+                      placeholder="e.g. Chapter 1 Notes"
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Overview / Description (optional)
+                    </label>
+                    <textarea
+                      value={documentDescription}
+                      onChange={(e) => setDocumentDescription(e.target.value)}
+                      disabled={uploadDocumentMutation.isPending}
+                      rows={3}
+                      placeholder="Brief description of this document..."
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Document File * (PDF — max 50MB)
+                    </label>
+                    <input
+                      ref={documentInputRef}
+                      type="file"
+                      accept=".pdf"
+                      disabled={uploadDocumentMutation.isPending}
+                      onChange={(e) =>
+                        setDocumentFile(e.target.files?.[0] ?? null)
+                      }
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
+                    />
+                    {documentFile && (
+                      <p className="mt-1 text-xs text-[#7C3AED]">
+                        {documentFile.name} (
+                        {(documentFile.size / (1024 * 1024)).toFixed(1)} MB)
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Order
+                    </label>
+                    <input
+                      type="number"
+                      value={documentOrder}
+                      onChange={(e) => setDocumentOrder(Number(e.target.value))}
+                      disabled={uploadDocumentMutation.isPending}
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#7C3AED] disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={closeUploadModal}
+                      disabled={uploadDocumentMutation.isPending}
+                      className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUploadDocument}
+                      disabled={
+                        uploadDocumentMutation.isPending ||
+                        !documentFile ||
+                        !documentTitle
+                      }
+                      className="flex items-center gap-2 px-6 py-3 bg-[#7C3AED] text-white rounded-lg font-semibold disabled:opacity-50"
+                    >
+                      <FileUp className="w-4 h-4" />
+                      {uploadDocumentMutation.isPending
+                        ? "Uploading..."
+                        : "Upload Document"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Video Title *
+                    </label>
+                    <input
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      disabled={uploadVideoMutation.isPending}
+                      placeholder="e.g. Introduction to Prophetic Medicine"
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Overview / Description (optional)
+                    </label>
+                    <textarea
+                      value={videoDescription}
+                      onChange={(e) => setVideoDescription(e.target.value)}
+                      disabled={uploadVideoMutation.isPending}
+                      rows={3}
+                      placeholder="Brief overview of this lesson for the course page..."
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
+                    />
+                    <p className="text-xs text-[#64748B] mt-1">
+                      This will appear on the course details page.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Video File * (MP4, max 4GB)
+                      </label>
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        disabled={uploadVideoMutation.isPending}
+                        onChange={(e) =>
+                          setVideoFile(e.target.files?.[0] ?? null)
+                        }
+                        className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
+                      />
+                      {videoFile && (
+                        <p className="mt-1 text-xs text-[#22A146]">
+                          {videoFile.name} (
+                          {(videoFile.size / (1024 * 1024)).toFixed(1)} MB)
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Caption File (VTT/SRT)
+                      </label>
+                      <input
+                        ref={captionInputRef}
+                        type="file"
+                        accept=".vtt,.srt"
+                        disabled={uploadVideoMutation.isPending}
+                        onChange={(e) =>
+                          setCaptionFile(e.target.files?.[0] ?? null)
+                        }
+                        className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none disabled:opacity-50"
+                      />
+                      {captionFile && (
+                        <p className="mt-1 text-xs text-[#22A146]">
+                          {captionFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Order
+                    </label>
+                    <input
+                      type="number"
+                      value={videoOrder}
+                      onChange={(e) => setVideoOrder(Number(e.target.value))}
+                      disabled={uploadVideoMutation.isPending}
+                      className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#22A146] disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Progress Bar */}
+                  {uploadVideoMutation.isPending && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#0C1F33]">
+                          Uploading to Bunny Stream...
+                        </span>
+                        <span className="text-[#22A146] font-bold">
+                          {Math.round(uploadProgress)}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#22A146] rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-[#64748B]">
+                        Please don&apos;t close this window while the video
+                        uploads.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={closeUploadModal}
+                      disabled={uploadVideoMutation.isPending}
+                      className="px-6 py-3 border border-[#E3E8EF] rounded-lg text-sm font-semibold disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUploadVideo}
+                      disabled={
+                        uploadVideoMutation.isPending ||
+                        !videoFile ||
+                        !videoTitle
+                      }
+                      className="flex items-center gap-2 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {uploadVideoMutation.isPending
+                        ? "Uploading..."
+                        : "Upload Video"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {previewMaterial && (

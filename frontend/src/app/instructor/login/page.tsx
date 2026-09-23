@@ -12,6 +12,8 @@ import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
 import { Eye, EyeClosed } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -101,18 +103,15 @@ export default function InstructorLoginPage() {
             noValidate
           >
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-[#0C1F33]"
-              >
+              <Label htmlFor="email" className="text-sm font-medium">
                 Email address
-              </label>
-              <input
+              </Label>
+              <Input
                 id="email"
                 type="email"
                 placeholder="instructor@example.com"
                 {...register("email")}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-slate-900 placeholder:text-slate-400"
+                className="px-4 py-3"
               />
               {errors.email && (
                 <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -121,12 +120,9 @@ export default function InstructorLoginPage() {
 
             <div className="space-y-2 relative">
               <div className="flex justify-between items-center">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium text-[#0C1F33]"
-                >
+                <Label htmlFor="password" className="text-sm font-medium">
                   Password
-                </label>
+                </Label>
                 <a
                   href="/forgot-password"
                   className="text-sm text-green hover:text-green-dark font-medium"
@@ -136,11 +132,11 @@ export default function InstructorLoginPage() {
               </div>
 
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full px-4 py-3 pr-20 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors text-slate-900"
+                  className="px-4 py-3"
                 />
                 <button
                   type="button"
