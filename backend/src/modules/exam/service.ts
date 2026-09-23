@@ -16,10 +16,26 @@ export class ExamService {
   // ──────────────────────────────────
 
   async createQuestion(ownerId: string, input: CreateQuestionInput) {
+    // Verify course belongs to instructor
+    const course = await prisma.course.findUnique({
+      where: { id: input.courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    if (course.instructorId !== ownerId) {
+      throw new ForbiddenError(
+        "You can only add questions to your own courses",
+      );
+    }
+
     const question = await prisma.question.create({
       data: {
         scope: "INSTRUCTOR",
         ownerId,
+        courseId: input.courseId,
         type: input.type,
         question: input.question,
         options: input.options
@@ -34,18 +50,33 @@ export class ExamService {
         partialCredit: input.partialCredit,
         difficulty: input.difficulty,
         explanation: input.explanation ?? null,
-        courseId: input.courseId ?? null,
       },
     });
 
     return question;
   }
 
-  async getMyQuestions(ownerId: string) {
+  async getMyQuestions(ownerId: string, courseId: string) {
+    // Verify course ownership
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    if (course.instructorId !== ownerId) {
+      throw new ForbiddenError(
+        "You can only view questions for your own courses",
+      );
+    }
+
     return prisma.question.findMany({
       where: {
         scope: "INSTRUCTOR",
         ownerId,
+        courseId,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -61,15 +92,17 @@ export class ExamService {
   async getQuestionById(questionId: string, userId: string, userRole: string) {
     const question = await prisma.question.findUnique({
       where: { id: questionId },
+      include: {
+        course: { select: { instructorId: true } },
+      },
     });
 
     if (!question) {
       throw new NotFoundError("Question not found");
     }
 
-    // FR-QB-04: Isolation at query layer — 404 not 403
     if (userRole === "INSTRUCTOR") {
-      if (question.scope === "INSTRUCTOR" && question.ownerId !== userId) {
+      if (question.course.instructorId !== userId) {
         throw new NotFoundError("Question not found");
       }
     }
@@ -84,13 +117,16 @@ export class ExamService {
   ) {
     const question = await prisma.question.findUnique({
       where: { id: questionId },
+      include: {
+        course: { select: { instructorId: true } },
+      },
     });
 
     if (!question) {
       throw new NotFoundError("Question not found");
     }
 
-    if (question.scope === "INSTRUCTOR" && question.ownerId !== ownerId) {
+    if (question.course.instructorId !== ownerId) {
       throw new NotFoundError("Question not found");
     }
 
@@ -113,13 +149,16 @@ export class ExamService {
   async deleteQuestion(questionId: string, ownerId: string) {
     const question = await prisma.question.findUnique({
       where: { id: questionId },
+      include: {
+        course: { select: { instructorId: true } },
+      },
     });
 
     if (!question) {
       throw new NotFoundError("Question not found");
     }
 
-    if (question.scope === "INSTRUCTOR" && question.ownerId !== ownerId) {
+    if (question.course.instructorId !== ownerId) {
       throw new NotFoundError("Question not found");
     }
 
@@ -147,13 +186,24 @@ export class ExamService {
       );
     }
 
-    // Check if final exam already exists (FR-EX-01: one final per course)
+    // Verify all questions belong to this course
+    const questionIds = input.questions.map((q) => q.questionId);
+    const questions = await prisma.question.findMany({
+      where: {
+        id: { in: questionIds },
+        courseId: input.courseId,
+      },
+      select: { id: true },
+    });
+
+    if (questions.length !== questionIds.length) {
+      throw new ValidationError("All questions must belong to this course");
+    }
+
+    // Check if final exam already exists
     if (input.type === "final") {
       const existingFinal = await prisma.exam.findFirst({
-        where: {
-          courseId: input.courseId,
-          type: "final",
-        },
+        where: { courseId: input.courseId, type: "final" },
       });
 
       if (existingFinal) {
@@ -182,7 +232,6 @@ export class ExamService {
 
     return exam;
   }
-
   async getCourseExams(courseId: string, learnerProfileId?: string) {
     const exams = await prisma.exam.findMany({
       where: { courseId },

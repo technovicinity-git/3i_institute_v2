@@ -2,8 +2,10 @@ import { apiClient } from "@/lib/api-client";
 import type { Question, CreateQuestionInput } from "@/types/question";
 
 export const questionService = {
-  getMyQuestions: async (): Promise<Question[]> => {
-    const response = await apiClient.get("/exams/questions");
+  getMyQuestions: async (courseId: string): Promise<Question[]> => {
+    const response = await apiClient.get(
+      `/exams/questions?courseId=${courseId}`,
+    );
     return response.data.data;
   },
 

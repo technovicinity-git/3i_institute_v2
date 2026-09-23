@@ -28,6 +28,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   const editPath = `${basePath}/edit`;
   const materialsPath = `${basePath}/materials`;
   const batchesPath = `${basePath}/batches`;
+  const questionsPath = `${basePath}/questions`;
   const examsPath = `${basePath}/exams`;
 
   const navItems = [
@@ -54,6 +55,14 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       color: "text-violet-600",
       activeColor: "text-violet-700",
       show: courseType === "ONLINE_CLASS",
+    },
+    {
+      label: "Questions",
+      href: questionsPath,
+      icon: FileText,
+      color: "text-green-600",
+      activeColor: "text-green-700",
+      show: true,
     },
     {
       label: "Exams",

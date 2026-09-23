@@ -398,14 +398,15 @@ model Question {
   difficulty    String    @default("medium")
   explanation   String?
 
-  courseId      String?
-  course        Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([ownerId])
   @@index([scope])
+  @@index([courseId])
 }
 
 model Exam {

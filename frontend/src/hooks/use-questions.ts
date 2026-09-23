@@ -4,10 +4,11 @@ import { toast } from "sonner";
 import { questionService } from "@/services/question.service";
 import type { CreateQuestionInput } from "@/types/question";
 
-export function useMyQuestions() {
+export function useMyQuestions(courseId: string) {
   return useQuery({
-    queryKey: ["my-questions"],
-    queryFn: () => questionService.getMyQuestions(),
+    queryKey: ["my-questions", courseId],
+    queryFn: () => questionService.getMyQuestions(courseId),
+    enabled: !!courseId,
     staleTime: 60 * 1000,
   });
 }

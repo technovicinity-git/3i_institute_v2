@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Plus, Trash2, Eye, Search } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Plus, Trash2, Eye, Search, ChevronLeft } from "lucide-react";
 import {
   useMyQuestions,
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
-import type { Question } from "@/types/question";
 import Link from "next/link";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { CourseActions } from "@/components/instructor/CourseActions";
 
 function getTypeBadge(type: string) {
   const typeMap: Record<string, { label: string; className: string }> = {
@@ -45,12 +46,12 @@ function getDifficultyBadge(difficulty: string) {
 }
 
 export default function QuestionsPage() {
+  const params = useParams();
   const router = useRouter();
-  const {
-    data: questions,
-    isLoading,
-    isError,
-  } = useMyQuestions("ae69e369-b0ec-4e27-9efd-1c8bbec1cb92");
+  const courseId = params.id as string;
+  const { data: courses } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
+  const { data: questions, isLoading, isError } = useMyQuestions(courseId);
   const deleteMutation = useDeleteQuestionMutation();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,25 +79,40 @@ export default function QuestionsPage() {
   return (
     <div className="p-6 md:p-10">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-        <div>
-          <h1
-            className="text-3xl md:text-[36px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
-          >
-            Question Bank
-          </h1>
-          <p className="text-base text-[#64748B]">
-            {questions?.length ?? 0} questions
-          </p>
-        </div>
+      <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/questions/create")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+          onClick={() => router.push("/instructor/courses")}
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          <Plus className="w-4 h-4" />
-          Create Question
+          <ChevronLeft className="w-4 h-4" />
+          Back to courses
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
+
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1
+              className="text-3xl md:text-[36px] text-[#0C1F33]"
+              style={{ fontFamily: "'Marcellus', serif" }}
+            >
+              Question Bank
+            </h1>
+            <p className="text-base text-[#64748B]">
+              {questions?.length ?? 0} questions
+            </p>
+          </div>
+          <button
+            onClick={() =>
+              router.push(`/instructor/courses/${courseId}/questions/create`)
+            }
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+          >
+            <Plus className="w-4 h-4" />
+            Create Question
+          </button>
+        </div>
       </div>
 
       {/* Search + Filter */}
