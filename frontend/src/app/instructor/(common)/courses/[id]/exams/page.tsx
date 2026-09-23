@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { FileText, Clock, Plus, CheckCircle } from "lucide-react";
+import { FileText, Clock, Plus, CheckCircle, ChevronLeft } from "lucide-react";
 import { useCourseExams } from "@/hooks/use-exams";
 import Link from "next/link";
 import { CourseActions } from "@/components/instructor/CourseActions";
@@ -23,13 +23,14 @@ export default function ExamsPage() {
   const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
   const course = courses?.find((c) => c.id === courseId);
   return (
-    <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
+    <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
           onClick={() => router.push("/instructor/courses")}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to courses
+          <ChevronLeft className="w-4 h-4" />
+          Back to courses
         </button>
         {course && (
           <CourseActions courseId={courseId} courseType={course.type} />

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const createQuestionSchema = z.object({
+  courseId: z.string().uuid("Course is required"),
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),
   question: z.string().min(1, "Question is required"),
   options: z.array(z.string()).optional(),
@@ -11,7 +12,6 @@ export const createQuestionSchema = z.object({
   partialCredit: z.boolean().default(false),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
   explanation: z.string().optional(),
-  courseId: z.string().uuid().optional(),
 });
 
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;

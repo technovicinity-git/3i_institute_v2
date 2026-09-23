@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ChevronLeft } from "lucide-react";
 import {
   useInstructorCourses,
   useUpdateCourseMutation,
@@ -134,13 +134,14 @@ export default function EditCoursePage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
+    <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
           onClick={() => router.push("/instructor/courses")}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to courses
+          <ChevronLeft className="w-4 h-4" />
+          Back to courses
         </button>
         {course && (
           <CourseActions courseId={courseId} courseType={course.type} />
