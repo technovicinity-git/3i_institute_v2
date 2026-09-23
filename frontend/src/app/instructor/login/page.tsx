@@ -14,6 +14,7 @@ import { useProfileStore } from "@/stores/profile-store";
 import { Eye, EyeClosed } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -153,13 +154,9 @@ export default function InstructorLoginPage() {
               )}
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-green text-white py-3 rounded-lg font-medium hover:bg-green-dark transition-colors shadow-sm disabled:opacity-50"
-            >
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : "Log in"}
-            </button>
+            </Button>
           </form>
 
           {/* Divider */}
