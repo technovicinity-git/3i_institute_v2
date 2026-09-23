@@ -9,6 +9,7 @@ import { Eye, EyeClosed, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useInstructorRegistrationMutation } from "@/hooks/use-instructor-registration";
 import { LandingLogo } from "@/components/landing/logo";
+import { Label } from "@/components/ui/label";
 
 const instructorRegistrationSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
@@ -128,10 +129,7 @@ export default function InstructorRegistrationPage() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#FBF9F4]"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
-    >
+    <div className="min-h-screen bg-[#FBF9F4]">
       {/* Header */}
       <header className="flex items-center justify-center h-[92px] bg-white border-b border-[#E3E8EF]">
         <LandingLogo />
@@ -169,15 +167,10 @@ export default function InstructorRegistrationPage() {
 
             <div className="space-y-5">
               {/* First Name */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    First name
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm font-medium">
+                  First name
+                </Label>
                 <input
                   type="text"
                   placeholder="Enter your first name"
@@ -192,15 +185,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Last Name */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Last name
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm font-medium">
+                  Last name
+                </Label>
                 <input
                   type="text"
                   placeholder="Enter your last name"
@@ -215,15 +203,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Email */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Email
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email address
+                </Label>
                 <input
                   type="email"
                   placeholder="you@example.com"
@@ -236,15 +219,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Password */}
-              <div className="relative space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Password
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="relative space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
                 <input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
@@ -268,15 +246,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Date of Birth */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Date of birth
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth" className="text-sm font-medium">
+                  Date of birth
+                </Label>
                 <input
                   type="date"
                   {...register("dateOfBirth")}
@@ -290,15 +263,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Locale */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Locale
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="locale" className="text-sm font-medium">
+                  Locale
+                </Label>
                 <div className="relative">
                   <select
                     {...register("locale")}
@@ -329,15 +297,10 @@ export default function InstructorRegistrationPage() {
 
             <div className="space-y-5">
               {/* Bio */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Tell us about yourself
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="bio" className="text-sm font-medium">
+                  Tell us about yourself
+                </Label>
                 <textarea
                   rows={4}
                   placeholder="Share your background, teaching philosophy, and why you want to join 3i..."
@@ -350,15 +313,13 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Area of Expertise */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Area of expertise
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="areaOfExpertise"
+                  className="text-sm font-medium"
+                >
+                  Area of expertise
+                </Label>
                 <input
                   type="text"
                   placeholder="e.g. Creative Arts, Software Engineering"
@@ -373,15 +334,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* CV Upload */}
-              <div className="space-y-[7px]">
-                <label className="flex items-center gap-1">
-                  <span className="text-base font-semibold text-[#0C1F33]">
-                    Upload your CV
-                  </span>
-                  <span className="text-base font-semibold text-[#157A34]">
-                    *
-                  </span>
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="cv" className="text-sm font-medium">
+                  Upload your CV
+                </Label>
 
                 {cvFile ? (
                   <div className="flex items-center justify-between border border-[#22A146] bg-green-50 rounded-lg p-4">
@@ -402,7 +358,7 @@ export default function InstructorRegistrationPage() {
                     </button>
                   </div>
                 ) : (
-                  <label
+                  <Label
                     onDragOver={(e) => {
                       e.preventDefault();
                       setIsDragging(true);
@@ -431,15 +387,15 @@ export default function InstructorRegistrationPage() {
                       className="hidden"
                       onChange={handleFileChange}
                     />
-                  </label>
+                  </Label>
                 )}
               </div>
 
               {/* WWCC Number */}
-              <div className="space-y-[7px]">
-                <label className="text-base font-semibold text-[#0C1F33]">
+              <div className="space-y-2">
+                <Label htmlFor="wwccNumber" className="text-sm font-medium">
                   WWCC number
-                </label>
+                </Label>
                 <input
                   type="text"
                   placeholder="Working with Children Check Number"
@@ -449,10 +405,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* Issuing State */}
-              <div className="space-y-[7px]">
-                <label className="text-base font-semibold text-[#0C1F33]">
+              <div className="space-y-2">
+                <Label htmlFor="wwccState" className="text-sm font-medium">
                   Issuing state
-                </label>
+                </Label>
                 <div className="relative">
                   <select
                     {...register("wwccState")}
@@ -469,10 +425,10 @@ export default function InstructorRegistrationPage() {
               </div>
 
               {/* WWCC Expiry Date */}
-              <div className="space-y-[7px]">
-                <label className="text-base font-semibold text-[#0C1F33]">
+              <div className="space-y-2">
+                <Label htmlFor="wwccExpiry" className="text-sm font-medium">
                   WWCC expiry date
-                </label>
+                </Label>
                 <input
                   type="date"
                   {...register("wwccExpiry")}
