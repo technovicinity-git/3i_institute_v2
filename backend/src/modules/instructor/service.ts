@@ -1,5 +1,10 @@
 import { prisma } from "#/lib/prisma";
-import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "#/shared/errors";
 import type { InstructorApplicationInput } from "#/modules/instructor/schema";
 
 export class InstructorService {
@@ -367,6 +372,170 @@ export class InstructorService {
     return {
       certificates: formattedCertificates,
       total: formattedCertificates.length,
+    };
+  }
+
+  async getCourseStudents(instructorId: string, courseId: string) {
+    // Verify course ownership
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, title: true, instructorId: true },
+    });
+
+    if (!course) {
+      throw new NotFoundError("Course not found");
+    }
+
+    if (course.instructorId !== instructorId) {
+      throw new ForbiddenError(
+        "You can only view students for your own courses",
+      );
+    }
+
+    // Get all enrolments for this course
+    const enrolments = await prisma.enrolment.findMany({
+      where: {
+        courseId,
+        waitlisted: false,
+      },
+      include: {
+        learnerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+            dateOfBirth: true,
+            avatarUrl: true,
+          },
+        },
+        batch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { enrolledAt: "desc" },
+    });
+
+    // Get progress for these learners
+    const learnerProfileIds = enrolments.map((e) => e.learnerProfileId);
+
+    const materialProgress = await prisma.materialProgress.findMany({
+      where: {
+        learnerProfileId: { in: learnerProfileIds },
+        material: { courseId },
+      },
+      select: {
+        learnerProfileId: true,
+        materialId: true,
+        completed: true,
+      },
+    });
+
+    // Get total materials in course
+    const totalMaterials = await prisma.material.count({
+      where: { courseId },
+    });
+
+    // Get exam attempts
+    const examAttempts = await prisma.examAttempt.findMany({
+      where: {
+        learnerProfileId: { in: learnerProfileIds },
+        exam: { courseId },
+      },
+      select: {
+        learnerProfileId: true,
+        score: true,
+        totalMarks: true,
+        passed: true,
+      },
+    });
+
+    // Get attendance
+    const attendance = await prisma.attendance.findMany({
+      where: {
+        learnerProfileId: { in: learnerProfileIds },
+        session: {
+          batch: { courseId },
+        },
+      },
+      select: {
+        learnerProfileId: true,
+        status: true,
+      },
+    });
+
+    // Compute per-student stats
+    const students = enrolments.map((enrolment) => {
+      const profile = enrolment.learnerProfile;
+
+      // Progress
+      const studentProgress = materialProgress.filter(
+        (mp) => mp.learnerProfileId === enrolment.learnerProfileId,
+      );
+      const completedCount = studentProgress.filter(
+        (mp) => mp.completed,
+      ).length;
+      const progress =
+        totalMaterials > 0
+          ? Math.round((completedCount / totalMaterials) * 100)
+          : 0;
+
+      // Exam average
+      const studentAttempts = examAttempts.filter(
+        (ea) => ea.learnerProfileId === enrolment.learnerProfileId,
+      );
+      const gradedAttempts = studentAttempts.filter(
+        (ea) => ea.score !== null && ea.totalMarks > 0,
+      );
+      const examAverage =
+        gradedAttempts.length > 0
+          ? Math.round(
+              (gradedAttempts.reduce(
+                (sum, ea) => sum + ((ea.score ?? 0) / ea.totalMarks) * 100,
+                0,
+              ) /
+                gradedAttempts.length) *
+                10,
+            ) / 10
+          : null;
+
+      // Attendance
+      const studentAttendance = attendance.filter(
+        (a) => a.learnerProfileId === enrolment.learnerProfileId,
+      );
+      const presentCount = studentAttendance.filter(
+        (a) => a.status === "present" || a.status === "late",
+      ).length;
+      const attendanceRate =
+        studentAttendance.length > 0
+          ? Math.round((presentCount / studentAttendance.length) * 100)
+          : null;
+
+      return {
+        id: enrolment.id,
+        learnerProfileId: enrolment.learnerProfileId,
+        displayName: profile?.displayName ?? "Unknown",
+        dateOfBirth: profile?.dateOfBirth ?? null,
+        avatarUrl: profile?.avatarUrl ?? null,
+        batchName: enrolment.batch?.name ?? null,
+        enrolledAt: enrolment.enrolledAt,
+        progress,
+        completedMaterials: completedCount,
+        totalMaterials,
+        examAverage,
+        examAttempts: studentAttempts.length,
+        attendanceRate,
+      };
+    });
+
+    return {
+      course: {
+        id: course.id,
+        title: course.title,
+      },
+      students,
+      total: students.length,
     };
   }
 }

@@ -9,6 +9,8 @@ import {
   Calendar,
   FileText,
   ChevronRight,
+  Users,
+  HelpCircle,
 } from "lucide-react";
 
 type CourseType = "REGULAR" | "ONLINE_CLASS";
@@ -30,6 +32,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   const batchesPath = `${basePath}/batches`;
   const questionsPath = `${basePath}/questions`;
   const examsPath = `${basePath}/exams`;
+  const studentsPath = `${basePath}/students`;
 
   const navItems = [
     {
@@ -59,7 +62,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
     {
       label: "Questions",
       href: questionsPath,
-      icon: FileText,
+      icon: HelpCircle,
       color: "text-green-600",
       activeColor: "text-green-700",
       show: true,
@@ -70,6 +73,14 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       icon: FileText,
       color: "text-orange-600",
       activeColor: "text-orange-700",
+      show: true,
+    },
+    {
+      label: "Students",
+      href: studentsPath,
+      icon: Users,
+      color: "text-purple-600",
+      activeColor: "text-purple-700",
       show: true,
     },
   ];

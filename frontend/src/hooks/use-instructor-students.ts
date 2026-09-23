@@ -10,3 +10,12 @@ export function useInstructorStudents(courseId?: string) {
         : instructorStudentsService.getStudents(),
   });
 }
+
+export function useCourseStudents(courseId: string) {
+  return useQuery({
+    queryKey: ["course-students", courseId],
+    queryFn: () => instructorStudentsService.getCourseStudents(courseId),
+    enabled: !!courseId,
+    staleTime: 60 * 1000,
+  });
+}
