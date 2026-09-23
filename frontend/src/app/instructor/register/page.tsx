@@ -130,9 +130,8 @@ export default function InstructorRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F4]">
-      {/* Header */}
-      <header className="flex items-center justify-center h-[92px] bg-white border-b border-[#E3E8EF]">
-        <LandingLogo />
+      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10">
+        <LandingLogo size="md" />
       </header>
 
       {/* Main Content */}
