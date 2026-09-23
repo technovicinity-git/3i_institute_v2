@@ -155,7 +155,9 @@ export default function CreateQuestionPage() {
     <div className="p-6 md:p-10 max-w-[800px] mx-auto">
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/questions")}
+          onClick={() =>
+            router.push(`/instructor/courses/${courseId}/questions`)
+          }
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           ← Back to questions

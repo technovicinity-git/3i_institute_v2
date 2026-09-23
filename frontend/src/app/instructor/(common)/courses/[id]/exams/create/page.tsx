@@ -29,7 +29,8 @@ export default function CreateExamPage() {
   const courseId = params.id as string;
 
   const createExamMutation = useCreateExamMutation();
-  const { data: allQuestions, isLoading: questionsLoading } = useMyQuestions();
+  const { data: allQuestions, isLoading: questionsLoading } =
+    useMyQuestions(courseId);
 
   const [selectedQuestions, setSelectedQuestions] = useState<
     Array<{ questionId: string; marks: number }>

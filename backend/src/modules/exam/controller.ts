@@ -6,6 +6,8 @@ import {
   submitExamSchema,
 } from "#/modules/exam/schema";
 import { sendSuccess } from "#/shared/response";
+import { bulkImportService } from "#/modules/exam/bulk-import.service";
+import { ValidationError } from "#/shared/errors";
 
 export class ExamController {
   // Questions
@@ -237,6 +239,52 @@ export class ExamController {
 
       const result = await examService.getExamResult(examId, learnerProfileId);
       sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  bulkImportQuestions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const courseId = req.body.courseId as string;
+
+      if (!courseId) {
+        throw new ValidationError("courseId is required");
+      }
+
+      const files = (req as any).files;
+      const csvFile = files?.file?.[0];
+
+      if (!csvFile) {
+        throw new ValidationError("CSV file is required (field name: 'file')");
+      }
+
+      // Validate file type
+      if (
+        !csvFile.mimetype.includes("csv") &&
+        !csvFile.mimetype.includes("text") &&
+        !csvFile.originalname.endsWith(".csv")
+      ) {
+        throw new ValidationError("File must be a CSV");
+      }
+
+      // Max 5MB
+      if (csvFile.buffer.length > 5 * 1024 * 1024) {
+        throw new ValidationError("CSV file exceeds 5MB limit");
+      }
+
+      const result = await bulkImportService.importQuestions(
+        instructorId,
+        courseId,
+        csvFile.buffer,
+      );
+
+      sendSuccess(res, result, 200, "Import complete");
     } catch (error) {
       next(error);
     }

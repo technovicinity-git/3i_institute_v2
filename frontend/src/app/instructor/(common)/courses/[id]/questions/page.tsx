@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Trash2, Eye, Search, ChevronLeft } from "lucide-react";
+import { Plus, Trash2, Eye, Search, ChevronLeft, Upload } from "lucide-react";
+import { BulkQuestionImportModal } from "@/components/instructor/bulk-question-import-modal";
 import {
   useMyQuestions,
   useDeleteQuestionMutation,
@@ -57,6 +58,7 @@ export default function QuestionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   const filteredQuestions = questions?.filter((q) => {
     const matchesSearch = q.question
@@ -103,15 +105,24 @@ export default function QuestionsPage() {
               {questions?.length ?? 0} questions
             </p>
           </div>
-          <button
-            onClick={() =>
-              router.push(`/instructor/courses/${courseId}/questions/create`)
-            }
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
-          >
-            <Plus className="w-4 h-4" />
-            Create Question
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setShowBulkImport(true)}
+              className="flex items-center gap-2 px-5 py-2.5 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Import
+            </button>
+            <button
+              onClick={() =>
+                router.push(`/instructor/courses/${courseId}/questions/create`)
+              }
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+            >
+              <Plus className="w-4 h-4" />
+              Create Question
+            </button>
+          </div>
         </div>
       </div>
 
@@ -217,6 +228,12 @@ export default function QuestionsPage() {
             })}
           </div>
         )}
+      {showBulkImport && (
+        <BulkQuestionImportModal
+          courseId={courseId}
+          onClose={() => setShowBulkImport(false)}
+        />
+      )}
     </div>
   );
 }
