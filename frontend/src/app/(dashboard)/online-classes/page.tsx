@@ -231,7 +231,7 @@ export default function OnlineClassesPage() {
                       Details
                     </Link>
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         const batchId = course.continueLessonId
                           ? course.continueLessonId
@@ -244,7 +244,7 @@ export default function OnlineClassesPage() {
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       Chat
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
