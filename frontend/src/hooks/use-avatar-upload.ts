@@ -33,7 +33,7 @@ export function useCourseThumbnailUploadMutation() {
     mutationFn: ({ courseId, file }: { courseId: string; file: File }) =>
       uploadService.uploadCourseThumbnail(courseId, file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      // queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
       toast.success("Thumbnail uploaded");
     },
     onError: (error: any) => {

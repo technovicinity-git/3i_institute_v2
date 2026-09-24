@@ -13,6 +13,8 @@ import {
 import { useCategories } from "@/hooks/use-categories";
 import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const editCourseSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -48,6 +50,7 @@ export default function EditCoursePage() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
+  const queryClient = useQueryClient();
 
   const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
@@ -111,7 +114,8 @@ export default function EditCoursePage() {
       },
       {
         onSuccess: () => {
-          router.push("/instructor/courses");
+          toast.success("Course updated successfully");
+          queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
         },
       },
     );
