@@ -415,7 +415,7 @@ export default function CoursesPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-[34px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {data?.courses.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))}
