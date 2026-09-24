@@ -120,7 +120,8 @@ function CourseCard({ course }: { course: Course }) {
       onClick={() => router.push(`/courses/${course.id}`)}
       className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full"
     >
-      <div className="relative h-[180px] bg-gradient-to-br from-[#12304E] to-[#2a5070] overflow-hidden">
+      {/* Thumbnail — 16:9 aspect ratio */}
+      <div className="relative w-full aspect-video bg-gradient-to-br from-[#12304E] to-[#2a5070] overflow-hidden">
         {course.thumbnailUrl ? (
           <Image
             src={course.thumbnailUrl}
@@ -133,6 +134,8 @@ function CourseCard({ course }: { course: Course }) {
             <BookOpen className="w-10 h-10" />
           </div>
         )}
+
+        {/* Wishlist button */}
         <button
           onClick={handleWishlist}
           aria-label="Toggle wishlist"
@@ -141,48 +144,61 @@ function CourseCard({ course }: { course: Course }) {
           }`}
         >
           <Heart
-            className={`w-4 h-4 ${liked ? "text-[#2D6CDF] fill-[#2D6CDF]" : "text-[#0C1F33]"}`}
+            className={`w-4 h-4 ${
+              liked ? "text-[#2D6CDF] fill-[#2D6CDF]" : "text-[#0C1F33]"
+            }`}
             strokeWidth={2}
           />
         </button>
+
+        {/* Enrolled badge */}
+        {course.enrolled && (
+          <span className="absolute top-3 left-3 text-[10px] font-bold text-white bg-[#22A146] px-2 py-1 rounded">
+            ENROLLED
+          </span>
+        )}
       </div>
 
-      <div className="p-4 pt-3 flex flex-col gap-2 flex-grow">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
+      {/* Content */}
+      <div className="p-4 flex flex-col gap-3 flex-grow">
+        {/* Level badge */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
             {getLevelBadge(course.level)}
           </span>
-          {course.enrolled && (
-            <span className="text-[11px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
-              ENROLLED
-            </span>
-          )}
         </div>
 
-        <h3 className="font-marcellus text-lg text-[#0C1F33] leading-6 min-h-[48px]">
+        {/* Title — max 2 lines */}
+        <h3
+          className="text-lg text-[#0C1F33] leading-6 line-clamp-2 min-h-[48px]"
+          style={{ fontFamily: "'Marcellus', serif" }}
+        >
           {course.title}
         </h3>
 
-        <p className="text-[15px] text-[#475569]">{course.instructor.name}</p>
+        {/* Instructor */}
+        <p className="text-[15px] text-[#475569] truncate">
+          {course.instructor.name}
+        </p>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[13px] text-[#475569]">
-              {course.category?.name ?? "Uncategorized"}
+        {/* Category + Rating row */}
+        <div className="flex items-center justify-between gap-2 mt-auto">
+          <span className="text-[13px] text-[#475569] truncate">
+            {course.category?.name ?? "Uncategorized"}
+          </span>
+          <span className="flex items-center gap-1 text-[13px] shrink-0">
+            <Star className="w-3 h-3 text-[#B8912F] fill-[#B8912F]" />
+            <span className="text-[#0C1F33] font-medium">
+              {course.averageRating ?? "New"}
             </span>
-            <span className="flex items-center gap-1 text-[13px]">
-              <Star className="w-3 h-3 text-[#B8912F] fill-[#B8912F]" />
-              <span className="text-[#0C1F33]">
-                {course.averageRating ?? "New"}
-              </span>
-              {course.ratingCount > 0 && (
-                <span className="text-[#475569]">({course.ratingCount})</span>
-              )}
-            </span>
-          </div>
+            {course.ratingCount > 0 && (
+              <span className="text-[#94A3B8]">({course.ratingCount})</span>
+            )}
+          </span>
         </div>
 
-        <span className="self-start text-[11px] font-bold text-[#0C1F33] border border-[#E3E8EF] px-2 py-0.5 rounded-full">
+        {/* Age badge */}
+        <span className="self-start text-[10px] font-bold text-[#0C1F33] border border-[#E3E8EF] px-2 py-0.5 rounded-full">
           {getAgeBadge(course.minimumAge)}
         </span>
       </div>
@@ -255,7 +271,7 @@ export default function CoursesPage() {
       className="min-h-screen bg-[#FBF9F4]"
       style={{ fontFamily: "'Figtree', sans-serif" }}
     >
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-9 pb-12">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-9 pb-12">
         <h1
           className="text-[32px] sm:text-[40px] text-[#0C1F33] mb-6"
           style={{ fontFamily: "'Marcellus', serif" }}
@@ -378,7 +394,7 @@ export default function CoursesPage() {
           {/* Cards */}
           <div className="flex-1 min-w-0 flex flex-col gap-8">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
@@ -399,7 +415,7 @@ export default function CoursesPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-[34px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-[34px]">
                 {data?.courses.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))}
