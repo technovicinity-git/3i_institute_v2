@@ -38,7 +38,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
 
   const navItems = [
     {
-      label: "Edit",
+      label: "Details",
       href: editPath,
       icon: Edit,
       color: "text-emerald-600",
