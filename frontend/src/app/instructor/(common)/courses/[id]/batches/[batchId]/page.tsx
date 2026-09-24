@@ -9,6 +9,7 @@ import {
   Plus,
   Video,
   MessageSquare,
+  ChevronLeft,
 } from "lucide-react";
 import { batchService } from "@/services/batch.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -103,13 +104,14 @@ export default function BatchDetailsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-[900px] mx-auto">
+    <div className="p-6 md:p-10">
+      {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => router.back()}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back
+          <ChevronLeft className="w-4 h-4" /> Back
         </button>
         {isLoading && (
           <div className="flex items-center justify-center py-20">

@@ -11,6 +11,7 @@ import {
   Eye,
   XCircle,
   ChevronLeft,
+  MessageSquare,
 } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
 import { CourseActions } from "@/components/instructor/CourseActions";
@@ -184,6 +185,14 @@ export default function BatchesPage() {
                         {confirmClose === batch.id ? "Confirm?" : "Close"}
                       </button>
                     )}
+
+                    <Link
+                      href={`/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(batch.course?.title ?? "Course")}&batchId=${batch.id}&batchName=${encodeURIComponent(batch.name)}`}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268]"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Chat
+                    </Link>
                   </div>
                 </div>
 

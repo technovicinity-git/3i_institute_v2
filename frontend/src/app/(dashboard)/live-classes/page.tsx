@@ -3,14 +3,9 @@
 import { useMemo } from "react";
 import {
   Video,
-  Calendar,
   Clock,
-  Users,
   ExternalLink,
   MessageSquare,
-  CheckCircle,
-  XCircle,
-  UserCheck,
   AlertCircle,
   GraduationCap,
 } from "lucide-react";

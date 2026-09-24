@@ -231,20 +231,17 @@ export default function OnlineClassesPage() {
                       Details
                     </Link>
 
-                    {/* <button
+                    <button
                       onClick={() => {
-                        const batchId = course.continueLessonId
-                          ? course.continueLessonId
-                          : "";
                         router.push(
-                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${batchId}&batchName=${encodeURIComponent("Batch")}`,
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.batchId}&batchName=${encodeURIComponent("Batch")}`,
                         );
                       }}
                       className="flex items-center gap-1.5 px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       Chat
-                    </button> */}
+                    </button>
                   </div>
                 </div>
 
@@ -313,18 +310,17 @@ export default function OnlineClassesPage() {
                       Details
                     </Link>
 
-                    {/* <button
+                    <button
                       onClick={() => {
-                        const batchId = course.continueLessonId ?? "";
                         router.push(
-                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${batchId}&batchName=${encodeURIComponent("Batch")}`,
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course?.batchId}&batchName=${encodeURIComponent("Batch")}`,
                         );
                       }}
                       className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2"
                     >
                       <MessageSquare className="w-4 h-4" />
                       Chat
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               </div>
