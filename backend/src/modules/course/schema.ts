@@ -14,6 +14,7 @@ export const createCourseSchema = z.object({
   language: z.enum(["en", "bn", "hi", "ur", "ar"]).default("en"),
   minimumAge: z.number().int().min(5).max(18),
   maximumAge: z.number().int().min(5).max(100).optional(),
+  learningOutcomes: z.array(z.string().min(1).max(255)).optional(),
 });
 
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
