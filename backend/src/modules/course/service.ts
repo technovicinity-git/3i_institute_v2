@@ -59,6 +59,8 @@ export class CourseService {
       where: { id: courseId },
     });
 
+    console.log("Input received for update:", input);
+
     if (!course) {
       throw new NotFoundError("Course not found");
     }
