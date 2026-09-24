@@ -69,9 +69,6 @@ export default function CourseDetailsPage() {
       {
         onSuccess: () => {
           toast.success("Enrolled successfully");
-          // router.push(
-          //   `/my-courses/${course.id}/lessons/${course.continueLessonId}`,
-          // );
           queryClient.invalidateQueries({
             queryKey: ["course-details", course.id, activeProfile.id],
           });
@@ -120,12 +117,16 @@ export default function CourseDetailsPage() {
 
             {/* Badges */}
             <div className="flex items-center gap-3">
-              {/* <span className="text-[11px] font-bold text-[#B8912F] bg-[#B8912F]/[0.08] px-2 py-1 rounded">
-                {course.level}
-              </span> */}
-              <span className="text-[11px] font-semibold text-[#B8912F] border border-[#B8912F] px-2.5 py-1 rounded-full">
-                Included with membership
+              <span className="text-[11px] font-bold text-[#B8912F] bg-[#B8912F]/[0.08] px-2 py-1 rounded">
+                {course.level === "1"
+                  ? "Beginner"
+                  : course.level === "2"
+                    ? "Intermediate"
+                    : "Advanced"}
               </span>
+              {/* <span className="text-[11px] font-semibold text-[#B8912F] border border-[#B8912F] px-2.5 py-1 rounded-full">
+                Included with membership
+              </span> */}
             </div>
 
             {/* Title */}
@@ -159,13 +160,23 @@ export default function CourseDetailsPage() {
 
             {/* Instructor */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#64748B] overflow-hidden flex items-center justify-center text-white text-sm font-semibold">
-                {course.instructor.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
+              {course.instructor.avatarUrl ? (
+                <Image
+                  src={course.instructor.avatarUrl}
+                  alt={course.instructor.name}
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#64748B] overflow-hidden flex items-center justify-center text-white text-sm font-semibold">
+                  {course.instructor.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)}
+                </div>
+              )}
               <span className="text-white text-sm">
                 Instructed by{" "}
                 <span className="font-semibold">{course.instructor.name}</span>
@@ -498,11 +509,11 @@ export default function CourseDetailsPage() {
                       Course Preview
                     </div>
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  {/* <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-[54px] h-[54px] rounded-full bg-white/90 flex items-center justify-center">
                       <PlayCircle className="w-5 h-5 text-[#12304E]" />
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="p-6 flex flex-col gap-5">
@@ -676,7 +687,12 @@ export default function CourseDetailsPage() {
                       {course.durationWeeks} weeks
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5" /> {course.level}
+                      <Award className="w-3.5 h-3.5" />{" "}
+                      {course.level === "1"
+                        ? "Beginner"
+                        : course.level === "2"
+                          ? "Intermediate"
+                          : "Advanced"}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Globe className="w-3.5 h-3.5" /> {course.language}
