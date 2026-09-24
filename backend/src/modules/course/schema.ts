@@ -29,6 +29,7 @@ export const updateCourseSchema = z.object({
   language: z.enum(["en", "bn", "hi", "ur", "ar"]).optional(),
   minimumAge: z.number().int().min(5).max(18).optional(),
   maximumAge: z.number().int().min(5).max(100).optional(),
+  learningOutcomes: z.array(z.string().min(1).max(255)).optional(),
 });
 
 export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
