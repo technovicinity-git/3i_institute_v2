@@ -1,27 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
   FileText,
   Clock,
-  CheckCircle,
   XCircle,
-  AlertCircle,
   ChevronRight,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useCourseExams } from "@/hooks/use-learner-exams";
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "No deadline";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default function CourseExamsPage() {
   const params = useParams();
@@ -36,7 +24,8 @@ export default function CourseExamsPage() {
   } = useCourseExams(courseId, activeProfile?.id ?? "");
 
   return (
-    <div className="p-6 md:p-10 max-w-[800px] mx-auto">
+    <div className="p-6 md:p-10">
+      {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => router.push("/my-courses")}

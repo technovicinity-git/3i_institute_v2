@@ -60,7 +60,8 @@ export default function CourseAssignmentsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-[800px] mx-auto">
+    <div className="p-6 md:p-10">
+      {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => router.push("/my-courses")}

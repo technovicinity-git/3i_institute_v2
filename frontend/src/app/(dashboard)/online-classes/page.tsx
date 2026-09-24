@@ -4,7 +4,13 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, FileText } from "lucide-react";
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  MessageSquare,
+  ExternalLink,
+} from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -21,7 +27,25 @@ function getLevelBadge(level: string): string {
   return levels[level] ?? "ALL LEVELS";
 }
 
-export default function MyCoursesPage() {
+function formatSessionDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatSessionTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export default function OnlineClassesPage() {
   const router = useRouter();
   const { activeProfile } = useProfileStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,21 +56,21 @@ export default function MyCoursesPage() {
     isError,
   } = useEnrolledCourses(activeProfile?.id ?? "");
 
-  // Filter regular courses only, then by search
-  const regularCourses = useMemo(() => {
+  // Filter online class courses only
+  const onlineCourses = useMemo(() => {
     if (!courses) return [];
-    return courses.filter((c) => c.type === "REGULAR");
+    return courses.filter((c) => c.type === "ONLINE_CLASS");
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
-    if (!searchQuery.trim()) return regularCourses;
+    if (!searchQuery.trim()) return onlineCourses;
     const query = searchQuery.toLowerCase();
-    return regularCourses.filter(
+    return onlineCourses.filter(
       (c) =>
         c.title.toLowerCase().includes(query) ||
         c.instructor.name.toLowerCase().includes(query),
     );
-  }, [regularCourses, searchQuery]);
+  }, [onlineCourses, searchQuery]);
 
   return (
     <div className="p-6 md:p-10">
@@ -56,16 +80,16 @@ export default function MyCoursesPage() {
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}
         >
-          My Courses
+          Online Classes
         </h1>
         <p className="text-base text-[#64748B]">
-          {regularCourses.length} self-paced course
-          {regularCourses.length !== 1 ? "s" : ""}
+          {onlineCourses.length} live course
+          {onlineCourses.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {/* Search */}
-      {regularCourses.length > 0 && (
+      {onlineCourses.length > 0 && (
         <div className="mb-6">
           <SearchInput
             value={searchQuery}
@@ -89,12 +113,12 @@ export default function MyCoursesPage() {
         </div>
       )}
 
-      {/* Empty — no regular courses */}
-      {!isLoading && !isError && regularCourses.length === 0 && (
+      {/* Empty — no online courses */}
+      {!isLoading && !isError && onlineCourses.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-[#64748B]">
-            You haven&apos;t enrolled in any self-paced courses yet.
+            You haven&apos;t joined any live classes yet.
           </p>
           <Link
             href="/courses"
@@ -108,7 +132,7 @@ export default function MyCoursesPage() {
       {/* Empty — search returned nothing */}
       {!isLoading &&
         !isError &&
-        regularCourses.length > 0 &&
+        onlineCourses.length > 0 &&
         filteredCourses.length === 0 && (
           <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
             <p className="text-[#64748B]">
@@ -121,9 +145,9 @@ export default function MyCoursesPage() {
       {!isLoading && !isError && filteredCourses.length > 0 && (
         <div className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden">
           {/* Desktop header */}
-          <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_200px_200px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+          <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_220px_240px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
             <div>Course</div>
-            <div>Progress</div>
+            <div>Next Session</div>
             <div>Actions</div>
           </div>
 
@@ -135,7 +159,7 @@ export default function MyCoursesPage() {
                 className="px-5 py-5 hover:bg-[#F8FAFC] transition-colors"
               >
                 {/* Desktop */}
-                <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_200px_200px] items-center gap-6">
+                <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_220px_240px] items-center gap-6">
                   {/* Course info */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-gradient-to-br from-[#12304E] to-[#2a5070]">
@@ -158,11 +182,9 @@ export default function MyCoursesPage() {
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
                           {getLevelBadge(course.level)}
                         </span>
-                        {course.isCompleted && (
-                          <span className="text-[9px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
-                            COMPLETED
-                          </span>
-                        )}
+                        <span className="text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
+                          LIVE
+                        </span>
                       </div>
                       <h3
                         className="text-base text-[#0C1F33] leading-5 truncate"
@@ -176,54 +198,53 @@ export default function MyCoursesPage() {
                     </div>
                   </div>
 
-                  {/* Progress */}
+                  {/* Next Session */}
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-semibold text-[#22A146]">
-                        {course.completedMaterials}/{course.totalMaterials}{" "}
-                        lessons
+                    {course.nextSession ? (
+                      <div className="flex items-start gap-2">
+                        <Calendar className="w-4 h-4 text-[#B8912F] shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#0C1F33] truncate">
+                            {course.nextSession.title}
+                          </p>
+                          <p className="text-xs text-[#64748B] mt-1">
+                            {formatSessionDate(course.nextSession.scheduledAt)}{" "}
+                            •{" "}
+                            {formatSessionTime(course.nextSession.scheduledAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-[#94A3B8]">
+                        No upcoming session
                       </span>
-                      <span className="text-xs font-semibold text-[#0C1F33]">
-                        {course.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#22A146] rounded-full"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
+                    )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {course.continueLessonId ? (
-                      <button
-                        onClick={() =>
-                          router.push(
-                            `/my-courses/${course.courseId}/lessons/${course.continueLessonId}`,
-                          )
-                        }
-                        className="px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
-                      >
-                        {course.progress > 0 ? "Resume" : "Start Course"}
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="px-4 py-2 bg-gray-200 text-gray-500 text-xs font-semibold rounded-lg cursor-not-allowed"
-                      >
-                        No Lessons
-                      </button>
-                    )}
-
                     <Link
-                      href={`/my-courses/${course.courseId}/exams`}
+                      href={`/courses/${course.courseId}`}
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <FileText className="w-3.5 h-3.5" />
-                      Exams
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Details
                     </Link>
+
+                    <button
+                      onClick={() => {
+                        const batchId = course.continueLessonId
+                          ? course.continueLessonId
+                          : "";
+                        router.push(
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${batchId}&batchName=${encodeURIComponent("Batch")}`,
+                        );
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Chat
+                    </button>
                   </div>
                 </div>
 
@@ -243,17 +264,15 @@ export default function MyCoursesPage() {
                           <BookOpen className="w-8 h-8" />
                         </div>
                       )}
-                      {course.isCompleted && (
-                        <span className="absolute top-2 left-2 text-[9px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
-                          DONE
-                        </span>
-                      )}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
                           {getLevelBadge(course.level)}
+                        </span>
+                        <span className="text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
+                          LIVE
                         </span>
                       </div>
                       <h3
@@ -268,54 +287,44 @@ export default function MyCoursesPage() {
                     </div>
                   </div>
 
-                  {/* Progress */}
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-semibold text-[#22A146]">
-                        {course.completedMaterials}/{course.totalMaterials}{" "}
-                        lessons
-                      </span>
-                      <span className="text-xs font-semibold text-[#0C1F33]">
-                        {course.progress}%
-                      </span>
+                  {/* Next Session */}
+                  {course.nextSession && (
+                    <div className="flex items-start gap-2 bg-[#F9F6F0] rounded-lg px-3 py-2 mt-4">
+                      <Calendar className="w-3.5 h-3.5 text-[#B8912F] shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-[#0C1F33] truncate">
+                          {course.nextSession.title}
+                        </p>
+                        <p className="text-[11px] text-[#64748B] mt-0.5">
+                          {formatSessionDate(course.nextSession.scheduledAt)} •{" "}
+                          {formatSessionTime(course.nextSession.scheduledAt)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#22A146] rounded-full"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-                  </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
-                    {course.continueLessonId ? (
-                      <button
-                        onClick={() =>
-                          router.push(
-                            `/my-courses/${course.courseId}/lessons/${course.continueLessonId}`,
-                          )
-                        }
-                        className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg"
-                      >
-                        {course.progress > 0 ? "Resume" : "Start Course"}
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="flex-1 py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg cursor-not-allowed"
-                      >
-                        No Lessons
-                      </button>
-                    )}
-
                     <Link
-                      href={`/my-courses/${course.courseId}/exams`}
+                      href={`/courses/${course.courseId}`}
                       className="flex-1 py-2.5 border border-[#12304E] text-[#12304E] text-sm font-semibold rounded-lg text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                     >
-                      <FileText className="w-4 h-4" />
-                      Exams
+                      <ExternalLink className="w-4 h-4" />
+                      Details
                     </Link>
+
+                    {/* <button
+                      onClick={() => {
+                        const batchId = course.continueLessonId ?? "";
+                        router.push(
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${batchId}&batchName=${encodeURIComponent("Batch")}`,
+                        );
+                      }}
+                      className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Chat
+                    </button> */}
                   </div>
                 </div>
               </div>
