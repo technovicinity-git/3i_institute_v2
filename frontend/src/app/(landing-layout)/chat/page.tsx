@@ -72,22 +72,27 @@ function ChatContent() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // Auto-scroll to bottom
+  // Auto-scroll chat container only
   useEffect(() => {
-    if (autoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (!autoScroll) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages, autoScroll]);
 
-  // Detect user scrolling up
   const handleScroll = () => {
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      100;
-    setAutoScroll(isNearBottom);
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    setAutoScroll(distanceFromBottom <= 50);
   };
 
   const handleSend = () => {
@@ -254,7 +259,7 @@ function ChatContent() {
         <div
           ref={messagesContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-1 scroll-smooth"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-1"
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
