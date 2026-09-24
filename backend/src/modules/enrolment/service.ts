@@ -284,7 +284,12 @@ export class EnrolmentService {
             },
           },
         },
-        batch: true,
+        batch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: { enrolledAt: "desc" },
     });
@@ -318,14 +323,10 @@ export class EnrolmentService {
             )
           : 0;
 
-      // Find the continue lesson:
-      // 1. First incomplete material (in order)
-      // 2. Or last incomplete material with progress
-      // 3. Or first material if none started
+      // Find the continue lesson
       let continueLessonId: string | null = null;
 
       if (courseMaterials.length > 0) {
-        // Find first incomplete material
         const firstIncomplete = courseMaterials.find((m) => {
           const mp = courseProgress.find((p) => p.materialId === m.id);
           return !mp || !mp.completed;
@@ -334,13 +335,15 @@ export class EnrolmentService {
         if (firstIncomplete) {
           continueLessonId = firstIncomplete.id;
         } else {
-          // All complete — go to first lesson
           continueLessonId = courseMaterials[0]?.id ?? null;
         }
       }
 
       const activeBatch = course.batches[0] ?? null;
       const nextSession = activeBatch?.sessions[0] ?? null;
+
+      // Prefer the directly assigned batch, fall back to the course's first active batch
+      const enrolledBatch = enrolment.batch ?? activeBatch;
 
       return {
         id: enrolment.id,
@@ -359,8 +362,11 @@ export class EnrolmentService {
         totalMaterials: courseMaterials.length,
         completedMaterials: completedMaterials.length,
         firstLessonId: courseMaterials[0]?.id ?? null,
-        continueLessonId, // NEW: lesson to resume from
-        batchName: enrolment.batch?.name ?? activeBatch?.name ?? null,
+        continueLessonId,
+        // Batch info
+        batchId: enrolledBatch?.id ?? null,
+        batchName: enrolledBatch?.name ?? null,
+        // Next session info
         nextSession: nextSession
           ? {
               title: nextSession.title,

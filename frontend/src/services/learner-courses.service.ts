@@ -24,6 +24,7 @@ export interface EnrolledCourse {
   firstLessonId: string | null;
   continueLessonId: string | null;
   batchName: string | null;
+  batchId: string | null;
   nextSession: {
     title: string;
     scheduledAt: string;
