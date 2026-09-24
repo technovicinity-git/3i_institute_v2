@@ -38,16 +38,19 @@ export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
 export const listCoursesQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(12),
-  category: z.string().optional(),
+  category: z.string().optional(), // comma-separated category IDs
   level: z.string().optional(),
   type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]).optional(),
-  format: z.string().optional(), // self-paced, live, hybrid
+  format: z.string().optional(),
+  language: z.string().optional(), // comma-separated language codes
+  ageBand: z.string().optional(), // comma-separated age bands
   search: z.string().max(255).optional(),
   sortBy: z
     .enum(["popularity", "newest", "rating", "title"])
     .optional()
     .default("popularity"),
   minRating: z.coerce.number().min(0).max(5).optional(),
+  learnerProfileId: z.string().uuid().optional(),
 });
 
 export type ListCoursesQuery = z.infer<typeof listCoursesQuerySchema>;

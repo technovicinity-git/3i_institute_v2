@@ -11,13 +11,14 @@ export const courseService = {
     if (filters.category) params.set("category", filters.category);
     if (filters.level) params.set("level", filters.level);
     if (filters.format) params.set("format", filters.format);
+    if (filters.language) params.set("language", filters.language);
+    if (filters.ageBand) params.set("ageBand", filters.ageBand);
     if (filters.search) params.set("search", filters.search);
     if (filters.sortBy) params.set("sortBy", filters.sortBy);
     if (filters.minRating) params.set("minRating", String(filters.minRating));
 
     const response = await apiClient.get(`/courses?${params.toString()}`);
 
-    // Backend returns: { success, data: Course[], pagination: { page, limit, total, totalPages } }
     return {
       courses: response.data.data,
       total: response.data.pagination?.total ?? 0,
@@ -26,7 +27,6 @@ export const courseService = {
       totalPages: response.data.pagination?.totalPages ?? 0,
     };
   },
-
   getById: async (courseId: string): Promise<Course> => {
     const response = await apiClient.get(`/courses/${courseId}`);
     return response.data.data;

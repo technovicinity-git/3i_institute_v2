@@ -265,7 +265,7 @@ export default function CourseDetailsPage() {
                   </p> */}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {course.curriculum.map((mod, idx) => (
                     <div
                       key={idx}
@@ -275,13 +275,13 @@ export default function CourseDetailsPage() {
                         onClick={() =>
                           setOpenModule(openModule === idx ? -1 : idx)
                         }
-                        className="w-full flex items-center justify-between px-5 py-5 bg-[#FBF9F4] hover:bg-[#F5F0E8] transition-colors"
+                        className="w-full flex items-center justify-between px-5 py-2 bg-white hover:bg-[#F5F0E8] transition-colors"
                       >
                         <div className="flex items-center gap-5">
-                          <span className="font-serif text-[22px] text-[#B8912F]">
+                          <span className="font-serif text-[#B8912F]">
                             {mod.moduleNum}
                           </span>
-                          <span className="font-serif text-[20px] text-[#0C1F33]">
+                          <span className="font-serif text-[#0C1F33]">
                             {mod.title}
                           </span>
                         </div>
