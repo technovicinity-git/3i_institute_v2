@@ -235,7 +235,7 @@ export default function CoursesPage() {
 
   const filters: CourseFilters = {
     page: currentPage,
-    limit: 9,
+    limit: 12,
     search: debouncedSearch || undefined,
     category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
     format: selectedTypes.length > 0 ? selectedTypes.join(",") : undefined,
