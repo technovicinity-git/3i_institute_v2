@@ -183,8 +183,8 @@ export default function CourseStudentsPage() {
               <span>Student</span>
               <span>Enrolled</span>
               <span>Age</span>
-              <span>Batch</span>
-              <span>Progress</span>
+              {course?.type === "ONLINE_CLASS" && <span>Batch</span>}
+              {course?.type === "REGULAR" && <span>Progress</span>}
               <span>Exam Avg</span>
             </div>
 
@@ -235,30 +235,34 @@ export default function CourseStudentsPage() {
                   </span>
 
                   {/* Batch */}
-                  <div className="min-w-0">
-                    {student.batchName ? (
-                      <span className="text-xs font-semibold text-[#7C3AED] bg-[#7C3AED]/10 px-2 py-1 rounded">
-                        {student.batchName}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold text-[#94A3B8]">
-                        —
-                      </span>
-                    )}
-                  </div>
+                  {course?.type === "ONLINE_CLASS" && (
+                    <div className="min-w-0">
+                      {student.batchName ? (
+                        <span className="text-xs font-semibold text-[#7C3AED] bg-[#7C3AED]/10 px-2 py-1 rounded">
+                          {student.batchName}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-[#94A3B8]">
+                          —
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Progress */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                      <div
-                        className="h-full bg-[#22A146] rounded-full"
-                        style={{ width: `${student.progress}%` }}
-                      />
+                  {course?.type === "REGULAR" && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                        <div
+                          className="h-full bg-[#22A146] rounded-full"
+                          style={{ width: `${student.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-[#0C1F33] whitespace-nowrap">
+                        {student.progress}%
+                      </span>
                     </div>
-                    <span className="text-xs font-semibold text-[#0C1F33] whitespace-nowrap">
-                      {student.progress}%
-                    </span>
-                  </div>
+                  )}
 
                   {/* Exam Average */}
                   <span
