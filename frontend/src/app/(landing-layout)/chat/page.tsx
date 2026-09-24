@@ -295,8 +295,8 @@ function ChatContent() {
                 )}
 
                 {isSelf ? (
-                  <div className="flex items-end gap-3 justify-end mb-1">
-                    <div className="flex-1 max-w-[564px]">
+                  <div className="flex items-end justify-end gap-3 mb-1">
+                    <div className="flex flex-col items-end max-w-[564px]">
                       {showSenderName && (
                         <div className="flex items-center gap-2 mb-1 justify-end">
                           <span className="text-[13px] text-[#475569]">
@@ -307,12 +307,14 @@ function ChatContent() {
                           </span>
                         </div>
                       )}
-                      <div className="bg-[#22A146] rounded-lg px-3.5 py-2.5">
-                        <p className="text-[15px] text-[#0C1F33] leading-6">
+
+                      <div className="bg-[#22A146] rounded-lg px-3.5 py-2.5 inline-block max-w-full">
+                        <p className="text-[15px] text-[#0C1F33] leading-6 break-words">
                           {msg.message}
                         </p>
                       </div>
                     </div>
+
                     <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
                       {activeProfile?.avatarUrl ? (
                         <Image
