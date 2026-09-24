@@ -127,29 +127,118 @@ export class CourseService {
     _accountId?: string,
     learnerProfileId?: string,
   ) {
-    const { page, limit, category, level, type, format, search, sortBy } =
-      query;
+    const {
+      page,
+      limit,
+      category,
+      level,
+      type,
+      format,
+      language,
+      ageBand,
+      search,
+      sortBy,
+    } = query;
+
+    // Parse comma-separated values
+    const categoryIds = category
+      ? category
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+      : [];
+    const languages = language
+      ? language
+          .split(",")
+          .map((l) => l.trim())
+          .filter(Boolean)
+      : [];
+    const ageBands = ageBand
+      ? ageBand
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean)
+      : [];
+
+    // Build age conditions from age bands
+    const ageConditions = ageBands
+      .map((band) => {
+        switch (band) {
+          case "5-8":
+            return { minimumAge: { gte: 5, lte: 8 } };
+          case "9-12":
+            return { minimumAge: { gte: 9, lte: 12 } };
+          case "13-15":
+            return { minimumAge: { gte: 13, lte: 15 } };
+          case "16-17":
+            return { minimumAge: { gte: 16, lte: 17 } };
+          case "18+":
+            return { minimumAge: { gte: 18 } };
+          case "All ages":
+            return { minimumAge: { lte: 5 } };
+          default:
+            return null;
+        }
+      })
+      .filter(Boolean);
 
     const where: any = {
       status: "PUBLISHED",
-      ...(category && { categoryId: category }),
-      ...(level && { level }),
-      ...(type && { type }),
-      ...(search && {
-        OR: [
-          { title: { contains: search, mode: "insensitive" } },
-          { summary: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-          {
-            instructor: {
-              firstName: { contains: search, mode: "insensitive" },
-            },
-          },
-          {
-            instructor: { lastName: { contains: search, mode: "insensitive" } },
-          },
-        ],
-      }),
+      AND: [
+        ...(categoryIds.length > 0
+          ? [{ categoryId: { in: categoryIds } }]
+          : []),
+        ...(languages.length > 0 ? [{ language: { in: languages } }] : []),
+        ...(level ? [{ level }] : []),
+        ...(type ? [{ type }] : []),
+        ...(format
+          ? [
+              {
+                type:
+                  format === "self-paced"
+                    ? "REGULAR"
+                    : format === "live"
+                      ? "ONLINE_CLASS"
+                      : "MIXED",
+              },
+            ]
+          : []),
+        ...(search
+          ? [
+              {
+                OR: [
+                  { title: { contains: search, mode: "insensitive" as const } },
+                  {
+                    summary: { contains: search, mode: "insensitive" as const },
+                  },
+                  {
+                    description: {
+                      contains: search,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  {
+                    instructor: {
+                      firstName: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  },
+                  {
+                    instructor: {
+                      lastName: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+        ...(ageConditions.length > 0 ? [{ OR: ageConditions }] : []),
+      ],
     };
 
     // Format filter
@@ -180,15 +269,13 @@ export class CourseService {
         prisma.course.findMany({
           where,
           include: {
-            instructor: {
-              select: { id: true, firstName: true, lastName: true },
-            },
             category: {
               select: { id: true, name: true, slug: true },
             },
-            _count: {
-              select: { enrolments: true },
+            instructor: {
+              select: { id: true, firstName: true, lastName: true },
             },
+            _count: { select: { enrolments: true } },
             ratings: {
               where: { hidden: false },
               select: { rating: true },

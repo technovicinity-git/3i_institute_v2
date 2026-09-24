@@ -54,6 +54,8 @@ export interface CourseFilters {
   sortBy?: SortOption;
   minRating?: number;
   learnerProfileId?: string;
+  language?: string;
+  ageBand?: string;
 }
 
 export interface Material {

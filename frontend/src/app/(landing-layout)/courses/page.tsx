@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -18,7 +17,6 @@ import {
 import { toast } from "sonner";
 import { useCourses } from "@/hooks/use-courses";
 import { useCategories } from "@/hooks/use-categories";
-import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
 import {
   useAddToWishlistMutation,
@@ -207,7 +205,6 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 export default function CoursesPage() {
-  const { user } = useAuthStore();
   const { activeProfile } = useProfileStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -233,12 +230,28 @@ export default function CoursesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentPage(1);
+  }, [
+    selectedCategories,
+    selectedTypes,
+    selectedLanguages,
+    selectedAgeBands,
+    sortBy,
+  ]);
+
   const filters: CourseFilters = {
     page: currentPage,
     limit: 12,
     search: debouncedSearch || undefined,
-    category: selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+    category:
+      selectedCategories.length > 0 ? selectedCategories.join(",") : undefined,
     format: selectedTypes.length > 0 ? selectedTypes.join(",") : undefined,
+    language:
+      selectedLanguages.length > 0 ? selectedLanguages.join(",") : undefined,
+    ageBand:
+      selectedAgeBands.length > 0 ? selectedAgeBands.join(",") : undefined,
     sortBy,
     ...(activeProfile?.id ? { learnerProfileId: activeProfile.id } : {}),
   };
