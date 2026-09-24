@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Users,
   HelpCircle,
+  ClipboardList,
 } from "lucide-react";
 
 type CourseType = "REGULAR" | "ONLINE_CLASS";
@@ -33,6 +34,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   const questionsPath = `${basePath}/questions`;
   const examsPath = `${basePath}/exams`;
   const studentsPath = `${basePath}/students`;
+  const assignmentsPath = `${basePath}/assignments`;
 
   const navItems = [
     {
@@ -55,8 +57,8 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       label: "Batches",
       href: batchesPath,
       icon: Calendar,
-      color: "text-violet-600",
-      activeColor: "text-violet-700",
+      color: "text-red-600",
+      activeColor: "text-yellow-700",
       show: courseType === "ONLINE_CLASS",
     },
     {
@@ -82,6 +84,14 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       color: "text-purple-600",
       activeColor: "text-purple-700",
       show: true,
+    },
+    {
+      label: "Assignments",
+      href: assignmentsPath,
+      icon: ClipboardList,
+      color: "text-pink-600",
+      activeColor: "text-pink-700",
+      show: courseType === "ONLINE_CLASS",
     },
   ];
 

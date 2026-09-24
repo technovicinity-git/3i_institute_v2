@@ -4,13 +4,6 @@ import { toast } from "sonner";
 import { assignmentService } from "@/services/assignment.service";
 import type { CreateAssignmentInput } from "@/types/assignment";
 
-export function useAssignments(courseId?: string) {
-  return useQuery({
-    queryKey: ["instructor-assignments", courseId],
-    queryFn: () => assignmentService.getAssignments(courseId),
-  });
-}
-
 export function useCreateAssignmentMutation() {
   const queryClient = useQueryClient();
 
@@ -59,5 +52,13 @@ export function useGradeSubmissionMutation() {
       const message = error.response?.data?.error?.message;
       toast.error(message ?? "Failed to grade submission");
     },
+  });
+}
+
+export function useAssignments(courseId: string) {
+  return useQuery({
+    queryKey: ["instructor-assignments", courseId],
+    queryFn: () => assignmentService.getAssignments(courseId),
+    enabled: !!courseId,
   });
 }
