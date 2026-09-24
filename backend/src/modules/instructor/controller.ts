@@ -121,6 +121,24 @@ export class InstructorController {
       next(error);
     }
   };
+
+  getCourseStudents = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const courseId = req.params["courseId"] as string;
+      const result = await instructorService.getCourseStudents(
+        instructorId,
+        courseId,
+      );
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const instructorController = new InstructorController();

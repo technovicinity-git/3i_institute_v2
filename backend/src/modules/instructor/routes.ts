@@ -93,6 +93,28 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/instructors/courses/{courseId}/students:
+ *   get:
+ *     tags: [Instructors]
+ *     summary: Get students enrolled in a specific course
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Course students with stats
+ */
+router.get(
+  "/courses/:courseId/students",
+  authenticate,
+  authorize("enrolment.manage"),
+  instructorController.getCourseStudents,
+);
+
+/**
+ * @swagger
  * /api/v1/instructors/students:
  *   get:
  *     tags: [Instructors]
