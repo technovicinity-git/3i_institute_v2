@@ -44,6 +44,7 @@ export class CourseService {
         maximumAge: input.maximumAge ?? null,
         status: needsApproval ? "PENDING_REVIEW" : "PUBLISHED",
         instructorId,
+        requirements: input.requirements ?? [],
       },
     });
 

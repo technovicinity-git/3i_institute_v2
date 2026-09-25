@@ -52,6 +52,21 @@ export interface CreateCourseInput {
   faq?: Array<{ question: string; answer: string }>;
 }
 
+export interface UpdateCourseInput {
+  title?: string;
+  summary?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  categoryId?: string;
+  type?: "REGULAR" | "ONLINE_CLASS" | "MIXED";
+  level?: string;
+  language?: string;
+  minimumAge?: number;
+  maximumAge?: number;
+  learningOutcomes?: string[];
+  requirements?: string[]; 
+}
+
 export const instructorCourseService = {
   getMyCourses: async (): Promise<InstructorCourse[]> => {
     const response = await apiClient.get("/courses/my-courses");
