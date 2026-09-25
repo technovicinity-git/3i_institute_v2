@@ -48,7 +48,8 @@ export default function CreateCoursePage() {
   const [newOutcome, setNewOutcome] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
+  const [requirements, setRequirements] = useState<string[]>([]);
+  const [newRequirement, setNewRequirement] = useState("");
   const { data: categories } = useCategories();
 
   const {
@@ -63,6 +64,17 @@ export default function CreateCoursePage() {
       minimumAge: 5,
     },
   });
+
+  const addRequirement = () => {
+    if (newRequirement.trim()) {
+      setRequirements([...requirements, newRequirement.trim()]);
+      setNewRequirement("");
+    }
+  };
+
+  const removeRequirement = (index: number) => {
+    setRequirements(requirements.filter((_, i) => i !== index));
+  };
 
   const addOutcome = () => {
     if (newOutcome.trim()) {
@@ -111,6 +123,7 @@ export default function CreateCoursePage() {
       {
         ...data,
         learningOutcomes,
+        requirements,
       },
       {
         onSuccess: (course) => {
@@ -411,6 +424,52 @@ export default function CreateCoursePage() {
                 >
                   {outcome}
                   <button type="button" onClick={() => removeOutcome(index)}>
+                    <X className="w-3 h-3 text-[#64748B]" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Requirements */}
+        <div>
+          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+            Requirements (optional)
+          </label>
+          <div className="flex gap-2 mb-3">
+            <input
+              value={newRequirement}
+              onChange={(e) => setNewRequirement(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addRequirement();
+                }
+              }}
+              placeholder="e.g. No prior experience needed"
+              className="flex-1 px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
+            />
+            <button
+              type="button"
+              onClick={addRequirement}
+              className="px-4 py-3 border border-[#12304E] rounded-lg text-[#12304E] hover:bg-gray-50"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          {requirements.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {requirements.map((req, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-2 bg-[#F9F6F0] px-3 py-1.5 rounded-lg text-sm"
+                >
+                  {req}
+                  <button
+                    type="button"
+                    onClick={() => removeRequirement(index)}
+                  >
                     <X className="w-3 h-3 text-[#64748B]" />
                   </button>
                 </span>
