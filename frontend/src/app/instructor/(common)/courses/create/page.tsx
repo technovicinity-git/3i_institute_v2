@@ -479,7 +479,7 @@ export default function CreateCoursePage() {
         </div>
 
         {/* Submit */}
-        <div className="flex gap-3 pt-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
             onClick={() => router.push("/instructor/courses")}
@@ -492,7 +492,7 @@ export default function CreateCoursePage() {
             disabled={
               createMutation.isPending || thumbnailUploadMutation.isPending
             }
-            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
+            className="px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
           >
             {createMutation.isPending
               ? "Creating..."
