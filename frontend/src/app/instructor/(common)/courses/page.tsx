@@ -211,9 +211,9 @@ export default function InstructorCoursesPage() {
 
       {/* Search + Filters bar */}
       {courses && courses.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap w-full">
           {/* Search */}
-          <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 flex-1 min-w-[240px] max-w-[400px]">
+          <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 flex-1 min-w-[240px] flex-1">
             <Search className="w-4 h-4 text-[#94A3B8] shrink-0" />
             <input
               type="text"
