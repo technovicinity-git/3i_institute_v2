@@ -254,7 +254,7 @@ export default function BatchDetailsPage() {
                         href={session.meetingLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline shrink-0"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-sm font-semibold text-[#22A146] hover:bg-emerald-100 transition-colors shrink-0"
                       >
                         <Video className="w-4 h-4" />
                         Join
@@ -263,13 +263,14 @@ export default function BatchDetailsPage() {
 
                     <Link
                       href={`/instructor/attendance/${session.id}`}
-                      className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline shrink-0"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-sm font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors shrink-0"
                     >
                       <Users className="w-4 h-4" />
                       Attendance
                     </Link>
+
                     {isPast && (
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">
+                      <span className="inline-flex items-center px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 shrink-0">
                         Completed
                       </span>
                     )}
