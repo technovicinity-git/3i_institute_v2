@@ -285,49 +285,6 @@ export default function InstructorDashboardPage() {
           </div>
         )}
       </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-lg font-bold text-[#0C1F33] mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link
-            href="/instructor/courses/create"
-            className="bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow"
-          >
-            <TrendingUp className="w-5 h-5 text-[#22A146] mb-3" />
-            <p className="text-sm font-semibold text-[#0C1F33]">
-              Create New Course
-            </p>
-          </Link>
-          <Link
-            href="/instructor/questions/create"
-            className="bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow"
-          >
-            <FileText className="w-5 h-5 text-[#2563EB] mb-3" />
-            <p className="text-sm font-semibold text-[#0C1F33]">
-              Create Question
-            </p>
-          </Link>
-          <Link
-            href="/instructor/assignments/create"
-            className="bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow"
-          >
-            <ClipboardList className="w-5 h-5 text-[#7C3AED] mb-3" />
-            <p className="text-sm font-semibold text-[#0C1F33]">
-              Create Assignment
-            </p>
-          </Link>
-          <Link
-            href="/instructor/students"
-            className="bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md transition-shadow"
-          >
-            <Users className="w-5 h-5 text-[#B8912F] mb-3" />
-            <p className="text-sm font-semibold text-[#0C1F33]">
-              View Students
-            </p>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }
