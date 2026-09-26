@@ -536,6 +536,124 @@ export class BatchService {
       meetingLink: session.meetingLink,
     };
   }
+
+  async updateSession(
+    instructorId: string,
+    sessionId: string,
+    input: {
+      title?: string;
+      scheduledAt?: string;
+      durationMinutes?: number;
+      meetingLink?: string;
+      notes?: string;
+    },
+  ) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        batch: {
+          include: { course: true },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    if (session.batch.course.instructorId !== instructorId) {
+      throw new ForbiddenError("You can only update your own sessions");
+    }
+
+    // If changing scheduledAt or duration, check conflicts with other sessions
+    if (input.scheduledAt || input.durationMinutes) {
+      const newStart = input.scheduledAt
+        ? new Date(input.scheduledAt).getTime()
+        : new Date(session.scheduledAt).getTime();
+      const newDuration = input.durationMinutes ?? session.durationMinutes;
+      const newEnd = newStart + newDuration * 60 * 1000;
+
+      const existingSessions = await prisma.session.findMany({
+        where: {
+          batch: {
+            course: { instructorId },
+          },
+          NOT: { id: sessionId },
+        },
+        include: {
+          batch: {
+            include: {
+              course: { select: { title: true } },
+            },
+          },
+        },
+      });
+
+      const conflicts: string[] = [];
+
+      for (const existing of existingSessions) {
+        const existingStart = new Date(existing.scheduledAt).getTime();
+        const existingEnd =
+          existingStart + existing.durationMinutes * 60 * 1000;
+
+        if (newStart < existingEnd && existingStart < newEnd) {
+          conflicts.push(
+            `Conflicts with "${existing.title}" on ${existing.batch.course.title} — ${existing.batch.name}`,
+          );
+        }
+      }
+
+      if (conflicts.length > 0) {
+        throw new ValidationError(
+          `Schedule conflict detected: ${conflicts.join("; ")}`,
+        );
+      }
+    }
+
+    const updated = await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.scheduledAt !== undefined && {
+          scheduledAt: new Date(input.scheduledAt),
+        }),
+        ...(input.durationMinutes !== undefined && {
+          durationMinutes: input.durationMinutes,
+        }),
+        ...(input.meetingLink !== undefined && {
+          meetingLink: input.meetingLink || null,
+        }),
+        ...(input.notes !== undefined && {
+          notes: input.notes || null,
+        }),
+      },
+    });
+
+    return updated;
+  }
+
+  async deleteSession(instructorId: string, sessionId: string) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        batch: {
+          include: { course: true },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundError("Session not found");
+    }
+
+    if (session.batch.course.instructorId !== instructorId) {
+      throw new ForbiddenError("You can only delete your own sessions");
+    }
+
+    await prisma.session.delete({
+      where: { id: sessionId },
+    });
+  }
 }
 
 export const batchService = new BatchService();

@@ -179,6 +179,33 @@ export class BatchController {
       next(error);
     }
   };
+
+  updateSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const sessionId = req.params["sessionId"] as string;
+      const input = req.body;
+      const session = await batchService.updateSession(
+        instructorId,
+        sessionId,
+        input,
+      );
+      sendSuccess(res, session, 200, "Session updated");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const sessionId = req.params["sessionId"] as string;
+      await batchService.deleteSession(instructorId, sessionId);
+      sendSuccess(res, null, 200, "Session deleted");
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const batchController = new BatchController();

@@ -63,6 +63,46 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/batches/sessions/{sessionId}:
+ *   patch:
+ *     tags: [Batches]
+ *     summary: Update a session
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Session updated
+ *   delete:
+ *     tags: [Batches]
+ *     summary: Delete a session
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Session deleted
+ */
+router.patch(
+  "/sessions/:sessionId",
+  authenticate,
+  authorize("batches.update"),
+  batchController.updateSession,
+);
+
+router.delete(
+  "/sessions/:sessionId",
+  authenticate,
+  authorize("batches.update"),
+  batchController.deleteSession,
+);
+
+/**
+ * @swagger
  * /api/v1/batches/course/{courseId}:
  *   get:
  *     tags: [Batches]
