@@ -70,4 +70,25 @@ export const batchService = {
     const response = await apiClient.get(`/batches/${batchId}/next-session`);
     return response.data.data;
   },
+
+  updateSession: async (
+    sessionId: string,
+    input: {
+      title?: string;
+      scheduledAt?: string;
+      durationMinutes?: number;
+      meetingLink?: string;
+      notes?: string;
+    },
+  ): Promise<Session> => {
+    const response = await apiClient.patch(
+      `/batches/sessions/${sessionId}`,
+      input,
+    );
+    return response.data.data;
+  },
+
+  deleteSession: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/batches/sessions/${sessionId}`);
+  }, 
 };

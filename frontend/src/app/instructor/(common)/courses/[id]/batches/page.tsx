@@ -12,6 +12,7 @@ import {
   XCircle,
   ChevronLeft,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
 import { CourseActions } from "@/components/instructor/CourseActions";
@@ -158,37 +159,50 @@ export default function BatchesPage() {
                       {status.label}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-sm text-[#64748B]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Enrolment */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-[#64748B]">
                       <Users className="w-4 h-4" />
                       {batch.enrolmentCount}/{batch.capacity}
                     </span>
+
+                    {/* Sessions */}
                     <Link
                       href={`/instructor/courses/${courseId}/batches/${batch.id}`}
-                      className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-sm font-semibold text-[#22A146] hover:bg-emerald-100 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                       Sessions
                     </Link>
+
+                    {/* Edit */}
                     <Link
                       href={`/instructor/courses/${courseId}/batches/${batch.id}/edit`}
-                      className="text-sm font-semibold text-[#2563EB] hover:underline"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-sm font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors"
                     >
+                      <Pencil className="w-4 h-4" />
                       Edit
                     </Link>
+
+                    {/* Close */}
                     {batch.status === "UPCOMING" && (
                       <button
                         onClick={() => handleCloseBatch(batch.id)}
-                        className="flex items-center gap-1 text-sm font-semibold text-red-600 hover:underline"
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                          confirmClose === batch.id
+                            ? "bg-red-600 text-white border border-red-600 hover:bg-red-700"
+                            : "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+                        }`}
                       >
                         <XCircle className="w-4 h-4" />
                         {confirmClose === batch.id ? "Confirm?" : "Close"}
                       </button>
                     )}
 
+                    {/* Chat */}
                     <Link
                       href={`/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(batch.course?.title ?? "Course")}&batchId=${batch.id}&batchName=${encodeURIComponent(batch.name)}`}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268]"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268] transition-colors"
                     >
                       <MessageSquare className="w-4 h-4" />
                       Chat

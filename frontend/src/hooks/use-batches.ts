@@ -102,3 +102,55 @@ export function useNextSession(batchId: string) {
     staleTime: 60 * 1000,
   });
 }
+
+export function useUpdateSessionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      input,
+    }: {
+      sessionId: string;
+      input: {
+        title?: string;
+        scheduledAt?: string;
+        durationMinutes?: number;
+        meetingLink?: string;
+        notes?: string;
+      };
+    }) => batchService.updateSession(sessionId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batch"] });
+      queryClient.invalidateQueries({ queryKey: ["course-batches"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-sessions"] });
+      toast.success("Session updated");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      if (message?.toLowerCase().includes("conflict")) {
+        toast.error(message, { duration: 6000 });
+      } else {
+        toast.error(message ?? "Failed to update session");
+      }
+    },
+  });
+}
+
+export function useDeleteSessionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sessionId: string) => batchService.deleteSession(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batch"] });
+      queryClient.invalidateQueries({ queryKey: ["course-batches"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-sessions"] });
+      toast.success("Session deleted");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to delete session");
+    },
+  });
+}
