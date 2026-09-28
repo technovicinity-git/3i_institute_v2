@@ -20,9 +20,13 @@ export function useCreateCourseMutation() {
   return useMutation({
     mutationFn: (input: CreateCourseInput) =>
       instructorCourseService.createCourse(input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
-      toast.success("Course created successfully");
+      toast.success(
+        variables.isDraft
+          ? "Draft saved successfully"
+          : "Course created successfully",
+      );
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

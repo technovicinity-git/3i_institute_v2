@@ -118,12 +118,13 @@ export default function CreateCoursePage() {
     setPreviewUrl(null);
   };
 
-  const onSubmit = (data: CreateCourseFormData) => {
+  const onSubmit = (data: CreateCourseFormData, isDraft: boolean) => {
     createMutation.mutate(
       {
         ...data,
         learningOutcomes,
         requirements,
+        isDraft,
       },
       {
         onSuccess: (course) => {
@@ -168,7 +169,7 @@ export default function CreateCoursePage() {
       </div>
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((data) => onSubmit(data, false))}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
         {/* Thumbnail Upload */}
@@ -486,6 +487,16 @@ export default function CreateCoursePage() {
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit((data) => onSubmit(data, true))}
+            disabled={
+              createMutation.isPending || thumbnailUploadMutation.isPending
+            }
+            className="px-6 py-3 border border-[#12304E] text-[#12304E] rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50"
+          >
+            Save as draft
           </button>
           <button
             type="submit"

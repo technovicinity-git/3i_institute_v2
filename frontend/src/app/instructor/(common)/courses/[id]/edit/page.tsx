@@ -116,7 +116,7 @@ export default function EditCoursePage() {
     setLearningOutcomes(learningOutcomes.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: EditCourseFormData) => {
+  const onSubmit = (data: EditCourseFormData, isDraft: boolean) => {
     updateMutation.mutate(
       {
         courseId,
@@ -125,11 +125,14 @@ export default function EditCoursePage() {
           thumbnailUrl: data.thumbnailUrl || undefined,
           learningOutcomes,
           requirements,
+          isDraft,
         },
       },
       {
         onSuccess: () => {
-          toast.success("Course updated successfully");
+          toast.success(
+            isDraft ? "Course saved as draft" : "Course updated successfully",
+          );
           queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
         },
       },
@@ -174,7 +177,7 @@ export default function EditCoursePage() {
       </div>
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((data) => onSubmit(data, course.isDraft))}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
         {/* Thumbnail */}
@@ -442,6 +445,14 @@ export default function EditCoursePage() {
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit((data) => onSubmit(data, !course.isDraft))}
+            disabled={updateMutation.isPending}
+            className="px-6 py-3 border border-[#12304E] text-[#12304E] rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50"
+          >
+            {course.isDraft ? "Publish" : "Draft"}
           </button>
           <button
             type="submit"
