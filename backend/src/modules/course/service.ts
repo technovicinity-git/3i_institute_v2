@@ -66,8 +66,6 @@ export class CourseService {
       where: { id: courseId },
     });
 
-    console.log("Input received for update:", input);
-
     if (!course) {
       throw new NotFoundError("Course not found");
     }
@@ -89,16 +87,12 @@ export class CourseService {
       }
     }
 
-    // Handle isDraft flag
-    if (input.isDraft !== undefined) {
-      if (input.isDraft) {
-        // Saving as draft keeps the course unpublished
-        status = "DRAFT";
-      } else if (status === "DRAFT") {
-        // Finalizing a draft re-evaluates whether admin approval is needed
-        const needsApproval = (input.minimumAge ?? course.minimumAge) < 13;
-        status = needsApproval ? "PENDING_REVIEW" : "PUBLISHED";
-      }
+    if (status === "DRAFT") {
+      // Finalizing a draft re-evaluates whether admin approval is needed
+      const needsApproval =
+        (input.minimumAge ?? course.minimumAge) < 13 ||
+        course.type === "REGULAR";
+      status = needsApproval ? "PENDING_REVIEW" : "PUBLISHED";
     }
 
     const updated = await prisma.course.update({
