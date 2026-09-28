@@ -16,6 +16,7 @@ export const createCourseSchema = z.object({
   maximumAge: z.number().int().min(5).max(100).optional(),
   learningOutcomes: z.array(z.string().min(1).max(255)).optional(),
   requirements: z.array(z.string().max(500)).optional(),
+  isDraft: z.boolean().optional(),
 });
 
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
@@ -33,6 +34,7 @@ export const updateCourseSchema = z.object({
   maximumAge: z.number().int().min(5).max(100).optional(),
   learningOutcomes: z.array(z.string().min(1).max(255)).optional(),
   requirements: z.array(z.string().max(500)).optional(),
+  isDraft: z.boolean().optional(),
 });
 
 export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;

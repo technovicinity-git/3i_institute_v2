@@ -29,6 +29,7 @@ export class CourseService {
     // FR-CRS-02: Age field mandatory — validation handles this
     // FR-CRS-04: Courses tagged under 13 need admin approval
     const needsApproval = input.minimumAge < 13;
+    const isDraft = input.isDraft ?? false;
 
     const course = await prisma.course.create({
       data: {
@@ -42,7 +43,12 @@ export class CourseService {
         language: input.language,
         minimumAge: input.minimumAge,
         maximumAge: input.maximumAge ?? null,
-        status: needsApproval ? "PENDING_REVIEW" : "PUBLISHED",
+        status: isDraft
+          ? "DRAFT"
+          : needsApproval
+            ? "PENDING_REVIEW"
+            : "PUBLISHED",
+        isDraft,
         instructorId,
         requirements: input.requirements ?? [],
       },
@@ -80,6 +86,18 @@ export class CourseService {
       }
       if (!needsApproval && course.status === "PENDING_REVIEW") {
         status = "PUBLISHED";
+      }
+    }
+
+    // Handle isDraft flag
+    if (input.isDraft !== undefined) {
+      if (input.isDraft) {
+        // Saving as draft keeps the course unpublished
+        status = "DRAFT";
+      } else if (status === "DRAFT") {
+        // Finalizing a draft re-evaluates whether admin approval is needed
+        const needsApproval = (input.minimumAge ?? course.minimumAge) < 13;
+        status = needsApproval ? "PENDING_REVIEW" : "PUBLISHED";
       }
     }
 
