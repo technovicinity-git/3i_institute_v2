@@ -408,7 +408,7 @@ export default function CoursesPage() {
           <div className="flex-1 min-w-0 flex flex-col gap-8">
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
+                {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
                     className="bg-white rounded-xl h-[320px] animate-pulse"
