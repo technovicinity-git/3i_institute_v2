@@ -10,6 +10,7 @@ import {
   Clock,
   MessageSquare,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
@@ -159,7 +160,7 @@ export default function OnlineClassesPage() {
                 className="px-5 py-5 hover:bg-[#F8FAFC] transition-colors"
               >
                 {/* Desktop */}
-                <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_220px_240px] items-center gap-6">
+                <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(180px,220px)_minmax(280px,auto)] items-center gap-6">
                   {/* Course info */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-gradient-to-br from-[#12304E] to-[#2a5070]">
@@ -222,7 +223,7 @@ export default function OnlineClassesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2 min-w-0">
                     <Link
                       href={`/courses/${course.courseId}`}
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
@@ -242,6 +243,13 @@ export default function OnlineClassesPage() {
                       <MessageSquare className="w-3.5 h-3.5" />
                       Chat
                     </button>
+                    <Link
+                      href={`/my-courses/${course.courseId}/exams`}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      Exams
+                    </Link>
                   </div>
                 </div>
 
@@ -321,6 +329,13 @@ export default function OnlineClassesPage() {
                       <MessageSquare className="w-4 h-4" />
                       Chat
                     </button>
+                    <Link
+                      href={`/my-courses/${course.courseId}/exams`}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      Exams
+                    </Link>
                   </div>
                 </div>
               </div>
