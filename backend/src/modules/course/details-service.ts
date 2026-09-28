@@ -21,6 +21,31 @@ export class CourseDetailsService {
         materials: {
           orderBy: { order: "asc" },
         },
+        batches: {
+          where: {
+            status: {
+              in: ["UPCOMING", "ACTIVE"],
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          include: {
+            sessions: {
+              orderBy: {
+                scheduledAt: "asc",
+              },
+              select: {
+                id: true,
+                title: true,
+                scheduledAt: true,
+                durationMinutes: true,
+                meetingLink: true,
+                notes: true,
+              },
+            },
+          },
+        },
         ratings: {
           where: { hidden: false },
           select: {
@@ -299,6 +324,23 @@ export class CourseDetailsService {
           },
         ],
       })),
+      batches:
+        course.type === "ONLINE_CLASS"
+          ? course.batches.map((batch) => ({
+              id: batch.id,
+              name: batch.name,
+              capacity: batch.capacity,
+              status: batch.status,
+              sessions: batch.sessions.map((session) => ({
+                id: session.id,
+                title: session.title,
+                scheduledAt: session.scheduledAt,
+                durationMinutes: session.durationMinutes,
+                meetingLink: session.meetingLink,
+                notes: session.notes,
+              })),
+            }))
+          : [],
 
       // Related
       relatedCourses: related,
