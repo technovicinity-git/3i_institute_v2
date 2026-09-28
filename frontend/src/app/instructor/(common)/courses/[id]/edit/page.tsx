@@ -62,6 +62,9 @@ export default function EditCoursePage() {
   const [newOutcome, setNewOutcome] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState("");
+  const [pendingAction, setPendingAction] = useState<"save" | "draftToggle" | null>(
+    null,
+  );
 
   const {
     register,
@@ -116,7 +119,12 @@ export default function EditCoursePage() {
     setLearningOutcomes(learningOutcomes.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: EditCourseFormData, isDraft: boolean) => {
+  const onSubmit = (
+    data: EditCourseFormData,
+    isDraft: boolean,
+    action: "save" | "draftToggle",
+  ) => {
+    setPendingAction(action);
     updateMutation.mutate(
       {
         courseId,
@@ -135,6 +143,7 @@ export default function EditCoursePage() {
           );
           queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
         },
+        onSettled: () => setPendingAction(null),
       },
     );
   };
@@ -177,7 +186,7 @@ export default function EditCoursePage() {
       </div>
 
       <form
-        onSubmit={handleSubmit((data) => onSubmit(data, course.isDraft))}
+        onSubmit={handleSubmit((data) => onSubmit(data, course.isDraft, "save"))}
         className="bg-white rounded-xl border border-[#E3E8EF] p-6 md:p-8 space-y-6"
       >
         {/* Thumbnail */}
@@ -448,18 +457,26 @@ export default function EditCoursePage() {
           </button>
           <button
             type="button"
-            onClick={handleSubmit((data) => onSubmit(data, !course.isDraft))}
+            onClick={handleSubmit((data) =>
+              onSubmit(data, !course.isDraft, "draftToggle"),
+            )}
             disabled={updateMutation.isPending}
             className="px-6 py-3 border border-[#12304E] text-[#12304E] rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50"
           >
-            {course.isDraft ? "Publish" : "Draft"}
+            {updateMutation.isPending && pendingAction === "draftToggle"
+              ? "Saving..."
+              : course.isDraft
+                ? "Publish"
+                : "Draft"}
           </button>
           <button
             type="submit"
             disabled={updateMutation.isPending}
             className="px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
           >
-            {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending && pendingAction === "save"
+              ? "Saving..."
+              : "Save Changes"}
           </button>
         </div>
       </form>
