@@ -233,6 +233,7 @@ model Course {
   maximumAge    Int?
 
   status        CourseStatus  @default(DRAFT)
+  isDraft       Boolean       @default(false)
   approvedAt    DateTime?
   approvedBy    String?
 
