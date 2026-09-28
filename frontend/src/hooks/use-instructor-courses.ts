@@ -48,7 +48,6 @@ export function useUpdateCourseMutation() {
     }) => instructorCourseService.updateCourse(courseId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
-      toast.success("Course updated");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

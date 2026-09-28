@@ -28,6 +28,7 @@ enum CourseStatus {
   PUBLISHED
   SUSPENDED
   ARCHIVED
+  REJECTED
 }
 
 enum BatchStatus {

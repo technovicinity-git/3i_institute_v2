@@ -36,6 +36,10 @@ function getStatusBadge(status: string) {
       label: "ARCHIVED",
       className: "bg-gray-100 text-gray-500",
     },
+    REJECTED: {
+      label: "REJECTED",
+      className: "bg-red-50 text-red-600",
+    },
   };
 
   return (
@@ -57,6 +61,7 @@ const STATUS_OPTIONS = [
   { value: "PENDING_REVIEW", label: "Pending Review" },
   { value: "SUSPENDED", label: "Suspended" },
   { value: "ARCHIVED", label: "Archived" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
 // ─── Reusable Dropdown Filter ───

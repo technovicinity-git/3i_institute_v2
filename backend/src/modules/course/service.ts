@@ -87,15 +87,19 @@ export class CourseService {
       }
     }
 
+    if (course.status === "REJECTED" && input.isDraft === false) {
+      status = "PENDING_REVIEW";
+    }
+
     // Handle isDraft flag
     if (input.isDraft !== undefined) {
-      if (input.isDraft) {
+      if (input.isDraft && course.status !== "REJECTED") {
         // Saving as draft keeps the course unpublished
         status = "DRAFT";
       } else if (status === "DRAFT") {
         // Finalizing a draft re-evaluates whether admin approval is needed
-        const needsApproval = (input.minimumAge ?? course.minimumAge) < 13;
-        status = needsApproval ? "PENDING_REVIEW" : "PUBLISHED";
+        // const needsApproval = (input.minimumAge ?? course.minimumAge) < 13;
+        status = course.type === "REGULAR" ? "PENDING_REVIEW" : "PUBLISHED";
       }
     }
 
@@ -430,7 +434,7 @@ export class CourseService {
     const updated = await prisma.course.update({
       where: { id: courseId },
       data: {
-        status: "DRAFT",
+        status: "REJECTED",
         approvedAt: null,
         approvedBy: null,
       },
