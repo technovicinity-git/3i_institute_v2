@@ -46,3 +46,14 @@ export interface ExamAttemptResult {
   startedAt: string;
   submittedAt: string | null;
 }
+
+export interface ExamQuestionResult {
+  questionId: string;
+  question: string;
+  type: ExamQuestion["type"];
+  options: string[] | null;
+  correctAnswer: string | string[] | null;
+  myAnswer: string | string[] | null;
+  marks: number;
+  explanation: string | null;
+}

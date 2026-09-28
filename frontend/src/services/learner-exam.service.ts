@@ -3,6 +3,7 @@ import type {
   LearnerExam,
   ExamQuestion,
   ExamAttemptResult,
+  ExamQuestionResult,
 } from "@/types/learner-exam";
 
 export const learnerExamService = {
@@ -56,6 +57,7 @@ export const learnerExamService = {
     };
     attempts: ExamAttemptResult[];
     bestAttempt: ExamAttemptResult | null;
+    questionResults: ExamQuestionResult[];
   }> => {
     const response = await apiClient.get(
       `/exams/result?examId=${examId}&learnerProfileId=${learnerProfileId}`,

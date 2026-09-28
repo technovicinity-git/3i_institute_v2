@@ -42,6 +42,18 @@ export default function ExamResultPage() {
     activeProfile?.id ?? "",
   );
 
+  function formatAnswer(answer: string | string[] | null): string {
+    if (answer === null || answer === undefined) {
+      return "Not answered";
+    }
+
+    if (Array.isArray(answer)) {
+      return answer.join(", ");
+    }
+
+    return answer;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -213,6 +225,106 @@ export default function ExamResultPage() {
             </div>
           </div>
         )}
+
+        {/* Question Review */}
+        {data.questionResults.length > 0 && (
+          <div className="text-left border-t border-[#E3E8EF] pt-6 mt-6">
+            <div className="mb-5">
+              <p className="text-sm font-bold text-[#0C1F33]">
+                Question Review
+              </p>
+
+              <p className="text-xs text-[#64748B] mt-1">
+                Review your answers and the correct answers.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {data.questionResults.map((item, index) => {
+                const isCorrect =
+                  JSON.stringify(item.myAnswer) ===
+                  JSON.stringify(item.correctAnswer);
+
+                return (
+                  <div
+                    key={item.questionId}
+                    className="rounded-xl border border-[#E3E8EF] overflow-hidden"
+                  >
+                    {/* Question */}
+                    <div className="p-5 bg-white">
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 shrink-0 rounded-lg bg-[#FBF9F4] flex items-center justify-center text-sm font-bold text-[#B8912F]">
+                          {index + 1}
+                        </div>
+
+                        <div className="flex-1">
+                          <p className="font-semibold text-[#0C1F33] leading-6">
+                            {item.question}
+                          </p>
+
+                          <p className="text-xs text-[#94A3B8] mt-1">
+                            {item.marks} {item.marks === 1 ? "mark" : "marks"}
+                          </p>
+                        </div>
+
+                        {isCorrect ? (
+                          <CheckCircle className="w-5 h-5 text-[#22A146]" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-500" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Answers */}
+                    <div className="border-t border-[#E3E8EF] bg-[#FAFBFC] p-5 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                          Your Answer
+                        </p>
+
+                        <div
+                          className={`mt-1 rounded-lg p-3 text-sm ${
+                            isCorrect
+                              ? "bg-green-50 text-green-800"
+                              : "bg-red-50 text-red-800"
+                          }`}
+                        >
+                          {formatAnswer(item.myAnswer)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                          Correct Answer
+                        </p>
+
+                        <div className="mt-1 rounded-lg bg-green-50 p-3 text-sm text-green-800">
+                          {formatAnswer(item.correctAnswer)}
+                        </div>
+                      </div>
+
+                      {item.explanation && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                            Explanation
+                          </p>
+
+                          <p className="mt-1 text-sm leading-6 text-[#475569]">
+                            {item.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-[#64748B] mt-1">
+          Showing answers from Attempt #{bestAttempt?.attemptNumber}.
+        </p>
 
         {/* Actions */}
         <div className="flex gap-3 mt-6 border-t border-[#E3E8EF] pt-6">

@@ -578,6 +578,7 @@ export class ExamService {
         passMark: true,
         totalMarks: true,
         type: true,
+        questions: true,
       },
     });
 
@@ -598,8 +599,86 @@ export class ExamService {
         .filter((a) => a.score !== null)
         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] ?? null;
 
+    // Exam questions are stored as JSON on the Exam model
+    const examQuestions = exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+
+    // Get the actual question records
+    const questionIds = examQuestions.map((q) => q.questionId);
+
+    const questions = await prisma.question.findMany({
+      where: {
+        id: {
+          in: questionIds,
+        },
+      },
+      select: {
+        id: true,
+        type: true,
+        question: true,
+        options: true,
+        correctAnswer: true,
+        suggestedAnswer: true,
+        marks: true,
+        explanation: true,
+      },
+    });
+
+    // Convert learner answers into an easy lookup object
+    const answers = bestAttempt?.answers as Record<string, unknown> | null;
+
+    // Build question-by-question result
+    const questionResults = examQuestions
+      .map((examQuestion) => {
+        const question = questions.find(
+          (q) => q.id === examQuestion.questionId,
+        );
+
+        if (!question) {
+          return null;
+        }
+
+        const myAnswer = answers?.[question.id] ?? null;
+
+        const marks = examQuestion.marks ?? question.marks;
+
+        // Marks awarded for manually graded questions
+        const marksAwarded = answers?.[`${question.id}_marks`] ?? null;
+
+        return {
+          questionId: question.id,
+          question: question.question,
+          type: question.type,
+          options: question.options,
+
+          // Correct answer
+          correctAnswer: question.correctAnswer,
+
+          // Learner's answer
+          myAnswer,
+
+          // Useful for written/manual questions
+          suggestedAnswer: question.suggestedAnswer,
+
+          marks,
+          marksAwarded,
+
+          explanation: question.explanation,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
     return {
-      exam,
+      exam: {
+        id: exam.id,
+        title: exam.title,
+        passMark: exam.passMark,
+        totalMarks: exam.totalMarks,
+        type: exam.type,
+      },
+
       attempts: attempts.map((a) => ({
         id: a.id,
         examId: a.examId,
@@ -613,6 +692,7 @@ export class ExamService {
         startedAt: a.startedAt,
         submittedAt: a.submittedAt,
       })),
+
       bestAttempt: bestAttempt
         ? {
             id: bestAttempt.id,
@@ -628,6 +708,8 @@ export class ExamService {
             submittedAt: bestAttempt.submittedAt,
           }
         : null,
+
+      questionResults,
     };
   }
 }
