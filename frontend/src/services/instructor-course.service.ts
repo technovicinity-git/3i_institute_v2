@@ -26,6 +26,7 @@ export interface InstructorCourse {
   totalLessons: number;
   totalDurationMinutes: number;
   rejectionReason?: string | null;
+  isDraft: boolean;
   totalModules: number;
   createdAt: string;
   updatedAt: string;
@@ -50,6 +51,7 @@ export interface CreateCourseInput {
   requirements?: string[];
   whatIncluded?: string[];
   faq?: Array<{ question: string; answer: string }>;
+  isDraft?: boolean;
 }
 
 export interface UpdateCourseInput {
