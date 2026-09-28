@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface LandingLogoProps {
   href?: string;
@@ -23,7 +24,7 @@ const sizeClasses = {
 };
 
 export function LandingLogo({
-  href = "/",
+  href = "/courses",
   size = "sm",
   textColor = "dark",
   asLink = true,
@@ -48,13 +49,13 @@ export function LandingLogo({
 
   if (asLink) {
     return (
-      <a
+      <Link
         href={href}
         className="flex items-center gap-2"
         aria-label="3i Institute home"
       >
         {content}
-      </a>
+      </Link>
     );
   }
 
