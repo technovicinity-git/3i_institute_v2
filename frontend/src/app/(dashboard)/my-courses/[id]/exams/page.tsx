@@ -7,6 +7,7 @@ import {
   Clock,
   XCircle,
   ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useCourseExams } from "@/hooks/use-learner-exams";
@@ -112,9 +113,22 @@ export default function CourseExamsPage() {
                   )}
                 </div>
 
-                <div className="shrink-0">
+                <div className="shrink-0 flex flex-col items-end gap-2">
+                  {exam.attemptCount > 0 && (
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/my-courses/${courseId}/exams/${exam.id}/result`,
+                        )
+                      }
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      View Result
+                    </button>
+                  )}
                   {exam.attemptCount >= exam.maxAttempts ? (
-                    <span className="flex items-center gap-1 text-sm font-semibold text-[#64748B]">
+                    <span className="flex items-center justify-center gap-1 text-sm font-semibold text-[#64748B]">
                       <XCircle className="w-4 h-4" />
                       Max Attempts Reached
                     </span>
@@ -125,7 +139,7 @@ export default function CourseExamsPage() {
                           `/my-courses/${courseId}/exams/${exam.id}/take`,
                         )
                       }
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
                     >
                       Take Exam
                       <ChevronRight className="w-4 h-4" />
