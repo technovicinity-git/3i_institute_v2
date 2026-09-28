@@ -10,7 +10,6 @@ import {
   ExternalLink,
   AlertTriangle,
   MessageSquare,
-  Plus,
   ChevronRight,
 } from "lucide-react";
 import {
@@ -162,7 +161,7 @@ export default function InstructorLiveClassesPage() {
         >
           Upcoming Schedule ({sessions?.length ?? 0})
         </button>
-        <button
+        {/* <button
           onClick={() => setTab("batches")}
           className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
             tab === "batches"
@@ -171,7 +170,7 @@ export default function InstructorLiveClassesPage() {
           }`}
         >
           All Batches ({batches?.length ?? 0})
-        </button>
+        </button> */}
       </div>
 
       {/* Upcoming Tab */}
