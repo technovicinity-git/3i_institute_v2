@@ -19,6 +19,23 @@ export interface CurriculumLesson {
   description: string | null;
 }
 
+export interface CourseBatchSession {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetingLink: string | null;
+  notes: string | null;
+}
+
+export interface CourseBatch {
+  id: string;
+  name: string;
+  capacity: number;
+  status: string;
+  sessions: CourseBatchSession[];
+}
+
 export interface CurriculumModule {
   moduleNum: string;
   title: string;
@@ -62,6 +79,7 @@ export interface CourseDetails {
   level: string;
   language: string;
   minimumAge: number;
+  batches: CourseBatch[];
 
   learningOutcomes: string[];
   requirements: string[];
