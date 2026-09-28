@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ExternalLink,
   FileText,
+  CalendarDays,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
@@ -231,6 +232,15 @@ export default function OnlineClassesPage() {
                       <ExternalLink className="w-3.5 h-3.5" />
                       Details
                     </Link>
+                    {course.batchId && (
+                      <Link
+                        href={`/online-classes/${course.batchId}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#B8912F] px-4 py-2 text-xs font-semibold text-[#9A7624] transition-colors hover:bg-[#F9F6F0]"
+                      >
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Sessions
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => {
@@ -317,6 +327,15 @@ export default function OnlineClassesPage() {
                       <ExternalLink className="w-4 h-4" />
                       Details
                     </Link>
+                    {course.batchId && (
+                      <Link
+                        href={`/online-classes/${course.batchId}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#B8912F] px-4 py-2 text-xs font-semibold text-[#9A7624] transition-colors hover:bg-[#F9F6F0]"
+                      >
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Sessions
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => {

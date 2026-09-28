@@ -6,6 +6,7 @@ import type {
   Session,
   InstructorSession,
   InstructorBatch,
+  LearnerBatch,
 } from "@/types/batch";
 
 export const batchService = {
@@ -90,5 +91,16 @@ export const batchService = {
 
   deleteSession: async (sessionId: string): Promise<void> => {
     await apiClient.delete(`/batches/sessions/${sessionId}`);
-  }, 
+  },
+
+  getLearnerBatch: async (
+    learnerProfileId: string,
+    batchId: string,
+  ): Promise<LearnerBatch> => {
+    const response = await apiClient.get(
+      `/batches/learner/${batchId}?learnerProfileId=${learnerProfileId}`,
+    );
+
+    return response.data.data;
+  },
 };

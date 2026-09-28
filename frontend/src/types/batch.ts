@@ -73,3 +73,15 @@ export interface InstructorBatch {
   sessionCount: number;
   nextSessionAt: string | null;
 }
+
+export interface LearnerBatch extends Batch {
+  course: {
+    id: string;
+    title: string;
+    type: string;
+    thumbnailUrl: string | null;
+    instructorName: string;
+    minimumAge: number;
+  };
+  enrolledAt: string;
+}

@@ -654,6 +654,92 @@ export class BatchService {
       where: { id: sessionId },
     });
   }
+
+  async getLearnerBatch(
+    accountId: string,
+    learnerProfileId: string,
+    batchId: string,
+  ) {
+    // Verify learner profile belongs to the authenticated account
+    const profile = await prisma.learnerProfile.findFirst({
+      where: {
+        id: learnerProfileId,
+        accountId,
+        deletedAt: null,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundError("Learner profile not found");
+    }
+
+    // Make sure this learner is actually enrolled in this batch
+    const enrolment = await prisma.enrolment.findFirst({
+      where: {
+        learnerProfileId,
+        batchId,
+        waitlisted: false,
+      },
+      include: {
+        batch: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                type: true,
+                thumbnailUrl: true,
+                instructor: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            sessions: {
+              orderBy: {
+                scheduledAt: "asc",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!enrolment || !enrolment.batch) {
+      throw new NotFoundError("You are not enrolled in this batch");
+    }
+
+    const batch = enrolment.batch;
+
+    return {
+      id: batch.id,
+      name: batch.name,
+      status: batch.status,
+      capacity: batch.capacity,
+
+      course: {
+        id: batch.course.id,
+        title: batch.course.title,
+        type: batch.course.type,
+        thumbnailUrl: batch.course.thumbnailUrl,
+        instructorName:
+          `${batch.course.instructor.firstName} ${batch.course.instructor.lastName}`.trim(),
+      },
+
+      enrolledAt: enrolment.enrolledAt,
+
+      sessions: batch.sessions.map((session) => ({
+        id: session.id,
+        title: session.title,
+        scheduledAt: session.scheduledAt,
+        durationMinutes: session.durationMinutes,
+        meetingLink: session.meetingLink,
+        notes: session.notes,
+      })),
+    };
+  }
 }
 
 export const batchService = new BatchService();
