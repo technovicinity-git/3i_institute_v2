@@ -154,3 +154,12 @@ export function useDeleteSessionMutation() {
     },
   });
 }
+
+export function useLearnerBatch(learnerProfileId: string, batchId: string) {
+  return useQuery({
+    queryKey: ["learner-batch", learnerProfileId, batchId],
+    queryFn: () => batchService.getLearnerBatch(learnerProfileId, batchId),
+    enabled: !!learnerProfileId && !!batchId,
+    staleTime: 60 * 1000,
+  });
+}

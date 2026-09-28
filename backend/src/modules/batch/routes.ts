@@ -132,6 +132,8 @@ router.get(
   batchController.getLearnerSessions,
 );
 
+router.get("/learner/:batchId", authenticate, batchController.getLearnerBatch);
+
 router.get(
   "/instructor/all",
   authenticate,

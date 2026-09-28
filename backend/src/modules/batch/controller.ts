@@ -206,6 +206,35 @@ export class BatchController {
       next(error);
     }
   };
+
+  getLearnerBatch = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const accountId = req.user?.sub!;
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+      const batchId = req.params["batchId"] as string;
+
+      if (!learnerProfileId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId is required",
+          },
+        });
+        return;
+      }
+
+      const batch = await batchService.getLearnerBatch(
+        accountId,
+        learnerProfileId,
+        batchId,
+      );
+
+      sendSuccess(res, batch, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const batchController = new BatchController();
