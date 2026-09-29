@@ -244,6 +244,9 @@ export default function ExamResultPage() {
                 const isCorrect =
                   JSON.stringify(item.myAnswer) ===
                   JSON.stringify(item.correctAnswer);
+                const isWritten =
+                  item.type === "short_answer" || item.type === "essay";
+                const isWrittenGraded = isWritten && item.marksAwarded !== null;
 
                 return (
                   <div
@@ -263,11 +266,17 @@ export default function ExamResultPage() {
                           </p>
 
                           <p className="text-xs text-[#94A3B8] mt-1">
-                            {item.marks} {item.marks === 1 ? "mark" : "marks"}
+                            {item.marks}{" "}
+                            {item.marks === 1 ? "mark" : "marks"}
+                            {isWritten && item.marksAwarded !== null
+                              ? ` • ${item.marksAwarded} awarded`
+                              : ""}
                           </p>
                         </div>
 
-                        {isCorrect ? (
+                        {isWritten && !isWrittenGraded ? (
+                          <AlertCircle className="w-5 h-5 text-orange-500" />
+                        ) : isCorrect ? (
                           <CheckCircle className="w-5 h-5 text-[#22A146]" />
                         ) : (
                           <XCircle className="w-5 h-5 text-red-500" />
@@ -277,31 +286,136 @@ export default function ExamResultPage() {
 
                     {/* Answers */}
                     <div className="border-t border-[#E3E8EF] bg-[#FAFBFC] p-5 space-y-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
-                          Your Answer
-                        </p>
+                      {item.type === "short_answer" || item.type === "essay" ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                            Your Answer
+                          </p>
 
-                        <div
-                          className={`mt-1 rounded-lg p-3 text-sm ${
-                            isCorrect
-                              ? "bg-green-50 text-green-800"
-                              : "bg-red-50 text-red-800"
-                          }`}
-                        >
-                          {formatAnswer(item.myAnswer)}
+                          <div
+                            className={`mt-1 rounded-lg p-3 text-sm whitespace-pre-wrap break-words ${
+                              isWritten && !isWrittenGraded
+                                ? "bg-[#FFF7ED] text-[#9A3412]"
+                                : isCorrect
+                                  ? "bg-green-50 text-green-800"
+                                  : "bg-red-50 text-red-800"
+                            }`}
+                          >
+                            {formatAnswer(item.myAnswer)}
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <>
+                          {/* Legend */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="flex items-center gap-1.5 text-[11px] text-[#64748B]">
+                              <span className="w-3 h-3 rounded-full bg-green-50 border border-[#22A146]" />
+                              Correct answer
+                            </span>
+                            <span className="flex items-center gap-1.5 text-[11px] text-[#64748B]">
+                              <span className="w-3 h-3 rounded-full bg-red-50 border border-red-400" />
+                              Your answer
+                            </span>
+                          </div>
 
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
-                          Correct Answer
-                        </p>
+                          {/* Options */}
+                          {item.options && item.options.length > 0 ? (
+                            <div className="space-y-2">
+                              {item.options.map((option, oIndex) => {
+                                const myAnswers = Array.isArray(item.myAnswer)
+                                  ? item.myAnswer
+                                  : item.myAnswer
+                                    ? [item.myAnswer]
+                                    : [];
+                                const correctAnswers = Array.isArray(
+                                  item.correctAnswer,
+                                )
+                                  ? item.correctAnswer
+                                  : item.correctAnswer
+                                    ? [item.correctAnswer]
+                                    : [];
 
-                        <div className="mt-1 rounded-lg bg-green-50 p-3 text-sm text-green-800">
-                          {formatAnswer(item.correctAnswer)}
-                        </div>
-                      </div>
+                                const isSelected = myAnswers.includes(option);
+                                const isCorrectOption = correctAnswers.includes(
+                                  option,
+                                );
+
+                                return (
+                                  <div
+                                    key={oIndex}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border text-sm ${
+                                      isCorrectOption
+                                        ? "border-[#22A146] bg-green-50/20"
+                                        : isSelected
+                                          ? "border-red-400 bg-red-50/20"
+                                          : "border-[#E3E8EF] bg-white"
+                                    }`}
+                                  >
+                                    <span className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0">
+                                      {isCorrectOption ? (
+                                        <CheckCircle className="w-4 h-4 text-[#22A146]" />
+                                      ) : isSelected ? (
+                                        <XCircle className="w-4 h-4 text-red-500" />
+                                      ) : (
+                                        <span className="w-2 h-2 rounded-full border border-[#94A3B8]" />
+                                      )}
+                                    </span>
+
+                                    <span className="flex-1 min-w-0 text-[#0C1F33] leading-6">
+                                      {option}
+                                    </span>
+
+                                    {isSelected && (
+                                      <span
+                                        className={`text-[11px] shrink-0 ${
+                                          isCorrectOption
+                                            ? "font-semibold text-[#22A146]"
+                                            : "font-semibold text-red-600"
+                                        }`}
+                                      >
+                                        Your answer
+                                      </span>
+                                    )}
+                                    {!isSelected && isCorrectOption && (
+                                      <span className="text-[11px] font-semibold shrink-0 text-[#22A146]">
+                                        Correct
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                                  Your Answer
+                                </p>
+
+                                <div
+                                  className={`mt-1 rounded-lg p-3 text-sm ${
+                                    isCorrect
+                                      ? "bg-green-50 text-green-800"
+                                      : "bg-red-50 text-red-800"
+                                  }`}
+                                >
+                                  {formatAnswer(item.myAnswer)}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                                  Correct Answer
+                                </p>
+
+                                <div className="mt-1 rounded-lg bg-green-50 p-3 text-sm text-green-800">
+                                  {formatAnswer(item.correctAnswer)}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )}
 
                       {item.explanation && (
                         <div>
@@ -323,7 +437,9 @@ export default function ExamResultPage() {
         )}
 
         <p className="text-xs text-[#64748B] mt-1">
-          Showing answers from Attempt #{bestAttempt?.attemptNumber}.
+          {bestAttempt
+            ? `Showing answers from Attempt #${bestAttempt.attemptNumber}.`
+            : "No attempts found."}
         </p>
 
         {/* Actions */}

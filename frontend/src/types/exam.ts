@@ -1,3 +1,5 @@
+import type { Question } from "@/types/question";
+
 export type ExamType = "practice" | "final";
 
 export interface ExamQuestion {
@@ -57,6 +59,7 @@ export interface ExamAttempt {
   gradedBy: string | null;
   startedAt: string;
   submittedAt: string | null;
+  questions?: Question[];
 }
 
 export interface GradeAnswerInput {

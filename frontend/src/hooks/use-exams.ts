@@ -49,6 +49,7 @@ export function useGradeAnswerMutation() {
     }) => examService.gradeAnswer(attemptId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exam-attempts"] });
+      queryClient.invalidateQueries({ queryKey: ["attempt-details"] });
       toast.success("Answer graded");
     },
     onError: (error: any) => {

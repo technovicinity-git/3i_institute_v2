@@ -490,12 +490,56 @@ export class ExamService {
             displayName: true,
           },
         },
+        exam: {
+          select: {
+            questions: true,
+          },
+        },
       },
     });
 
     if (!attempt) {
       throw new NotFoundError("Attempt not found");
     }
+
+    // Fetch the questions belonging to this attempt's exam so grading pages get
+    // the exact questions the learner had to answer (not the whole bank).
+    const examQuestions = attempt.exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+
+    const questions = await prisma.question.findMany({
+      where: {
+        id: { in: examQuestions.map((q) => q.questionId) },
+      },
+      select: {
+        id: true,
+        type: true,
+        question: true,
+        options: true,
+        correctAnswer: true,
+        suggestedAnswer: true,
+        marks: true,
+        explanation: true,
+      },
+    });
+
+    // Attach per-question marks defined on the exam
+    const questionList = examQuestions
+      .map((examQuestion) => {
+        const question = questions.find(
+          (q) => q.id === examQuestion.questionId,
+        );
+
+        if (!question) return null;
+
+        return {
+          ...question,
+          marks: examQuestion.marks ?? question.marks,
+        };
+      })
+      .filter((q): q is NonNullable<typeof q> => q !== null);
 
     return {
       id: attempt.id,
@@ -510,6 +554,7 @@ export class ExamService {
       graded: attempt.graded,
       startedAt: attempt.startedAt,
       submittedAt: attempt.submittedAt,
+      questions: questionList,
     };
   }
 
@@ -594,10 +639,17 @@ export class ExamService {
       orderBy: { attemptNumber: "asc" },
     });
 
+    // Best graded attempt (highest score). When an exam contains short-answer /
+    // essay questions the whole attempt is stored with score = null until it is
+    // manually graded, so those attempts used to be dropped here and their
+    // answers never returned. Fall back to the most recent attempt so the
+    // learner's written answers are still shown while grading is pending.
+    const gradedAttempts = attempts
+      .filter((a) => a.score !== null)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
     const bestAttempt =
-      attempts
-        .filter((a) => a.score !== null)
-        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] ?? null;
+      gradedAttempts[0] ?? attempts[attempts.length - 1] ?? null;
 
     // Exam questions are stored as JSON on the Exam model
     const examQuestions = exam.questions as Array<{
@@ -664,6 +716,7 @@ export class ExamService {
 
           marks,
           marksAwarded,
+          attemptNumber: bestAttempt?.attemptNumber ?? null,
 
           explanation: question.explanation,
         };

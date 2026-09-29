@@ -55,5 +55,7 @@ export interface ExamQuestionResult {
   correctAnswer: string | string[] | null;
   myAnswer: string | string[] | null;
   marks: number;
+  marksAwarded: number | null;
+  attemptNumber: number | null;
   explanation: string | null;
 }

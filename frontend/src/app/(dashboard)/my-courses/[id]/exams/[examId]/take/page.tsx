@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Clock, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -26,36 +26,7 @@ export default function TakeExamPage() {
   const [submitted, setSubmitted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer
-  useEffect(() => {
-    if (isLoading || submitted) return;
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isLoading, submitted]);
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
-
-  const handleAutoSubmit = () => {
-    handleSubmit();
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (submitted) return;
 
     if (!activeProfile) {
@@ -70,7 +41,7 @@ export default function TakeExamPage() {
         answers,
       },
       {
-        onSuccess: (result) => {
+        onSuccess: () => {
           setSubmitted(true);
           if (timerRef.current) clearInterval(timerRef.current);
           toast.success("Exam submitted");
@@ -78,6 +49,44 @@ export default function TakeExamPage() {
         },
       },
     );
+  }, [
+    submitted,
+    activeProfile,
+    submitMutation,
+    answers,
+    examId,
+    courseId,
+    router,
+  ]);
+
+  const handleAutoSubmit = useCallback(() => {
+    handleSubmit();
+  }, [handleSubmit]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (isLoading || submitted) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isLoading, submitted]);
+
+  // Auto-submit when the timer reaches zero
+  useEffect(() => {
+    if (timeLeft <= 0 && !isLoading && !submitted) {
+      handleAutoSubmit();
+    }
+  }, [timeLeft, isLoading, submitted, handleAutoSubmit]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   const handleAnswer = (questionId: string, answer: string | string[]) => {
