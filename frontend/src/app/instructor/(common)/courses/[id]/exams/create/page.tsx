@@ -36,6 +36,8 @@ export default function CreateExamPage() {
     Array<{ questionId: string; marks: number }>
   >([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
 
   const {
     register,
@@ -54,9 +56,15 @@ export default function CreateExamPage() {
     },
   });
 
-  const filteredQuestions = allQuestions?.filter((q) =>
-    q.question.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredQuestions = allQuestions?.filter((q) => {
+    const matchesSearch = q.question
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || q.type === filterType;
+    const matchesDifficulty =
+      filterDifficulty === "all" || q.difficulty === filterDifficulty;
+    return matchesSearch && matchesType && matchesDifficulty;
+  });
 
   const toggleQuestion = (question: Question) => {
     const exists = selectedQuestions.find(
@@ -236,16 +244,42 @@ export default function CreateExamPage() {
             </div>
           </div>
 
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 mb-4">
-            <Search className="w-4 h-4 text-[#94A3B8]" />
-            <input
-              type="text"
-              placeholder="Search questions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-sm outline-none w-full"
-            />
+          {/* Search + Filters */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 text-[#94A3B8]" />
+              <input
+                type="text"
+                placeholder="Search questions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent text-sm outline-none w-full"
+              />
+            </div>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
+              aria-label="Filter by type"
+            >
+              <option value="all">All Types</option>
+              <option value="mcq">MCQ</option>
+              <option value="multi_select">Multi Select</option>
+              <option value="true_false">True/False</option>
+              <option value="short_answer">Short Answer</option>
+              <option value="essay">Essay</option>
+            </select>
+            <select
+              value={filterDifficulty}
+              onChange={(e) => setFilterDifficulty(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
+              aria-label="Filter by difficulty"
+            >
+              <option value="all">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
           </div>
 
           {/* Question list */}
@@ -287,7 +321,8 @@ export default function CreateExamPage() {
                         {question.question}
                       </p>
                       <p className="text-xs text-[#64748B] mt-1">
-                        {question.type.toUpperCase()} • {question.marks} marks
+                        {question.type.toUpperCase()} • {question.difficulty} •{" "}
+                        {question.marks} marks
                       </p>
                     </div>
                     {isSelected && (
