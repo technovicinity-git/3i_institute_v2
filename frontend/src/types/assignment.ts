@@ -11,6 +11,8 @@ export interface Assignment {
   status: AssignmentStatus;
   submissionCount: number;
   createdAt: string;
+  batchId: string | null;
+  batchName: string | null;
 }
 
 export interface AssignmentSubmission {
