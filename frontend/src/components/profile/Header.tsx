@@ -112,6 +112,7 @@ function DropdownMenu({
   onLogOut,
   isLoggingOut,
 }: DropdownMenuProps) {
+  const router = useRouter();
   return (
     <div className="absolute right-0 top-full mt-2 w-[200px] rounded-lg border border-[#E3E8EF] bg-white shadow-lg z-50 overflow-hidden">
       <button
@@ -124,6 +125,15 @@ function DropdownMenu({
         </span>
       </button>
       <div className="h-px bg-[#E3E8EF]" />
+      <button
+        onClick={() => {
+          router.push("/profiles");
+        }}
+        className="flex w-full items-center gap-3 px-4 py-3.5 bg-[#FBF9F4] hover:bg-[#F5F2EB] transition-colors"
+      >
+        <UserIcon />
+        <span className="text-[15px] text-[#0C1F33] font-normal">Profiles</span>
+      </button>
       <button
         onClick={onLogOut}
         disabled={isLoggingOut}

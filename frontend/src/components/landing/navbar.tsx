@@ -59,13 +59,6 @@ export function Navbar() {
     return "/dashboard";
   };
 
-  // Determine login URL based on role
-  const getLoginUrl = (): string => {
-    if (userRole === "Admin") return "/admin/login";
-    if (userRole === "Instructor") return "/instructor/login";
-    return "/login";
-  };
-
   const handleLogout = () => {
     setShowDropdown(false);
     logoutMutation.mutate(undefined, {

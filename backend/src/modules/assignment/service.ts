@@ -11,6 +11,7 @@ interface CreateAssignmentInput {
   description: string;
   dueDate?: string;
   totalMarks: number;
+  batchId?: string | null;
 }
 
 export class AssignmentService {
@@ -29,6 +30,23 @@ export class AssignmentService {
         "You can only create assignments for your own courses",
       );
     }
+    if (input.batchId) {
+      const batch = await prisma.batch.findFirst({
+        where: {
+          id: input.batchId,
+          courseId: input.courseId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!batch) {
+        throw new NotFoundError(
+          "Selected batch does not belong to this course",
+        );
+      }
+    }
 
     const assignment = await prisma.assignment.create({
       data: {
@@ -37,6 +55,7 @@ export class AssignmentService {
         description: input.description,
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         totalMarks: input.totalMarks,
+        batchId: input.batchId ?? null,
       },
     });
 

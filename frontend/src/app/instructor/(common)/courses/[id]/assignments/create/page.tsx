@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ChevronLeft } from "lucide-react";
 import { useCreateAssignmentMutation } from "@/hooks/use-assignments";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { useCourseBatches } from "@/hooks/use-batches";
 import { CourseActions } from "@/components/instructor/CourseActions";
 
 const createAssignmentSchema = z.object({
@@ -14,6 +15,7 @@ const createAssignmentSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   dueDate: z.string().optional(),
   totalMarks: z.number().int().min(1).max(1000),
+  batchId: z.string().uuid().optional().nullable(),
 });
 
 type CreateAssignmentFormData = z.infer<typeof createAssignmentSchema>;
@@ -26,6 +28,10 @@ export default function CreateAssignmentPage() {
   const { data: courses } = useInstructorCourses();
   const course = courses?.find((c) => c.id === courseId);
 
+  // Get batches belonging to this course
+  const { data: batches, isLoading: isBatchesLoading } =
+    useCourseBatches(courseId);
+
   const createMutation = useCreateAssignmentMutation();
 
   const {
@@ -36,6 +42,7 @@ export default function CreateAssignmentPage() {
     resolver: zodResolver(createAssignmentSchema),
     defaultValues: {
       totalMarks: 100,
+      batchId: null,
     },
   });
 
@@ -47,6 +54,7 @@ export default function CreateAssignmentPage() {
         description: data.description,
         dueDate: data.dueDate || undefined,
         totalMarks: data.totalMarks,
+        batchId: data.batchId ?? null,
       },
       {
         onSuccess: () => {
@@ -91,11 +99,13 @@ export default function CreateAssignmentPage() {
           <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
             Title *
           </label>
+
           <input
             {...register("title")}
             placeholder="e.g. Anatomy System Assignment"
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
+
           {errors.title && (
             <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>
           )}
@@ -106,12 +116,14 @@ export default function CreateAssignmentPage() {
           <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
             Description *
           </label>
+
           <textarea
             {...register("description")}
             rows={5}
             placeholder="Describe the assignment requirements..."
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
+
           {errors.description && (
             <p className="mt-1 text-xs text-red-600">
               {errors.description.message}
@@ -119,27 +131,68 @@ export default function CreateAssignmentPage() {
           )}
         </div>
 
+        {/* Batch */}
+        <div>
+          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
+            Batch
+          </label>
+
+          <select
+            {...register("batchId")}
+            disabled={isBatchesLoading}
+            className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E] bg-white disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            <option value="">
+              {isBatchesLoading ? "Loading batches..." : "All batches"}
+            </option>
+
+            {!isBatchesLoading &&
+              batches?.map((batch) => (
+                <option key={batch.id} value={batch.id}>
+                  {batch.name}
+                </option>
+              ))}
+          </select>
+
+          <p className="mt-1 text-xs text-[#64748B]">
+            Leave this as &quot;All batches&quot; if the assignment should be
+            available to learners from every batch of this course.
+          </p>
+
+          {errors.batchId && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors.batchId.message}
+            </p>
+          )}
+        </div>
+
         {/* Due Date + Marks */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Due Date */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Due Date
             </label>
+
             <input
               type="date"
               {...register("dueDate")}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
           </div>
+
+          {/* Total Marks */}
           <div>
             <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
               Total Marks *
             </label>
+
             <input
               type="number"
               {...register("totalMarks", { valueAsNumber: true })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
             />
+
             {errors.totalMarks && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.totalMarks.message}
@@ -159,6 +212,7 @@ export default function CreateAssignmentPage() {
           >
             Cancel
           </button>
+
           <button
             type="submit"
             disabled={createMutation.isPending}

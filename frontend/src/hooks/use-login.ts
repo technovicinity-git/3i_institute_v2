@@ -4,14 +4,21 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { authService, type LoginInput } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 
 export function useLoginMutation() {
   const router = useRouter();
   const { setUser, setAccessToken } = useAuthStore();
+  const logoutMutation = useLogoutMutation();
 
   return useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
     onSuccess: (data) => {
+      if (data.user.role !== "Account Holder") {
+        toast.error("You're not authorized to access this application.");
+        logoutMutation.mutate(undefined);
+        return;
+      }
       setUser(data.user);
       setAccessToken(data.accessToken);
       toast.success(`Welcome back, ${data.user.firstName}!`);

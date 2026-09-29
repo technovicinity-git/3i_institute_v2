@@ -43,6 +43,7 @@ export interface AuthResponse {
     email: string;
     locale: string;
     emailVerified: boolean;
+    role: "Account Holder" | "Learner" | "Instructor";
   };
   accessToken: string;
 }
