@@ -232,7 +232,6 @@ export class AssignmentService {
     const batchIds = enrolments
       .map((enrolment) => enrolment.batchId)
       .filter((batchId): batchId is string => batchId !== null);
-
     const assignments = await prisma.assignment.findMany({
       where: {
         courseId,
