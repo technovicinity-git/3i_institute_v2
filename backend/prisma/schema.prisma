@@ -324,6 +324,7 @@ model Batch {
 
   sessions      Session[]
   enrolments    Enrolment[]
+  assignments Assignment[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -603,6 +604,8 @@ model Assignment {
   status      String    @default("PUBLISHED")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  batchId String?
+  batch   Batch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
 
   submissions AssignmentSubmission[]
 

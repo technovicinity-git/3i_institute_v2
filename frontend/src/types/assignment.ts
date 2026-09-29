@@ -31,4 +31,5 @@ export interface CreateAssignmentInput {
   description: string;
   dueDate?: string;
   totalMarks: number;
+  batchId?: string | null;
 }

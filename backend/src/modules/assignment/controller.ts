@@ -9,6 +9,7 @@ const createAssignmentSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   dueDate: z.string().optional(),
   totalMarks: z.number().int().min(1).max(1000),
+  batchId: z.string().uuid().optional().nullable(), 
 });
 
 const gradeSubmissionSchema = z.object({
