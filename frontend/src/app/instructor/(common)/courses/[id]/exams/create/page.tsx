@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Check, X } from "lucide-react";
+import { Search, Check, X, ChevronLeft } from "lucide-react";
 import { useCreateExamMutation } from "@/hooks/use-exams";
 import { useMyQuestions } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
@@ -122,13 +122,13 @@ export default function CreateExamPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-[1000px] mx-auto">
+    <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
           onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to exams
+          <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
@@ -352,20 +352,21 @@ export default function CreateExamPage() {
         </div>
 
         {/* Submit */}
-        <div className="flex gap-3">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
-            className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
+            className="px-4 py-2 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
           >
             Cancel
           </button>
+
           <button
             type="submit"
             disabled={
               createExamMutation.isPending || selectedQuestions.length === 0
             }
-            className="flex-1 px-6 py-3 bg-[#22A146] text-white rounded-lg font-semibold disabled:opacity-50"
+            className="px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
           >
             {createExamMutation.isPending
               ? "Creating..."
