@@ -9,6 +9,8 @@ import { Search, Check, X, ChevronLeft } from "lucide-react";
 import { useCreateExamMutation } from "@/hooks/use-exams";
 import { useMyQuestions } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { CourseActions } from "@/components/instructor/CourseActions";
 
 const createExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -19,6 +21,9 @@ const createExamSchema = z.object({
   cooldownHours: z.number().int().min(0).max(168),
   randomizeQuestions: z.boolean(),
   randomizeOptions: z.boolean(),
+  // Only used for ONLINE_CLASS courses — the scheduled exam start time.
+  // Sent to the API as `openDate`.
+  startTime: z.string().optional(),
 });
 
 type CreateExamFormData = z.infer<typeof createExamSchema>;
@@ -32,6 +37,9 @@ export default function CreateExamPage() {
   const { data: allQuestions, isLoading: questionsLoading } =
     useMyQuestions(courseId);
 
+  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
+
   const [selectedQuestions, setSelectedQuestions] = useState<
     Array<{ questionId: string; marks: number }>
   >([]);
@@ -42,6 +50,7 @@ export default function CreateExamPage() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
@@ -99,6 +108,15 @@ export default function CreateExamPage() {
       return;
     }
 
+    // ONLINE_CLASS exams must have a scheduled start time.
+    if (course?.type === "ONLINE_CLASS" && !data.startTime) {
+      setError("startTime", {
+        type: "manual",
+        message: "Exam start time is required for online class exams",
+      });
+      return;
+    }
+
     createExamMutation.mutate(
       {
         courseId,
@@ -111,6 +129,12 @@ export default function CreateExamPage() {
         cooldownHours: data.cooldownHours,
         randomizeQuestions: data.randomizeQuestions,
         randomizeOptions: data.randomizeOptions,
+        // The scheduled start time for ONLINE_CLASS exams is stored as the
+        // exam's openDate on the backend.
+        openDate:
+          course?.type === "ONLINE_CLASS" && data.startTime
+            ? new Date(data.startTime).toISOString()
+            : undefined,
         questions: selectedQuestions,
       },
       {
@@ -130,6 +154,9 @@ export default function CreateExamPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}
@@ -217,6 +244,28 @@ export default function CreateExamPage() {
               />
             </div>
           </div>
+
+          {course?.type === "ONLINE_CLASS" && (
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Exam Start Time *
+              </label>
+              <input
+                type="datetime-local"
+                {...register("startTime")}
+                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              />
+              {errors.startTime && (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.startTime.message}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-[#64748B]">
+                Learners will be able to start this exam from the scheduled
+                time until 50% of the exam duration has elapsed.
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">

@@ -11,6 +11,10 @@ import {
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useCourseExams } from "@/hooks/use-learner-exams";
+import {
+  getExamAccess,
+  formatExamStartTime,
+} from "@/lib/exam-access";
 
 export default function CourseExamsPage() {
   const params = useParams();
@@ -63,7 +67,9 @@ export default function CourseExamsPage() {
 
       {!isLoading && !isError && exams && exams.length > 0 && (
         <div className="space-y-4">
-          {exams.map((exam) => (
+          {exams.map((exam) => {
+            const access = getExamAccess(exam);
+            return (
             <div
               key={exam.id}
               className="bg-white rounded-xl border border-[#E3E8EF] p-6 hover:shadow-md transition-shadow"
@@ -132,6 +138,16 @@ export default function CourseExamsPage() {
                       <XCircle className="w-4 h-4" />
                       Max Attempts Reached
                     </span>
+                  ) : access.status === "upcoming" ? (
+                    <span className="flex items-center justify-center gap-1 text-sm font-semibold text-yellow-700">
+                      <Clock className="w-4 h-4" />
+                      Starts {formatExamStartTime(access.startTime)}
+                    </span>
+                  ) : access.status === "closed" ? (
+                    <span className="flex items-center justify-center gap-1 text-sm font-semibold text-[#64748B]">
+                      <XCircle className="w-4 h-4" />
+                      Start Window Closed
+                    </span>
                   ) : (
                     <button
                       onClick={() =>
@@ -148,7 +164,8 @@ export default function CourseExamsPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

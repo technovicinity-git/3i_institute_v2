@@ -41,6 +41,9 @@ export interface ExamTakeInfo {
   passMark: number;
   totalMarks: number;
   maxAttempts: number;
+  // Scheduled start time for ONLINE_CLASS exams (null for REGULAR courses).
+  openDate: string | null;
+  closeDate: string | null;
 }
 
 export interface ExamTakeData {

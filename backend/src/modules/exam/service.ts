@@ -322,6 +322,26 @@ export class ExamService {
       throw new ValidationError("Exam has closed");
     }
 
+    // ONLINE_CLASS exams are scheduled with a start time (openDate). The
+    // learner may only START the exam from the start time until 50% of the
+    // exam duration has elapsed past the start time. `startedAt` is the time
+    // the learner entered the exam, so submitting later (e.g. after running
+    // out of time) is still allowed as long as the exam was started on time.
+    if (exam.openDate) {
+      const startedAt = input.startedAt ? new Date(input.startedAt) : now;
+      const startWindowEnd = new Date(
+        exam.openDate.getTime() + exam.duration * 0.5 * 60 * 1000,
+      );
+      if (startedAt > startWindowEnd) {
+        throw new ValidationError(
+          "The exam start window has closed. Exams can only be started within 50% of the exam duration after the scheduled start time.",
+        );
+      }
+      if (startedAt < exam.openDate) {
+        throw new ValidationError("Exam has not opened yet");
+      }
+    }
+
     // Check attempt count and cooldown
     const attempts = await prisma.examAttempt.findMany({
       where: {
@@ -724,6 +744,9 @@ export class ExamService {
         passMark: exam.passMark,
         totalMarks: exam.totalMarks,
         maxAttempts: exam.maxAttempts,
+        // Scheduled start time for ONLINE_CLASS exams (null for REGULAR).
+        openDate: exam.openDate,
+        closeDate: exam.closeDate,
       },
       questions: learnerQuestions,
     };
@@ -751,6 +774,7 @@ export class ExamService {
         totalMarks: true,
         type: true,
         duration: true,
+        openDate: true,
         questions: true,
       },
     });
@@ -859,6 +883,7 @@ export class ExamService {
         totalMarks: exam.totalMarks,
         type: exam.type,
         duration: exam.duration,
+        openDate: exam.openDate,
       },
 
       attempts: attempts.map((a) => ({

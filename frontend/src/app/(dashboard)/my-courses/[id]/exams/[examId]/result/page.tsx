@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useExamResult } from "@/hooks/use-learner-exams";
+import { getExamAccess } from "@/lib/exam-access";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -87,6 +88,7 @@ export default function ExamResultPage() {
   const latestAttempt = data.attempts[data.attempts.length - 1] ?? null;
   const isPassed = bestAttempt?.passed === true;
   const isPendingGrading = latestAttempt && !latestAttempt.graded;
+  const access = getExamAccess(data.exam);
 
   return (
     <div className="p-6 md:p-10 max-w-[700px] mx-auto">
@@ -469,9 +471,18 @@ export default function ExamResultPage() {
               onClick={() =>
                 router.push(`/my-courses/${courseId}/exams/${examId}/take`)
               }
-              className="flex-1 py-3 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+              disabled={access.status !== "open"}
+              className={`flex-1 py-3 rounded-lg text-sm font-semibold ${
+                access.status === "open"
+                  ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
+                  : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
+              }`}
             >
-              Retake Exam
+              {access.status === "open"
+                ? "Retake Exam"
+                : access.status === "upcoming"
+                  ? "Exam Not Started Yet"
+                  : "Start Window Closed"}
             </button>
           )}
         </div>

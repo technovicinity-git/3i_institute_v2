@@ -9,6 +9,10 @@ import {
   useExamQuestions,
   useSubmitExamMutation,
 } from "@/hooks/use-learner-exams";
+import {
+  getExamAccess,
+  formatExamStartTime,
+} from "@/lib/exam-access";
 
 export default function TakeExamPage() {
   const params = useParams();
@@ -87,6 +91,9 @@ export default function TakeExamPage() {
     if (submitted || timeLeft !== null) return;
     if (!examData?.exam?.duration) return;
 
+    // ONLINE_CLASS exams are only startable within the scheduled window.
+    if (getExamAccess(examData.exam).status !== "open") return;
+
     startedAtMsRef.current = Date.now();
 
     // Same pattern as materials upload progress — the exam duration is only
@@ -129,6 +136,73 @@ export default function TakeExamPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  const access = getExamAccess(examData.exam);
+
+  // ONLINE_CLASS exams cannot be opened before the scheduled start time.
+  if (access.status === "upcoming") {
+    return (
+      <div className="p-6 md:p-10 max-w-[700px] mx-auto">
+        <div className="bg-white rounded-xl border border-[#E3E8EF] p-10 text-center">
+          <Clock className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+          <h1
+            className="text-2xl text-[#0C1F33]"
+            style={{ fontFamily: "'Marcellus', serif" }}
+          >
+            Exam Not Started Yet
+          </h1>
+          <p className="mt-3 text-sm text-[#64748B]">
+            This exam starts on{" "}
+            <span className="font-semibold text-[#0C1F33]">
+              {formatExamStartTime(access.startTime)}
+            </span>
+            .
+          </p>
+          <p className="mt-1 text-sm text-[#64748B]">
+            You will be able to start it any time after the start time until
+            50% of the exam duration has elapsed.
+          </p>
+          <button
+            onClick={() => router.push(`/my-courses/${courseId}/exams`)}
+            className="mt-6 px-5 py-2.5 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
+          >
+            Back to Exams
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // The learner can only start within 50% of the exam duration after the
+  // scheduled start time.
+  if (access.status === "closed") {
+    return (
+      <div className="p-6 md:p-10 max-w-[700px] mx-auto">
+        <div className="bg-white rounded-xl border border-[#E3E8EF] p-10 text-center">
+          <Clock className="w-12 h-12 text-[#64748B] mx-auto mb-4" />
+          <h1
+            className="text-2xl text-[#0C1F33]"
+            style={{ fontFamily: "'Marcellus', serif" }}
+          >
+            Start Window Closed
+          </h1>
+          <p className="mt-3 text-sm text-[#64748B]">
+            This exam could be started until{" "}
+            <span className="font-semibold text-[#0C1F33]">
+              {formatExamStartTime(access.windowEnd)}
+            </span>
+            . The start window has now passed.
+          </p>
+          <button
+            onClick={() => router.push(`/my-courses/${courseId}/exams`)}
+            className="mt-6 px-5 py-2.5 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
+          >
+            Back to Exams
+          </button>
+        </div>
       </div>
     );
   }

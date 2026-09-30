@@ -22,6 +22,7 @@ export interface Module {
 export interface CourseLessonPage {
   courseId: string;
   courseTitle: string;
+  type: "REGULAR" | "ONLINE_CLASS";
   modules: Module[];
   totalLessons: number;
   totalDurationMinutes: number;

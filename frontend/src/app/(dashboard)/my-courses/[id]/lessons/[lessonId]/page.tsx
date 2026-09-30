@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Lock, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
 import {
@@ -152,6 +152,9 @@ export default function LessonPage() {
       </div>
     );
   }
+
+  const courseProgress = courseContent.progress ?? 0;
+  const isExamUnlocked = courseProgress >= 90;
 
   return (
     <div
@@ -340,6 +343,74 @@ export default function LessonPage() {
               </div>
             </div>
           </section>
+
+          {/* Take Exam — REGULAR courses, unlocked after 90% completion */}
+          {courseContent.type === "REGULAR" && (
+            <section className="w-full bg-[#FBF9F4]">
+              <div className="px-6 sm:px-8 pt-2 pb-12">
+                <div className="w-full max-w-4xl mx-auto bg-white rounded-xl border border-[#E3E8EF] px-6 sm:px-8 py-8">
+                  <div className="flex items-start justify-between gap-6 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <h2
+                        className="text-xl text-[#0C1F33]"
+                        style={{ fontFamily: "'Marcellus', serif" }}
+                      >
+                        Course Exam
+                      </h2>
+                      <p className="mt-2 text-sm text-[#475569]">
+                        {isExamUnlocked
+                          ? "You have completed 90% of the course — you can now sit the exam."
+                          : `Complete 90% of the course to unlock the exam. You are at ${courseProgress}%.`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/my-courses/${courseId}/exams`)}
+                      disabled={!isExamUnlocked}
+                      className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
+                        isExamUnlocked
+                          ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
+                          : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
+                      }`}
+                    >
+                      {isExamUnlocked ? (
+                        <>
+                          <FileText className="w-4 h-4" />
+                          Take Exam
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          Locked
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between text-xs text-[#64748B] mb-1.5">
+                      <span>Course progress</span>
+                      <span>{courseProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          isExamUnlocked ? "bg-[#22A146]" : "bg-[#F59E0B]"
+                        }`}
+                        style={{ width: `${Math.min(100, courseProgress)}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-[#64748B]">
+                      {isExamUnlocked
+                        ? "Exam unlocked — good luck!"
+                        : "The exam unlocks automatically once you reach 90% course completion."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
       {/* RIGHT: Sidebar */}

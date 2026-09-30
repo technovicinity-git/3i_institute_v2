@@ -57,6 +57,7 @@ export const learnerExamService = {
       passMark: number;
       totalMarks: number;
       duration: number;
+      openDate: string | null;
     };
     attempts: ExamAttemptResult[];
     bestAttempt: ExamAttemptResult | null;

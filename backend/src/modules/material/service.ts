@@ -223,6 +223,7 @@ export class MaterialService {
       select: {
         id: true,
         title: true,
+        type: true,
         totalModules: true,
         totalLessons: true,
         totalDurationMinutes: true,
@@ -288,6 +289,7 @@ export class MaterialService {
     return {
       courseId: course.id,
       courseTitle: course.title,
+      type: course.type,
       modules,
       totalLessons,
       totalDurationMinutes:
