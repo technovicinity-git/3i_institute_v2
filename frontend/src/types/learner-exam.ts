@@ -7,7 +7,8 @@ export interface LearnerExam {
   duration: number;
   passMark: number;
   totalMarks: number;
-  maxAttempts: number;
+  // null for REGULAR dynamic exams (no attempt limit).
+  maxAttempts: number | null;
   cooldownHours: number;
   openDate: string | null;
   closeDate: string | null;

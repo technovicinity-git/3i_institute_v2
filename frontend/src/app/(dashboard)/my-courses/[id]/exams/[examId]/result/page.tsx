@@ -89,6 +89,9 @@ export default function ExamResultPage() {
   const isPassed = bestAttempt?.passed === true;
   const isPendingGrading = latestAttempt && !latestAttempt.graded;
   const access = getExamAccess(data.exam);
+  // For REGULAR dynamic exams each attempt has its own random question set and
+  // therefore its own total marks — prefer the attempt's total for accuracy.
+  const displayTotalMarks = bestAttempt?.totalMarks ?? data.exam.totalMarks;
 
   return (
     <div className="p-6 md:p-10 max-w-[700px] mx-auto">
@@ -152,7 +155,7 @@ export default function ExamResultPage() {
               {bestAttempt.score}
               <span className="text-2xl text-[#64748B]">
                 {" "}
-                / {data.exam.totalMarks}
+                / {displayTotalMarks}
               </span>
             </p>
             <p className="text-sm text-[#64748B] mt-1">
@@ -168,7 +171,7 @@ export default function ExamResultPage() {
             <Target className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
             <p className="text-lg font-bold text-[#0C1F33]">
               {bestAttempt?.score !== null && bestAttempt?.score !== undefined
-                ? `${Math.round(((bestAttempt?.score ?? 0) / data.exam.totalMarks) * 100)}%`
+                ? `${Math.round(((bestAttempt?.score ?? 0) / displayTotalMarks) * 100)}%`
                 : "—"}
             </p>
             <p className="text-[10px] text-[#64748B] uppercase">Score</p>

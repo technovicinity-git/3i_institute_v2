@@ -39,6 +39,46 @@ export class CertificateController {
     }
   };
 
+  issueExam = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = issueCertificateSchema.parse(req.body);
+      const certificate = await certificateService.issueExamCertificate(
+        input.learnerProfileId,
+        input.courseId,
+      );
+      sendSuccess(res, certificate, 201, "Exam certificate issued");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getExam = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const learnerProfileId = req.query["learnerProfileId"] as string;
+      const courseId = req.query["courseId"] as string;
+
+      if (!learnerProfileId || !courseId) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "learnerProfileId and courseId are required",
+          },
+        });
+        return;
+      }
+
+      const certificate =
+        await certificateService.getExamCertificate(
+          learnerProfileId,
+          courseId,
+        );
+      sendSuccess(res, certificate, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getLearnerCertificates = async (
     req: Request,
     res: Response,

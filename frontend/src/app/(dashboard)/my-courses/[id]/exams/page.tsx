@@ -105,11 +105,16 @@ export default function CourseExamsPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <FileText className="w-4 h-4" />
-                      {exam.questions.length} questions
+                      {exam.maxAttempts === null
+                        ? "Random questions"
+                        : `${exam.questions.length} questions`}
                     </span>
                     <span>Pass: {exam.passMark}%</span>
                     <span>
-                      Attempts: {exam.attemptCount}/{exam.maxAttempts}
+                      Attempts:{" "}
+                      {exam.maxAttempts === null
+                        ? exam.attemptCount
+                        : `${exam.attemptCount}/${exam.maxAttempts}`}
                     </span>
                   </div>
                   {exam.bestScore !== null && (
@@ -133,7 +138,7 @@ export default function CourseExamsPage() {
                       View Result
                     </button>
                   )}
-                  {exam.attemptCount >= exam.maxAttempts ? (
+                  {exam.maxAttempts !== null && exam.attemptCount >= exam.maxAttempts ? (
                     <span className="flex items-center justify-center gap-1 text-sm font-semibold text-[#64748B]">
                       <XCircle className="w-4 h-4" />
                       Max Attempts Reached

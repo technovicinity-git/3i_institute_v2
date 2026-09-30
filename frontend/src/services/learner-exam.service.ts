@@ -27,12 +27,14 @@ export const learnerExamService = {
     learnerProfileId: string,
     answers: Record<string, string | string[]>,
     startedAt?: string,
+    questionSet?: Array<{ questionId: string }>,
   ): Promise<ExamAttemptResult> => {
     const response = await apiClient.post("/exams/submit", {
       examId,
       learnerProfileId,
       answers,
       startedAt,
+      questionSet,
     });
     return response.data.data;
   },

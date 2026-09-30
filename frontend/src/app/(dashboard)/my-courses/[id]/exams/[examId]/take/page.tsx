@@ -54,6 +54,9 @@ export default function TakeExamPage() {
         startedAt: startedAtMsRef.current
           ? new Date(startedAtMsRef.current).toISOString()
           : undefined,
+        // Echo back exactly which questions were shown so REGULAR dynamic
+        // exams are graded against the same random set the learner answered.
+        questionSet: examData?.questions.map((q) => ({ questionId: q.id })),
       },
       {
         onSuccess: () => {
@@ -73,6 +76,7 @@ export default function TakeExamPage() {
     submitMutation,
     activeProfile,
     answers,
+    examData,
     examId,
     courseId,
     router,

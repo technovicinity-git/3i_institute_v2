@@ -2,9 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Save, Lock, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Lock, FileText, Award } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
+import { useCourseExams } from "@/hooks/use-learner-exams";
+import {
+  useExamCertificate,
+  useIssueExamCertificateMutation,
+} from "@/hooks/use-learner-certificates";
+import type { ExamCertificate } from "@/services/learner-certificate.service";
 import {
   useCourseContent,
   useLessonNotes,
@@ -34,6 +40,34 @@ export default function LessonPage() {
   const { data: noteData } = useLessonNotes(activeProfile?.id ?? "", lessonId);
   const saveNoteMutation = useSaveNoteMutation();
   const updateProgressMutation = useUpdateProgressMutation();
+
+  // REGULAR course exam certificate status
+  const { data: exams } = useCourseExams(courseId, activeProfile?.id ?? "");
+  const { data: examCertificate } = useExamCertificate(
+    activeProfile?.id ?? "",
+    courseId,
+  );
+  const issueCertMutation = useIssueExamCertificateMutation();
+
+  const [generatedCertificate, setGeneratedCertificate] = useState<
+    ExamCertificate | null
+  >(null);
+  const certificate = generatedCertificate ?? examCertificate;
+  const hasExamAttempt = exams?.some((e) => e.attemptCount > 0) ?? false;
+
+  const handleGenerateCertificate = () => {
+    if (!activeProfile) return;
+    if (certificate) return; // certificate can only be generated once
+
+    issueCertMutation.mutate(
+      { learnerProfileId: activeProfile.id, courseId },
+      {
+        onSuccess: (cert) => {
+          setGeneratedCertificate(cert);
+        },
+      },
+    );
+  };
 
   const [activeTab, setActiveTab] = useState<"overview" | "notes">("overview");
 
@@ -406,6 +440,85 @@ export default function LessonPage() {
                         ? "Exam unlocked — good luck!"
                         : "The exam unlocks automatically once you reach 90% course completion."}
                     </p>
+                  </div>
+
+                  {/* Certificate — one-time, after at least one exam attempt */}
+                  <div className="mt-6 border-t border-[#E3E8EF] pt-6">
+                    {certificate ? (
+                      <div className="bg-[#FBF9F4] rounded-lg border border-[#22A146]/30 p-6">
+                        <div className="flex items-center gap-3">
+                          <Award className="w-9 h-9 text-[#22A146]" />
+                          <div>
+                            <h3 className="text-base font-semibold text-[#0C1F33]">
+                              Certificate Generated
+                            </h3>
+                            <p className="text-xs text-[#64748B]">
+                              Issued on{" "}
+                              {new Date(certificate.issuedAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 mt-4">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-[#64748B]">
+                              Course Progress
+                            </p>
+                            <p className="text-xl font-semibold text-[#0C1F33] mt-1">
+                              {certificate.details?.progress ?? 0}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-[#64748B]">
+                              Last Exam Score
+                            </p>
+                            <p className="text-xl font-semibold text-[#0C1F33] mt-1">
+                              {certificate.details?.score ?? 0}
+                              /{certificate.details?.totalMarks ?? 0}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-4 text-xs text-[#64748B]">
+                          Verification code:{" "}
+                          <span className="font-mono font-semibold text-[#0C1F33]">
+                            {certificate.verificationCode}
+                          </span>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#0C1F33]">
+                            Course Certificate
+                          </p>
+                          <p className="mt-1 text-xs text-[#64748B]">
+                            {hasExamAttempt
+                              ? "Generate a certificate showing your course progress and last exam score. This can only be done once."
+                              : "Take the exam at least once to unlock your certificate."}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleGenerateCertificate}
+                          disabled={!hasExamAttempt || issueCertMutation.isPending}
+                          className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
+                            hasExamAttempt && !issueCertMutation.isPending
+                              ? "border border-[#12304E] text-[#12304E] hover:bg-gray-50"
+                              : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
+                          }`}
+                        >
+                          <Award className="w-4 h-4" />
+                          {issueCertMutation.isPending
+                            ? "Generating..."
+                            : "Generate Certificate"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

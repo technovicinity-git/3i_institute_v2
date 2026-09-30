@@ -60,6 +60,54 @@ router.post(
 
 /**
  * @swagger
+ * /api/v1/certificates/issue/exam:
+ *   post:
+ *     tags: [Certificates]
+ *     summary: Issue exam certificate (REGULAR course exam)
+ *     description: Requires at least one exam attempt. Can only be issued once.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [learnerProfileId, courseId]
+ *             properties:
+ *               learnerProfileId: { type: string, format: uuid }
+ *               courseId: { type: string, format: uuid }
+ *     responses:
+ *       201:
+ *         description: Certificate issued
+ */
+router.post(
+  "/issue/exam",
+  authenticate,
+  certificateController.issueExam,
+);
+
+/**
+ * @swagger
+ * /api/v1/certificates/exam:
+ *   get:
+ *     tags: [Certificates]
+ *     summary: Get the exam certificate for a learner + course (nullable)
+ *     parameters:
+ *       - in: query
+ *         name: learnerProfileId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Certificate or null
+ */
+router.get("/exam", authenticate, certificateController.getExam);
+
+/**
+ * @swagger
  * /api/v1/certificates/learner/{learnerProfileId}:
  *   get:
  *     tags: [Certificates]

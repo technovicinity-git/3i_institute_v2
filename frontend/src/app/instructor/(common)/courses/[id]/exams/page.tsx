@@ -111,13 +111,19 @@ export default function ExamsPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <FileText className="w-4 h-4" />
-                        {exam.questions.length} questions
+                        {exam.questions.length === 0
+                          ? "Random questions"
+                          : `${exam.questions.length} questions`}
                       </span>
                       <span className="flex items-center gap-1">
                         <CheckCircle className="w-4 h-4" />
                         Pass: {exam.passMark}%
                       </span>
-                      <span>Max attempts: {exam.maxAttempts}</span>
+                      <span>
+                        {exam.questions.length === 0
+                          ? "Unlimited attempts"
+                          : `Max attempts: ${exam.maxAttempts}`}
+                      </span>
                     </div>
                   </div>
 

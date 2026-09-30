@@ -29,12 +29,21 @@ export function useSubmitExamMutation() {
       learnerProfileId,
       answers,
       startedAt,
+      questionSet,
     }: {
       examId: string;
       learnerProfileId: string;
       answers: Record<string, string | string[]>;
       startedAt?: string;
-    }) => learnerExamService.submitExam(examId, learnerProfileId, answers, startedAt),
+      questionSet?: Array<{ questionId: string }>;
+    }) =>
+      learnerExamService.submitExam(
+        examId,
+        learnerProfileId,
+        answers,
+        startedAt,
+        questionSet,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-exams"] });
       toast.success("Exam submitted");
