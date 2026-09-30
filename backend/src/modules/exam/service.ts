@@ -412,6 +412,8 @@ export class ExamService {
         totalMarks: exam.totalMarks,
         passed,
         graded: !needsManualGrading,
+        startedAt: input.startedAt ? new Date(input.startedAt) : new Date(),
+        submittedAt: new Date(),
       },
     });
 
@@ -711,7 +713,20 @@ export class ExamService {
       difficulty: question.difficulty,
     }));
 
-    return learnerQuestions;
+    // Include exam metadata (duration, marks, etc.) along with the questions
+    // so the take page can build a dynamic countdown timer.
+    return {
+      exam: {
+        id: exam.id,
+        title: exam.title,
+        type: exam.type,
+        duration: exam.duration,
+        passMark: exam.passMark,
+        totalMarks: exam.totalMarks,
+        maxAttempts: exam.maxAttempts,
+      },
+      questions: learnerQuestions,
+    };
   }
 
   async getMyAttempts(examId: string, learnerProfileId: string) {
@@ -735,6 +750,7 @@ export class ExamService {
         passMark: true,
         totalMarks: true,
         type: true,
+        duration: true,
         questions: true,
       },
     });
@@ -842,6 +858,7 @@ export class ExamService {
         passMark: exam.passMark,
         totalMarks: exam.totalMarks,
         type: exam.type,
+        duration: exam.duration,
       },
 
       attempts: attempts.map((a) => ({

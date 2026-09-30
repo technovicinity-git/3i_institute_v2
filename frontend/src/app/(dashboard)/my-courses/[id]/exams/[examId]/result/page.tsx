@@ -22,12 +22,19 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+function formatMinutesTaken(
+  startedAt: string | null | undefined,
+  submittedAt: string | null | undefined,
+): string {
+  if (!startedAt || !submittedAt) return "—";
+
+  const minutes = Math.round(
+    (new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 60000,
+  );
+
+  if (minutes < 0) return "—";
+
+  return `${Math.max(1, minutes)}m`;
 }
 
 export default function ExamResultPage() {
@@ -147,7 +154,8 @@ export default function ExamResultPage() {
               </span>
             </p>
             <p className="text-sm text-[#64748B] mt-1">
-              Pass mark: {data.exam.passMark}%
+              Pass mark: {data.exam.passMark}% • Duration:{" "}
+              {data.exam.duration} mins
             </p>
           </div>
         )}
@@ -173,11 +181,12 @@ export default function ExamResultPage() {
           <div className="bg-[#FBF9F4] rounded-lg p-4">
             <Clock className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
             <p className="text-lg font-bold text-[#0C1F33]">
-              {latestAttempt?.submittedAt
-                ? formatTime(latestAttempt.submittedAt)
-                : "—"}
+              {formatMinutesTaken(
+                latestAttempt?.startedAt,
+                latestAttempt?.submittedAt,
+              )}
             </p>
-            <p className="text-[10px] text-[#64748B] uppercase">Submitted</p>
+            <p className="text-[10px] text-[#64748B] uppercase">Time Taken</p>
           </div>
         </div>
 
@@ -217,7 +226,12 @@ export default function ExamResultPage() {
                       {attempt.score ?? "—"}/{attempt.totalMarks}
                     </span>
                     <span className="text-xs text-[#94A3B8]">
-                      {formatDate(attempt.submittedAt ?? attempt.startedAt)}
+                      {attempt.submittedAt
+                        ? `Completed in ${formatMinutesTaken(
+                            attempt.startedAt,
+                            attempt.submittedAt,
+                          )} of ${data.exam.duration}m exam`
+                        : formatDate(attempt.startedAt)}
                     </span>
                   </div>
                 </div>

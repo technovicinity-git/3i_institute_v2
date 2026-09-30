@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { examService } from "@/services/exam.service";
 import type { Exam } from "@/types/exam";
+import { ChevronLeft } from "lucide-react";
 
 const editExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -93,13 +94,13 @@ export default function EditExamPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[700px] mx-auto">
+    <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
           onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to exams
+          <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"

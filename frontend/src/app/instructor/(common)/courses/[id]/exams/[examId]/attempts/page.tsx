@@ -8,8 +8,11 @@ import {
   CheckCircle,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useExamAttempts } from "@/hooks/use-exams";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { CourseActions } from "@/components/instructor/CourseActions";
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -36,19 +39,24 @@ export default function ExamAttemptsPage() {
   const examId = params.examId as string;
 
   const { data: attempts, isLoading, isError } = useExamAttempts(examId);
+  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
 
   const pendingGrading = attempts?.filter((a) => !a.graded) ?? [];
   const graded = attempts?.filter((a) => a.graded) ?? [];
 
   return (
-    <div className="p-6 md:p-10 max-w-[900px] mx-auto">
+    <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
           onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
-          className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
-          ← Back to exams
+          <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}

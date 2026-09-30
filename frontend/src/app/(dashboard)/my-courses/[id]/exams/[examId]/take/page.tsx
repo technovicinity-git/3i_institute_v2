@@ -17,42 +17,57 @@ export default function TakeExamPage() {
   const courseId = params.id as string;
 
   const { activeProfile } = useProfileStore();
-  const { data: questions, isLoading } = useExamQuestions(examId);
+  const { data: examData, isLoading } = useExamQuestions(examId);
   const submitMutation = useSubmitExamMutation();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 min default
   const [submitted, setSubmitted] = useState(false);
+  // null = timer has not started yet (exam data still loading)
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  // When the learner started the exam (epoch ms). Kept in a ref so the timer
+  // start is not tied to a render cycle.
+  const startedAtMsRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const submittingRef = useRef(false);
+  const autoFiredRef = useRef(false);
 
   const handleSubmit = useCallback(() => {
-    if (submitted) return;
+    if (submitted || submittingRef.current || submitMutation.isPending) return;
 
     if (!activeProfile) {
       toast.error("No active profile");
       return;
     }
 
+    submittingRef.current = true;
+
     submitMutation.mutate(
       {
         examId,
         learnerProfileId: activeProfile.id,
         answers,
+        startedAt: startedAtMsRef.current
+          ? new Date(startedAtMsRef.current).toISOString()
+          : undefined,
       },
       {
         onSuccess: () => {
+          submittingRef.current = false;
           setSubmitted(true);
           if (timerRef.current) clearInterval(timerRef.current);
           toast.success("Exam submitted");
           router.push(`/my-courses/${courseId}/exams/${examId}/result`);
         },
+        onError: () => {
+          submittingRef.current = false;
+        },
       },
     );
   }, [
     submitted,
-    activeProfile,
     submitMutation,
+    activeProfile,
     answers,
     examId,
     courseId,
@@ -60,28 +75,45 @@ export default function TakeExamPage() {
   ]);
 
   const handleAutoSubmit = useCallback(() => {
+    // Only auto-submit once, even if the effect runs again while the timer is
+    // still at zero (e.g. mutation retries).
+    if (autoFiredRef.current) return;
+    autoFiredRef.current = true;
     handleSubmit();
   }, [handleSubmit]);
 
+  // Start the countdown once the exam (and its duration) are loaded.
+  useEffect(() => {
+    if (submitted || timeLeft !== null) return;
+    if (!examData?.exam?.duration) return;
+
+    startedAtMsRef.current = Date.now();
+
+    // Same pattern as materials upload progress — the exam duration is only
+    // known once the exam data arrives, so we set the initial value here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimeLeft(examData.exam.duration * 60);
+  }, [submitted, timeLeft, examData]);
+
   // Countdown timer
   useEffect(() => {
-    if (isLoading || submitted) return;
+    if (submitted || timeLeft === null) return;
 
     timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
+      setTimeLeft((prev) => (prev === null ? 0 : Math.max(0, prev - 1)));
     }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isLoading, submitted]);
+  }, [submitted, timeLeft]);
 
   // Auto-submit when the timer reaches zero
   useEffect(() => {
-    if (timeLeft <= 0 && !isLoading && !submitted) {
+    if (timeLeft === 0 && !submitted) {
       handleAutoSubmit();
     }
-  }, [timeLeft, isLoading, submitted, handleAutoSubmit]);
+  }, [timeLeft, submitted, handleAutoSubmit]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -93,13 +125,15 @@ export default function TakeExamPage() {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
   };
 
-  if (isLoading) {
+  if (isLoading || !examData) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
       </div>
     );
   }
+
+  const questions = examData.questions;
 
   if (!questions || questions.length === 0) {
     return (
@@ -122,13 +156,18 @@ export default function TakeExamPage() {
           </p>
           <p className="text-xs text-[#64748B]">{answeredCount} answered</p>
         </div>
-        <div
-          className={`flex items-center gap-2 text-lg font-bold ${
-            timeLeft < 300 ? "text-red-600" : "text-[#0C1F33]"
-          }`}
-        >
-          <Clock className="w-5 h-5" />
-          {formatTime(timeLeft)}
+        <div className="text-right">
+          <div
+            className={`flex items-center gap-2 text-lg font-bold ${
+              timeLeft !== null && timeLeft < 300
+                ? "text-red-600"
+                : "text-[#0C1F33]"
+            }`}
+          >
+            <Clock className="w-5 h-5" />
+            {timeLeft === null ? "--:--" : formatTime(timeLeft)}
+          </div>
+          <p className="text-xs text-[#64748B]">of {examData.exam.duration} min</p>
         </div>
       </div>
 
