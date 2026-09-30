@@ -140,6 +140,125 @@ export class CertificateService {
     });
   }
 
+  /**
+   * REGULAR course exam certificate. Requires at least one exam attempt on the
+   * course and can only be issued once — subsequent calls return the existing
+   * certificate. The certificate snapshot includes course progress status and
+   * the learner's last exam score.
+   */
+  async issueExamCertificate(learnerProfileId: string, courseId: string) {
+    // Verify enrolment exists
+    const enrolment = await prisma.enrolment.findFirst({
+      where: {
+        learnerProfileId,
+        courseId,
+        waitlisted: false,
+      },
+    });
+
+    if (!enrolment) {
+      throw new NotFoundError("Enrolment not found");
+    }
+
+    // Only one certificate per learner + course
+    const existing = await prisma.certificate.findFirst({
+      where: {
+        learnerProfileId,
+        courseId,
+        type: "EXAM",
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    // A certificate can only be generated after at least one exam attempt
+    const lastAttempt = await prisma.examAttempt.findFirst({
+      where: {
+        learnerProfileId,
+        exam: { courseId },
+      },
+      orderBy: { submittedAt: "desc" },
+      include: {
+        exam: { select: { id: true, title: true } },
+      },
+    });
+
+    if (!lastAttempt) {
+      throw new ValidationError(
+        "You must take the exam at least once before generating a certificate",
+      );
+    }
+
+    const [profile, course] = await Promise.all([
+      prisma.learnerProfile.findUnique({ where: { id: learnerProfileId } }),
+      prisma.course.findUnique({ where: { id: courseId } }),
+    ]);
+
+    if (!profile || !course) {
+      throw new NotFoundError("Profile or course not found");
+    }
+
+    // Course progress status (completed materials / total materials)
+    const [totalMaterials, completedMaterials] = await Promise.all([
+      prisma.material.count({ where: { courseId } }),
+      prisma.materialProgress.count({
+        where: {
+          learnerProfileId,
+          completed: true,
+          material: { courseId },
+        },
+      }),
+    ]);
+
+    const progress =
+      totalMaterials > 0
+        ? Math.round((completedMaterials / totalMaterials) * 100)
+        : 0;
+
+    const certificate = await prisma.certificate.create({
+      data: {
+        learnerProfileId,
+        courseId,
+        examId: lastAttempt.exam.id,
+        type: "EXAM",
+        verificationCode: generateVerificationCode(),
+        learnerNameSnapshot: profile.displayName,
+        courseTitleSnapshot: course.title,
+        issuerName: "3i International Islamic Institute",
+        details: JSON.parse(
+          JSON.stringify({
+            progress,
+            completedLessons: completedMaterials,
+            totalLessons: totalMaterials,
+            score: lastAttempt.score ?? 0,
+            totalMarks: lastAttempt.totalMarks,
+            examTitle: lastAttempt.exam.title,
+          }),
+        ),
+      },
+    });
+
+    return certificate;
+  }
+
+  /**
+   * Returns the REGULAR course exam certificate for a learner (or null if not
+   * generated yet).
+   */
+  async getExamCertificate(learnerProfileId: string, courseId: string) {
+    return prisma.certificate.findFirst({
+      where: {
+        learnerProfileId,
+        courseId,
+        type: "EXAM",
+        revokedAt: null,
+      },
+      orderBy: { issuedAt: "desc" },
+    });
+  }
+
   async verifyCertificate(verificationCode: string) {
     const certificate = await prisma.certificate.findUnique({
       where: { verificationCode },

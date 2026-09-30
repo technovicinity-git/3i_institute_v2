@@ -23,7 +23,9 @@ export const createExamSchema = z.object({
   duration: z.number().int().min(5).max(480),
   passMark: z.number().int().min(1).max(100),
   totalMarks: z.number().int().min(1),
-  maxAttempts: z.number().int().min(1).max(10).default(3),
+  // REGULAR course exams have no attempt limit — the UI sends a large number
+  // and the service treats exams without a fixed question list as unlimited.
+  maxAttempts: z.number().int().min(1).max(999999).default(3),
   cooldownHours: z.number().int().min(0).default(24),
   openDate: z.string().optional(),
   closeDate: z.string().optional(),
@@ -32,14 +34,15 @@ export const createExamSchema = z.object({
   revealAnswers: z
     .enum(["after_pass", "after_all_attempts", "never"])
     .default("after_pass"),
-  questions: z
-    .array(
-      z.object({
-        questionId: z.string().uuid(),
-        marks: z.number().int().min(1).optional(),
-      }),
-    )
-    .min(1, "At least one question is required"),
+  // REGULAR course exams may leave this empty — a random question set is then
+  // generated from the course question bank up to `totalMarks` for each
+  // learner attempt.
+  questions: z.array(
+    z.object({
+      questionId: z.string().uuid(),
+      marks: z.number().int().min(1).optional(),
+    }),
+  ),
 });
 
 export type CreateExamInput = z.infer<typeof createExamSchema>;
@@ -51,6 +54,17 @@ export const submitExamSchema = z.object({
   // ISO timestamp captured by the client when the learner started the exam.
   // Used to record submission time and compute how long the learner took.
   startedAt: z.string().optional(),
+  // For REGULAR course exams (which generate a random question set per
+  // attempt), the client echoes back the exact questions that were shown so
+  // grading can use the same set. Marks are always re-derived from the
+  // question bank to prevent tampering.
+  questionSet: z
+    .array(
+      z.object({
+        questionId: z.string().uuid(),
+      }),
+    )
+    .optional(),
 });
 
 export type SubmitExamInput = z.infer<typeof submitExamSchema>;

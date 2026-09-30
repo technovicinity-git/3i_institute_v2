@@ -186,18 +186,32 @@ export class ExamService {
       );
     }
 
-    // Verify all questions belong to this course
-    const questionIds = input.questions.map((q) => q.questionId);
-    const questions = await prisma.question.findMany({
-      where: {
-        id: { in: questionIds },
-        courseId: input.courseId,
-      },
-      select: { id: true },
-    });
+    // REGULAR course exams may use a dynamic question bank (no fixed list):
+    // per attempt, questions are randomly selected from the course up to the
+    // instructor-defined total marks. ONLINE_CLASS exams still require an
+    // explicit question list.
+    const isDynamic = input.questions.length === 0;
 
-    if (questions.length !== questionIds.length) {
-      throw new ValidationError("All questions must belong to this course");
+    if (isDynamic && course.type !== "REGULAR") {
+      throw new ValidationError(
+        "Online class exams require selecting at least one question",
+      );
+    }
+
+    // Verify all questions belong to this course
+    if (!isDynamic) {
+      const questionIds = input.questions.map((q) => q.questionId);
+      const questions = await prisma.question.findMany({
+        where: {
+          id: { in: questionIds },
+          courseId: input.courseId,
+        },
+        select: { id: true },
+      });
+
+      if (questions.length !== questionIds.length) {
+        throw new ValidationError("All questions must belong to this course");
+      }
     }
 
     // Check if final exam already exists
@@ -254,10 +268,14 @@ export class ExamService {
     const examsWithAttempts = exams.map((exam) => {
       const examAttempts = attempts.filter((a) => a.examId === exam.id);
       const bestAttempt = examAttempts[0] ?? null;
+      const isDynamic =
+        (exam.questions as Array<{ questionId: string }>).length === 0;
 
       return {
         ...exam,
         attemptCount: examAttempts.length,
+        // REGULAR dynamic exams have no attempt limit.
+        maxAttempts: isDynamic ? null : exam.maxAttempts,
         lastAttemptAt:
           examAttempts.length > 0
             ? examAttempts[examAttempts.length - 1]!.createdAt
@@ -291,6 +309,49 @@ export class ExamService {
     return Math.ceil((totalMarks * passMark) / 100);
   }
 
+  /**
+   * Randomly pick questions from a course's question bank so their combined
+   * marks reach (but never exceed) the instructor-defined `targetMarks`.
+   * REGULAR course exams use this to build a fresh question set for every
+   * learner attempt.
+   */
+  private async buildRandomQuestionSet(
+    courseId: string,
+    targetMarks: number,
+  ): Promise<Array<{ questionId: string; marks: number }>> {
+    const bank = await prisma.question.findMany({
+      where: { courseId },
+      select: { id: true, marks: true },
+    });
+
+    if (bank.length === 0 || targetMarks <= 0) {
+      return [];
+    }
+
+    // Fisher–Yates shuffle so every attempt sees a different order.
+    const shuffled = [...bank];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffled[i]!;
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = temp;
+    }
+
+    const selected: Array<{ questionId: string; marks: number }> = [];
+    let total = 0;
+
+    for (const question of shuffled) {
+      const marks = question.marks ?? 1;
+      if (marks <= 0) continue;
+      if (total + marks > targetMarks) continue;
+      selected.push({ questionId: question.id, marks });
+      total += marks;
+      if (total === targetMarks) break;
+    }
+
+    return selected;
+  }
+
   async submitExam(accountId: string, input: SubmitExamInput) {
     const exam = await prisma.exam.findUnique({
       where: { id: input.examId },
@@ -299,6 +360,14 @@ export class ExamService {
     if (!exam) {
       throw new NotFoundError("Exam not found");
     }
+
+    // REGULAR course exams use a dynamic question bank: no fixed question list
+    // is stored on the exam, no attempt limit exists and there is no cooldown.
+    const examQuestions = exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+    const isDynamic = examQuestions.length === 0;
 
     // Check learner profile belongs to account
     const profile = await prisma.learnerProfile.findFirst({
@@ -322,7 +391,27 @@ export class ExamService {
       throw new ValidationError("Exam has closed");
     }
 
-    // Check attempt count and cooldown
+    // ONLINE_CLASS exams are scheduled with a start time (openDate). The
+    // learner may only START the exam from the start time until 50% of the
+    // exam duration has elapsed past the start time. `startedAt` is the time
+    // the learner entered the exam, so submitting later (e.g. after running
+    // out of time) is still allowed as long as the exam was started on time.
+    if (exam.openDate) {
+      const startedAt = input.startedAt ? new Date(input.startedAt) : now;
+      const startWindowEnd = new Date(
+        exam.openDate.getTime() + exam.duration * 0.5 * 60 * 1000,
+      );
+      if (startedAt > startWindowEnd) {
+        throw new ValidationError(
+          "The exam start window has closed. Exams can only be started within 50% of the exam duration after the scheduled start time.",
+        );
+      }
+      if (startedAt < exam.openDate) {
+        throw new ValidationError("Exam has not opened yet");
+      }
+    }
+
+    // Check attempt count and cooldown (not applicable to dynamic REGULAR exams)
     const attempts = await prisma.examAttempt.findMany({
       where: {
         examId: input.examId,
@@ -331,13 +420,13 @@ export class ExamService {
       orderBy: { attemptNumber: "desc" },
     });
 
-    if (attempts.length >= exam.maxAttempts) {
+    if (!isDynamic && attempts.length >= exam.maxAttempts) {
       throw new ValidationError("Maximum attempts reached");
     }
 
     // Check cooldown
     const lastAttempt = attempts[0];
-    if (lastAttempt && exam.cooldownHours > 0) {
+    if (!isDynamic && lastAttempt && exam.cooldownHours > 0) {
       const cooldownEnd = new Date(
         lastAttempt.submittedAt!.getTime() +
           exam.cooldownHours * 60 * 60 * 1000,
@@ -351,16 +440,60 @@ export class ExamService {
 
     const attemptNumber = attempts.length + 1;
 
+    // Resolve the question set used for this attempt.
+    let selectedQuestions: Array<{ questionId: string; marks?: number }>;
+    let attemptTotalMarks: number;
+
+    if (isDynamic) {
+      // The client echoes back the exact random questions shown. Marks are
+      // always re-derived from the question bank so a learner cannot tamper
+      // with the displayed marks.
+      if (!input.questionSet || input.questionSet.length === 0) {
+        throw new ValidationError(
+          "Question set is required for this exam",
+        );
+      }
+
+      const questionIds = input.questionSet.map((q) => q.questionId);
+      const bankQuestions = await prisma.question.findMany({
+        where: {
+          id: { in: questionIds },
+          courseId: exam.courseId,
+        },
+        select: { id: true, marks: true },
+      });
+
+      selectedQuestions = questionIds
+        .map((id) => {
+          const question = bankQuestions.find((bq) => bq.id === id);
+          return question
+            ? { questionId: question.id, marks: question.marks ?? 1 }
+            : null;
+        })
+        .filter(
+          (item): item is { questionId: string; marks: number } =>
+            item !== null,
+        );
+
+      if (selectedQuestions.length === 0) {
+        throw new ValidationError("Question set is invalid");
+      }
+
+      attemptTotalMarks = selectedQuestions.reduce(
+        (sum, q) => sum + (q.marks ?? 1),
+        0,
+      );
+    } else {
+      selectedQuestions = [...examQuestions];
+      attemptTotalMarks = exam.totalMarks;
+    }
+
     // Calculate score for auto-graded questions
-    const examQuestions = exam.questions as Array<{
-      questionId: string;
-      marks?: number;
-    }>;
     let score = 0;
     let totalGraded = 0;
     let needsManualGrading = false;
 
-    for (const eq of examQuestions) {
+    for (const eq of selectedQuestions) {
       const question = await prisma.question.findUnique({
         where: { id: eq.questionId },
       });
@@ -399,17 +532,28 @@ export class ExamService {
     }
 
     const passed = !needsManualGrading
-      ? score >= this.getPassThreshold(exam.totalMarks, exam.passMark)
+      ? score >= this.getPassThreshold(attemptTotalMarks, exam.passMark)
       : null;
+
+    // Persist the question set used for this attempt so grading and result
+    // views can reconstruct exactly what the learner saw (important for
+    // dynamic REGULAR exams where each attempt is a random sample). Fixed
+    // exams keep using the exam-level question list.
+    const storedAnswers = JSON.parse(
+      JSON.stringify(input.answers),
+    );
+    if (isDynamic) {
+      storedAnswers["__questionSet"] = selectedQuestions;
+    }
 
     const attempt = await prisma.examAttempt.create({
       data: {
         examId: input.examId,
         learnerProfileId: input.learnerProfileId,
         attemptNumber,
-        answers: JSON.parse(JSON.stringify(input.answers)),
+        answers: storedAnswers,
         score: needsManualGrading ? null : score,
-        totalMarks: exam.totalMarks,
+        totalMarks: attemptTotalMarks,
         passed,
         graded: !needsManualGrading,
         startedAt: input.startedAt ? new Date(input.startedAt) : new Date(),
@@ -449,11 +593,19 @@ export class ExamService {
     const answers = attempt.answers as Record<string, unknown>;
     answers[`${questionId}_marks`] = marksAwarded;
 
-    // Questions attached to this attempt's exam
-    const examQuestions = attempt.exam.questions as Array<{
-      questionId: string;
-      marks?: number;
-    }>;
+    // Questions attached to this attempt's exam. For REGULAR dynamic exams
+    // (no fixed list on the exam) the exact set the learner saw is persisted
+    // on the attempt itself under the reserved `__questionSet` key.
+    const storedQuestionSet = answers["__questionSet"] as
+      | Array<{ questionId: string; marks: number }>
+      | undefined;
+    const examQuestions =
+      storedQuestionSet && storedQuestionSet.length > 0
+        ? storedQuestionSet
+        : (attempt.exam.questions as Array<{
+            questionId: string;
+            marks?: number;
+          }>);
 
     const questions = await prisma.question.findMany({
       where: { id: { in: examQuestions.map((q) => q.questionId) } },
@@ -616,12 +768,21 @@ export class ExamService {
       throw new NotFoundError("Attempt not found");
     }
 
-    // Fetch the questions belonging to this attempt's exam so grading pages get
-    // the exact questions the learner had to answer (not the whole bank).
-    const examQuestions = attempt.exam.questions as Array<{
-      questionId: string;
-      marks?: number;
-    }>;
+    // Fetch the questions belonging to this attempt so grading pages get the
+    // exact questions the learner had to answer (not the whole bank). REGULAR
+    // dynamic exams store the per-attempt set under `__questionSet`.
+    const storedQuestionSet = (attempt.answers as Record<string, unknown>)[
+      "__questionSet"
+    ] as
+      | Array<{ questionId: string; marks: number }>
+      | undefined;
+    const examQuestions =
+      storedQuestionSet && storedQuestionSet.length > 0
+        ? storedQuestionSet
+        : (attempt.exam.questions as Array<{
+            questionId: string;
+            marks?: number;
+          }>);
 
     const questions = await prisma.question.findMany({
       where: {
@@ -681,16 +842,27 @@ export class ExamService {
       throw new NotFoundError("Exam not found");
     }
 
-    // Get question IDs from exam
+    // Get question IDs from exam. REGULAR course exams (dynamic) have an empty
+    // list — a fresh random set is generated from the course bank up to the
+    // instructor-defined total marks for every attempt.
     const examQuestions = exam.questions as Array<{
       questionId: string;
       marks?: number;
     }>;
+    const isDynamic = examQuestions.length === 0;
+
+    let selected = examQuestions;
+    if (isDynamic) {
+      selected = await this.buildRandomQuestionSet(
+        exam.courseId,
+        exam.totalMarks,
+      );
+    }
 
     // Fetch full question details
     const questions = await prisma.question.findMany({
       where: {
-        id: { in: examQuestions.map((q) => q.questionId) },
+        id: { in: selected.map((q) => q.questionId) },
       },
       select: {
         id: true,
@@ -704,14 +876,17 @@ export class ExamService {
     });
 
     // Return questions WITHOUT correctAnswer for learner
-    const learnerQuestions = questions.map((question) => ({
-      id: question.id,
-      type: question.type,
-      question: question.question,
-      options: question.options,
-      marks: question.marks,
-      difficulty: question.difficulty,
-    }));
+    const learnerQuestions = questions.map((question) => {
+      const selection = selected.find((s) => s.questionId === question.id);
+      return {
+        id: question.id,
+        type: question.type,
+        question: question.question,
+        options: question.options,
+        marks: selection?.marks ?? question.marks,
+        difficulty: question.difficulty,
+      };
+    });
 
     // Include exam metadata (duration, marks, etc.) along with the questions
     // so the take page can build a dynamic countdown timer.
@@ -724,6 +899,9 @@ export class ExamService {
         passMark: exam.passMark,
         totalMarks: exam.totalMarks,
         maxAttempts: exam.maxAttempts,
+        // Scheduled start time for ONLINE_CLASS exams (null for REGULAR).
+        openDate: exam.openDate,
+        closeDate: exam.closeDate,
       },
       questions: learnerQuestions,
     };
@@ -751,6 +929,7 @@ export class ExamService {
         totalMarks: true,
         type: true,
         duration: true,
+        openDate: true,
         questions: true,
       },
     });
@@ -779,11 +958,21 @@ export class ExamService {
     const bestAttempt =
       gradedAttempts[0] ?? attempts[attempts.length - 1] ?? null;
 
-    // Exam questions are stored as JSON on the Exam model
-    const examQuestions = exam.questions as Array<{
+    // Exam questions are stored as JSON on the Exam model. REGULAR dynamic
+    // exams keep the per-attempt random set inside the attempt itself.
+    const baseExamQuestions = exam.questions as Array<{
       questionId: string;
       marks?: number;
     }>;
+    const storedQuestionSet = bestAttempt
+      ? ((bestAttempt.answers as Record<string, unknown>)["__questionSet"] as
+          | Array<{ questionId: string; marks: number }>
+          | undefined)
+      : undefined;
+    const examQuestions =
+      storedQuestionSet && storedQuestionSet.length > 0
+        ? storedQuestionSet
+        : baseExamQuestions;
 
     // Get the actual question records
     const questionIds = examQuestions.map((q) => q.questionId);
@@ -859,6 +1048,7 @@ export class ExamService {
         totalMarks: exam.totalMarks,
         type: exam.type,
         duration: exam.duration,
+        openDate: exam.openDate,
       },
 
       attempts: attempts.map((a) => ({

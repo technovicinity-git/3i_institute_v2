@@ -55,6 +55,7 @@ enum WaiverStatus {
 enum CertificateType {
   ATTENDANCE
   COMPLETION
+  EXAM
 }
 
 enum SeatStatus {
@@ -476,6 +477,11 @@ model Certificate {
   issuedAt            DateTime  @default(now())
   revokedAt           DateTime?
   revokeReason        String?
+
+  // Optional link to the exam this certificate was issued for (EXAM type).
+  examId              String?
+  // Extra snapshot data (e.g. progress status and last exam score).
+  details             Json?
 
   @@index([verificationCode])
   @@index([learnerProfileId])

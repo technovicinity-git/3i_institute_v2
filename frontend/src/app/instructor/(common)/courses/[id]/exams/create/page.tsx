@@ -9,6 +9,8 @@ import { Search, Check, X, ChevronLeft } from "lucide-react";
 import { useCreateExamMutation } from "@/hooks/use-exams";
 import { useMyQuestions } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
+import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { CourseActions } from "@/components/instructor/CourseActions";
 
 const createExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -19,6 +21,12 @@ const createExamSchema = z.object({
   cooldownHours: z.number().int().min(0).max(168),
   randomizeQuestions: z.boolean(),
   randomizeOptions: z.boolean(),
+  // Only used for ONLINE_CLASS courses — the scheduled exam start time.
+  // Sent to the API as `openDate`.
+  startTime: z.string().optional(),
+  // Only used for REGULAR courses — the total marks for the dynamic question
+  // bank. Questions are randomly selected per attempt up to this mark.
+  marks: z.number().int().min(1).max(1000).optional(),
 });
 
 type CreateExamFormData = z.infer<typeof createExamSchema>;
@@ -32,6 +40,9 @@ export default function CreateExamPage() {
   const { data: allQuestions, isLoading: questionsLoading } =
     useMyQuestions(courseId);
 
+  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const course = courses?.find((c) => c.id === courseId);
+
   const [selectedQuestions, setSelectedQuestions] = useState<
     Array<{ questionId: string; marks: number }>
   >([]);
@@ -42,6 +53,7 @@ export default function CreateExamPage() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
@@ -51,6 +63,7 @@ export default function CreateExamPage() {
       passMark: 50,
       maxAttempts: 3,
       cooldownHours: 24,
+      marks: 20,
       randomizeQuestions: false,
       randomizeOptions: false,
     },
@@ -95,9 +108,34 @@ export default function CreateExamPage() {
   };
 
   const onSubmit = (data: CreateExamFormData) => {
-    if (selectedQuestions.length === 0) {
+    const isOnlineClass = course?.type === "ONLINE_CLASS";
+
+    if (!isOnlineClass && (!data.marks || data.marks < 1)) {
+      setError("marks", {
+        type: "manual",
+        message: "Total marks are required for regular course exams",
+      });
       return;
     }
+
+    if (isOnlineClass && selectedQuestions.length === 0) {
+      return;
+    }
+
+    // ONLINE_CLASS exams must have a scheduled start time.
+    if (isOnlineClass && !data.startTime) {
+      setError("startTime", {
+        type: "manual",
+        message: "Exam start time is required for online class exams",
+      });
+      return;
+    }
+
+    // REGULAR course exams use a dynamic question bank: the instructor sets a
+    // total mark and random questions are drawn per attempt up to that mark.
+    // They have no attempt limit and no cooldown.
+    const totalMarks =
+      isOnlineClass || !data.marks ? calculateTotalMarks() : data.marks;
 
     createExamMutation.mutate(
       {
@@ -106,12 +144,18 @@ export default function CreateExamPage() {
         type: data.type,
         duration: data.duration,
         passMark: data.passMark,
-        totalMarks: calculateTotalMarks(),
-        maxAttempts: data.maxAttempts,
-        cooldownHours: data.cooldownHours,
+        totalMarks,
+        maxAttempts: isOnlineClass ? data.maxAttempts : 999999,
+        cooldownHours: isOnlineClass ? data.cooldownHours : 0,
         randomizeQuestions: data.randomizeQuestions,
         randomizeOptions: data.randomizeOptions,
-        questions: selectedQuestions,
+        // The scheduled start time for ONLINE_CLASS exams is stored as the
+        // exam's openDate on the backend.
+        openDate:
+          isOnlineClass && data.startTime
+            ? new Date(data.startTime).toISOString()
+            : undefined,
+        questions: isOnlineClass ? selectedQuestions : [],
       },
       {
         onSuccess: () => {
@@ -130,6 +174,9 @@ export default function CreateExamPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
+        {course && (
+          <CourseActions courseId={courseId} courseType={course.type} />
+        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}
@@ -193,19 +240,37 @@ export default function CreateExamPage() {
                 className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Max Attempts *
-              </label>
-              <input
-                type="number"
-                {...register("maxAttempts", { valueAsNumber: true })}
-                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
-              />
-            </div>
+            {course?.type === "ONLINE_CLASS" ? (
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Max Attempts *
+                </label>
+                <input
+                  type="number"
+                  {...register("maxAttempts", { valueAsNumber: true })}
+                  className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Exam Marks (Total) *
+                </label>
+                <input
+                  type="number"
+                  {...register("marks", { valueAsNumber: true })}
+                  className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+                />
+                {errors.marks && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.marks.message}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {course?.type === "ONLINE_CLASS" ? (
             <div>
               <label className="block text-sm font-semibold mb-2">
                 Cooldown (hours)
@@ -216,7 +281,35 @@ export default function CreateExamPage() {
                 className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
               />
             </div>
-          </div>
+          ) : (
+            <p className="text-xs text-[#64748B]">
+              Questions are randomly selected from your course question bank in
+              every learner attempt up to the total mark set above. Learners
+              can attempt this exam unlimited times.
+            </p>
+          )}
+
+          {course?.type === "ONLINE_CLASS" && (
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Exam Start Time *
+              </label>
+              <input
+                type="datetime-local"
+                {...register("startTime")}
+                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              />
+              {errors.startTime && (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.startTime.message}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-[#64748B]">
+                Learners will be able to start this exam from the scheduled
+                time until 50% of the exam duration has elapsed.
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -230,8 +323,9 @@ export default function CreateExamPage() {
           </div>
         </div>
 
-        {/* Question Selection */}
-        <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
+        {/* Question Selection (ONLINE_CLASS only — REGULAR exams use a dynamic bank) */}
+        {course?.type === "ONLINE_CLASS" && (
+          <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <h2 className="text-lg font-semibold text-[#0C1F33]">
               Select Questions
@@ -350,6 +444,7 @@ export default function CreateExamPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
@@ -364,13 +459,16 @@ export default function CreateExamPage() {
           <button
             type="submit"
             disabled={
-              createExamMutation.isPending || selectedQuestions.length === 0
+              createExamMutation.isPending ||
+              (course?.type === "ONLINE_CLASS" &&
+                selectedQuestions.length === 0)
             }
             className="px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
           >
             {createExamMutation.isPending
               ? "Creating..."
-              : selectedQuestions.length === 0
+              : course?.type === "ONLINE_CLASS" &&
+                  selectedQuestions.length === 0
                 ? "Select at least one question"
                 : "Create Exam"}
           </button>

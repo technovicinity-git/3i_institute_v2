@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useExamResult } from "@/hooks/use-learner-exams";
+import { getExamAccess } from "@/lib/exam-access";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -87,6 +88,10 @@ export default function ExamResultPage() {
   const latestAttempt = data.attempts[data.attempts.length - 1] ?? null;
   const isPassed = bestAttempt?.passed === true;
   const isPendingGrading = latestAttempt && !latestAttempt.graded;
+  const access = getExamAccess(data.exam);
+  // For REGULAR dynamic exams each attempt has its own random question set and
+  // therefore its own total marks — prefer the attempt's total for accuracy.
+  const displayTotalMarks = bestAttempt?.totalMarks ?? data.exam.totalMarks;
 
   return (
     <div className="p-6 md:p-10 max-w-[700px] mx-auto">
@@ -150,7 +155,7 @@ export default function ExamResultPage() {
               {bestAttempt.score}
               <span className="text-2xl text-[#64748B]">
                 {" "}
-                / {data.exam.totalMarks}
+                / {displayTotalMarks}
               </span>
             </p>
             <p className="text-sm text-[#64748B] mt-1">
@@ -166,7 +171,7 @@ export default function ExamResultPage() {
             <Target className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
             <p className="text-lg font-bold text-[#0C1F33]">
               {bestAttempt?.score !== null && bestAttempt?.score !== undefined
-                ? `${Math.round(((bestAttempt?.score ?? 0) / data.exam.totalMarks) * 100)}%`
+                ? `${Math.round(((bestAttempt?.score ?? 0) / displayTotalMarks) * 100)}%`
                 : "—"}
             </p>
             <p className="text-[10px] text-[#64748B] uppercase">Score</p>
@@ -469,9 +474,18 @@ export default function ExamResultPage() {
               onClick={() =>
                 router.push(`/my-courses/${courseId}/exams/${examId}/take`)
               }
-              className="flex-1 py-3 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+              disabled={access.status !== "open"}
+              className={`flex-1 py-3 rounded-lg text-sm font-semibold ${
+                access.status === "open"
+                  ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
+                  : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
+              }`}
             >
-              Retake Exam
+              {access.status === "open"
+                ? "Retake Exam"
+                : access.status === "upcoming"
+                  ? "Exam Not Started Yet"
+                  : "Start Window Closed"}
             </button>
           )}
         </div>
