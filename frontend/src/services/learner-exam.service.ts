@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/api-client";
 import type {
   LearnerExam,
-  ExamQuestion,
   ExamAttemptResult,
   ExamQuestionResult,
+  ExamTakeData,
 } from "@/types/learner-exam";
 
 export const learnerExamService = {
@@ -17,7 +17,7 @@ export const learnerExamService = {
     return response.data.data;
   },
 
-  getExamQuestions: async (examId: string): Promise<ExamQuestion[]> => {
+  getExamQuestions: async (examId: string): Promise<ExamTakeData> => {
     const response = await apiClient.get(`/exams/${examId}/questions`);
     return response.data.data;
   },
@@ -26,11 +26,13 @@ export const learnerExamService = {
     examId: string,
     learnerProfileId: string,
     answers: Record<string, string | string[]>,
+    startedAt?: string,
   ): Promise<ExamAttemptResult> => {
     const response = await apiClient.post("/exams/submit", {
       examId,
       learnerProfileId,
       answers,
+      startedAt,
     });
     return response.data.data;
   },
@@ -54,6 +56,7 @@ export const learnerExamService = {
       title: string;
       passMark: number;
       totalMarks: number;
+      duration: number;
     };
     attempts: ExamAttemptResult[];
     bestAttempt: ExamAttemptResult | null;

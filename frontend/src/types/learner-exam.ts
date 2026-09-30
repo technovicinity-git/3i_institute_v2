@@ -33,6 +33,21 @@ export interface ExamQuestion {
   difficulty: string;
 }
 
+export interface ExamTakeInfo {
+  id: string;
+  title: string;
+  type: "practice" | "final";
+  duration: number;
+  passMark: number;
+  totalMarks: number;
+  maxAttempts: number;
+}
+
+export interface ExamTakeData {
+  exam: ExamTakeInfo;
+  questions: ExamQuestion[];
+}
+
 export interface ExamAttemptResult {
   id: string;
   examId: string;

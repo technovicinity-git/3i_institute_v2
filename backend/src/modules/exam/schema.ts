@@ -48,6 +48,9 @@ export const submitExamSchema = z.object({
   examId: z.string().uuid(),
   learnerProfileId: z.string().uuid(),
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  // ISO timestamp captured by the client when the learner started the exam.
+  // Used to record submission time and compute how long the learner took.
+  startedAt: z.string().optional(),
 });
 
 export type SubmitExamInput = z.infer<typeof submitExamSchema>;
