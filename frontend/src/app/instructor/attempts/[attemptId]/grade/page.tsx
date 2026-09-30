@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
@@ -21,19 +21,35 @@ export default function GradeAttemptPage() {
   const { data: attemptData, isLoading } = useQuery({
     queryKey: ["attempt-details", attemptId],
     queryFn: async () => {
-      const [attemptResponse, questionsResponse] = await Promise.all([
-        apiClient.get(`/exams/attempts-details/${attemptId}`),
-        apiClient.get(`/exams/questions`),
-      ]);
+      const attemptResponse = await apiClient.get(
+        `/exams/attempts-details/${attemptId}`,
+      );
+      const attempt = attemptResponse.data.data as ExamAttempt;
       return {
-        attempt: attemptResponse.data.data as ExamAttempt,
-        questions: questionsResponse.data.data as Question[],
+        attempt,
+        questions: (attempt.questions ?? []) as Question[],
       };
     },
   });
 
   const attempt = attemptData?.attempt;
-  const questions = attemptData?.questions ?? [];
+  const questions = useMemo(() => attemptData?.questions ?? [], [attemptData]);
+
+  // Marks already awarded on a previous visit. Used when the instructor has not
+  // typed a new value in this grading session.
+  const storedMarks = useMemo(() => {
+    if (!attempt) return {};
+
+    const attemptAnswers = attempt.answers as Record<string, unknown>;
+    const marks: Record<string, number> = {};
+    for (const q of questions) {
+      const awarded = attemptAnswers[`${q.id}_marks`];
+      if (typeof awarded === "number" && awarded >= 0) {
+        marks[q.id] = awarded;
+      }
+    }
+    return marks;
+  }, [attempt, questions]);
 
   // Get questions that need manual grading (short_answer, essay)
   const writtenQuestions = questions.filter(
@@ -115,7 +131,8 @@ export default function GradeAttemptPage() {
             const studentAnswer = attempt.answers[question.id] as
               | string
               | undefined;
-            const awardedMarks = marksMap[question.id];
+            const awardedMarks =
+              marksMap[question.id] ?? storedMarks[question.id];
             const isGraded = awardedMarks !== undefined && awardedMarks >= 0;
 
             return (

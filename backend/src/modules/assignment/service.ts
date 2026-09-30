@@ -79,6 +79,12 @@ export class AssignmentService {
     const assignments = await prisma.assignment.findMany({
       where: { courseId: { in: courseIds } },
       include: {
+        batch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: { submissions: true },
         },
@@ -97,6 +103,8 @@ export class AssignmentService {
       status: assignment.status,
       submissionCount: assignment._count.submissions,
       createdAt: assignment.createdAt,
+      batchId: assignment.batchId,
+      batchName: assignment.batch?.name ?? null,
     }));
   }
 
@@ -208,10 +216,27 @@ export class AssignmentService {
       throw new NotFoundError("Learner profile not found");
     }
 
+    const enrolments = await prisma.enrolment.findMany({
+      where: {
+        learnerProfileId,
+        batch: {
+          courseId,
+        },
+        waitlisted: false,
+      },
+      select: {
+        batchId: true,
+      },
+    });
+
+    const batchIds = enrolments
+      .map((enrolment) => enrolment.batchId)
+      .filter((batchId): batchId is string => batchId !== null);
     const assignments = await prisma.assignment.findMany({
       where: {
         courseId,
         status: "PUBLISHED",
+        OR: [{ batchId: null }, { batchId: { in: batchIds } }],
       },
       include: {
         submissions: {

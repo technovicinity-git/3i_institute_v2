@@ -141,6 +141,12 @@ export default function CourseAssignmentsPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-xs text-[#64748B]">
+                      {assignment.batchName && (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          Batch: {assignment.batchName}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         Due: {formatDate(assignment.dueDate)}

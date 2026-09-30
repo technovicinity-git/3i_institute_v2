@@ -282,6 +282,15 @@ export class ExamService {
     return exam;
   }
 
+  /**
+   * Convert a percentage pass mark into the absolute score a learner must
+   * reach. `passMark` is stored as a percentage (e.g. 50 = 50% of the total
+   * marks), so the threshold is rounded up to the nearest whole mark.
+   */
+  private getPassThreshold(totalMarks: number, passMark: number): number {
+    return Math.ceil((totalMarks * passMark) / 100);
+  }
+
   async submitExam(accountId: string, input: SubmitExamInput) {
     const exam = await prisma.exam.findUnique({
       where: { id: input.examId },
@@ -389,7 +398,9 @@ export class ExamService {
       }
     }
 
-    const passed = !needsManualGrading ? score >= exam.passMark : null;
+    const passed = !needsManualGrading
+      ? score >= this.getPassThreshold(exam.totalMarks, exam.passMark)
+      : null;
 
     const attempt = await prisma.examAttempt.create({
       data: {
@@ -428,18 +439,119 @@ export class ExamService {
       throw new ForbiddenError("You can only grade your own course exams");
     }
 
-    // Update answers with marks
+    if (!Number.isFinite(marksAwarded) || marksAwarded < 0) {
+      throw new ValidationError("Marks awarded must be a non-negative number");
+    }
+
+    // Update answers with marks so the grade survives re-visits
     const answers = attempt.answers as Record<string, unknown>;
     answers[`${questionId}_marks`] = marksAwarded;
+
+    // Questions attached to this attempt's exam
+    const examQuestions = attempt.exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+
+    const questions = await prisma.question.findMany({
+      where: { id: { in: examQuestions.map((q) => q.questionId) } },
+      select: {
+        id: true,
+        type: true,
+        correctAnswer: true,
+        marks: true,
+        negativeMarks: true,
+      },
+    });
+
+    // Only written (short answer / essay) questions can be graded manually
+    const targetQuestion = questions.find((q) => q.id === questionId);
+    if (
+      !targetQuestion ||
+      (targetQuestion.type !== "short_answer" &&
+        targetQuestion.type !== "essay")
+    ) {
+      throw new ValidationError(
+        "Only short answer and essay questions can be manually graded",
+      );
+    }
+
+    // Recompute the attempt score every time a written question is graded:
+    //   - Auto-graded questions (mcq, true_false, multi_select) use the answer
+    //     the learner submitted on the attempt.
+    //   - Written questions (short_answer, essay) use the marks the instructor
+    //     already awarded (stored as "<questionId>_marks").
+    // The attempt is only marked as fully graded once ALL written questions
+    // have been given marks. Until then score/passed/graded stay pending.
+    let score = 0;
+    let manualPending = false;
+
+    for (const eq of examQuestions) {
+      const question = questions.find((q) => q.id === eq.questionId);
+      if (!question) continue;
+
+      const marks = eq.marks ?? question.marks;
+      const userAnswer = answers[eq.questionId];
+
+      if (question.type === "mcq" || question.type === "true_false") {
+        const correct = question.correctAnswer as string;
+        if (userAnswer === correct) {
+          score += marks;
+        } else if (question.negativeMarks > 0) {
+          score -= question.negativeMarks;
+        }
+      } else if (question.type === "multi_select") {
+        const correct = question.correctAnswer as string[];
+        const userAnswers = (
+          Array.isArray(userAnswer) ? userAnswer : [userAnswer]
+        ) as unknown[];
+        const isCorrect =
+          correct.length === userAnswers.length &&
+          correct.every((c) => userAnswers.includes(c));
+        if (isCorrect) {
+          score += marks;
+        } else if (question.negativeMarks > 0) {
+          score -= question.negativeMarks;
+        }
+      } else {
+        // short_answer / essay — graded manually by the instructor
+        const awarded = answers[`${eq.questionId}_marks`];
+        if (typeof awarded === "number" && awarded >= 0) {
+          score += awarded;
+        } else {
+          manualPending = true;
+        }
+      }
+    }
+
+    const allGraded = !manualPending;
+    const passThreshold = this.getPassThreshold(
+      attempt.totalMarks,
+      attempt.exam.passMark,
+    );
 
     await prisma.examAttempt.update({
       where: { id: attemptId },
       data: {
         answers: JSON.parse(JSON.stringify(answers)),
+        // Once every written question has been graded, finalize the attempt:
+        // store the total score and the pass/fail status.
+        ...(allGraded
+          ? {
+              score,
+              passed: score >= passThreshold,
+              graded: true,
+              gradedBy: instructorId,
+            }
+          : {}),
       },
     });
 
-    return { message: "Answer graded" };
+    return {
+      message: allGraded ? "Attempt fully graded" : "Answer graded",
+      graded: allGraded,
+      ...(allGraded ? { score, passed: score >= passThreshold } : {}),
+    };
   }
 
   async getExamAttempts(examId: string) {
@@ -490,12 +602,56 @@ export class ExamService {
             displayName: true,
           },
         },
+        exam: {
+          select: {
+            questions: true,
+          },
+        },
       },
     });
 
     if (!attempt) {
       throw new NotFoundError("Attempt not found");
     }
+
+    // Fetch the questions belonging to this attempt's exam so grading pages get
+    // the exact questions the learner had to answer (not the whole bank).
+    const examQuestions = attempt.exam.questions as Array<{
+      questionId: string;
+      marks?: number;
+    }>;
+
+    const questions = await prisma.question.findMany({
+      where: {
+        id: { in: examQuestions.map((q) => q.questionId) },
+      },
+      select: {
+        id: true,
+        type: true,
+        question: true,
+        options: true,
+        correctAnswer: true,
+        suggestedAnswer: true,
+        marks: true,
+        explanation: true,
+      },
+    });
+
+    // Attach per-question marks defined on the exam
+    const questionList = examQuestions
+      .map((examQuestion) => {
+        const question = questions.find(
+          (q) => q.id === examQuestion.questionId,
+        );
+
+        if (!question) return null;
+
+        return {
+          ...question,
+          marks: examQuestion.marks ?? question.marks,
+        };
+      })
+      .filter((q): q is NonNullable<typeof q> => q !== null);
 
     return {
       id: attempt.id,
@@ -510,6 +666,7 @@ export class ExamService {
       graded: attempt.graded,
       startedAt: attempt.startedAt,
       submittedAt: attempt.submittedAt,
+      questions: questionList,
     };
   }
 
@@ -594,10 +751,17 @@ export class ExamService {
       orderBy: { attemptNumber: "asc" },
     });
 
+    // Best graded attempt (highest score). When an exam contains short-answer /
+    // essay questions the whole attempt is stored with score = null until it is
+    // manually graded, so those attempts used to be dropped here and their
+    // answers never returned. Fall back to the most recent attempt so the
+    // learner's written answers are still shown while grading is pending.
+    const gradedAttempts = attempts
+      .filter((a) => a.score !== null)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
     const bestAttempt =
-      attempts
-        .filter((a) => a.score !== null)
-        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] ?? null;
+      gradedAttempts[0] ?? attempts[attempts.length - 1] ?? null;
 
     // Exam questions are stored as JSON on the Exam model
     const examQuestions = exam.questions as Array<{
@@ -664,6 +828,7 @@ export class ExamService {
 
           marks,
           marksAwarded,
+          attemptNumber: bestAttempt?.attemptNumber ?? null,
 
           explanation: question.explanation,
         };
