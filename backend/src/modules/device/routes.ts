@@ -20,10 +20,10 @@ const registerDeviceSchema = z.object({
  *   get:
  *     tags: [Devices]
  *     summary: Get all registered devices
- *     description: Returns devices plus device limit info (scales with seats: 1 + seats)
+ *     description: Returns registered devices for the authenticated account.
  *     responses:
  *       200:
- *         description: List of devices with limit info
+ *         description: List of registered devices
  *         content:
  *           application/json:
  *             schema:
@@ -36,17 +36,10 @@ const registerDeviceSchema = z.object({
  *                       type: array
  *                       items:
  *                         type: object
- *                     deviceLimit:
- *                       type: integer
- *                       description: Maximum devices allowed (1 + seats)
- *                     currentCount:
- *                       type: integer
- *                     remainingSlots:
- *                       type: integer
  *   post:
  *     tags: [Devices]
  *     summary: Register a device
- *     description: Register a new device. Device limit scales with subscription seats.
+ *     description: Register a device for the authenticated account.
  *     requestBody:
  *       required: true
  *       content:
@@ -65,8 +58,6 @@ const registerDeviceSchema = z.object({
  *     responses:
  *       201:
  *         description: Device registered
- *       409:
- *         description: Device limit reached
  */
 router.get(
   "/",
