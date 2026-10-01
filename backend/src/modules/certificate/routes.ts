@@ -60,6 +60,29 @@ router.post(
 
 /**
  * @swagger
+ * /api/v1/certificates/issue/final-exam/{examId}:
+ *   post:
+ *     tags: [Certificates]
+ *     summary: Issue completion certificates for eligible online-class learners
+ *     description: Only for ONLINE_CLASS final exams. Fails while any attempt remains ungraded.
+ *     parameters:
+ *       - in: path
+ *         name: examId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Certificate issuance counts
+ */
+router.post(
+  "/issue/final-exam/:examId",
+  authenticate,
+  authorize("exams.grade"),
+  certificateController.issueOnlineFinalExamBatch,
+);
+
+/**
+ * @swagger
  * /api/v1/certificates/issue/exam:
  *   post:
  *     tags: [Certificates]

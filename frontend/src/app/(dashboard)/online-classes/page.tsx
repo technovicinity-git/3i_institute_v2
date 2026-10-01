@@ -12,10 +12,13 @@ import {
   ExternalLink,
   FileText,
   CalendarDays,
+  Download,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 import { SearchInput } from "@/components/dashboard/search-input";
+import { useLearnerCertificates } from "@/hooks/use-learner-certificates";
+import { downloadExamCertificatePdf } from "@/services/learner-certificate.service";
 
 function getLevelBadge(level: string): string {
   const levels: Record<string, string> = {
@@ -57,6 +60,7 @@ export default function OnlineClassesPage() {
     isLoading,
     isError,
   } = useEnrolledCourses(activeProfile?.id ?? "");
+  const { data: certificates } = useLearnerCertificates(activeProfile?.id ?? "");
 
   // Filter online class courses only
   const onlineCourses = useMemo(() => {
@@ -155,7 +159,14 @@ export default function OnlineClassesPage() {
 
           {/* Rows */}
           <div className="divide-y divide-[#E3E8EF]">
-            {filteredCourses.map((course) => (
+            {filteredCourses.map((course) => {
+              const completionCertificate = certificates?.find(
+                (certificate) =>
+                  certificate.courseId === course.courseId &&
+                  certificate.type === "COMPLETION",
+              );
+
+              return (
               <div
                 key={course.id}
                 className="px-5 py-5 hover:bg-[#F8FAFC] transition-colors"
@@ -224,7 +235,7 @@ export default function OnlineClassesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-2 min-w-0">
+                  <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
                     <Link
                       href={`/courses/${course.courseId}`}
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
@@ -260,6 +271,15 @@ export default function OnlineClassesPage() {
                       <FileText className="w-3.5 h-3.5" />
                       Exams
                     </Link>
+                    {completionCertificate && (
+                      <button
+                        type="button"
+                        onClick={() => downloadExamCertificatePdf(completionCertificate)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#22A146] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1E9040]"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Certificate
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -319,7 +339,7 @@ export default function OnlineClassesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-gray-100">
                     <Link
                       href={`/courses/${course.courseId}`}
                       className="flex-1 py-2.5 border border-[#12304E] text-[#12304E] text-sm font-semibold rounded-lg text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
@@ -355,10 +375,20 @@ export default function OnlineClassesPage() {
                       <FileText className="w-3.5 h-3.5" />
                       Exams
                     </Link>
+                    {completionCertificate && (
+                      <button
+                        type="button"
+                        onClick={() => downloadExamCertificatePdf(completionCertificate)}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#22A146] px-3 py-2 text-xs font-semibold text-white"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Certificate
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

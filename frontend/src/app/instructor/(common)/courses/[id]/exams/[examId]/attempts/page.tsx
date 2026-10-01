@@ -2,8 +2,12 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertCircle, CheckCircle, ChevronLeft, Eye, Users } from "lucide-react";
-import { useExamAttempts } from "@/hooks/use-exams";
+import { AlertCircle, Award, CheckCircle, ChevronLeft, Eye, Users } from "lucide-react";
+import {
+  useCourseExams,
+  useExamAttempts,
+  useIssueOnlineFinalExamCertificatesMutation,
+} from "@/hooks/use-exams";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
 
@@ -25,8 +29,11 @@ export default function ExamAttemptsPage() {
   const examId = params.examId as string;
 
   const { data: attempts, isLoading, isError } = useExamAttempts(examId);
+  const { data: courseExams } = useCourseExams(courseId);
   const { data: courses } = useInstructorCourses();
   const course = courses?.find((item) => item.id === courseId);
+  const exam = courseExams?.find((item) => item.id === examId);
+  const issueCertificatesMutation = useIssueOnlineFinalExamCertificatesMutation();
   const pendingCount = attempts?.filter((attempt) => !attempt.graded).length ?? 0;
 
   return (
@@ -45,6 +52,24 @@ export default function ExamAttemptsPage() {
         <p className="text-base text-[#64748B]">
           {attempts?.length ?? 0} total attempts · {pendingCount} needs grading
         </p>
+        {course?.type === "ONLINE_CLASS" && exam?.type === "final" && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => issueCertificatesMutation.mutate(examId)}
+              disabled={issueCertificatesMutation.isPending || isLoading || !attempts?.length}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#12304E] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0C1F33] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Award className="h-4 w-4" />
+              {issueCertificatesMutation.isPending
+                ? "Issuing certificates..."
+                : "Issue certificates for all learners"}
+            </button>
+            <span className="text-xs text-[#64748B]">
+              Latest passed attempts qualify. All attempts must be graded first.
+            </span>
+          </div>
+        )}
       </div>
 
       {isLoading && (

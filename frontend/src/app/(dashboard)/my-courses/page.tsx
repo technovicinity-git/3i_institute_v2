@@ -206,14 +206,14 @@ export default function MyCoursesPage() {
                         }
                         className="px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
                       >
-                        {course.progress > 0 ? "Resume" : "Start Course"}
+                        {course.progress > 0 ? "Resume" : "Start"}
                       </button>
                     ) : (
                       <button
                         disabled
                         className="px-4 py-2 bg-gray-200 text-gray-500 text-xs font-semibold rounded-lg cursor-not-allowed"
                       >
-                        No Lessons
+                        Upcoming
                       </button>
                     )}
 
@@ -298,7 +298,7 @@ export default function MyCoursesPage() {
                         }
                         className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg"
                       >
-                        {course.progress > 0 ? "Resume" : "Start Course"}
+                        {course.progress > 0 ? "Resume" : "Start"}
                       </button>
                     ) : (
                       <button

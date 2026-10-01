@@ -15,6 +15,15 @@ export function useExamCertificate(
   });
 }
 
+export function useLearnerCertificates(learnerProfileId: string) {
+  return useQuery({
+    queryKey: ["learner-certificates", learnerProfileId],
+    queryFn: () =>
+      learnerCertificateService.getLearnerCertificates(learnerProfileId),
+    enabled: !!learnerProfileId,
+  });
+}
+
 export function useIssueExamCertificateMutation() {
   const queryClient = useQueryClient();
 
