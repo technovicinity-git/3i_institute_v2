@@ -16,6 +16,7 @@ export const uploadVideoSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   description: z.string().max(2000).optional().or(z.literal("")),
   order: z.coerce.number().int().min(0).default(0),
+  duration: z.coerce.number().int().min(0).optional(),
 });
 
 export type UploadVideoInput = z.infer<typeof uploadVideoSchema>;
