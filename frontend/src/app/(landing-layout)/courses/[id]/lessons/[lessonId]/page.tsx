@@ -28,15 +28,11 @@ export default function LessonPage() {
   const updateProgressMutation = useUpdateProgressMutation();
 
   const [activeTab, setActiveTab] = useState<"overview" | "notes">("overview");
-  const [expandedModule, setExpandedModule] = useState<string>("module-1");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+
   const [notes, setNotes] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
-  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: videoUrlData, isLoading: videoLoading } =
     useLessonVideoUrl(lessonId);
@@ -72,45 +68,6 @@ export default function LessonPage() {
         },
       },
     );
-  };
-
-  const handleProgressUpdate = (seconds: number, position: number) => {
-    if (!activeProfile) return;
-
-    updateProgressMutation.mutate({
-      learnerProfileId: activeProfile.id,
-      materialId: lessonId,
-      watchedSeconds: seconds,
-      lastPosition: position,
-    });
-  };
-
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) {
-      // Start progress tracking
-      progressTimerRef.current = setInterval(() => {
-        setProgress((prev) => Math.min(100, prev + 0.1));
-      }, 1000);
-    } else {
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    }
-  };
-
-  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(
-      0,
-      Math.min(100, ((e.clientX - rect.left) / rect.width) * 100),
-    );
-    setProgress(pct);
-  };
-
-  const cyclePlaybackSpeed = () => {
-    const speeds = [1, 1.25, 1.5, 2];
-    const currentIndex = speeds.indexOf(playbackSpeed);
-    const nextSpeed = speeds[(currentIndex + 1) % speeds.length]!;
-    setPlaybackSpeed(nextSpeed);
   };
 
   const toggleFullscreen = () => {

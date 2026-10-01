@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CheckCircle, Play } from "lucide-react";
+import { CheckCircle, Clock, Play } from "lucide-react";
 import type { CourseLessonPage } from "@/services/lesson.service";
 
 interface CourseContentSidebarProps {
@@ -19,6 +19,16 @@ export function CourseContentSidebar({
   const lessons = [...(courseContent?.modules ?? [])]
     .sort((a, b) => a.order - b.order)
     .flatMap((module) => [...module.lessons].sort((a, b) => a.order - b.order));
+
+  const formatDuration = (seconds: number) => {
+    const totalSeconds = Math.floor(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainingSeconds = totalSeconds % 60;
+    return hours > 0
+      ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+      : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -95,11 +105,12 @@ export function CourseContentSidebar({
                       <span className="text-xs text-[#64748B]">
                         {lesson.type?.toUpperCase() ?? "LESSON"}
                       </span>
-                      <span className="text-xs text-[#94A3B8]">
-                        {lesson.duration
-                          ? `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, "0")}`
-                          : "--:--"}
-                      </span>
+                      {lesson.type?.toLowerCase() === "video" && lesson.duration != null && (
+                        <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8]">
+                          <Clock className="h-3 w-3" />
+                          {formatDuration(lesson.duration)}
+                        </span>
+                      )}
                     </span>
                   </span>
                 </button>

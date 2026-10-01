@@ -318,9 +318,8 @@ export class CourseDetailsService {
           {
             title: m.title,
             description: m.description ?? null,
-            duration: m.duration
-              ? `${Math.floor(m.duration / 60)}:${String(m.duration % 60).padStart(2, "0")}`
-              : "00:00",
+            type: m.type,
+            duration: formatDuration(m.duration ?? 0),
           },
         ],
       })),
@@ -353,6 +352,16 @@ export class CourseDetailsService {
       isCompleted,
     };
   }
+}
+
+function formatDuration(totalSeconds: number): string {
+  const seconds = Math.floor(totalSeconds);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`
+    : `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
 export const courseDetailsService = new CourseDetailsService();
