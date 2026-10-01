@@ -7,6 +7,15 @@ import type {
 } from "@/types/exam";
 
 export const examService = {
+  issueOnlineFinalExamCertificates: async (
+    examId: string,
+  ): Promise<{ issued: number; alreadyIssued: number; notPassed: number }> => {
+    const response = await apiClient.post(
+      `/certificates/issue/final-exam/${examId}`,
+    );
+    return response.data.data;
+  },
+
   getCourseExams: async (courseId: string): Promise<Exam[]> => {
     const response = await apiClient.get(`/exams/course/${courseId}`);
     return response.data.data;

@@ -2,9 +2,9 @@ import { apiClient } from "@/lib/api-client";
 
 export interface ExamCertificateDetails {
   /** Course progress percentage at the time the certificate was generated. */
-  progress: number;
-  completedLessons: number;
-  totalLessons: number;
+  progress?: number;
+  completedLessons?: number;
+  totalLessons?: number;
   /** The learner's last exam score at the time the certificate was generated. */
   score: number | null;
   totalMarks: number;
@@ -24,9 +24,19 @@ export interface ExamCertificate {
   issuedAt: string;
   examId: string | null;
   details: ExamCertificateDetails | null;
+  courseId?: string | null;
 }
 
 export const learnerCertificateService = {
+  getLearnerCertificates: async (
+    learnerProfileId: string,
+  ): Promise<ExamCertificate[]> => {
+    const response = await apiClient.get(
+      `/certificates/learner/${learnerProfileId}`,
+    );
+    return response.data.data;
+  },
+
   getExamCertificate: async (
     learnerProfileId: string,
     courseId: string,
@@ -71,26 +81,48 @@ export function downloadExamCertificatePdf(certificate: ExamCertificate) {
       : `Result: ${details.score} / ${details.totalMarks} (${details.passed === null || details.passed === undefined ? "graded" : details.passed ? "passed" : "not passed"})`
     : "Result: Not available";
   const lines: string[] = [];
-  const addText = (text: string, x: number, y: number, size: number, font = "F1") => {
-    lines.push(`BT /${font} ${size} Tf ${x} ${y} Td (${pdfSafeText(text)}) Tj ET`);
+  const addText = (
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    font = "F1",
+  ) => {
+    lines.push(
+      `BT /${font} ${size} Tf ${x} ${y} Td (${pdfSafeText(text)}) Tj ET`,
+    );
   };
   const centerText = (text: string, y: number, size: number, font = "F1") => {
     const safe = pdfSafeText(text);
     const x = Math.max(45, (842 - safe.length * size * 0.52) / 2);
-    lines.push(`BT /${font} ${size} Tf ${x.toFixed(1)} ${y} Td (${safe}) Tj ET`);
+    lines.push(
+      `BT /${font} ${size} Tf ${x.toFixed(1)} ${y} Td (${safe}) Tj ET`,
+    );
   };
 
   lines.push("0.07 0.19 0.31 RG 3 w 28 28 786 539 re S");
   lines.push("0.13 0.63 0.27 RG 1 w 39 39 764 517 re S");
-  centerText(certificate.issuerName ?? "3i International Islamic Institute", 510, 16, "F2");
+  centerText(
+    certificate.issuerName ?? "3i International Islamic Institute",
+    510,
+    16,
+    "F2",
+  );
   centerText("CERTIFICATE OF ACHIEVEMENT", 455, 27, "F2");
   centerText("This certificate is proudly presented to", 410, 13);
   centerText(certificate.learnerNameSnapshot, 365, 29, "F2");
   centerText("for completing the course", 325, 13);
   centerText(certificate.courseTitleSnapshot, 290, 22, "F2");
-  centerText(details?.examTitle ? `Latest exam: ${details.examTitle}` : "Course examination", 248, 13);
+  centerText(
+    details?.examTitle
+      ? `Latest exam: ${details.examTitle}`
+      : "Course examination",
+    248,
+    13,
+  );
   centerText(result, 218, 15, "F2");
-  if (details?.attemptNumber) centerText(`Attempt number: ${details.attemptNumber}`, 192, 11);
+  if (details?.attemptNumber)
+    centerText(`Attempt number: ${details.attemptNumber}`, 192, 11);
   if (details?.progress !== undefined) {
     centerText(`Course progress at issuance: ${details.progress}%`, 170, 11);
   }
@@ -123,7 +155,9 @@ export function downloadExamCertificatePdf(certificate: ExamCertificate) {
 
   const url = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
   const link = document.createElement("a");
-  const filename = pdfSafeText(`${certificate.learnerNameSnapshot}-${certificate.courseTitleSnapshot}`)
+  const filename = pdfSafeText(
+    `${certificate.learnerNameSnapshot}-${certificate.courseTitleSnapshot}`,
+  )
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");

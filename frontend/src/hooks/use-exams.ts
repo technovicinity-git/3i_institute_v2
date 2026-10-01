@@ -36,6 +36,25 @@ export function useExamAttempts(examId: string) {
   });
 }
 
+export function useIssueOnlineFinalExamCertificatesMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (examId: string) =>
+      examService.issueOnlineFinalExamCertificates(examId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["learner-certificates"] });
+      toast.success(
+        `Issued ${result.issued} certificate(s). ${result.alreadyIssued} already issued; ${result.notPassed} learner(s) did not pass their latest attempt.`,
+      );
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to issue final exam certificates");
+    },
+  });
+}
+
 export function useGradeAnswerMutation() {
   const queryClient = useQueryClient();
 

@@ -39,6 +39,22 @@ export class CertificateController {
     }
   };
 
+  issueOnlineFinalExamBatch = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const result = await certificateService.issueOnlineFinalExamCertificates(
+        req.user?.sub!,
+        req.params["examId"] as string,
+      );
+      sendSuccess(res, result, 200, "Final exam certificates issued");
+    } catch (error) {
+      next(error);
+    }
+  };
+
   issueExam = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = issueCertificateSchema.parse(req.body);
@@ -88,6 +104,7 @@ export class CertificateController {
   ) => {
     try {
       const certificates = await certificateService.getLearnerCertificates(
+        req.user?.sub!,
         req.params["learnerProfileId"] as string,
       );
       sendSuccess(res, certificates, 200);

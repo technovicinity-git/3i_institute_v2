@@ -122,7 +122,13 @@ export class CertificateService {
     return certificate;
   }
 
-  async getLearnerCertificates(learnerProfileId: string) {
+  async getLearnerCertificates(accountId: string, learnerProfileId: string) {
+    const profile = await prisma.learnerProfile.findFirst({
+      where: { id: learnerProfileId, accountId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!profile) throw new NotFoundError("Learner profile not found");
+
     return prisma.certificate.findMany({
       where: {
         learnerProfileId,
@@ -134,10 +140,123 @@ export class CertificateService {
         verificationCode: true,
         learnerNameSnapshot: true,
         courseTitleSnapshot: true,
+        courseId: true,
+        issuerName: true,
+        examId: true,
+        details: true,
         issuedAt: true,
       },
       orderBy: { issuedAt: "desc" },
     });
+  }
+
+  async issueOnlineFinalExamCertificates(instructorId: string, examId: string) {
+    const exam = await prisma.exam.findUnique({
+      where: { id: examId },
+      include: { course: true },
+    });
+    if (!exam) throw new NotFoundError("Exam not found");
+    if (exam.course.instructorId !== instructorId) {
+      throw new NotFoundError("Exam not found");
+    }
+    if (exam.type !== "final" || exam.course.type !== "ONLINE_CLASS") {
+      throw new ValidationError(
+        "Certificates can only be issued for online class final exams",
+      );
+    }
+
+    const attempts = await prisma.examAttempt.findMany({
+      where: { examId },
+      orderBy: [{ learnerProfileId: "asc" }, { attemptNumber: "desc" }],
+      select: {
+        learnerProfileId: true,
+        attemptNumber: true,
+        score: true,
+        totalMarks: true,
+        passed: true,
+        graded: true,
+      },
+    });
+    const ungradedCount = attempts.filter((attempt) => !attempt.graded).length;
+    if (ungradedCount > 0) {
+      throw new ValidationError(
+        `Cannot issue certificates while ${ungradedCount} exam attempt(s) still need grading.`,
+      );
+    }
+    if (attempts.length === 0) {
+      throw new ValidationError("No learner attempts were found for this exam");
+    }
+
+    // Attempts are sorted newest first for each learner. A certificate is
+    // awarded only when that learner's latest final-exam attempt was passed.
+    const latestByLearner = new Map<string, (typeof attempts)[number]>();
+    for (const attempt of attempts) {
+      if (!latestByLearner.has(attempt.learnerProfileId)) {
+        latestByLearner.set(attempt.learnerProfileId, attempt);
+      }
+    }
+    const eligible = [...latestByLearner.entries()].filter(([, attempt]) => attempt.passed);
+    if (eligible.length === 0) {
+      return { issued: 0, alreadyIssued: 0, notPassed: latestByLearner.size };
+    }
+
+    const eligibleIds = eligible.map(([learnerProfileId]) => learnerProfileId);
+    const existing = await prisma.certificate.findMany({
+      where: {
+        learnerProfileId: { in: eligibleIds },
+        courseId: exam.courseId,
+        type: "COMPLETION",
+      },
+      select: { learnerProfileId: true },
+    });
+    const existingIds = new Set(existing.map((certificate) => certificate.learnerProfileId));
+    const toIssue = eligible.filter(([learnerProfileId]) => !existingIds.has(learnerProfileId));
+    const profiles = await prisma.learnerProfile.findMany({
+      where: { id: { in: toIssue.map(([learnerProfileId]) => learnerProfileId) } },
+      select: { id: true, displayName: true },
+    });
+    const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+
+    const records = toIssue.flatMap(([learnerProfileId, attempt]) => {
+      const profile = profileById.get(learnerProfileId);
+      if (!profile) return [];
+      return [{
+        learnerProfileId,
+        courseId: exam.courseId,
+        examId: exam.id,
+        type: "COMPLETION" as const,
+        verificationCode: generateVerificationCode(),
+        learnerNameSnapshot: profile.displayName,
+        courseTitleSnapshot: exam.course.title,
+        issuerName: "3i International Islamic Institute",
+        details: JSON.parse(JSON.stringify({
+          examTitle: exam.title,
+          score: attempt.score,
+          totalMarks: attempt.totalMarks,
+          attemptNumber: attempt.attemptNumber,
+          passed: attempt.passed,
+          graded: attempt.graded,
+        })),
+      }];
+    });
+
+    let createdCount = 0;
+    if (records.length > 0) {
+      const [created] = await prisma.$transaction([
+        prisma.certificate.createMany({ data: records, skipDuplicates: true }),
+        prisma.learnerProfile.updateMany({
+          where: { id: { in: records.map((record) => record.learnerProfileId) } },
+          data: { nameLocked: true },
+        }),
+      ]);
+      createdCount = created.count;
+    }
+
+    return {
+      issued: createdCount,
+      alreadyIssued: existing.length + records.length - createdCount,
+      notPassed: latestByLearner.size - eligible.length,
+    };
   }
 
   /**

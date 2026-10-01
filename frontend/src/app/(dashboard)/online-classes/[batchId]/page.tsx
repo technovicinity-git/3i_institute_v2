@@ -13,10 +13,13 @@ import {
   Video,
   User,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 
 import { useLearnerBatch } from "@/hooks/use-batches";
 import { useProfileStore } from "@/stores/profile-store";
+import { useLearnerCertificates } from "@/hooks/use-learner-certificates";
+import { downloadExamCertificatePdf } from "@/services/learner-certificate.service";
 
 type SessionStatus = "LIVE" | "STARTING_SOON" | "UPCOMING" | "COMPLETED";
 
@@ -42,6 +45,7 @@ export default function OnlineClassBatchPage() {
   const batchId = params.batchId;
 
   const { activeProfile } = useProfileStore();
+  const { data: certificates } = useLearnerCertificates(activeProfile?.id ?? "");
 
   const {
     data: batch,
@@ -214,6 +218,11 @@ export default function OnlineClassBatchPage() {
 
   const completedSessions = sessionsWithStatus.filter(
     (session) => session.status.key === "COMPLETED",
+  );
+  const completionCertificate = certificates?.find(
+    (certificate) =>
+      certificate.courseId === batch.course.id &&
+      certificate.type === "COMPLETION",
   );
 
   // A batch is upcoming only while every scheduled session is still in the
@@ -479,6 +488,15 @@ export default function OnlineClassBatchPage() {
                 {isUpcomingBatch ? "Upcoming" : "Ongoing"}
               </span>
             </div>
+            {completionCertificate && (
+              <button
+                type="button"
+                onClick={() => downloadExamCertificatePdf(completionCertificate)}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#22A146] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E9040]"
+              >
+                <Download className="h-4 w-4" /> Download Certificate
+              </button>
+            )}
           </div>
         </div>
 
