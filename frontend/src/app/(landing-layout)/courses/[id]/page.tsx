@@ -482,11 +482,16 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  {course.curriculum.map((mod, idx) => (
-                    <div
-                      key={idx}
-                      className="border border-[#E3E8EF] rounded-lg overflow-hidden"
-                    >
+                  {course.curriculum.map((mod, idx) => {
+                    const videoLesson = mod.lessonsList.find(
+                      (lesson) => lesson.type?.toLowerCase() === "video",
+                    );
+
+                    return (
+                      <div
+                        key={idx}
+                        className="border border-[#E3E8EF] rounded-lg overflow-hidden"
+                      >
                       <button
                         onClick={() =>
                           setOpenModule(openModule === idx ? -1 : idx)
@@ -502,8 +507,15 @@ export default function CourseDetailsPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-sm text-[#64748B]">
-                            {mod.duration}
+                          <span className="inline-flex items-center gap-1.5 text-sm text-[#64748B]">
+                            {videoLesson ? (
+                              <>
+                                <Clock className="h-4 w-4" />
+                                Video · {videoLesson.duration}
+                              </>
+                            ) : (
+                              mod.duration
+                            )}
                           </span>
                           {/* {openModule === idx ? (
                             <ChevronUp className="w-5 h-5 text-[#64748B]" />
@@ -548,8 +560,9 @@ export default function CourseDetailsPage() {
                           ))}
                         </div>
                       )} */}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

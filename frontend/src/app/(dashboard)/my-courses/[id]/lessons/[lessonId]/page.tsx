@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Save, Lock, FileText, Award } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Lock, FileText, Award, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
 import { useCourseExams } from "@/hooks/use-learner-exams";
@@ -26,6 +26,16 @@ import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
 import { useQueryClient } from "@tanstack/react-query";
 import { DocumentViewer } from "@/components/lesson/document-viewer";
+
+function formatVideoDuration(seconds: number): string {
+  const totalSeconds = Math.floor(seconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+    : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
 
 export default function LessonPage() {
   const params = useParams();
@@ -89,7 +99,9 @@ export default function LessonPage() {
     useLessonMaterialUrl(lessonId);
 
   // Flatten all lessons in order
-  const allLessons = courseContent?.modules?.flatMap((m) => m.lessons) ?? [];
+  const allLessons = [...(courseContent?.modules ?? [])]
+    .sort((a, b) => a.order - b.order)
+    .flatMap((module) => [...module.lessons].sort((a, b) => a.order - b.order));
   const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
   const previousLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
@@ -158,9 +170,7 @@ export default function LessonPage() {
   }, [noteData]);
 
   // Find current lesson
-  const currentLesson = courseContent?.modules
-    ?.flatMap((m) => m.lessons)
-    ?.find((l) => l.id === lessonId);
+  const currentLesson = allLessons.find((lesson) => lesson.id === lessonId);
 
   const handleSaveNote = () => {
     if (!activeProfile || !notes.trim()) {
@@ -310,9 +320,16 @@ export default function LessonPage() {
                 >
                   {currentLesson?.title ?? "Lesson"}
                 </h1>
-                <p className="mt-2 text-[13px] text-[#475569]">
-                  Course: {courseContent.courseTitle}
-                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#475569]">
+                  <span>Course: {courseContent.courseTitle}</span>
+                  {currentLesson?.type?.toLowerCase() === "video" &&
+                    currentLesson.duration != null && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Video duration: {formatVideoDuration(currentLesson.duration)}
+                      </span>
+                    )}
+                </div>
 
                 {/* Tabs */}
                 <div className="flex mt-6 border-b border-[#E3E8EF]">

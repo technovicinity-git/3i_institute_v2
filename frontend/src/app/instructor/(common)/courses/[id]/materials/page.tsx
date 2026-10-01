@@ -67,6 +67,35 @@ function formatDuration(seconds: number | null): string {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
+function readVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    const objectUrl = URL.createObjectURL(file);
+
+    const cleanup = () => {
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      cleanup();
+      if (!Number.isFinite(duration) || duration < 0) {
+        reject(new Error("Could not read the video duration"));
+        return;
+      }
+      resolve(Math.round(duration));
+    };
+    video.onerror = () => {
+      cleanup();
+      reject(new Error("Could not read the video duration"));
+    };
+    video.src = objectUrl;
+  });
+}
+
 export default function CourseMaterialsPage() {
   const params = useParams();
   const router = useRouter();
@@ -195,7 +224,7 @@ export default function CourseMaterialsPage() {
     }
   };
 
-  const handleUploadVideo = () => {
+  const handleUploadVideo = async () => {
     if (!videoFile) {
       toast.error("Please select a video file");
       return;
@@ -206,11 +235,20 @@ export default function CourseMaterialsPage() {
       return;
     }
 
+    let duration: number;
+    try {
+      duration = await readVideoDuration(videoFile);
+    } catch {
+      toast.error("Could not read this video's duration. Please choose a supported video file.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("courseId", courseId);
     formData.append("title", videoTitle);
     formData.append("description", videoDescription);
     formData.append("order", String(videoOrder));
+    formData.append("duration", String(duration));
     formData.append("video", videoFile);
     if (captionFile) {
       formData.append("captions", captionFile);

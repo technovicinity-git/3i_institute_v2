@@ -121,7 +121,9 @@ export class MaterialService {
           type: "video",
           url: video.guid,
           order: input.order,
-          duration: video.length || null,
+          // Bunny's create response usually has length 0 because processing
+          // starts after upload. Use the file metadata sent by the uploader.
+          duration: input.duration ?? (video.length > 0 ? video.length : null),
           captionUrl: null,
         },
       });

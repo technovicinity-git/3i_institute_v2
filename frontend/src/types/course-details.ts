@@ -17,6 +17,7 @@ export interface CurriculumLesson {
   title: string;
   duration: string;
   description: string | null;
+  type?: string;
 }
 
 export interface CourseBatchSession {
