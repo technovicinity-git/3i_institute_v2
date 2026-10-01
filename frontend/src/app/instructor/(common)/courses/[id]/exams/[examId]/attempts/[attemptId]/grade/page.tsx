@@ -9,6 +9,13 @@ import { useGradeAnswerMutation } from "@/hooks/use-exams";
 import type { ExamAttempt } from "@/types/exam";
 import type { Question } from "@/types/question";
 
+function answerText(answer: unknown): string {
+  if (Array.isArray(answer)) return answer.join(", ");
+  return typeof answer === "string" && answer.length > 0
+    ? answer
+    : "No answer submitted";
+}
+
 export default function GradeAttemptPage() {
   const params = useParams();
   const router = useRouter();
@@ -33,6 +40,7 @@ export default function GradeAttemptPage() {
   });
 
   const attempt = attemptData?.attempt;
+  const answers = (attempt?.answers ?? {}) as Record<string, unknown>;
   const questions = useMemo(() => attemptData?.questions ?? [], [attemptData]);
 
   // Marks already awarded on a previous visit. Used when the instructor has not
@@ -55,6 +63,7 @@ export default function GradeAttemptPage() {
   const writtenQuestions = questions.filter(
     (q) => q.type === "short_answer" || q.type === "essay",
   );
+  const questionsToShow = attempt?.graded ? questions : writtenQuestions;
 
   const handleSubmitAllGrades = async () => {
     const grades = writtenQuestions.map((question) => ({
@@ -102,7 +111,7 @@ export default function GradeAttemptPage() {
               className="text-3xl md:text-[36px] text-[#0C1F33]"
               style={{ fontFamily: "'Marcellus', serif" }}
             >
-              Grade Attempt
+              {attempt.graded ? "View Attempt" : "Grade Attempt"}
             </h1>
             <p className="text-base text-[#64748B] mt-1">
               {attempt.learnerName} • Attempt #{attempt.attemptNumber}
@@ -126,8 +135,8 @@ export default function GradeAttemptPage() {
         </div>
       </div>
 
-      {/* Written Questions */}
-      {writtenQuestions.length === 0 ? (
+      {/* Answers */}
+      {!attempt.graded && writtenQuestions.length === 0 ? (
         <div className="bg-white rounded-xl border border-[#E3E8EF] p-10 text-center">
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-[#64748B]">
@@ -136,11 +145,11 @@ export default function GradeAttemptPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {writtenQuestions.map((question) => {
-            const studentAnswer = attempt.answers[question.id] as
-              | string
-              | undefined;
+          {questionsToShow.map((question) => {
+            const studentAnswer = answers[question.id];
             const inputValue = marksMap[question.id];
+            const isWritten = question.type === "short_answer" || question.type === "essay";
+            const awarded = answers[`${question.id}_marks`];
 
             return (
               <div
@@ -151,9 +160,7 @@ export default function GradeAttemptPage() {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-[#64748B] uppercase">
-                      {question.type === "essay"
-                        ? "Essay Question"
-                        : "Short Answer"}
+                      {question.type.replace("_", " ")} Question
                     </span>
                     <span className="text-sm font-semibold text-[#0C1F33]">
                       Max Marks: {question.marks}
@@ -170,9 +177,20 @@ export default function GradeAttemptPage() {
                     Student&apos;s Answer
                   </p>
                   <p className="text-sm text-[#0C1F33] leading-6 whitespace-pre-wrap">
-                    {studentAnswer || "No answer submitted"}
+                    {answerText(studentAnswer)}
                   </p>
                 </div>
+
+                {attempt.graded && !isWritten && question.correctAnswer !== null && (
+                  <div className="bg-green-50 rounded-lg p-4 mb-4">
+                    <p className="text-xs font-bold text-[#22A146] uppercase mb-2">
+                      Correct Answer
+                    </p>
+                    <p className="text-sm text-[#0C1F33] leading-6 whitespace-pre-wrap">
+                      {answerText(question.correctAnswer)}
+                    </p>
+                  </div>
+                )}
 
                 {/* Suggested Answer (for reference) */}
                 {question.suggestedAnswer && (
@@ -187,27 +205,28 @@ export default function GradeAttemptPage() {
                 )}
 
                 {/* Grading Input */}
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-[#0C1F33]">
-                    Marks Awarded:
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={question.marks}
-                    value={inputValue ?? storedMarks[question.id] ?? ""}
-                    onChange={(e) =>
-                      setMarksMap({
-                        ...marksMap,
-                        [question.id]: e.target.value,
-                      })
-                    }
-                    className="w-24 px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm"
-                  />
-                  <span className="text-sm text-[#64748B]">
-                    / {question.marks}
-                  </span>
-                </div>
+                {attempt.graded ? (
+                  isWritten && (
+                    <p className="text-sm font-semibold text-[#0C1F33]">
+                      Marks awarded: {typeof awarded === "number" ? awarded : "—"} / {question.marks}
+                    </p>
+                  )
+                ) : (
+                  isWritten && (
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-[#0C1F33]">Marks Awarded:</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={question.marks}
+                        value={inputValue ?? storedMarks[question.id] ?? ""}
+                        onChange={(e) => setMarksMap({ ...marksMap, [question.id]: e.target.value })}
+                        className="w-24 px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm"
+                      />
+                      <span className="text-sm text-[#64748B]">/ {question.marks}</span>
+                    </div>
+                  )
+                )}
               </div>
             );
           })}
@@ -221,8 +240,9 @@ export default function GradeAttemptPage() {
             Grading Summary
           </p>
           <p className="text-xs text-[#64748B] mt-1">
-            {writtenQuestions.length} written question(s) to grade manually.
-            MCQ/True-False are auto-graded.
+            {attempt.graded
+              ? `Final result: ${attempt.score ?? 0} / ${attempt.totalMarks} · ${attempt.passed ? "Passed" : "Failed"}.`
+              : `${writtenQuestions.length} written question(s) to grade manually. MCQ/True-False are auto-graded.`}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -232,7 +252,7 @@ export default function GradeAttemptPage() {
           >
             Done
           </button>
-          {writtenQuestions.length > 0 && (
+          {!attempt.graded && writtenQuestions.length > 0 && (
             <button
               onClick={handleSubmitAllGrades}
               disabled={

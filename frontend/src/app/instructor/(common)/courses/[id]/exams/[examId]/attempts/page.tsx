@@ -2,32 +2,19 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Users,
-  CheckCircle,
-  AlertCircle,
-  ChevronRight,
-  ChevronLeft,
-} from "lucide-react";
+import { AlertCircle, CheckCircle, ChevronLeft, Eye, Users } from "lucide-react";
 import { useExamAttempts } from "@/hooks/use-exams";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "Not submitted";
+  return new Date(dateStr).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
   });
 }
 
@@ -38,11 +25,9 @@ export default function ExamAttemptsPage() {
   const examId = params.examId as string;
 
   const { data: attempts, isLoading, isError } = useExamAttempts(examId);
-  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
-  const course = courses?.find((c) => c.id === courseId);
-
-  const pendingGrading = attempts?.filter((a) => !a.graded) ?? [];
-  const graded = attempts?.filter((a) => a.graded) ?? [];
+  const { data: courses } = useInstructorCourses();
+  const course = courses?.find((item) => item.id === courseId);
+  const pendingCount = attempts?.filter((attempt) => !attempt.graded).length ?? 0;
 
   return (
     <div className="p-6 md:p-10">
@@ -53,18 +38,12 @@ export default function ExamAttemptsPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
-        <h1
-          className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
-        >
+        {course && <CourseActions courseId={courseId} courseType={course.type} />}
+        <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "'Marcellus', serif" }}>
           Exam Attempts
         </h1>
         <p className="text-base text-[#64748B]">
-          {attempts?.length ?? 0} total attempts • {pendingGrading.length} needs
-          grading
+          {attempts?.length ?? 0} total attempts · {pendingCount} needs grading
         </p>
       </div>
 
@@ -74,6 +53,8 @@ export default function ExamAttemptsPage() {
         </div>
       )}
 
+      {isError && <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700">Could not load exam attempts.</p>}
+
       {!isLoading && !isError && attempts?.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -81,74 +62,52 @@ export default function ExamAttemptsPage() {
         </div>
       )}
 
-      {/* Pending Grading */}
-      {pendingGrading.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-[#0C1F33] mb-4 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-orange-500" />
-            Needs Grading
-          </h2>
-          <div className="space-y-3">
-            {pendingGrading.map((attempt) => (
-              <Link
-                key={attempt.id}
-                href={`/instructor/courses/${courseId}/exams/${examId}/attempts/${attempt.id}/grade`}
-                className="bg-white rounded-xl border border-orange-200 p-5 flex items-center justify-between hover:shadow-md transition-shadow"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-[#0C1F33]">
-                    {attempt.learnerName} — Attempt #{attempt.attemptNumber}
-                  </p>
-                  <p className="text-xs text-[#64748B] mt-1">
-                    Submitted:{" "}
-                    {formatDate(attempt.submittedAt ?? attempt.startedAt)} at{" "}
-                    {formatTime(attempt.submittedAt ?? attempt.startedAt)}
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1 text-sm font-semibold text-orange-600">
-                  Grade Now
-                  <ChevronRight className="w-4 h-4" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Graded */}
-      {graded.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-[#0C1F33] mb-4 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-[#22A146]" />
-            Graded
-          </h2>
-          <div className="space-y-3">
-            {graded.map((attempt) => (
-              <div
-                key={attempt.id}
-                className="bg-white rounded-xl border border-[#E3E8EF] p-5 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-[#0C1F33]">
-                    {attempt.learnerName} — Attempt #{attempt.attemptNumber}
-                  </p>
-                  <p className="text-xs text-[#64748B] mt-1">
-                    Score: {attempt.score}/{attempt.totalMarks} •{" "}
-                    {attempt.passed ? "Passed" : "Failed"}
-                  </p>
-                </div>
-                <span
-                  className={`text-sm font-bold px-3 py-1 rounded-full ${
-                    attempt.passed
-                      ? "bg-[#22A146]/10 text-[#22A146]"
-                      : "bg-red-50 text-red-600"
-                  }`}
-                >
-                  {attempt.passed ? "PASSED" : "FAILED"}
-                </span>
-              </div>
-            ))}
-          </div>
+      {!isLoading && !isError && !!attempts?.length && (
+        <div className="overflow-x-auto rounded-xl border border-[#E3E8EF] bg-white">
+          <table className="w-full min-w-[760px] text-left">
+            <thead className="bg-[#FBF9F4] text-xs uppercase tracking-wide text-[#64748B]">
+              <tr>
+                <th className="px-5 py-4 font-semibold">Learner</th>
+                <th className="px-5 py-4 font-semibold">Attempt</th>
+                <th className="px-5 py-4 font-semibold">Submitted</th>
+                <th className="px-5 py-4 font-semibold">Result</th>
+                <th className="px-5 py-4 font-semibold">Status</th>
+                <th className="px-5 py-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E3E8EF]">
+              {attempts?.map((attempt) => (
+                <tr key={attempt.id} className="hover:bg-gray-50/70">
+                  <td className="px-5 py-4 text-sm font-semibold text-[#0C1F33]">{attempt.learnerName}</td>
+                  <td className="px-5 py-4 text-sm text-[#475569]">#{attempt.attemptNumber}</td>
+                  <td className="px-5 py-4 text-sm text-[#475569]">{formatDate(attempt.submittedAt)}</td>
+                  <td className="px-5 py-4 text-sm text-[#0C1F33]">
+                    {attempt.graded ? `${attempt.score ?? 0} / ${attempt.totalMarks}` : "—"}
+                  </td>
+                  <td className="px-5 py-4">
+                    {attempt.graded ? (
+                      <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${attempt.passed ? "bg-[#22A146]/10 text-[#22A146]" : "bg-red-50 text-red-600"}`}>
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        {attempt.passed ? "PASSED" : "FAILED"}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+                        <AlertCircle className="h-3.5 w-3.5" /> Needs grading
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={`/instructor/courses/${courseId}/exams/${examId}/attempts/${attempt.id}/grade`}
+                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${attempt.graded ? "border border-[#E3E8EF] text-[#12304E] hover:bg-gray-50" : "bg-[#22A146] text-white hover:bg-[#1E9040]"}`}
+                    >
+                      {attempt.graded ? <><Eye className="h-4 w-4" /> View</> : "Grade now"}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
