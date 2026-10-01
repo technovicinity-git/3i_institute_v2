@@ -186,6 +186,16 @@ export class ExamService {
       );
     }
 
+    if (course.type === "ONLINE_CLASS") {
+      if (!input.openDate) {
+        throw new ValidationError("Exam start time is required for online class exams");
+      }
+      const startTime = new Date(input.openDate);
+      if (Number.isNaN(startTime.getTime()) || startTime.getTime() <= Date.now()) {
+        throw new ValidationError("Exam start time must be in the future");
+      }
+    }
+
     // REGULAR course exams may use a dynamic question bank (no fixed list):
     // per attempt, questions are randomly selected from the course up to the
     // instructor-defined total marks. ONLINE_CLASS exams still require an
@@ -233,7 +243,10 @@ export class ExamService {
         duration: input.duration,
         passMark: input.passMark,
         totalMarks: input.totalMarks,
-        maxAttempts: input.maxAttempts,
+        maxAttempts:
+          course.type === "ONLINE_CLASS" && input.type === "final"
+            ? 1
+            : input.maxAttempts,
         cooldownHours: input.cooldownHours,
         openDate: input.openDate ? new Date(input.openDate) : null,
         closeDate: input.closeDate ? new Date(input.closeDate) : null,
