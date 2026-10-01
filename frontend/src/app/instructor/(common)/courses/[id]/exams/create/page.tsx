@@ -54,6 +54,8 @@ export default function CreateExamPage() {
     register,
     handleSubmit,
     setError,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
@@ -68,6 +70,17 @@ export default function CreateExamPage() {
       randomizeOptions: false,
     },
   });
+
+  const examType = watch("type");
+  const maxAttemptsRegistration = register("maxAttempts", {
+    valueAsNumber: true,
+  });
+  const minStartTime = (() => {
+    const localNow = new Date(
+      Date.now() - new Date().getTimezoneOffset() * 60_000,
+    );
+    return localNow.toISOString().slice(0, 16);
+  })();
 
   const filteredQuestions = allQuestions?.filter((q) => {
     const matchesSearch = q.question
@@ -131,6 +144,18 @@ export default function CreateExamPage() {
       return;
     }
 
+    if (
+      isOnlineClass &&
+      data.startTime &&
+      new Date(data.startTime).getTime() <= Date.now()
+    ) {
+      setError("startTime", {
+        type: "manual",
+        message: "Exam start time must be in the future",
+      });
+      return;
+    }
+
     // REGULAR course exams use a dynamic question bank: the instructor sets a
     // total mark and random questions are drawn per attempt up to that mark.
     // They have no attempt limit and no cooldown.
@@ -145,7 +170,11 @@ export default function CreateExamPage() {
         duration: data.duration,
         passMark: data.passMark,
         totalMarks,
-        maxAttempts: isOnlineClass ? data.maxAttempts : 999999,
+        maxAttempts: isOnlineClass
+          ? data.type === "final"
+            ? 1
+            : data.maxAttempts
+          : 999999,
         cooldownHours: isOnlineClass ? data.cooldownHours : 0,
         randomizeQuestions: data.randomizeQuestions,
         randomizeOptions: data.randomizeOptions,
@@ -210,7 +239,15 @@ export default function CreateExamPage() {
             <div>
               <label className="block text-sm font-semibold mb-2">Type *</label>
               <select
-                {...register("type")}
+                {...register("type", {
+                  onChange: (event) => {
+                    if (event.target.value === "final") {
+                      setValue("maxAttempts", 1, { shouldValidate: true });
+                    } else {
+                      setValue("maxAttempts", 3, { shouldValidate: true });
+                    }
+                  },
+                })}
                 className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
               >
                 <option value="practice">Practice</option>
@@ -247,9 +284,21 @@ export default function CreateExamPage() {
                 </label>
                 <input
                   type="number"
-                  {...register("maxAttempts", { valueAsNumber: true })}
+                  {...maxAttemptsRegistration}
+                  disabled={examType === "final"}
+                  aria-describedby={
+                    examType === "final" ? "final-attempts-help" : undefined
+                  }
                   className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
                 />
+                {examType === "final" && (
+                  <p
+                    id="final-attempts-help"
+                    className="mt-1 text-xs text-[#64748B]"
+                  >
+                    Final exams allow one attempt.
+                  </p>
+                )}
               </div>
             ) : (
               <div>
@@ -284,8 +333,8 @@ export default function CreateExamPage() {
           ) : (
             <p className="text-xs text-[#64748B]">
               Questions are randomly selected from your course question bank in
-              every learner attempt up to the total mark set above. Learners
-              can attempt this exam unlimited times.
+              every learner attempt up to the total mark set above. Learners can
+              attempt this exam unlimited times.
             </p>
           )}
 
@@ -297,6 +346,7 @@ export default function CreateExamPage() {
               <input
                 type="datetime-local"
                 {...register("startTime")}
+                min={minStartTime}
                 className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
               />
               {errors.startTime && (
@@ -305,8 +355,8 @@ export default function CreateExamPage() {
                 </p>
               )}
               <p className="mt-1 text-xs text-[#64748B]">
-                Learners will be able to start this exam from the scheduled
-                time until 50% of the exam duration has elapsed.
+                Learners will be able to start this exam from the scheduled time
+                until 50% of the exam duration has elapsed.
               </p>
             </div>
           )}
@@ -326,124 +376,124 @@ export default function CreateExamPage() {
         {/* Question Selection (ONLINE_CLASS only — REGULAR exams use a dynamic bank) */}
         {course?.type === "ONLINE_CLASS" && (
           <div className="bg-white rounded-xl border border-[#E3E8EF] p-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-lg font-semibold text-[#0C1F33]">
-              Select Questions
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-[#64748B]">
-                {selectedQuestions.length} selected • {calculateTotalMarks()}{" "}
-                marks
-              </span>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <h2 className="text-lg font-semibold text-[#0C1F33]">
+                Select Questions
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-[#64748B]">
+                  {selectedQuestions.length} selected • {calculateTotalMarks()}{" "}
+                  marks
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Search + Filters */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 text-[#94A3B8]" />
-              <input
-                type="text"
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent text-sm outline-none w-full"
-              />
+            {/* Search + Filters */}
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 text-[#94A3B8]" />
+                <input
+                  type="text"
+                  placeholder="Search questions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent text-sm outline-none w-full"
+                />
+              </div>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
+                aria-label="Filter by type"
+              >
+                <option value="all">All Types</option>
+                <option value="mcq">MCQ</option>
+                <option value="multi_select">Multi Select</option>
+                <option value="true_false">True/False</option>
+                <option value="short_answer">Short Answer</option>
+                <option value="essay">Essay</option>
+              </select>
+              <select
+                value={filterDifficulty}
+                onChange={(e) => setFilterDifficulty(e.target.value)}
+                className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
+                aria-label="Filter by difficulty"
+              >
+                <option value="all">All Difficulties</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
             </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
-              aria-label="Filter by type"
-            >
-              <option value="all">All Types</option>
-              <option value="mcq">MCQ</option>
-              <option value="multi_select">Multi Select</option>
-              <option value="true_false">True/False</option>
-              <option value="short_answer">Short Answer</option>
-              <option value="essay">Essay</option>
-            </select>
-            <select
-              value={filterDifficulty}
-              onChange={(e) => setFilterDifficulty(e.target.value)}
-              className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm"
-              aria-label="Filter by difficulty"
-            >
-              <option value="all">All Difficulties</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
 
-          {/* Question list */}
-          {questionsLoading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="w-8 h-8 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {filteredQuestions?.map((question) => {
-                const isSelected = selectedQuestions.some(
-                  (sq) => sq.questionId === question.id,
-                );
-                const selectedQuestion = selectedQuestions.find(
-                  (sq) => sq.questionId === question.id,
-                );
-                return (
-                  <div
-                    key={question.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      isSelected
-                        ? "border-[#22A146] bg-green-50"
-                        : "border-[#E3E8EF] hover:bg-gray-50"
-                    }`}
-                    onClick={() => toggleQuestion(question)}
-                  >
-                    <button
-                      type="button"
-                      className={`w-6 h-6 rounded flex items-center justify-center shrink-0 border ${
+            {/* Question list */}
+            {questionsLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="w-8 h-8 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {filteredQuestions?.map((question) => {
+                  const isSelected = selectedQuestions.some(
+                    (sq) => sq.questionId === question.id,
+                  );
+                  const selectedQuestion = selectedQuestions.find(
+                    (sq) => sq.questionId === question.id,
+                  );
+                  return (
+                    <div
+                      key={question.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                         isSelected
-                          ? "bg-[#22A146] border-[#22A146] text-white"
-                          : "border-[#E3E8EF]"
+                          ? "border-[#22A146] bg-green-50"
+                          : "border-[#E3E8EF] hover:bg-gray-50"
                       }`}
+                      onClick={() => toggleQuestion(question)}
                     >
-                      {isSelected && <Check className="w-4 h-4" />}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#0C1F33]">
-                        {question.question}
-                      </p>
-                      <p className="text-xs text-[#64748B] mt-1">
-                        {question.type.toUpperCase()} • {question.difficulty} •{" "}
-                        {question.marks} marks
-                      </p>
+                      <button
+                        type="button"
+                        className={`w-6 h-6 rounded flex items-center justify-center shrink-0 border ${
+                          isSelected
+                            ? "bg-[#22A146] border-[#22A146] text-white"
+                            : "border-[#E3E8EF]"
+                        }`}
+                      >
+                        {isSelected && <Check className="w-4 h-4" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#0C1F33]">
+                          {question.question}
+                        </p>
+                        <p className="text-xs text-[#64748B] mt-1">
+                          {question.type.toUpperCase()} • {question.difficulty}{" "}
+                          • {question.marks} marks
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <input
+                          type="number"
+                          value={selectedQuestion?.marks ?? question.marks}
+                          onChange={(e) =>
+                            updateQuestionMarks(
+                              question.id,
+                              Number(e.target.value),
+                            )
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-20 px-2 py-1.5 border border-[#E3E8EF] rounded text-sm shrink-0"
+                        />
+                      )}
                     </div>
-                    {isSelected && (
-                      <input
-                        type="number"
-                        value={selectedQuestion?.marks ?? question.marks}
-                        onChange={(e) =>
-                          updateQuestionMarks(
-                            question.id,
-                            Number(e.target.value),
-                          )
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-20 px-2 py-1.5 border border-[#E3E8EF] rounded text-sm shrink-0"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-              {filteredQuestions?.length === 0 && (
-                <p className="text-center py-8 text-[#64748B]">
-                  No questions found.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+                  );
+                })}
+                {filteredQuestions?.length === 0 && (
+                  <p className="text-center py-8 text-[#64748B]">
+                    No questions found.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Submit */}
