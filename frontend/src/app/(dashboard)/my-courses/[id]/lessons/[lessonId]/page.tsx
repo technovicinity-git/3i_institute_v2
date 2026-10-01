@@ -89,7 +89,9 @@ export default function LessonPage() {
     useLessonMaterialUrl(lessonId);
 
   // Flatten all lessons in order
-  const allLessons = courseContent?.modules?.flatMap((m) => m.lessons) ?? [];
+  const allLessons = [...(courseContent?.modules ?? [])]
+    .sort((a, b) => a.order - b.order)
+    .flatMap((module) => [...module.lessons].sort((a, b) => a.order - b.order));
   const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
   const previousLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
@@ -158,9 +160,7 @@ export default function LessonPage() {
   }, [noteData]);
 
   // Find current lesson
-  const currentLesson = courseContent?.modules
-    ?.flatMap((m) => m.lessons)
-    ?.find((l) => l.id === lessonId);
+  const currentLesson = allLessons.find((lesson) => lesson.id === lessonId);
 
   const handleSaveNote = () => {
     if (!activeProfile || !notes.trim()) {
