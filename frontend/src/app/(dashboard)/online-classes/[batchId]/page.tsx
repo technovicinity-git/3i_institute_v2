@@ -216,6 +216,15 @@ export default function OnlineClassBatchPage() {
     (session) => session.status.key === "COMPLETED",
   );
 
+  // A batch is upcoming only while every scheduled session is still in the
+  // future. Once any session has started or finished, the batch is ongoing.
+  const isUpcomingBatch =
+    sessionsWithStatus.length > 0
+      ? sessionsWithStatus.every(
+          (session) => new Date(session.scheduledAt).getTime() > now.getTime(),
+        )
+      : batch.status !== "ACTIVE";
+
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString(undefined, {
       weekday: "long",
@@ -462,12 +471,12 @@ export default function OnlineClassBatchPage() {
 
               <span
                 className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  batch.status === "ACTIVE"
-                    ? "bg-green-50 text-green-700"
-                    : "bg-[#F8F3E8] text-[#9A7624]"
+                  isUpcomingBatch
+                    ? "bg-[#F8F3E8] text-[#9A7624]"
+                    : "bg-green-50 text-green-700"
                 }`}
               >
-                {batch.status === "ACTIVE" ? "Active" : "Upcoming"}
+                {isUpcomingBatch ? "Upcoming" : "Ongoing"}
               </span>
             </div>
           </div>
