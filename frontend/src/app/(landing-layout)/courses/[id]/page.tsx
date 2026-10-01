@@ -492,40 +492,40 @@ export default function CourseDetailsPage() {
                         key={idx}
                         className="border border-[#E3E8EF] rounded-lg overflow-hidden"
                       >
-                      <button
-                        onClick={() =>
-                          setOpenModule(openModule === idx ? -1 : idx)
-                        }
-                        className="w-full flex items-center justify-between px-5 py-2 bg-white hover:bg-[#F5F0E8] transition-colors"
-                      >
-                        <div className="flex items-center gap-5">
-                          <span className="font-serif text-[#B8912F]">
-                            {mod.moduleNum}
-                          </span>
-                          <span className="font-serif text-[#0C1F33]">
-                            {mod.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="inline-flex items-center gap-1.5 text-sm text-[#64748B]">
-                            {videoLesson ? (
-                              <>
-                                <Clock className="h-4 w-4" />
-                                Video · {videoLesson.duration}
-                              </>
-                            ) : (
-                              mod.duration
-                            )}
-                          </span>
-                          {/* {openModule === idx ? (
+                        <button
+                          onClick={() =>
+                            setOpenModule(openModule === idx ? -1 : idx)
+                          }
+                          className="w-full flex items-center justify-between px-5 py-2 bg-white hover:bg-[#F5F0E8] transition-colors"
+                        >
+                          <div className="flex items-center gap-5">
+                            <span className="font-serif text-[#B8912F]">
+                              {mod.moduleNum}
+                            </span>
+                            <span className="font-serif text-[#0C1F33]">
+                              {mod.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="inline-flex items-center gap-1.5 text-sm text-[#64748B]">
+                              {videoLesson ? (
+                                <>
+                                  <Clock className="h-4 w-4" />
+                                  Video · {videoLesson.duration}
+                                </>
+                              ) : (
+                                "Pdf"
+                              )}
+                            </span>
+                            {/* {openModule === idx ? (
                             <ChevronUp className="w-5 h-5 text-[#64748B]" />
                           ) : (
                             <ChevronDown className="w-5 h-5 text-[#64748B]" />
                           )} */}
-                        </div>
-                      </button>
+                          </div>
+                        </button>
 
-                      {/* {openModule === idx && (
+                        {/* {openModule === idx && (
                         <div className="bg-white divide-y divide-[#E3E8EF]">
                           {mod.lessonsList.map((lesson, li) => (
                             <div
