@@ -17,6 +17,11 @@ export const examService = {
     return response.data.data;
   },
 
+  updateExam: async (examId: string, input: CreateExamInput): Promise<Exam> => {
+    const response = await apiClient.patch(`/exams/${examId}`, input);
+    return response.data.data;
+  },
+
   getExamAttempts: async (examId: string): Promise<ExamAttempt[]> => {
     const response = await apiClient.get(`/exams/attempts/${examId}`);
     return response.data.data;

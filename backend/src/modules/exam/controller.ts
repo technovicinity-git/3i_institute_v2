@@ -96,6 +96,21 @@ export class ExamController {
     }
   };
 
+  updateExam = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const instructorId = req.user?.sub!;
+      const input = createExamSchema.parse(req.body);
+      const exam = await examService.updateExam(
+        instructorId,
+        req.params["id"] as string,
+        input,
+      );
+      sendSuccess(res, exam, 200, "Exam updated");
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getCourseExams = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const courseId = req.params["courseId"] as string;

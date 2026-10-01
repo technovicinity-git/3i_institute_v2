@@ -246,6 +246,80 @@ export class ExamService {
 
     return exam;
   }
+
+  async updateExam(instructorId: string, examId: string, input: CreateExamInput) {
+    const existingExam = await prisma.exam.findUnique({
+      where: { id: examId },
+      include: { course: true },
+    });
+
+    if (!existingExam) {
+      throw new NotFoundError("Exam not found");
+    }
+    if (existingExam.course.instructorId !== instructorId) {
+      throw new ForbiddenError("You can only update your own course exams");
+    }
+    if (input.courseId !== existingExam.courseId) {
+      throw new ValidationError("An exam cannot be moved to another course");
+    }
+
+    const isDynamic = input.questions.length === 0;
+    if (isDynamic && existingExam.course.type !== "REGULAR") {
+      throw new ValidationError(
+        "Online class exams require selecting at least one question",
+      );
+    }
+    if (existingExam.course.type === "ONLINE_CLASS" && !input.openDate) {
+      throw new ValidationError("Exam start time is required for online class exams");
+    }
+
+    if (!isDynamic) {
+      const questionIds = input.questions.map((question) => question.questionId);
+      if (new Set(questionIds).size !== questionIds.length) {
+        throw new ValidationError("A question can only be added once to an exam");
+      }
+      const questions = await prisma.question.findMany({
+        where: { id: { in: questionIds }, courseId: existingExam.courseId },
+        select: { id: true },
+      });
+      if (questions.length !== questionIds.length) {
+        throw new ValidationError("All questions must belong to this course");
+      }
+    }
+
+    if (input.type === "final") {
+      const existingFinal = await prisma.exam.findFirst({
+        where: {
+          courseId: existingExam.courseId,
+          type: "final",
+          id: { not: examId },
+        },
+      });
+      if (existingFinal) {
+        throw new ValidationError("Course already has a final exam");
+      }
+    }
+
+    return prisma.exam.update({
+      where: { id: examId },
+      data: {
+        title: input.title,
+        type: input.type,
+        duration: input.duration,
+        passMark: input.passMark,
+        totalMarks: input.totalMarks,
+        maxAttempts: input.maxAttempts,
+        cooldownHours: input.cooldownHours,
+        openDate: input.openDate ? new Date(input.openDate) : null,
+        closeDate: input.closeDate ? new Date(input.closeDate) : null,
+        randomizeQuestions: input.randomizeQuestions,
+        randomizeOptions: input.randomizeOptions,
+        revealAnswers: input.revealAnswers,
+        questions: JSON.parse(JSON.stringify(input.questions)),
+      },
+    });
+  }
+
   async getCourseExams(courseId: string, learnerProfileId?: string) {
     const exams = await prisma.exam.findMany({
       where: { courseId },
