@@ -194,6 +194,56 @@ router.post(
   examController.createExam,
 );
 
+/**
+ * @swagger
+ * /api/v1/exams/{id}:
+ *   patch:
+ *     tags: [Exams]
+ *     summary: Update an exam and its course-specific settings
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [courseId, title, type, duration, passMark, totalMarks, questions]
+ *             properties:
+ *               courseId: { type: string, format: uuid }
+ *               title: { type: string }
+ *               type: { type: string, enum: [practice, final] }
+ *               duration: { type: integer }
+ *               passMark: { type: integer }
+ *               totalMarks: { type: integer }
+ *               maxAttempts: { type: integer }
+ *               cooldownHours: { type: integer }
+ *               openDate: { type: string, format: date-time }
+ *               randomizeQuestions: { type: boolean }
+ *               randomizeOptions: { type: boolean }
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [questionId]
+ *                   properties:
+ *                     questionId: { type: string, format: uuid }
+ *                     marks: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Exam updated
+ */
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("exams.create"),
+  validate(createExamSchema),
+  examController.updateExam,
+);
+
 router.patch(
   "/questions/:id",
   authenticate,
@@ -253,7 +303,7 @@ router.post(
  * /api/v1/exams/grade/{attemptId}:
  *   post:
  *     tags: [Exams]
- *     summary: Grade written answer (instructor)
+ *     summary: Grade written answers (instructor)
  *     parameters:
  *       - in: path
  *         name: attemptId
@@ -265,13 +315,20 @@ router.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [questionId, marksAwarded]
+ *             required: [grades]
  *             properties:
- *               questionId: { type: string, format: uuid }
- *               marksAwarded: { type: integer }
+ *               grades:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required: [questionId, marksAwarded]
+ *                   properties:
+ *                     questionId: { type: string, format: uuid }
+ *                     marksAwarded: { type: number, minimum: 0 }
  *     responses:
  *       200:
- *         description: Answer graded
+ *         description: Answers saved and attempt score recalculated
  */
 router.post(
   "/grade/:attemptId",

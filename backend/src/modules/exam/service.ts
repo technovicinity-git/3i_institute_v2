@@ -246,6 +246,80 @@ export class ExamService {
 
     return exam;
   }
+
+  async updateExam(instructorId: string, examId: string, input: CreateExamInput) {
+    const existingExam = await prisma.exam.findUnique({
+      where: { id: examId },
+      include: { course: true },
+    });
+
+    if (!existingExam) {
+      throw new NotFoundError("Exam not found");
+    }
+    if (existingExam.course.instructorId !== instructorId) {
+      throw new ForbiddenError("You can only update your own course exams");
+    }
+    if (input.courseId !== existingExam.courseId) {
+      throw new ValidationError("An exam cannot be moved to another course");
+    }
+
+    const isDynamic = input.questions.length === 0;
+    if (isDynamic && existingExam.course.type !== "REGULAR") {
+      throw new ValidationError(
+        "Online class exams require selecting at least one question",
+      );
+    }
+    if (existingExam.course.type === "ONLINE_CLASS" && !input.openDate) {
+      throw new ValidationError("Exam start time is required for online class exams");
+    }
+
+    if (!isDynamic) {
+      const questionIds = input.questions.map((question) => question.questionId);
+      if (new Set(questionIds).size !== questionIds.length) {
+        throw new ValidationError("A question can only be added once to an exam");
+      }
+      const questions = await prisma.question.findMany({
+        where: { id: { in: questionIds }, courseId: existingExam.courseId },
+        select: { id: true },
+      });
+      if (questions.length !== questionIds.length) {
+        throw new ValidationError("All questions must belong to this course");
+      }
+    }
+
+    if (input.type === "final") {
+      const existingFinal = await prisma.exam.findFirst({
+        where: {
+          courseId: existingExam.courseId,
+          type: "final",
+          id: { not: examId },
+        },
+      });
+      if (existingFinal) {
+        throw new ValidationError("Course already has a final exam");
+      }
+    }
+
+    return prisma.exam.update({
+      where: { id: examId },
+      data: {
+        title: input.title,
+        type: input.type,
+        duration: input.duration,
+        passMark: input.passMark,
+        totalMarks: input.totalMarks,
+        maxAttempts: input.maxAttempts,
+        cooldownHours: input.cooldownHours,
+        openDate: input.openDate ? new Date(input.openDate) : null,
+        closeDate: input.closeDate ? new Date(input.closeDate) : null,
+        randomizeQuestions: input.randomizeQuestions,
+        randomizeOptions: input.randomizeOptions,
+        revealAnswers: input.revealAnswers,
+        questions: JSON.parse(JSON.stringify(input.questions)),
+      },
+    });
+  }
+
   async getCourseExams(courseId: string, learnerProfileId?: string) {
     const exams = await prisma.exam.findMany({
       where: { courseId },
@@ -570,6 +644,23 @@ export class ExamService {
     questionId: string,
     marksAwarded: number,
   ) {
+    return this.gradeWrittenAnswers(instructorId, attemptId, [
+      { questionId, marksAwarded },
+    ]);
+  }
+
+  async gradeWrittenAnswers(
+    instructorId: string,
+    attemptId: string,
+    grades: Array<{ questionId: string; marksAwarded: number }>,
+  ) {
+    if (grades.length === 0) {
+      throw new ValidationError("At least one answer grade is required");
+    }
+    if (new Set(grades.map((grade) => grade.questionId)).size !== grades.length) {
+      throw new ValidationError("Each question can only be graded once per submission");
+    }
+
     const attempt = await prisma.examAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -585,13 +676,7 @@ export class ExamService {
       throw new ForbiddenError("You can only grade your own course exams");
     }
 
-    if (!Number.isFinite(marksAwarded) || marksAwarded < 0) {
-      throw new ValidationError("Marks awarded must be a non-negative number");
-    }
-
-    // Update answers with marks so the grade survives re-visits
     const answers = attempt.answers as Record<string, unknown>;
-    answers[`${questionId}_marks`] = marksAwarded;
 
     // Questions attached to this attempt's exam. For REGULAR dynamic exams
     // (no fixed list on the exam) the exact set the learner saw is persisted
@@ -619,15 +704,25 @@ export class ExamService {
     });
 
     // Only written (short answer / essay) questions can be graded manually
-    const targetQuestion = questions.find((q) => q.id === questionId);
-    if (
-      !targetQuestion ||
-      (targetQuestion.type !== "short_answer" &&
-        targetQuestion.type !== "essay")
-    ) {
-      throw new ValidationError(
-        "Only short answer and essay questions can be manually graded",
-      );
+    for (const { questionId, marksAwarded } of grades) {
+      if (!Number.isFinite(marksAwarded) || marksAwarded < 0) {
+        throw new ValidationError("Marks awarded must be a non-negative number");
+      }
+      const targetQuestion = questions.find((q) => q.id === questionId);
+      if (
+        !targetQuestion ||
+        (targetQuestion.type !== "short_answer" && targetQuestion.type !== "essay")
+      ) {
+        throw new ValidationError(
+          "Only short answer and essay questions can be manually graded",
+        );
+      }
+      const examQuestion = examQuestions.find((q) => q.questionId === questionId);
+      const maxMarks = examQuestion?.marks ?? targetQuestion.marks;
+      if (marksAwarded > maxMarks) {
+        throw new ValidationError(`Marks awarded cannot exceed ${maxMarks}`);
+      }
+      answers[`${questionId}_marks`] = marksAwarded;
     }
 
     // Recompute the attempt score every time a written question is graded:

@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Users,
-  Clock,
   CheckCircle,
   AlertCircle,
   ChevronRight,
@@ -93,7 +92,7 @@ export default function ExamAttemptsPage() {
             {pendingGrading.map((attempt) => (
               <Link
                 key={attempt.id}
-                href={`/instructor/attempts/${attempt.id}/grade`}
+                href={`/instructor/courses/${courseId}/exams/${examId}/attempts/${attempt.id}/grade`}
                 className="bg-white rounded-xl border border-orange-200 p-5 flex items-center justify-between hover:shadow-md transition-shadow"
               >
                 <div>

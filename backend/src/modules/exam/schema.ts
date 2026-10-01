@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const gradeWrittenAnswersSchema = z.object({
+  grades: z.array(z.object({
+    questionId: z.string().uuid(),
+    marksAwarded: z.number().finite().min(0),
+  })).min(1),
+});
+
 export const createQuestionSchema = z.object({
   courseId: z.string().uuid("Course is required"),
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),

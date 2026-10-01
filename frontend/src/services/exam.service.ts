@@ -17,6 +17,11 @@ export const examService = {
     return response.data.data;
   },
 
+  updateExam: async (examId: string, input: CreateExamInput): Promise<Exam> => {
+    const response = await apiClient.patch(`/exams/${examId}`, input);
+    return response.data.data;
+  },
+
   getExamAttempts: async (examId: string): Promise<ExamAttempt[]> => {
     const response = await apiClient.get(`/exams/attempts/${examId}`);
     return response.data.data;
@@ -24,8 +29,10 @@ export const examService = {
 
   gradeAnswer: async (
     attemptId: string,
-    input: GradeAnswerInput,
+    input: GradeAnswerInput | GradeAnswerInput[],
   ): Promise<void> => {
-    await apiClient.post(`/exams/grade/${attemptId}`, input);
+    await apiClient.post(`/exams/grade/${attemptId}`, {
+      grades: Array.isArray(input) ? input : [input],
+    });
   },
 };
