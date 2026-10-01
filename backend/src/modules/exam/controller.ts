@@ -4,6 +4,7 @@ import {
   createQuestionSchema,
   createExamSchema,
   submitExamSchema,
+  gradeWrittenAnswersSchema,
 } from "#/modules/exam/schema";
 import { sendSuccess } from "#/shared/response";
 import { bulkImportService } from "#/modules/exam/bulk-import.service";
@@ -128,14 +129,17 @@ export class ExamController {
   ) => {
     try {
       const instructorId = req.user?.sub!;
-      const { marksAwarded, questionId } = req.body;
-      await examService.gradeWrittenAnswer(
+      const input = gradeWrittenAnswersSchema.parse(
+        Array.isArray(req.body?.grades)
+          ? req.body
+          : { grades: [req.body] },
+      );
+      await examService.gradeWrittenAnswers(
         instructorId,
         req.params["attemptId"] as string,
-        questionId,
-        marksAwarded,
+        input.grades,
       );
-      sendSuccess(res, null, 200, "Answer graded");
+      sendSuccess(res, null, 200, "Answers graded");
     } catch (error) {
       next(error);
     }

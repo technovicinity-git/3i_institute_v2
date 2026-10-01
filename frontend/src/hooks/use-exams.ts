@@ -45,7 +45,7 @@ export function useGradeAnswerMutation() {
       input,
     }: {
       attemptId: string;
-      input: GradeAnswerInput;
+      input: GradeAnswerInput | GradeAnswerInput[];
     }) => examService.gradeAnswer(attemptId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exam-attempts"] });

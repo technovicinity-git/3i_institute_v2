@@ -253,7 +253,7 @@ router.post(
  * /api/v1/exams/grade/{attemptId}:
  *   post:
  *     tags: [Exams]
- *     summary: Grade written answer (instructor)
+ *     summary: Grade written answers (instructor)
  *     parameters:
  *       - in: path
  *         name: attemptId
@@ -265,13 +265,20 @@ router.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [questionId, marksAwarded]
+ *             required: [grades]
  *             properties:
- *               questionId: { type: string, format: uuid }
- *               marksAwarded: { type: integer }
+ *               grades:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required: [questionId, marksAwarded]
+ *                   properties:
+ *                     questionId: { type: string, format: uuid }
+ *                     marksAwarded: { type: number, minimum: 0 }
  *     responses:
  *       200:
- *         description: Answer graded
+ *         description: Answers saved and attempt score recalculated
  */
 router.post(
   "/grade/:attemptId",

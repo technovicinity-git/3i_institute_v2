@@ -24,8 +24,10 @@ export const examService = {
 
   gradeAnswer: async (
     attemptId: string,
-    input: GradeAnswerInput,
+    input: GradeAnswerInput | GradeAnswerInput[],
   ): Promise<void> => {
-    await apiClient.post(`/exams/grade/${attemptId}`, input);
+    await apiClient.post(`/exams/grade/${attemptId}`, {
+      grades: Array.isArray(input) ? input : [input],
+    });
   },
 };
