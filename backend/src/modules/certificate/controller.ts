@@ -43,6 +43,7 @@ export class CertificateController {
     try {
       const input = issueCertificateSchema.parse(req.body);
       const certificate = await certificateService.issueExamCertificate(
+        req.user?.sub!,
         input.learnerProfileId,
         input.courseId,
       );
@@ -70,6 +71,7 @@ export class CertificateController {
 
       const certificate =
         await certificateService.getExamCertificate(
+          req.user?.sub!,
           learnerProfileId,
           courseId,
         );

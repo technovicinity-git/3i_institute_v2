@@ -10,7 +10,10 @@ import {
   useExamCertificate,
   useIssueExamCertificateMutation,
 } from "@/hooks/use-learner-certificates";
-import type { ExamCertificate } from "@/services/learner-certificate.service";
+import {
+  downloadExamCertificatePdf,
+  type ExamCertificate,
+} from "@/services/learner-certificate.service";
 import {
   useCourseContent,
   useLessonNotes,
@@ -64,6 +67,7 @@ export default function LessonPage() {
       {
         onSuccess: (cert) => {
           setGeneratedCertificate(cert);
+          downloadExamCertificatePdf(cert);
         },
       },
     );
@@ -479,17 +483,36 @@ export default function LessonPage() {
                               Last Exam Score
                             </p>
                             <p className="text-xl font-semibold text-[#0C1F33] mt-1">
-                              {certificate.details?.score ?? 0}
-                              /{certificate.details?.totalMarks ?? 0}
+                              {certificate.details?.score === null
+                                ? "Pending"
+                                : typeof certificate.details?.score === "number"
+                                  ? certificate.details.score
+                                  : "—"}
+                              {typeof certificate.details?.score === "number" &&
+                                `/${certificate.details?.totalMarks ?? 0}`}
                             </p>
                           </div>
                         </div>
+                        {certificate.details?.examTitle && (
+                          <p className="mt-3 text-xs text-[#64748B]">
+                            Latest attempt: {certificate.details.examTitle}
+                            {certificate.details.attemptNumber
+                              ? ` · Attempt #${certificate.details.attemptNumber}`
+                              : ""}
+                          </p>
+                        )}
                         <p className="mt-4 text-xs text-[#64748B]">
                           Verification code:{" "}
                           <span className="font-mono font-semibold text-[#0C1F33]">
                             {certificate.verificationCode}
                           </span>
                         </p>
+                        <button
+                          onClick={() => downloadExamCertificatePdf(certificate)}
+                          className="mt-4 px-4 py-2 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#0C1F33]"
+                        >
+                          Download PDF
+                        </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-4 flex-wrap">
