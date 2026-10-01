@@ -485,6 +485,7 @@ model Certificate {
 
   @@index([verificationCode])
   @@index([learnerProfileId])
+  @@unique([learnerProfileId, courseId, type])
 }
 
 model Subscription {
