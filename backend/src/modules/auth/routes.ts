@@ -99,7 +99,7 @@ const router: Router = Router();
  */
 router.post(
   "/register",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(registerSchema),
   authController.register,
 );
@@ -153,7 +153,7 @@ router.post(
  */
 router.post(
   "/login",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(loginSchema),
   authController.login,
 );
@@ -258,7 +258,7 @@ router.post(
  */
 router.post(
   "/forgot-password",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 3 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(forgotPasswordSchema),
   authController.forgotPassword,
 );
@@ -390,7 +390,7 @@ router.post(
  */
 router.post(
   "/google",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(googleLoginSchema),
   socialAuthController.googleLogin,
 );
@@ -433,7 +433,7 @@ router.post(
  */
 router.post(
   "/apple",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(appleLoginSchema),
   socialAuthController.appleLogin,
 );
@@ -471,7 +471,7 @@ router.post(
  */
 router.post(
   "/register/learner",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 5 }),
   validate(learnerRegistrationSchema),
   registrationController.registerLearner,
 );
@@ -509,7 +509,7 @@ router.post(
  */
 router.post(
   "/register/instructor",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }),
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 5 }),
   validate(instructorRegistrationSchema),
   registrationController.registerInstructor,
 );
