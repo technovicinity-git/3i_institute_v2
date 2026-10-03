@@ -18,6 +18,14 @@ export interface AdminUsersResponse {
   total: number;
 }
 
+export interface AdminUserFilters {
+  search?: string;
+  role?: string;
+  accountType?: string;
+  emailVerified?: string;
+  subscriptionStatus?: string;
+}
+
 export interface AdminInstructor {
   id: string;
   firstName: string;
@@ -218,13 +226,17 @@ export const adminService = {
   getUsers: async (
     page = 1,
     limit = 20,
-    search?: string,
+    filters: AdminUserFilters = {},
   ): Promise<AdminUsersResponse> => {
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
     });
-    if (search) params.set("search", search);
+    if (filters.search) params.set("search", filters.search);
+    if (filters.role) params.set("role", filters.role);
+    if (filters.accountType) params.set("accountType", filters.accountType);
+    if (filters.emailVerified) params.set("emailVerified", filters.emailVerified);
+    if (filters.subscriptionStatus) params.set("subscriptionStatus", filters.subscriptionStatus);
     const response = await apiClient.get(`/admin/users?${params.toString()}`);
     return response.data.data;
   },

@@ -8,6 +8,7 @@ import {
   Ban,
   CheckCircle,
   Trash2,
+  Filter,
 } from "lucide-react";
 import {
   useAdminUsers,
@@ -48,11 +49,12 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "" });
   const [actionUser, setActionUser] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useAdminUsers(
     page,
-    debouncedSearch || undefined,
+    { search: debouncedSearch || undefined, ...filters },
   );
   const suspendMutation = useSuspendUserMutation();
   const activateMutation = useActivateUserMutation();
@@ -101,16 +103,34 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 mb-6 max-w-[400px]">
-        <Search className="w-4 h-4 text-[#94A3B8]" />
-        <input
-          type="text"
-          placeholder="Search by name or email..."
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="bg-transparent text-sm outline-none w-full"
-        />
+      {/* Search and filters */}
+      <div className="bg-white border border-[#E3E8EF] rounded-xl p-4 mb-6">
+        <div className="flex items-center gap-2 border border-[#E3E8EF] rounded-lg px-4 py-2.5 mb-4 max-w-[440px]">
+          <Search className="w-4 h-4 text-[#94A3B8]" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="bg-transparent text-sm outline-none w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-[#334155]"><Filter className="w-4 h-4" /> Filters</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <select aria-label="Filter by role" value={filters.role} onChange={(event) => { setFilters({ ...filters, role: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
+            <option value="">All roles</option><option value="Admin">Admin</option><option value="Instructor">Instructor</option><option value="Account Holder">Account Holder</option>
+          </select>
+          <select aria-label="Filter by account type" value={filters.accountType} onChange={(event) => { setFilters({ ...filters, accountType: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
+            <option value="">All account types</option><option value="ADULT">Adult</option><option value="STANDALONE_MINOR">Standalone minor</option>
+          </select>
+          <select aria-label="Filter by email verification" value={filters.emailVerified} onChange={(event) => { setFilters({ ...filters, emailVerified: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
+            <option value="">Any email status</option><option value="true">Email verified</option><option value="false">Email not verified</option>
+          </select>
+          <select aria-label="Filter by subscription" value={filters.subscriptionStatus} onChange={(event) => { setFilters({ ...filters, subscriptionStatus: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
+            <option value="">Any subscription</option><option value="ACTIVE">Active subscription</option><option value="INACTIVE">No active subscription</option>
+          </select>
+        </div>
+        {(filters.role || filters.accountType || filters.emailVerified || filters.subscriptionStatus || debouncedSearch) && <button onClick={() => { setFilters({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "" }); setSearchQuery(""); setDebouncedSearch(""); setPage(1); }} className="mt-3 text-sm font-semibold text-[#2563EB] hover:underline">Clear filters</button>}
       </div>
 
       {/* Loading */}

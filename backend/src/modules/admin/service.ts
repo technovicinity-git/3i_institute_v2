@@ -2,17 +2,22 @@ import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
 
 export class AdminService {
-  async getUsers(page: number, limit: number, search?: string) {
+  async getUsers(
+    page: number,
+    limit: number,
+    filters: { search?: string; role?: string; accountType?: string; emailVerified?: boolean; subscriptionStatus?: string } = {},
+  ) {
     const where: any = {
-      ...(search
-        ? {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-              { email: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      ...(filters.search ? { OR: [
+        { firstName: { contains: filters.search, mode: "insensitive" } },
+        { lastName: { contains: filters.search, mode: "insensitive" } },
+        { email: { contains: filters.search, mode: "insensitive" } },
+      ] } : {}),
+      ...(filters.role ? { role: { name: filters.role } } : {}),
+      ...(filters.accountType ? { accountType: filters.accountType } : {}),
+      ...(filters.emailVerified !== undefined ? { emailVerified: filters.emailVerified } : {}),
+      ...(filters.subscriptionStatus === "ACTIVE" ? { subscriptions: { some: { status: "ACTIVE" } } } : {}),
+      ...(filters.subscriptionStatus === "INACTIVE" ? { subscriptions: { none: { status: "ACTIVE" } } } : {}),
     };
 
     const [total, users] = await Promise.all([
