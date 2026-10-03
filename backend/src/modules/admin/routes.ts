@@ -132,6 +132,8 @@ router.get(
   adminController.getPendingApplications,
 );
 
+router.get("/instructors/:id", authenticate, authorize("admin.access"), adminController.getInstructorDetails);
+
 /**
  * @swagger
  * /api/v1/admin/courses/pending:

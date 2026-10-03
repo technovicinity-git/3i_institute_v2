@@ -30,6 +30,15 @@ export interface AdminInstructor {
     courses: number;
   };
   createdAt: string;
+  status: "ACTIVE" | "SUSPENDED" | "PENDING" | "REJECTED";
+}
+
+export interface AdminInstructorDetails extends AdminInstructor {
+  application: {
+    bio?: string; areaOfExpertise?: string; cvUrl?: string;
+    wwccNumber?: string; wwccState?: string; wwccExpiry?: string;
+  } | null;
+  courses: Array<{ id: string; title: string; summary: string; thumbnailUrl: string | null; status: string; createdAt: string }>;
 }
 
 export interface PendingApplication {
@@ -235,6 +244,19 @@ export const adminService = {
   getInstructors: async (): Promise<AdminInstructor[]> => {
     const response = await apiClient.get("/admin/instructors");
     return response.data.data.instructors;
+  },
+
+  getInstructorDetails: async (id: string): Promise<AdminInstructorDetails> => {
+    const response = await apiClient.get(`/admin/instructors/${id}`);
+    return response.data.data;
+  },
+
+  suspendInstructor: async (id: string): Promise<void> => {
+    await apiClient.post(`/instructors/${id}/suspend`);
+  },
+
+  reinstateInstructor: async (id: string): Promise<void> => {
+    await apiClient.post(`/instructors/${id}/reinstate`);
   },
 
   getPendingApplications: async (): Promise<PendingApplication[]> => {

@@ -229,6 +229,20 @@ export class InstructorService {
 
     return { message: "Instructor suspended" };
   }
+
+  async reinstate(adminId: string, instructorId: string) {
+    const user = await prisma.user.findUnique({ where: { id: instructorId }, include: { role: true } });
+    if (!user) throw new NotFoundError("Instructor not found");
+    if (user.role.name === "Instructor") throw new ConflictError("Instructor is already active");
+    const instructorRole = await prisma.role.findUnique({ where: { name: "Instructor" } });
+    if (!instructorRole) throw new Error("Instructor role not found — run seed");
+    const latestStatus = await prisma.auditLog.findFirst({ where: { resource: "instructor", resourceId: instructorId, action: { in: ["INSTRUCTOR_SUSPENDED", "INSTRUCTOR_REINSTATED"] } }, orderBy: { createdAt: "desc" } });
+    if (latestStatus?.action !== "INSTRUCTOR_SUSPENDED") throw new ValidationError("User is not a suspended instructor");
+    await prisma.user.update({ where: { id: instructorId }, data: { roleId: instructorRole.id } });
+    await prisma.course.updateMany({ where: { instructorId, status: "SUSPENDED" }, data: { status: "PUBLISHED" } });
+    await prisma.auditLog.create({ data: { userId: adminId, action: "INSTRUCTOR_REINSTATED", resource: "instructor", resourceId: instructorId, details: { reinstatedBy: adminId } } });
+    return { message: "Instructor reinstated" };
+  }
   async getApplicationStatus(userId: string) {
     // Check if user is already instructor
     const user = await prisma.user.findUnique({

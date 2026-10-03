@@ -69,6 +69,13 @@ export class InstructorController {
     }
   };
 
+  reinstate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await instructorService.reinstate(req.user?.sub!, req.params["instructorId"] as string);
+      sendSuccess(res, result, 200, "Instructor reinstated");
+    } catch (error) { next(error); }
+  };
+
   getApplicationStatus = async (
     req: Request,
     res: Response,
