@@ -16,6 +16,7 @@ import {
   useApproveInstructorMutation,
   useRejectInstructorMutation,
 } from "@/hooks/use-admin";
+import { useQueryClient } from "@tanstack/react-query";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -30,6 +31,7 @@ export default function AdminInstructorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: instructors, isLoading: instructorsLoading } =
     useAdminInstructors();
@@ -47,7 +49,14 @@ export default function AdminInstructorsPage() {
   );
 
   const handleApprove = (userId: string) => {
-    approveMutation.mutate(userId);
+    approveMutation.mutate(userId, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
+        queryClient.invalidateQueries({
+          queryKey: ["admin-pending-applications"],
+        });
+      },
+    });
   };
 
   const handleReject = (userId: string) => {
@@ -56,6 +65,10 @@ export default function AdminInstructorsPage() {
       { userId, reason: rejectReason },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ["admin-pending-applications"],
+          });
+          queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
           setRejectTarget(null);
           setRejectReason("");
         },

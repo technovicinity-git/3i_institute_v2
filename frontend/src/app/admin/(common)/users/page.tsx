@@ -32,7 +32,7 @@ function getRoleBadge(role: string) {
       className: "bg-[#7C3AED]/10 text-[#7C3AED]",
     },
     "Account Holder": {
-      label: "LEARNER",
+      label: "ACCOUNT HOLDER",
       className: "bg-[#22A146]/10 text-[#22A146]",
     },
   };
