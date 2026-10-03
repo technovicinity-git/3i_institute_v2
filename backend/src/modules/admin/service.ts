@@ -2,6 +2,92 @@ import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
 
 export class AdminService {
+  async getLearnerProfiles(
+    page: number,
+    limit: number,
+    filters: { search?: string; status?: string; seatStatus?: string } = {},
+  ) {
+    const where: any = {
+      ...(filters.status === "ACTIVE" ? { deletedAt: null } : {}),
+      ...(filters.status === "ARCHIVED" ? { deletedAt: { not: null } } : {}),
+      ...(filters.seatStatus === "ACTIVE" ? { isActive: true } : {}),
+      ...(filters.seatStatus === "INACTIVE" ? { isActive: false } : {}),
+      ...(filters.search ? {
+        OR: [
+          { displayName: { contains: filters.search, mode: "insensitive" } },
+          { account: { is: { firstName: { contains: filters.search, mode: "insensitive" } } } },
+          { account: { is: { lastName: { contains: filters.search, mode: "insensitive" } } } },
+          { account: { is: { email: { contains: filters.search, mode: "insensitive" } } } },
+        ],
+      } : {}),
+    };
+    const [total, profiles] = await Promise.all([
+      prisma.learnerProfile.count({ where }),
+      prisma.learnerProfile.findMany({
+        where,
+        select: {
+          id: true, displayName: true, dateOfBirth: true, avatarUrl: true,
+          isActive: true, chatEnabled: true, createdAt: true, deletedAt: true,
+          account: { select: { id: true, firstName: true, lastName: true, email: true, accountType: true } },
+          _count: { select: { enrolments: true, examAttempts: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+    return { profiles, total };
+  }
+
+  async getLearnerProfileDetails(profileId: string) {
+    const profile = await prisma.learnerProfile.findUnique({
+      where: { id: profileId },
+      select: {
+        id: true, displayName: true, dateOfBirth: true, avatarUrl: true,
+        isActive: true, chatEnabled: true, nameLocked: true, createdAt: true, deletedAt: true,
+        account: { select: { id: true, firstName: true, lastName: true, email: true, accountType: true } },
+        enrolments: {
+          orderBy: { enrolledAt: "desc" },
+          select: {
+            id: true, enrolledAt: true, waitlisted: true, waitlistPosition: true,
+            course: {
+              select: {
+                id: true, title: true, status: true, thumbnailUrl: true,
+                exams: {
+                  select: {
+                    id: true, title: true, type: true, totalMarks: true, passMark: true,
+                    attempts: {
+                      where: { learnerProfileId: profileId },
+                      orderBy: { attemptNumber: "desc" },
+                      select: { id: true, attemptNumber: true, score: true, totalMarks: true, passed: true, graded: true, startedAt: true, submittedAt: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: { select: { examAttempts: true, certificates: true } },
+      },
+    });
+    if (!profile) throw new NotFoundError("Learner profile not found");
+    return profile;
+  }
+
+  async archiveLearnerProfile(profileId: string) {
+    const profile = await prisma.learnerProfile.findUnique({ where: { id: profileId } });
+    if (!profile) throw new NotFoundError("Learner profile not found");
+    await prisma.learnerProfile.update({ where: { id: profileId }, data: { deletedAt: new Date() } });
+    return { message: "Learner profile archived" };
+  }
+
+  async restoreLearnerProfile(profileId: string) {
+    const profile = await prisma.learnerProfile.findUnique({ where: { id: profileId } });
+    if (!profile) throw new NotFoundError("Learner profile not found");
+    await prisma.learnerProfile.update({ where: { id: profileId }, data: { deletedAt: null } });
+    return { message: "Learner profile restored" };
+  }
+
   async getUsers(
     page: number,
     limit: number,

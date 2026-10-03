@@ -17,11 +17,13 @@ import {
   BarChart3,
   X,
   Tags,
+  UsersRound,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { label: "Users", icon: Users, href: "/admin/users" },
+  { label: "Learner Profiles", icon: UsersRound, href: "/admin/learner-profiles" },
   { label: "Instructors", icon: GraduationCap, href: "/admin/instructors" },
   { label: "Courses", icon: BookOpen, href: "/admin/courses" },
   { label: "Exams", icon: FileText, href: "/admin/exams" },
