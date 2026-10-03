@@ -13,6 +13,40 @@ export function useAdminUsers(
   });
 }
 
+export function useAdminLearnerProfiles(
+  page: number,
+  filters: { search?: string; status?: string; seatStatus?: string } = {},
+) {
+  return useQuery({
+    queryKey: ["admin-learner-profiles", page, filters],
+    queryFn: () => adminService.getLearnerProfiles(page, filters),
+  });
+}
+
+export function useAdminLearnerProfile(id: string) {
+  return useQuery({
+    queryKey: ["admin-learner-profile", id],
+    queryFn: () => adminService.getLearnerProfileDetails(id),
+    enabled: Boolean(id),
+  });
+}
+
+function useLearnerProfileAction(action: "archive" | "restore") {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => action === "archive" ? adminService.archiveLearnerProfile(id) : adminService.restoreLearnerProfile(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-learner-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-learner-profile", id] });
+      toast.success(action === "archive" ? "Learner profile archived" : "Learner profile restored");
+    },
+    onError: (error: any) => toast.error(error.response?.data?.error?.message ?? `Failed to ${action} learner profile`),
+  });
+}
+
+export function useArchiveLearnerProfileMutation() { return useLearnerProfileAction("archive"); }
+export function useRestoreLearnerProfileMutation() { return useLearnerProfileAction("restore"); }
+
 export function useSuspendUserMutation() {
   const queryClient = useQueryClient();
 

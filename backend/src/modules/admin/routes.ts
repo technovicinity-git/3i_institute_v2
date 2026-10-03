@@ -5,6 +5,11 @@ import { authorize } from "#/middleware/authorize";
 
 const router: Router = Router();
 
+router.get("/learner-profiles", authenticate, authorize("admin.access"), adminController.getLearnerProfiles);
+router.get("/learner-profiles/:id", authenticate, authorize("admin.access"), adminController.getLearnerProfileDetails);
+router.post("/learner-profiles/:id/archive", authenticate, authorize("admin.access"), adminController.archiveLearnerProfile);
+router.post("/learner-profiles/:id/restore", authenticate, authorize("admin.access"), adminController.restoreLearnerProfile);
+
 /**
  * @swagger
  * /api/v1/admin/users:

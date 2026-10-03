@@ -3,6 +3,39 @@ import { adminService } from "#/modules/admin/service";
 import { sendSuccess } from "#/shared/response";
 
 export class AdminController {
+  getLearnerProfiles = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const page = Number(req.query["page"] ?? 1);
+      const limit = Number(req.query["limit"] ?? 20);
+      const search = req.query["search"] as string | undefined;
+      const status = req.query["status"] as string | undefined;
+      const seatStatus = req.query["seatStatus"] as string | undefined;
+      const result = await adminService.getLearnerProfiles(page, limit, { search, status, seatStatus });
+      sendSuccess(res, result, 200);
+    } catch (error) { next(error); }
+  };
+
+  getLearnerProfileDetails = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await adminService.getLearnerProfileDetails(req.params["id"] as string);
+      sendSuccess(res, result, 200);
+    } catch (error) { next(error); }
+  };
+
+  archiveLearnerProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await adminService.archiveLearnerProfile(req.params["id"] as string);
+      sendSuccess(res, result, 200);
+    } catch (error) { next(error); }
+  };
+
+  restoreLearnerProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await adminService.restoreLearnerProfile(req.params["id"] as string);
+      sendSuccess(res, result, 200);
+    } catch (error) { next(error); }
+  };
+
   getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const page = Number(req.query["page"] ?? 1);

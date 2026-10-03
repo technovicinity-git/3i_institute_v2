@@ -18,6 +18,39 @@ export interface AdminUsersResponse {
   total: number;
 }
 
+export interface AdminLearnerProfile {
+  id: string;
+  displayName: string;
+  dateOfBirth: string;
+  avatarUrl: string | null;
+  isActive: boolean;
+  chatEnabled: boolean;
+  createdAt: string;
+  deletedAt: string | null;
+  account: { id: string; firstName: string; lastName: string; email: string; accountType: string };
+  _count: { enrolments: number; examAttempts: number };
+}
+
+export interface AdminLearnerProfilesResponse {
+  profiles: AdminLearnerProfile[];
+  total: number;
+}
+
+export interface AdminLearnerProfileDetails extends Omit<AdminLearnerProfile, "_count"> {
+  nameLocked: boolean;
+  enrolments: Array<{
+    id: string; enrolledAt: string; waitlisted: boolean; waitlistPosition: number | null;
+    course: {
+      id: string; title: string; status: string; thumbnailUrl: string | null;
+      exams: Array<{
+        id: string; title: string; type: string; totalMarks: number; passMark: number;
+        attempts: Array<{ id: string; attemptNumber: number; score: number | null; totalMarks: number; passed: boolean | null; graded: boolean; startedAt: string; submittedAt: string | null }>;
+      }>;
+    };
+  }>;
+  _count: { examAttempts: number; certificates: number };
+}
+
 export interface AdminUserFilters {
   search?: string;
   role?: string;
@@ -223,6 +256,31 @@ export interface AdminCertificate {
 }
 
 export const adminService = {
+  getLearnerProfiles: async (
+    page = 1,
+    filters: { search?: string; status?: string; seatStatus?: string } = {},
+  ): Promise<AdminLearnerProfilesResponse> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (filters.search) params.set("search", filters.search);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.seatStatus) params.set("seatStatus", filters.seatStatus);
+    const response = await apiClient.get(`/admin/learner-profiles?${params.toString()}`);
+    return response.data.data;
+  },
+
+  getLearnerProfileDetails: async (id: string): Promise<AdminLearnerProfileDetails> => {
+    const response = await apiClient.get(`/admin/learner-profiles/${id}`);
+    return response.data.data;
+  },
+
+  archiveLearnerProfile: async (id: string): Promise<void> => {
+    await apiClient.post(`/admin/learner-profiles/${id}/archive`);
+  },
+
+  restoreLearnerProfile: async (id: string): Promise<void> => {
+    await apiClient.post(`/admin/learner-profiles/${id}/restore`);
+  },
+
   getUsers: async (
     page = 1,
     limit = 20,
