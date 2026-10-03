@@ -65,6 +65,26 @@ export function useAdminInstructors() {
   });
 }
 
+export function useAdminInstructor(id: string) {
+  return useQuery({ queryKey: ["admin-instructor", id], queryFn: () => adminService.getInstructorDetails(id), enabled: Boolean(id) });
+}
+
+function useInstructorStatusMutation(action: "suspend" | "reinstate") {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => action === "suspend" ? adminService.suspendInstructor(id) : adminService.reinstateInstructor(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-instructor", id] });
+      toast.success(action === "suspend" ? "Instructor suspended" : "Instructor reinstated");
+    },
+    onError: (error: any) => toast.error(error.response?.data?.error?.message ?? `Failed to ${action} instructor`),
+  });
+}
+
+export function useSuspendInstructorMutation() { return useInstructorStatusMutation("suspend"); }
+export function useReinstateInstructorMutation() { return useInstructorStatusMutation("reinstate"); }
+
 export function usePendingApplications() {
   return useQuery({
     queryKey: ["admin-pending-applications"],
@@ -77,11 +97,12 @@ export function useApproveInstructorMutation() {
 
   return useMutation({
     mutationFn: (userId: string) => adminService.approveInstructor(userId),
-    onSuccess: () => {
+    onSuccess: (_data, userId) => {
       queryClient.invalidateQueries({
         queryKey: ["admin-pending-applications"],
       });
       queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-instructor", userId] });
       toast.success("Instructor approved");
     },
     onError: (error: any) => {
@@ -97,10 +118,11 @@ export function useRejectInstructorMutation() {
   return useMutation({
     mutationFn: ({ userId, reason }: { userId: string; reason: string }) =>
       adminService.rejectInstructor(userId, reason),
-    onSuccess: () => {
+    onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({
         queryKey: ["admin-pending-applications"],
       });
+      queryClient.invalidateQueries({ queryKey: ["admin-instructor", userId] });
       toast.success("Instructor rejected");
     },
     onError: (error: any) => {

@@ -250,4 +250,6 @@ router.post(
   instructorController.suspend,
 );
 
+router.post("/:instructorId/reinstate", authenticate, authorize("instructors.suspend"), instructorController.reinstate);
+
 export { router as instructorRoutes };

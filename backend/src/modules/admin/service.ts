@@ -102,10 +102,19 @@ export class AdminService {
   }
 
   async getInstructors(page: number, limit: number) {
+    const statusEvents = await prisma.auditLog.findMany({
+      where: { action: { in: ["INSTRUCTOR_SUSPENDED", "INSTRUCTOR_REINSTATED"] }, resource: "instructor" },
+      select: { resourceId: true, action: true },
+      orderBy: { createdAt: "desc" },
+    });
+    const latestStatus = new Map<string, string>();
+    for (const event of statusEvents) if (event.resourceId && !latestStatus.has(event.resourceId)) latestStatus.set(event.resourceId, event.action);
+    const currentlySuspendedIds = [...latestStatus].filter(([, action]) => action === "INSTRUCTOR_SUSPENDED").map(([id]) => id);
+    const where = { OR: [{ role: { name: "Instructor" } }, { id: { in: currentlySuspendedIds } }] };
     const [total, instructors] = await Promise.all([
-      prisma.user.count({ where: { role: { name: "Instructor" } } }),
+      prisma.user.count({ where }),
       prisma.user.findMany({
-        where: { role: { name: "Instructor" } },
+        where,
         select: {
           id: true,
           firstName: true,
@@ -117,6 +126,7 @@ export class AdminService {
           _count: {
             select: { courses: true },
           },
+          role: { select: { name: true } },
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
@@ -124,7 +134,31 @@ export class AdminService {
       }),
     ]);
 
-    return { instructors, total };
+    return { instructors: instructors.map((instructor) => ({ ...instructor, status: instructor.role.name === "Instructor" ? "ACTIVE" : "SUSPENDED" })), total };
+  }
+
+  async getInstructorDetails(instructorId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: instructorId },
+      select: {
+        id: true, firstName: true, lastName: true, email: true, bio: true,
+        avatarUrl: true, createdAt: true, role: { select: { name: true } },
+        courses: { select: { id: true, title: true, summary: true, thumbnailUrl: true, status: true, createdAt: true }, orderBy: { createdAt: "desc" } },
+      },
+    });
+    if (!user) throw new NotFoundError("Instructor not found");
+    const application = await prisma.auditLog.findFirst({
+      where: { resource: "instructor_application", resourceId: instructorId, action: "INSTRUCTOR_APPLICATION_SUBMITTED" },
+      orderBy: { createdAt: "desc" },
+      select: { details: true, createdAt: true },
+    });
+    const latestStatus = await prisma.auditLog.findFirst({
+      where: { resource: "instructor", resourceId: instructorId, action: { in: ["INSTRUCTOR_SUSPENDED", "INSTRUCTOR_REINSTATED"] } },
+      orderBy: { createdAt: "desc" }, select: { action: true },
+    });
+    const rejection = await prisma.auditLog.findFirst({ where: { resource: "instructor_application", resourceId: instructorId, action: "INSTRUCTOR_REJECTED" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
+    const status = user.role.name === "Instructor" ? "ACTIVE" : latestStatus?.action === "INSTRUCTOR_SUSPENDED" ? "SUSPENDED" : rejection && (!application || rejection.createdAt > application.createdAt) ? "REJECTED" : "PENDING";
+    return { ...user, status, application: application?.details ?? null };
   }
 
   async getPendingInstructorApplications() {

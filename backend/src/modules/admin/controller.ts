@@ -56,6 +56,13 @@ export class AdminController {
     }
   };
 
+  getInstructorDetails = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await adminService.getInstructorDetails(req.params["id"] as string);
+      sendSuccess(res, result, 200);
+    } catch (error) { next(error); }
+  };
+
   getPendingApplications = async (
     _req: Request,
     res: Response,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Search,
   GraduationCap,
@@ -175,6 +176,12 @@ export default function AdminInstructorsPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          href={`/admin/instructors/${application.user?.id}`}
+                          className="px-3 py-2 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
+                        >
+                          Details
+                        </Link>
                         <button
                           onClick={() => handleApprove(application?.user?.id)}
                           disabled={approveMutation.isPending}
@@ -315,9 +322,13 @@ export default function AdminInstructorsPage() {
                         <BookOpen className="w-4 h-4" />
                         {instructor?._count?.courses} courses
                       </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${instructor.status === "SUSPENDED" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
+                        {instructor.status === "SUSPENDED" ? "Suspended" : "Active"}
+                      </span>
                       <span className="text-xs text-[#94A3B8]">
                         Joined {formatDate(instructor.createdAt)}
                       </span>
+                      <Link href={`/admin/instructors/${instructor.id}`} className="px-3 py-2 rounded-lg border border-[#E3E8EF] text-sm font-semibold text-[#0C1F33] hover:bg-gray-50">View details</Link>
                     </div>
                   </div>
                 ))}
