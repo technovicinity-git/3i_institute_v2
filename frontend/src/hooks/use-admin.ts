@@ -3,10 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminService } from "@/services/admin.service";
 
-export function useAdminUsers(page: number, search?: string) {
+export function useAdminUsers(
+  page: number,
+  filters: import("@/services/admin.service").AdminUserFilters = {},
+) {
   return useQuery({
-    queryKey: ["admin-users", page, search],
-    queryFn: () => adminService.getUsers(page, 20, search),
+    queryKey: ["admin-users", page, filters],
+    queryFn: () => adminService.getUsers(page, 20, filters),
   });
 }
 

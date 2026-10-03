@@ -8,7 +8,17 @@ export class AdminController {
       const page = Number(req.query["page"] ?? 1);
       const limit = Number(req.query["limit"] ?? 20);
       const search = req.query["search"] as string | undefined;
-      const result = await adminService.getUsers(page, limit, search);
+      const role = req.query["role"] as string | undefined;
+      const accountType = req.query["accountType"] as string | undefined;
+      const verifiedValue = req.query["emailVerified"] as string | undefined;
+      const subscriptionStatus = req.query["subscriptionStatus"] as string | undefined;
+      const result = await adminService.getUsers(page, limit, {
+        search,
+        role,
+        accountType,
+        emailVerified: verifiedValue === undefined ? undefined : verifiedValue === "true",
+        subscriptionStatus,
+      });
       sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
