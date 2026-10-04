@@ -7,7 +7,6 @@ import {
   useMyQuestions,
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
-import type { Question } from "@/types/question";
 import Link from "next/link";
 
 function getTypeBadge(type: string) {
@@ -90,13 +89,13 @@ export default function QuestionsPage() {
             {questions?.length ?? 0} questions
           </p>
         </div>
-        <button
+        {/* <button
           onClick={() => router.push("/instructor/questions/create")}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
         >
           <Plus className="w-4 h-4" />
           Create Question
-        </button>
+        </button> */}
       </div>
 
       {/* Search + Filter */}

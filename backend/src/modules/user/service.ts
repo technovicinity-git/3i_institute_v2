@@ -79,6 +79,7 @@ export class UserService {
         lastName: true,
         email: true,
         locale: true,
+        bio: true,
         accountType: true,
         emailVerified: true,
         billingContactName: true,

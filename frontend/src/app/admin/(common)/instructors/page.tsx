@@ -199,53 +199,6 @@ export default function AdminInstructorsPage() {
                         </button>
                       </div>
                     </div>
-
-                    {/* Application details */}
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                      <div>
-                        <p className="text-xs font-bold text-[#64748B] uppercase mb-1">
-                          Area of Expertise
-                        </p>
-                        <p className="text-sm text-[#0C1F33]">
-                          {details.areaOfExpertise ?? "—"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-[#64748B] uppercase mb-1">
-                          CV
-                        </p>
-                        {details.cvUrl ? (
-                          <a
-                            href={details.cvUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:underline"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            View CV
-                          </a>
-                        ) : (
-                          <p className="text-sm text-[#64748B]">—</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-[#64748B] uppercase mb-1">
-                          WWCC
-                        </p>
-                        <p className="text-sm text-[#0C1F33]">
-                          {details.wwccNumber ?? "—"} (
-                          {details.wwccState ?? "—"})
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-[#64748B] uppercase mb-1">
-                          Bio
-                        </p>
-                        <p className="text-sm text-[#0C1F33] line-clamp-2">
-                          {details.bio ?? "—"}
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 );
               })}
@@ -322,13 +275,22 @@ export default function AdminInstructorsPage() {
                         <BookOpen className="w-4 h-4" />
                         {instructor?._count?.courses} courses
                       </span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${instructor.status === "SUSPENDED" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
-                        {instructor.status === "SUSPENDED" ? "Suspended" : "Active"}
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${instructor.status === "SUSPENDED" ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}
+                      >
+                        {instructor.status === "SUSPENDED"
+                          ? "Suspended"
+                          : "Active"}
                       </span>
                       <span className="text-xs text-[#94A3B8]">
                         Joined {formatDate(instructor.createdAt)}
                       </span>
-                      <Link href={`/admin/instructors/${instructor.id}`} className="px-3 py-2 rounded-lg border border-[#E3E8EF] text-sm font-semibold text-[#0C1F33] hover:bg-gray-50">View details</Link>
+                      <Link
+                        href={`/admin/instructors/${instructor.id}`}
+                        className="px-3 py-2 rounded-lg border border-[#E3E8EF] text-sm font-semibold text-[#0C1F33] hover:bg-gray-50"
+                      >
+                        View details
+                      </Link>
                     </div>
                   </div>
                 ))}
