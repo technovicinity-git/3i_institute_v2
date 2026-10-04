@@ -83,8 +83,25 @@ export default function CreateCoursePage() {
     },
   });
 
+  const titleRegistration = register("title");
+  const summaryRegistration = register("summary");
+
   const titleChars = (watch("title") ?? "").length;
   const summaryChars = (watch("summary") ?? "").length;
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.length > TITLE_MAX_LENGTH) {
+      e.target.value = e.target.value.slice(0, TITLE_MAX_LENGTH);
+    }
+    void titleRegistration.onChange(e);
+  };
+
+  const handleSummaryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length > SUMMARY_MAX_LENGTH) {
+      e.target.value = e.target.value.slice(0, SUMMARY_MAX_LENGTH);
+    }
+    void summaryRegistration.onChange(e);
+  };
 
   const addRequirement = () => {
     if (newRequirement.trim()) {
@@ -271,7 +288,9 @@ export default function CreateCoursePage() {
             </span>
           </div>
           <input
-            {...register("title", { maxLength: TITLE_MAX_LENGTH })}
+            {...titleRegistration}
+            maxLength={TITLE_MAX_LENGTH}
+            onChange={handleTitleChange}
             placeholder="e.g. Foundations of Prophetic Medicine"
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
@@ -297,7 +316,9 @@ export default function CreateCoursePage() {
             </span>
           </div>
           <textarea
-            {...register("summary", { maxLength: SUMMARY_MAX_LENGTH })}
+            {...summaryRegistration}
+            maxLength={SUMMARY_MAX_LENGTH}
+            onChange={handleSummaryChange}
             rows={3}
             placeholder="Brief summary of what students will learn"
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"

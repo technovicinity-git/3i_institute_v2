@@ -93,8 +93,25 @@ export default function EditCoursePage() {
     resolver: zodResolver(editCourseSchema),
   });
 
+  const titleRegistration = register("title");
+  const summaryRegistration = register("summary");
+
   const titleChars = (watch("title") ?? "").length;
   const summaryChars = (watch("summary") ?? "").length;
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.length > TITLE_MAX_LENGTH) {
+      e.target.value = e.target.value.slice(0, TITLE_MAX_LENGTH);
+    }
+    void titleRegistration.onChange(e);
+  };
+
+  const handleSummaryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length > SUMMARY_MAX_LENGTH) {
+      e.target.value = e.target.value.slice(0, SUMMARY_MAX_LENGTH);
+    }
+    void summaryRegistration.onChange(e);
+  };
 
   // Load course data
   useEffect(() => {
@@ -233,7 +250,9 @@ export default function EditCoursePage() {
             </span>
           </div>
           <input
-            {...register("title", { maxLength: TITLE_MAX_LENGTH })}
+            {...titleRegistration}
+            maxLength={TITLE_MAX_LENGTH}
+            onChange={handleTitleChange}
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
           {errors.title && (
@@ -258,7 +277,9 @@ export default function EditCoursePage() {
             </span>
           </div>
           <textarea
-            {...register("summary", { maxLength: SUMMARY_MAX_LENGTH })}
+            {...summaryRegistration}
+            maxLength={SUMMARY_MAX_LENGTH}
+            onChange={handleSummaryChange}
             rows={3}
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
