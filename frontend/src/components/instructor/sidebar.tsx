@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   BookOpen,
   Video,
-  ClipboardList,
   FileQuestionMark,
   Award,
   Users,
@@ -20,11 +19,6 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/instructor/dashboard" },
   { label: "My Courses", icon: BookOpen, href: "/instructor/courses" },
   { label: "Live Classes", icon: Video, href: "/instructor/live-classes" },
-  {
-    label: "Assignments",
-    icon: ClipboardList,
-    href: "/instructor/assignments",
-  },
   {
     label: "Questions",
     icon: FileQuestionMark,
