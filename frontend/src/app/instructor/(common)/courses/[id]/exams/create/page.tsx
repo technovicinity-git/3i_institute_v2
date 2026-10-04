@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -487,9 +488,17 @@ export default function CreateExamPage() {
                   );
                 })}
                 {filteredQuestions?.length === 0 && (
-                  <p className="text-center py-8 text-[#64748B]">
-                    No questions found.
-                  </p>
+                  <div className="text-center py-8">
+                    <p className="text-[#64748B] mb-4">
+                      No questions found.
+                    </p>
+                    <Link
+                      href={`/instructor/courses/${courseId}/questions`}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
+                    >
+                      Manage Questions
+                    </Link>
+                  </div>
                 )}
               </div>
             )}
