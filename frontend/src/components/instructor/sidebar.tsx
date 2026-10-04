@@ -8,7 +8,7 @@ import {
   BookOpen,
   Video,
   ClipboardList,
-  FileText,
+  FileQuestionMark,
   Award,
   Users,
   Settings,
@@ -25,7 +25,11 @@ const navItems = [
     icon: ClipboardList,
     href: "/instructor/assignments",
   },
-
+  {
+    label: "Questions",
+    icon: FileQuestionMark,
+    href: "/instructor/questions",
+  },
   { label: "Certificates", icon: Award, href: "/instructor/certificates" },
   { label: "Students", icon: Users, href: "/instructor/students" },
   { label: "Notifications", icon: Bell, href: "/instructor/notifications" },
