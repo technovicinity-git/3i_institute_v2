@@ -112,7 +112,7 @@ export default function AdminInstructorsPage() {
               : "border-transparent text-[#64748B] hover:text-[#0C1F33]"
           }`}
         >
-          All Instructors
+          All Instructors ({instructors?.length ?? 0})
         </button>
       </div>
 
