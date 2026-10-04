@@ -56,37 +56,23 @@ class LearnerDashboardLayout extends ConsumerWidget {
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.white,
       titleSpacing: showMenu ? 0 : 24,
-      title: Row(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (showMenu)
-            Builder(
-              builder: (context) => IconButton(
-                tooltip: 'Open navigation menu',
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                icon: const Icon(Icons.menu, color: Color(0xFF12304E)),
-              ),
+          Text(
+            'Assalamu alaikum, $name',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 18,
+              color: Color(0xFF12304E),
             ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Assalamu alaikum, $name',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 18,
-                    color: Color(0xFF12304E),
-                  ),
-                ),
-                const Text(
-                  'Welcome back to your dashboard',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
+          ),
+          const Text(
+            'Welcome back to your dashboard',
+            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
           ),
         ],
       ),
@@ -113,6 +99,10 @@ class LearnerDashboardLayout extends ConsumerWidget {
             if (value == 'switch') {
               ref.read(activeLearnerProfileProvider.notifier).select(null);
               context.go('/profiles');
+            } else if (value == 'courses') {
+              context.go('/courses');
+            } else if (value == 'online-classes') {
+              context.go('/online-classes');
             }
           },
           itemBuilder: (context) => [
@@ -135,6 +125,11 @@ class LearnerDashboardLayout extends ConsumerWidget {
             const PopupMenuItem(
               value: 'switch',
               child: Text('Switch learner profile'),
+            ),
+            const PopupMenuItem(value: 'courses', child: Text('Courses')),
+            const PopupMenuItem(
+              value: 'online-classes',
+              child: Text('Online Classes'),
             ),
           ],
           child: Padding(
@@ -166,8 +161,16 @@ class DashboardSidebar extends StatelessWidget {
 
   static const _items = <_DashboardNavItem>[
     _DashboardNavItem('Dashboard', Icons.dashboard_outlined, '/dashboard'),
-    _DashboardNavItem('My Courses', Icons.menu_book_outlined, null),
-    _DashboardNavItem('Online Classes', Icons.video_library_outlined, null),
+    _DashboardNavItem(
+      'Regular Courses',
+      Icons.menu_book_outlined,
+      '/my-courses',
+    ),
+    _DashboardNavItem(
+      'Online Classes',
+      Icons.video_library_outlined,
+      '/online-classes',
+    ),
     _DashboardNavItem('Assignments', Icons.assignment_outlined, null),
     _DashboardNavItem('Exams', Icons.description_outlined, null),
     _DashboardNavItem('Certificates', Icons.workspace_premium_outlined, null),
@@ -208,7 +211,10 @@ class DashboardSidebar extends StatelessWidget {
             for (final item in _items)
               _DashboardNavigationTile(
                 item: item,
-                selected: currentLocation == item.route,
+                selected:
+                    item.route != null &&
+                    (currentLocation == item.route ||
+                        currentLocation.startsWith('${item.route}/')),
               ),
             const Spacer(),
             Padding(

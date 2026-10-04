@@ -193,7 +193,7 @@ class ProfileSelectionPage extends ConsumerWidget {
       }
     }
     ref.read(activeLearnerProfileProvider.notifier).select(profile);
-    if (context.mounted) context.go('/dashboard');
+    if (context.mounted) context.go('/courses');
   }
 }
 

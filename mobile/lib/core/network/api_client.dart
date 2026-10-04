@@ -61,6 +61,8 @@ class ApiClient {
   static const _accessTokenKey = 'auth.accessToken';
   static const _refreshTokenKey = 'auth.refreshToken';
 
+  Future<String?> readAccessToken() => _storage.read(key: _accessTokenKey);
+
   final FlutterSecureStorage _storage;
   late final Dio dio;
   Future<String?>? _refreshFuture;
