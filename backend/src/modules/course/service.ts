@@ -50,6 +50,7 @@ export class CourseService {
             : "PUBLISHED",
         isDraft,
         instructorId,
+        learningOutcomes: input.learningOutcomes ?? [],
         requirements: input.requirements ?? [],
       },
     });

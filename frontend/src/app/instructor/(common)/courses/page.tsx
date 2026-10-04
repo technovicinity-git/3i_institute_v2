@@ -409,13 +409,13 @@ export default function InstructorCoursesPage() {
                       </div>
 
                       <div className="flex items-center gap-3 flex-wrap">
-                        <Link
+                        {/* <Link
                           href={`/courses/${course.id}`}
                           className="flex items-center gap-1 text-sm font-semibold text-[#12304E] hover:underline"
                         >
                           <Eye className="w-4 h-4" />
                           View
-                        </Link>
+                        </Link> */}
                         <Link
                           href={`/instructor/courses/${course.id}/edit`}
                           className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline"
@@ -476,13 +476,13 @@ export default function InstructorCoursesPage() {
                       </div>
 
                       <div className="flex items-center gap-4 flex-wrap mt-4 pt-3 border-t border-gray-100">
-                        <Link
+                        {/* <Link
                           href={`/courses/${course.id}`}
                           className="flex items-center gap-1 text-sm font-semibold text-[#12304E] hover:underline"
                         >
                           <Eye className="w-4 h-4" />
                           View
-                        </Link>
+                        </Link> */}
                         <Link
                           href={`/instructor/courses/${course.id}/edit`}
                           className="flex items-center gap-1 text-sm font-semibold text-[#22A146] hover:underline"

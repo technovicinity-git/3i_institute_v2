@@ -255,10 +255,10 @@ export default function AdminCoursesPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link
                       href={`/courses/${course.id}`}
-                      className="p-2 rounded-lg hover:bg-gray-50 text-[#64748B]"
-                      title="View"
+                      className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-[#12304E] text-[#12304E] hover:bg-slate-50"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
+                      View
                     </Link>
 
                     {course.status === "PENDING_REVIEW" && (
