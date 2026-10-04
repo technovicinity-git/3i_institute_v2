@@ -13,21 +13,38 @@ import { useCourseThumbnailUploadMutation } from "@/hooks/use-avatar-upload";
 import { useCategories } from "@/hooks/use-categories";
 
 const createCourseSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255, "Title must be 255 characters or fewer"),
   summary: z
     .string()
     .min(10, "Summary must be at least 10 characters")
-    .max(500),
+    .max(500, "Summary must be 500 characters or fewer"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   categoryId: z.string().uuid("Please select a category"),
   type: z.enum(["REGULAR", "ONLINE_CLASS"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
-  minimumAge: z.number().int().min(5).max(18),
-  maximumAge: z.number().int().min(5).max(100).optional(),
+  minimumAge: z
+    .number({ error: "Minimum age is required" })
+    .int("Minimum age must be a whole number")
+    .min(5, "Minimum age must be between 5 and 18")
+    .max(18, "Minimum age must be between 5 and 18"),
+  maximumAge: z
+    .number({ error: "Maximum age must be a number" })
+    .int("Maximum age must be a whole number")
+    .min(5, "Maximum age must be at least 5")
+    .max(100, "Maximum age cannot exceed 100")
+    .optional(),
 });
 
 type CreateCourseFormData = z.infer<typeof createCourseSchema>;
+
+const TITLE_MAX_LENGTH = 255;
+const SUMMARY_MAX_LENGTH = 500;
+const MIN_MINIMUM_AGE = 5;
+const MAX_MINIMUM_AGE = 18;
 
 const LANGUAGES = [
   { value: "en", label: "English" },
@@ -55,6 +72,7 @@ export default function CreateCoursePage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<CreateCourseFormData>({
     resolver: zodResolver(createCourseSchema),
@@ -64,6 +82,9 @@ export default function CreateCoursePage() {
       minimumAge: 5,
     },
   });
+
+  const titleChars = (watch("title") ?? "").length;
+  const summaryChars = (watch("summary") ?? "").length;
 
   const addRequirement = () => {
     if (newRequirement.trim()) {
@@ -235,11 +256,22 @@ export default function CreateCoursePage() {
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-            Course Title *
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-[#0C1F33]">
+              Course Title *
+            </label>
+            <span
+              className={`text-xs ${
+                TITLE_MAX_LENGTH - titleChars <= 0
+                  ? "text-red-500 font-semibold"
+                  : "text-[#64748B]"
+              }`}
+            >
+              {TITLE_MAX_LENGTH - titleChars} characters left
+            </span>
+          </div>
           <input
-            {...register("title")}
+            {...register("title", { maxLength: TITLE_MAX_LENGTH })}
             placeholder="e.g. Foundations of Prophetic Medicine"
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
           />
@@ -250,11 +282,22 @@ export default function CreateCoursePage() {
 
         {/* Summary */}
         <div>
-          <label className="block text-sm font-semibold text-[#0C1F33] mb-2">
-            Summary *
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-[#0C1F33]">
+              Summary *
+            </label>
+            <span
+              className={`text-xs ${
+                SUMMARY_MAX_LENGTH - summaryChars <= 0
+                  ? "text-red-500 font-semibold"
+                  : "text-[#64748B]"
+              }`}
+            >
+              {SUMMARY_MAX_LENGTH - summaryChars} characters left
+            </span>
+          </div>
           <textarea
-            {...register("summary")}
+            {...register("summary", { maxLength: SUMMARY_MAX_LENGTH })}
             rows={3}
             placeholder="Brief summary of what students will learn"
             className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg outline-none focus:border-[#12304E]"
@@ -366,9 +409,15 @@ export default function CreateCoursePage() {
             </label>
             <input
               type="number"
+              min={MIN_MINIMUM_AGE}
+              max={MAX_MINIMUM_AGE}
+              placeholder={`${MIN_MINIMUM_AGE}–${MAX_MINIMUM_AGE}`}
               {...register("minimumAge", { valueAsNumber: true })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
+            <p className="mt-1 text-xs text-[#64748B]">
+              Students aged {MIN_MINIMUM_AGE}–{MAX_MINIMUM_AGE} years
+            </p>
             {errors.minimumAge && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.minimumAge.message}
@@ -381,12 +430,20 @@ export default function CreateCoursePage() {
             </label>
             <input
               type="number"
+              min={MIN_MINIMUM_AGE}
+              max={100}
+              placeholder="Optional"
               {...register("maximumAge", {
                 setValueAs: (value) =>
                   value === "" ? undefined : Number(value),
               })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
+            {errors.maximumAge && (
+              <p className="mt-1 text-xs text-red-600">
+                {errors.maximumAge.message}
+              </p>
+            )}
           </div>
         </div>
 
