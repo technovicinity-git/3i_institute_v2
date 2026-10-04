@@ -36,6 +36,9 @@ The backend sends verification and password-reset links to its configured fronte
 - Google and (on iOS) Apple sign-in. First-time social accounts are prompted for date of birth.
 - Access-token refresh and session restore. The refresh token is read from the API's `Set-Cookie` response and stored using platform secure storage; rotated tokens are persisted on refresh.
 - Logout clears the local secure session even if the logout request fails.
+- Profile selection shows each learner's age band and seat status, verifies a PIN when set, and keeps the selected profile available to learner features. The add-learner tile creates a profile with a name, birth date, and four-digit PIN.
+- Course catalog includes search, category/type/language/age filters, sorting, pagination, rating/enrolment badges, and wishlist actions.
+- Course details show outcomes, requirements, schedule, curriculum, instructor, reviews, FAQs, related courses, and membership details. Regular courses enrol directly; live classes prompt the learner to choose a batch.
 
 The standard frontend `/register` route creates an Account Holder and asks them to verify email. The separate `/auth/register/learner` endpoint creates an account and learner profile together; learner profiles belong to a later app phase, so mobile follows the standard frontend auth flow here.
 
@@ -50,15 +53,22 @@ lib/
       data/                API data source, models, repository implementation
       domain/              Auth entity and repository contract
       presentation/        Riverpod controller, pages, reusable widgets
-    home/presentation/     Authenticated landing placeholder for phase 2
+    profiles/
+      data/                Learner profile API and repository
+      domain/              Profile entity and repository contract
+      presentation/        Selector, PIN prompt, add profile, shared header
+    courses/
+      data/                Course, category, wishlist, and enrolment APIs
+      domain/              Course entities and repository contract
+      presentation/        Catalog, details, landing shell, reusable cards
   main.dart                Application entry point
 ```
 
 ## Phases
 
-1. Project and platform setup
-2. Authentication flows and API integration (implemented)
-3. Learner profiles and course discovery
+1. Project, platform, and authentication setup (implemented)
+2. Learner profile selection (implemented)
+3. Course discovery and details (implemented)
 4. Course learning experience and remaining product areas
 
 Auth API payloads and routes are documented in `frontend/src/services/auth.service.ts`, `password.service.ts`, and `email.service.ts`. The visual references are under `frontend/src/app/(auth)`.

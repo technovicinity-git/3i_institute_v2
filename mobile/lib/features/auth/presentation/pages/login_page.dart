@@ -40,7 +40,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             email: _emailController.text,
             password: _passwordController.text,
           );
-      if (mounted) context.go('/home');
+      if (mounted) context.go('/profiles');
     } catch (error) {
       if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Login failed. Please try again.'));
     } finally {

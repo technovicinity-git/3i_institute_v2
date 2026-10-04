@@ -104,7 +104,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       await login(dateOfBirth);
     }
     if (mounted && ref.read(authControllerProvider).asData?.value != null) {
-      context.go('/home');
+      context.go('/profiles');
     }
   }
 

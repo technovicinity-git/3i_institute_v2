@@ -8,7 +8,12 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/courses/presentation/pages/course_details_page.dart';
+import '../../features/courses/presentation/pages/courses_page.dart';
+import '../../features/courses/presentation/widgets/landing_layout.dart';
+import '../../features/profiles/presentation/pages/add_learner_page.dart';
+import '../../features/profiles/presentation/pages/profile_selection_page.dart';
+import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../pages/startup_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -31,7 +36,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/verify-email',
         builder: (context, state) => VerifyEmailPage(token: state.uri.queryParameters['token']),
       ),
-      GoRoute(path: '/home', builder: (context, state) => const HomePage()),
+      ShellRoute(
+        builder: (context, state, child) => ProfileLayout(child: child),
+        routes: [
+          GoRoute(path: '/profiles', builder: (context, state) => const ProfileSelectionPage()),
+          GoRoute(path: '/profiles/add', builder: (context, state) => const AddLearnerPage()),
+        ],
+      ),
+      ShellRoute(
+        builder: (context, state, child) => LandingLayout(child: child),
+        routes: [
+          GoRoute(path: '/courses', builder: (context, state) => const CoursesPage()),
+          GoRoute(
+            path: '/courses/:courseId',
+            builder: (context, state) => CourseDetailsPage(courseId: state.pathParameters['courseId']!),
+          ),
+        ],
+      ),
     ],
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
@@ -47,9 +68,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       };
 
       if (auth.isLoading) return path == '/startup' ? null : '/startup';
-      if (path == '/startup') return account == null ? '/login' : '/home';
+      if (path == '/startup') return account == null ? '/login' : '/profiles';
       if (account == null && !openRoutes.contains(path)) return '/login';
-      if (account != null && (path == '/login' || path == '/register')) return '/home';
+      if (account != null && (path == '/login' || path == '/register')) return '/profiles';
       return null;
     },
   );
