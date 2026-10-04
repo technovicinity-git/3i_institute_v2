@@ -4,14 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
-import { useUserProfile } from "@/hooks/use-user-profile";
+import { useUserProfile, useUpdateProfileMutation } from "@/hooks/use-user-profile";
 import { useChangePasswordMutation } from "@/hooks/use-security";
 import { useInstructorPhotoUploadMutation } from "@/hooks/use-instructor-photo";
 
 export default function InstructorSettingsPage() {
-  const { data: profile, isLoading } = useUserProfile();
+  const { data: profile } = useUserProfile();
   const changePasswordMutation = useChangePasswordMutation();
   const photoUploadMutation = useInstructorPhotoUploadMutation();
+  const updateProfileMutation = useUpdateProfileMutation();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,6 +29,7 @@ export default function InstructorSettingsPage() {
   // Load profile data when available
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFirstName(profile.firstName);
       setLastName(profile.lastName);
       setBio(profile.bio ?? "");
@@ -71,8 +73,11 @@ export default function InstructorSettingsPage() {
   };
 
   const handleSaveProfile = () => {
-    // TODO: Call update profile API
-    toast.success("Profile updated");
+    updateProfileMutation.mutate({
+      firstName,
+      lastName,
+      bio: bio.trim() ? bio : null,
+    });
   };
 
   const handleChangePassword = () => {
@@ -203,9 +208,10 @@ export default function InstructorSettingsPage() {
 
         <button
           onClick={handleSaveProfile}
-          className="px-6 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
+          disabled={updateProfileMutation.isPending}
+          className="px-6 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
         >
-          Save Profile
+          {updateProfileMutation.isPending ? "Saving..." : "Save Profile"}
         </button>
       </div>
 
