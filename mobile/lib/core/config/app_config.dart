@@ -1,7 +1,7 @@
 abstract final class AppConfig {
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:4000/api/v1',
+    defaultValue: 'https://threei-institute-v2.onrender.com/api/v1',
   );
 
   // On mobile, configure native client IDs in the platform projects and pass

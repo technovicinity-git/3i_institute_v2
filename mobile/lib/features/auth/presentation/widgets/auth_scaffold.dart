@@ -26,24 +26,15 @@ class AuthScaffold extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '3i',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.onPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    child: Column(
+                      children: [
+                        Image.asset('assets/images/logo-icon.png', width: 76, height: 76, semanticLabel: '3i International Islamic Institute logo'),
+                        const SizedBox(height: 8),
+                        Text('International Islamic Institute', style: theme.textTheme.labelLarge?.copyWith(color: const Color(0xFF12304E), fontWeight: FontWeight.w600)),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(

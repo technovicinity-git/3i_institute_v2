@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
-import '../../domain/entities/course.dart';
 import '../../domain/entities/course_details.dart';
 import '../providers/courses_providers.dart';
 import '../widgets/course_card.dart';

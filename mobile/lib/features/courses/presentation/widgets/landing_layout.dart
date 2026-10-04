@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
+import '../../../profiles/presentation/widgets/learner_avatar.dart';
 
 class LandingLayout extends ConsumerWidget {
   const LandingLayout({required this.child, super.key});
@@ -22,7 +23,12 @@ class LandingLayout extends ConsumerWidget {
         titleSpacing: 20,
         title: InkWell(
           onTap: () => context.go('/courses'),
-          child: const Text('3i', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800, color: Color(0xFF12304E))),
+          child: Image.asset(
+            'assets/images/logo-icon.png',
+            width: 42,
+            height: 42,
+            semanticLabel: '3i International Islamic Institute home',
+          ),
         ),
         actions: [
           TextButton.icon(
@@ -36,6 +42,8 @@ class LandingLayout extends ConsumerWidget {
               if (value == 'switch') {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
                 context.go('/profiles');
+              } else if (value == 'dashboard') {
+                context.go('/dashboard');
               } else if (value == 'logout') {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
                 try {
@@ -52,24 +60,46 @@ class LandingLayout extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(profile?.displayName ?? account?.firstName ?? 'Account', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF12304E))),
+                    Text(
+                      profile?.displayName ?? account?.firstName ?? 'Account',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF12304E),
+                      ),
+                    ),
                     if (account?.email.isNotEmpty == true)
-                      Text(account!.email, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      Text(
+                        account!.email,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const PopupMenuItem(value: 'switch', child: Text('Switch learner profile')),
+              const PopupMenuItem(
+                value: 'switch',
+                child: Text('Switch learner profile'),
+              ),
+              const PopupMenuItem(
+                value: 'dashboard',
+                child: Text('Learner dashboard'),
+              ),
               const PopupMenuItem(value: 'logout', child: Text('Log out')),
             ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: CircleAvatar(
+              child: LearnerAvatar(
+                imageUrl: profile?.avatarUrl,
+                initials:
+                    profile?.initials ??
+                    (account?.firstName.isNotEmpty == true
+                        ? account!.firstName.substring(0, 1).toUpperCase()
+                        : 'U'),
                 radius: 17,
                 backgroundColor: const Color(0xFF12304E),
-                child: Text(
-                  (profile?.initials ?? (account?.firstName.isNotEmpty == true ? account!.firstName.substring(0, 1).toUpperCase() : 'U')),
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
-                ),
+                foregroundColor: Colors.white,
               ),
             ),
           ),
@@ -89,28 +119,36 @@ class LandingFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        color: const Color(0xFF12304E),
-        padding: const EdgeInsets.fromLTRB(24, 36, 24, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('3i', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
-            const Text('Rigorous teaching. Global classrooms. One institute.', style: TextStyle(color: Color(0xFFB8912F), fontFamily: 'serif')),
-            const SizedBox(height: 8),
-            const Text(
-              'Structured, accredited programs across the sciences, humanities, and professional fields, taught to students in 40 countries.',
-              style: TextStyle(color: Color(0xFFCBD5E1), height: 1.5, fontSize: 13),
-            ),
-            const SizedBox(height: 28),
-            const Divider(color: Color(0xFF2B4560)),
-            const SizedBox(height: 10),
-            Text(
-              '© ${DateTime.now().year} 3i International Islamic Institute. All rights reserved.',
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-            ),
-          ],
+    width: double.infinity,
+    color: const Color(0xFF12304E),
+    padding: const EdgeInsets.fromLTRB(24, 36, 24, 20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Image.asset(
+          'assets/images/logo-icon.png',
+          width: 58,
+          height: 58,
+          semanticLabel: '3i International Islamic Institute logo',
         ),
-      );
+        const SizedBox(height: 10),
+        const Text(
+          'Rigorous teaching. Global classrooms. One institute.',
+          style: TextStyle(color: Color(0xFFB8912F), fontFamily: 'serif'),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Structured, accredited programs across the sciences, humanities, and professional fields, taught to students in 40 countries.',
+          style: TextStyle(color: Color(0xFFCBD5E1), height: 1.5, fontSize: 13),
+        ),
+        const SizedBox(height: 28),
+        const Divider(color: Color(0xFF2B4560)),
+        const SizedBox(height: 10),
+        Text(
+          '© ${DateTime.now().year} 3i International Islamic Institute. All rights reserved.',
+          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+        ),
+      ],
+    ),
+  );
 }

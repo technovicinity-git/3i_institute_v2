@@ -39,8 +39,9 @@ The backend sends verification and password-reset links to its configured fronte
 - Profile selection shows each learner's age band and seat status, verifies a PIN when set, and keeps the selected profile available to learner features. The add-learner tile creates a profile with a name, birth date, and four-digit PIN.
 - Course catalog includes search, category/type/language/age filters, sorting, pagination, rating/enrolment badges, and wishlist actions.
 - Course details show outcomes, requirements, schedule, curriculum, instructor, reviews, FAQs, related courses, and membership details. Regular courses enrol directly; live classes prompt the learner to choose a batch.
+- Learner dashboard loads profile-specific course stats, continue-learning progress, upcoming classes, deadlines, weekly study hours, notes, and recommendations. It uses a responsive sidebar on larger screens and a navigation drawer on phones.
 
-The standard frontend `/register` route creates an Account Holder and asks them to verify email. The separate `/auth/register/learner` endpoint creates an account and learner profile together; learner profiles belong to a later app phase, so mobile follows the standard frontend auth flow here.
+The standard frontend `/register` route creates an Account Holder and asks them to verify email. After verification, the account holder can create and select learner profiles in the app.
 
 ## Structure
 
@@ -61,6 +62,10 @@ lib/
       data/                Course, category, wishlist, and enrolment APIs
       domain/              Course entities and repository contract
       presentation/        Catalog, details, landing shell, reusable cards
+    dashboard/
+      data/                Profile-specific dashboard API and models
+      domain/              Dashboard data entities and repository contract
+      presentation/        Learner dashboard, responsive navigation shell
   main.dart                Application entry point
 ```
 
@@ -69,6 +74,7 @@ lib/
 1. Project, platform, and authentication setup (implemented)
 2. Learner profile selection (implemented)
 3. Course discovery and details (implemented)
-4. Course learning experience and remaining product areas
+4. Learner dashboard (implemented)
+5. Course learning experience and remaining product areas
 
 Auth API payloads and routes are documented in `frontend/src/services/auth.service.ts`, `password.service.ts`, and `email.service.ts`. The visual references are under `frontend/src/app/(auth)`.
