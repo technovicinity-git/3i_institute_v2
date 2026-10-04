@@ -25,6 +25,21 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// Auth endpoints where a 401 is a legitimate business response (e.g. invalid
+// login credentials) rather than an expired access token — skip auto-refresh.
+const AUTH_NO_REFRESH_PATHS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/resend-verification",
+  "/auth/verify-email",
+  "/auth/google",
+  "/auth/apple",
+];
+
 // Response interceptor — refresh on 401
 apiClient.interceptors.response.use(
   (response) => response,
@@ -35,7 +50,9 @@ apiClient.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes("/auth/refresh")
+      !AUTH_NO_REFRESH_PATHS.some((path) =>
+        originalRequest.url?.includes(path),
+      )
     ) {
       originalRequest._retry = true;
 

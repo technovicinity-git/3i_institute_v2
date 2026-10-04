@@ -37,6 +37,19 @@ export default function LoginPage() {
     loginMutation.mutate(data);
   };
 
+  const loginError = loginMutation.error as
+    | {
+        response?: {
+          data?: {
+            error?: {
+              message?: string;
+            };
+          };
+        };
+      }
+    | null;
+  const loginErrorMessage = loginError?.response?.data?.error?.message;
+
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
       {/* Logo */}
@@ -69,6 +82,16 @@ export default function LoginPage() {
             className="space-y-6"
             noValidate
           >
+            {/* Server error */}
+            {loginErrorMessage && (
+              <div
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {loginErrorMessage}
+              </div>
+            )}
+
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
