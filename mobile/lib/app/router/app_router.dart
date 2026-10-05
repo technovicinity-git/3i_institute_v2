@@ -14,7 +14,10 @@ import '../../features/courses/presentation/widgets/landing_layout.dart';
 import '../../features/chat/presentation/pages/learner_chat_page.dart';
 import '../../features/certificates/presentation/pages/certificates_page.dart';
 import '../../features/dashboard/presentation/pages/learner_dashboard_page.dart';
+import '../../features/dashboard/presentation/pages/learner_assignments_page.dart';
+import '../../features/dashboard/presentation/pages/learner_exams_page.dart';
 import '../../features/dashboard/presentation/widgets/learner_dashboard_layout.dart';
+import '../../features/assignments/presentation/pages/course_assignments_page.dart';
 import '../../features/exams/presentation/pages/course_exams_page.dart';
 import '../../features/exams/presentation/pages/exam_result_page.dart';
 import '../../features/exams/presentation/pages/take_exam_page.dart';
@@ -81,6 +84,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const LearnerDashboardPage(),
           ),
           GoRoute(
+            path: '/assignments',
+            builder: (context, state) => const LearnerAssignmentsPage(),
+          ),
+          GoRoute(
+            path: '/exams',
+            builder: (context, state) => const LearnerExamsPage(),
+          ),
+          GoRoute(
             path: '/certificates',
             builder: (context, state) => const CertificatesPage(),
           ),
@@ -97,6 +108,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => CourseExamsPage(
               courseId: state.pathParameters['courseId']!,
               onlineClass: state.uri.queryParameters['online'] == 'true',
+            ),
+          ),
+          GoRoute(
+            path: '/my-courses/:courseId/assignments',
+            builder: (context, state) => CourseAssignmentsPage(
+              courseId: state.pathParameters['courseId']!,
             ),
           ),
           GoRoute(

@@ -171,8 +171,8 @@ class DashboardSidebar extends StatelessWidget {
       Icons.video_library_outlined,
       '/online-classes',
     ),
-    _DashboardNavItem('Assignments', Icons.assignment_outlined, null),
-    _DashboardNavItem('Exams', Icons.description_outlined, null),
+    _DashboardNavItem('Assignments', Icons.assignment_outlined, '/assignments'),
+    _DashboardNavItem('Exams', Icons.description_outlined, '/exams'),
     _DashboardNavItem(
       'Certificates',
       Icons.workspace_premium_outlined,
