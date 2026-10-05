@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -385,6 +385,8 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               _ExamEligibilityCard(
                 progress: content.progress,
                 unlocked: courseUnlocked,
+                onTakeExam: () =>
+                    context.push('/my-courses/${widget.courseId}/exams'),
               ),
             ],
           ),
@@ -891,8 +893,35 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
             ],
           ),
         ),
+        Positioned(
+          left: 4,
+          right: 4,
+          bottom: 36,
+          child: _VideoActionBar(controller: c, onFullscreen: _openFullscreen),
+        ),
       ],
     );
+  }
+
+  Future<void> _openFullscreen() async {
+    final controller = _controller;
+    if (controller == null || !_initialized) return;
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    try {
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => _FullscreenVideoPage(controller: controller),
+        ),
+      );
+    } finally {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      await SystemChrome.setPreferredOrientations(const []);
+    }
   }
 
   Future<void> _togglePlayback(VideoPlayerController controller) async {
@@ -908,6 +937,196 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       }
     }
   }
+}
+
+class _VideoActionBar extends StatefulWidget {
+  const _VideoActionBar({required this.controller, this.onFullscreen});
+  final VideoPlayerController controller;
+  final VoidCallback? onFullscreen;
+
+  @override
+  State<_VideoActionBar> createState() => _VideoActionBarState();
+}
+
+class _VideoActionBarState extends State<_VideoActionBar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_refresh);
+  }
+
+  @override
+  void didUpdateWidget(covariant _VideoActionBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_refresh);
+      widget.controller.addListener(_refresh);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _seek(int seconds) async {
+    final controller = widget.controller;
+    final value = controller.value;
+    final target = value.position.inSeconds + seconds;
+    await controller.seekTo(
+      Duration(seconds: target.clamp(0, value.duration.inSeconds).toInt()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final speed = widget.controller.value.playbackSpeed;
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Back 10 seconds',
+          visualDensity: VisualDensity.compact,
+          color: Colors.white,
+          onPressed: () => _seek(-10),
+          icon: const Icon(Icons.replay_10),
+        ),
+        IconButton(
+          tooltip: 'Forward 10 seconds',
+          visualDensity: VisualDensity.compact,
+          color: Colors.white,
+          onPressed: () => _seek(10),
+          icon: const Icon(Icons.forward_10),
+        ),
+        const Spacer(),
+        PopupMenuButton<double>(
+          tooltip: 'Playback speed',
+          initialValue: speed,
+          onSelected: widget.controller.setPlaybackSpeed,
+          color: const Color(0xFF12304E),
+          itemBuilder: (_) => [
+            for (final rate in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+              PopupMenuItem(
+                value: rate,
+                child: Text(
+                  rate == 1 ? 'Normal' : '${rate}x',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Text(
+              '${speed}x',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        if (widget.onFullscreen != null)
+          IconButton(
+            tooltip: 'Full screen',
+            visualDensity: VisualDensity.compact,
+            color: Colors.white,
+            onPressed: widget.onFullscreen,
+            icon: const Icon(Icons.fullscreen),
+          ),
+      ],
+    );
+  }
+}
+
+class _FullscreenVideoPage extends StatefulWidget {
+  const _FullscreenVideoPage({required this.controller});
+  final VideoPlayerController controller;
+
+  @override
+  State<_FullscreenVideoPage> createState() => _FullscreenVideoPageState();
+}
+
+class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    body: Stack(
+      alignment: Alignment.center,
+      children: [
+        Center(
+          child: AspectRatio(
+            aspectRatio: widget.controller.value.aspectRatio,
+            child: VideoPlayer(widget.controller),
+          ),
+        ),
+        IconButton.filled(
+          tooltip: widget.controller.value.isPlaying ? 'Pause' : 'Play',
+          onPressed: () => widget.controller.value.isPlaying
+              ? widget.controller.pause()
+              : widget.controller.play(),
+          iconSize: 38,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.black54,
+            foregroundColor: Colors.white,
+          ),
+          icon: Icon(
+            widget.controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+          ),
+        ),
+        Positioned(
+          top: 8,
+          left: 8,
+          child: IconButton(
+            tooltip: 'Exit full screen',
+            color: Colors.white,
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.fullscreen_exit),
+          ),
+        ),
+        Positioned(
+          left: 12,
+          right: 12,
+          bottom: 54,
+          child: _VideoActionBar(controller: widget.controller),
+        ),
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 20,
+          child: VideoProgressIndicator(
+            widget.controller,
+            allowScrubbing: true,
+            colors: const VideoProgressColors(
+              playedColor: _green,
+              bufferedColor: Colors.white54,
+              backgroundColor: Colors.white24,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _MediaMessage extends StatelessWidget {
@@ -975,9 +1194,14 @@ class _TabButton extends StatelessWidget {
 }
 
 class _ExamEligibilityCard extends StatelessWidget {
-  const _ExamEligibilityCard({required this.progress, required this.unlocked});
+  const _ExamEligibilityCard({
+    required this.progress,
+    required this.unlocked,
+    required this.onTakeExam,
+  });
   final int progress;
   final bool unlocked;
+  final VoidCallback onTakeExam;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
@@ -1011,7 +1235,14 @@ class _ExamEligibilityCard extends StatelessWidget {
             ],
           ),
         ),
-        if (!unlocked)
+        if (unlocked) const SizedBox(width: 8),
+        if (unlocked)
+          FilledButton(
+            onPressed: onTakeExam,
+            style: FilledButton.styleFrom(backgroundColor: _green),
+            child: const Text('Take exam'),
+          )
+        else
           const Text(
             '90%',
             style: TextStyle(color: _navy, fontWeight: FontWeight.w700),

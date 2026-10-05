@@ -26,6 +26,11 @@ import '../../features/learning/presentation/pages/online_classes_page.dart';
 import '../../features/learning/presentation/pages/regular_courses_page.dart';
 import '../../features/profiles/presentation/pages/add_learner_page.dart';
 import '../../features/profiles/presentation/pages/profile_selection_page.dart';
+import '../../features/profiles/presentation/pages/profile_management_page.dart';
+import '../../features/profiles/presentation/pages/edit_learner_page.dart';
+import '../../features/profiles/presentation/pages/delete_learner_page.dart';
+import '../../features/profiles/presentation/pages/account_settings_page.dart';
+import '../../features/profiles/presentation/pages/login_security_page.dart';
 import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
@@ -72,6 +77,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/profiles/add',
             builder: (context, state) => const AddLearnerPage(),
+          ),
+          GoRoute(
+            path: '/profile-management',
+            builder: (context, state) => const ProfileManagementPage(),
+          ),
+          GoRoute(
+            path: '/profiles/:profileId/edit',
+            builder: (context, state) => EditLearnerPage(
+              profileId: state.pathParameters['profileId']!,
+              resetPinOnOpen:
+                  state.uri.queryParameters['action'] == 'reset-pin',
+            ),
+          ),
+          GoRoute(
+            path: '/delete-profile',
+            builder: (context, state) => DeleteLearnerPage(
+              profileId: state.uri.queryParameters['profileId'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: '/account-settings',
+            builder: (context, state) => const AccountSettingsPage(),
+          ),
+          GoRoute(
+            path: '/login-security',
+            builder: (context, state) => const LoginSecurityPage(),
           ),
         ],
       ),
