@@ -41,6 +41,7 @@ import '../../features/instructor_dashboard/presentation/widgets/instructor_dash
 import '../../features/instructor_courses/presentation/pages/instructor_courses_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -107,11 +108,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/instructor/courses/:courseId/batches',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Course Batches'),
-          ),
-          GoRoute(
             path: '/instructor/courses/:courseId/questions',
             builder: (context, state) => const InstructorSectionPlaceholderPage(
               title: 'Course Questions',
@@ -127,6 +123,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const InstructorSectionPlaceholderPage(
               title: 'Course Students',
             ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches',
+            builder: (context, state) => InstructorBatchesPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/create',
+            builder: (context, state) => InstructorBatchCreatePage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/:batchId/edit',
+            builder: (context, state) => InstructorBatchEditPage(
+              courseId: state.pathParameters['courseId']!,
+              batchId: state.pathParameters['batchId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/:batchId',
+            builder: (context, state) => InstructorBatchDetailPage(
+              courseId: state.pathParameters['courseId']!,
+              batchId: state.pathParameters['batchId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/chat',
+            builder: (context, state) => LearnerChatPage(
+              courseId: state.uri.queryParameters['courseId'] ?? '',
+              courseTitle: state.uri.queryParameters['courseTitle'] ?? 'Course',
+              batchId: state.uri.queryParameters['batchId'],
+              batchName: state.uri.queryParameters['batchName'] ?? 'Batch',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/attendance/:sessionId',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Attendance'),
           ),
           GoRoute(
             path: '/instructor/live-classes',

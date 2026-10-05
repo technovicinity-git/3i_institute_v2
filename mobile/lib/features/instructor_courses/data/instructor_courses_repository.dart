@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/entities/instructor_course.dart';
+import '../domain/entities/instructor_batch.dart';
 
 class InstructorCoursesRepository {
   InstructorCoursesRepository(this._client);
@@ -123,6 +124,109 @@ class InstructorCoursesRepository {
         '/instructors/assignments/submissions/$id/grade',
         data: {'marksAwarded': marks, 'feedback': feedback},
       );
+
+  Future<List<InstructorBatch>> getBatchesForCourse(String courseId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/batches/course/$courseId',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => _batch({...item, 'courseId': item['courseId'] ?? courseId}),
+        )
+        .toList();
+  }
+
+  Future<InstructorBatch> getBatch(String batchId) async {
+    final response = await _dio.get<Map<String, dynamic>>('/batches/$batchId');
+    return _batch(_map(response.data?['data']));
+  }
+
+  Future<List<InstructorExistingSession>> getInstructorSessions() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/batches/instructor/sessions',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => InstructorExistingSession(
+            id: '${item['id'] ?? ''}',
+            title: '${item['title'] ?? ''}',
+            scheduledAt: '${item['scheduledAt'] ?? ''}',
+            durationMinutes: _int(item['durationMinutes']),
+            batchName: '${item['batchName'] ?? ''}',
+            courseTitle: '${item['courseTitle'] ?? ''}',
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> createBatch({
+    required String courseId,
+    required String name,
+    required int capacity,
+    required List<Map<String, dynamic>> sessions,
+  }) async => _dio.post<void>(
+    '/batches',
+    data: {
+      'courseId': courseId,
+      'name': name,
+      'capacity': capacity,
+      'sessions': sessions,
+    },
+  );
+  Future<void> updateBatch(
+    String batchId, {
+    required String name,
+    required int capacity,
+  }) async => _dio.patch<void>(
+    '/batches/$batchId',
+    data: {'name': name, 'capacity': capacity},
+  );
+  Future<void> closeBatch(String batchId) async =>
+      _dio.post<void>('/batches/$batchId/close');
+  Future<void> addSession(String batchId, Map<String, dynamic> input) async =>
+      _dio.post<void>('/batches/$batchId/sessions', data: input);
+  Future<void> updateSession(
+    String sessionId,
+    Map<String, dynamic> input,
+  ) async => _dio.patch<void>('/batches/sessions/$sessionId', data: input);
+  Future<void> deleteSession(String sessionId) async =>
+      _dio.delete<void>('/batches/sessions/$sessionId');
+
+  InstructorBatch _batch(Map<String, dynamic> item) {
+    final course = _map(item['course']);
+    final rawSessions = item['sessions'];
+    final sessions = (rawSessions is List ? rawSessions : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (session) => InstructorBatchSession(
+            id: '${session['id'] ?? ''}',
+            title: '${session['title'] ?? 'Session'}',
+            scheduledAt: '${session['scheduledAt'] ?? ''}',
+            durationMinutes: _int(session['durationMinutes']),
+            meetingLink: _nullable(session['meetingLink']),
+            notes: _nullable(session['notes']),
+          ),
+        )
+        .toList();
+    final enrollments = item['enrolments'];
+    final enrolmentCount =
+        item['enrolmentCount'] ??
+        (enrollments is List ? enrollments.length : null);
+    return InstructorBatch(
+      id: '${item['id'] ?? ''}',
+      courseId: '${item['courseId'] ?? course['id'] ?? ''}',
+      courseTitle: '${item['courseTitle'] ?? course['title'] ?? 'Course'}',
+      name: '${item['name'] ?? 'Batch'}',
+      capacity: _int(item['capacity']),
+      status: '${item['status'] ?? 'UPCOMING'}',
+      enrolmentCount: _int(enrolmentCount),
+      sessions: sessions,
+    );
+  }
 
   InstructorCourse _course(Map<String, dynamic> item) {
     final category = _map(item['category']);
