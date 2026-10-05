@@ -253,7 +253,7 @@ export default function AddLearnerPage() {
                 htmlFor="displayName"
                 className="mb-2 block text-sm font-semibold"
               >
-                Child&apos;s name
+                Learner&apos;s name
               </Label>
               <Input
                 id="displayName"
