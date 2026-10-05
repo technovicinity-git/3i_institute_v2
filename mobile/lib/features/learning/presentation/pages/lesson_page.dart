@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:pdfx/pdfx.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -83,10 +86,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
   }
 
   Future<void> _openDocument(String url, String profileId) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (opened && mounted) {
+    if (url.isNotEmpty && mounted) {
       setState(() => _documentOpened = true);
       _startDocumentTimer(profileId);
     }
@@ -191,7 +191,6 @@ class _LessonPageState extends ConsumerState<LessonPage> {
         final progress = progressAsync.asData?.value ?? const LessonProgress();
         final signed = signedAsync.asData?.value;
         final isDocument = signed?.contentType.toLowerCase() == 'document';
-        final isLink = signed?.contentType.toLowerCase() == 'link';
 
         return Scaffold(
           backgroundColor: const Color(0xFFFBF9F4),
@@ -221,8 +220,6 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               _MediaPanel(
                 signedAsync: signedAsync,
                 isDocument: isDocument,
-                isLink: isLink,
-                profileId: profileId,
                 initialPosition: progress.lastPosition,
                 onProgress: (seconds, position, completed) => _saveProgress(
                   profileId,
@@ -230,6 +227,8 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   position: position,
                   completed: completed,
                 ),
+                onRetryMedia: () =>
+                    ref.invalidate(signedLessonUrlProvider(widget.lessonId)),
                 onDocumentOpen: signed == null
                     ? null
                     : () => _openDocument(signed.url, profileId),
@@ -517,68 +516,206 @@ class _MediaPanel extends StatelessWidget {
   const _MediaPanel({
     required this.signedAsync,
     required this.isDocument,
-    required this.isLink,
-    required this.profileId,
     required this.initialPosition,
     required this.onProgress,
     required this.onDocumentOpen,
+    required this.onRetryMedia,
     required this.documentOpened,
     required this.documentCompleted,
   });
   final AsyncValue<SignedLessonUrl> signedAsync;
-  final bool isDocument, isLink, documentOpened, documentCompleted;
-  final String profileId;
+  final bool isDocument, documentOpened, documentCompleted;
   final int initialPosition;
   final void Function(int, int, bool) onProgress;
   final VoidCallback? onDocumentOpen;
+  final VoidCallback onRetryMedia;
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(12),
-    child: AspectRatio(
-      aspectRatio: 16 / 9,
-      child: ColoredBox(
-        color: const Color(0xFF111820),
-        child: signedAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-          error: (_, _) => const _MediaMessage(
-            icon: Icons.cloud_off_outlined,
-            text: 'Lesson media unavailable',
-          ),
-          data: (media) {
-            if (media.url.isEmpty) {
-              return const _MediaMessage(
-                icon: Icons.hide_image_outlined,
-                text: 'Lesson media unavailable',
-              );
-            }
-            if (media.contentType.toLowerCase() == 'document') {
-              return _DocumentMessage(
-                open: onDocumentOpen,
-                opened: documentOpened,
-                completed: documentCompleted,
-              );
-            }
-            if (media.contentType.toLowerCase() == 'link') {
-              return _MediaMessage(
-                icon: Icons.open_in_new,
-                text: 'Open the lesson link',
-                action: TextButton(
-                  onPressed: () => launchUrl(
-                    Uri.parse(media.url),
-                    mode: LaunchMode.externalApplication,
+    child: isDocument
+        ? SizedBox(
+            height: MediaQuery.sizeOf(context).height * .68,
+            child: ColoredBox(
+              color: const Color(0xFFE9EDF2),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: signedAsync.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(color: _navy),
+                      ),
+                      error: (_, _) => const _MediaMessage(
+                        icon: Icons.cloud_off_outlined,
+                        text: 'Document unavailable',
+                      ),
+                      data: (media) => media.url.isEmpty
+                          ? const _MediaMessage(
+                              icon: Icons.picture_as_pdf_outlined,
+                              text: 'Document unavailable',
+                            )
+                          : _InlinePdfViewer(
+                              url: media.url,
+                              onOpened: onDocumentOpen,
+                              onRetry: onRetryMedia,
+                            ),
+                    ),
                   ),
-                  child: const Text('Open link'),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    color: const Color(0xFFFBF9F4),
+                    child: Text(
+                      documentCompleted
+                          ? 'Lesson marked complete'
+                          : documentOpened
+                          ? 'Read-only preview • Keep reading to complete this lesson'
+                          : 'Read-only PDF preview',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ColoredBox(
+              color: const Color(0xFF111820),
+              child: signedAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
-              );
-            }
-            return _VideoLessonPlayer(
-              url: media.url,
-              initialPosition: initialPosition,
-              onProgress: onProgress,
-            );
-          },
+                error: (_, _) => const _MediaMessage(
+                  icon: Icons.cloud_off_outlined,
+                  text: 'Lesson media unavailable',
+                ),
+                data: (media) {
+                  if (media.url.isEmpty) {
+                    return const _MediaMessage(
+                      icon: Icons.hide_image_outlined,
+                      text: 'Lesson media unavailable',
+                    );
+                  }
+                  if (media.contentType.toLowerCase() == 'link') {
+                    return _MediaMessage(
+                      icon: Icons.open_in_new,
+                      text: 'Open the lesson link',
+                      action: TextButton(
+                        onPressed: () => launchUrl(
+                          Uri.parse(media.url),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: const Text('Open link'),
+                      ),
+                    );
+                  }
+                  return _VideoLessonPlayer(
+                    url: media.url,
+                    initialPosition: initialPosition,
+                    onProgress: onProgress,
+                    onRetry: onRetryMedia,
+                  );
+                },
+              ),
+            ),
+          ),
+  );
+}
+
+class _InlinePdfViewer extends StatefulWidget {
+  const _InlinePdfViewer({
+    required this.url,
+    required this.onOpened,
+    required this.onRetry,
+  });
+  final String url;
+  final VoidCallback? onOpened;
+  final VoidCallback onRetry;
+
+  @override
+  State<_InlinePdfViewer> createState() => _InlinePdfViewerState();
+}
+
+class _InlinePdfViewerState extends State<_InlinePdfViewer> {
+  late PdfControllerPinch _controller;
+  bool _opened = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = _createController(widget.url);
+  }
+
+  PdfControllerPinch _createController(String url) =>
+      PdfControllerPinch(document: PdfDocument.openData(_fetchPdf(url)));
+
+  Future<Uint8List> _fetchPdf(String url) async {
+    final response = await Dio().get<List<int>>(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = response.data;
+    if (bytes == null || bytes.isEmpty) {
+      throw const FormatException('The PDF file is empty.');
+    }
+    return Uint8List.fromList(bytes);
+  }
+
+  @override
+  void didUpdateWidget(covariant _InlinePdfViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _controller.dispose();
+      _opened = false;
+      _controller = _createController(widget.url);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PdfViewPinch(
+    controller: _controller,
+    onDocumentLoaded: (_) {
+      if (_opened) return;
+      _opened = true;
+      widget.onOpened?.call();
+    },
+    builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+      options: const DefaultBuilderOptions(),
+      documentLoaderBuilder: (_) =>
+          const Center(child: CircularProgressIndicator(color: _navy)),
+      errorBuilder: (_, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.picture_as_pdf_outlined, color: _navy, size: 38),
+              const SizedBox(height: 10),
+              const Text(
+                'This PDF could not be displayed. Check your connection and try again.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: widget.onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reload PDF'),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -590,10 +727,12 @@ class _VideoLessonPlayer extends StatefulWidget {
     required this.url,
     required this.initialPosition,
     required this.onProgress,
+    required this.onRetry,
   });
   final String url;
   final int initialPosition;
   final void Function(int, int, bool) onProgress;
+  final VoidCallback onRetry;
   @override
   State<_VideoLessonPlayer> createState() => _VideoLessonPlayerState();
 }
@@ -613,10 +752,17 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
     try {
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(widget.url),
+        formatHint: VideoFormat.hls,
       );
       _controller = controller;
       await controller.initialize();
       if (!mounted) return;
+      if (controller.value.hasError) {
+        throw StateError(
+          controller.value.errorDescription ??
+              'HLS stream initialization failed.',
+        );
+      }
       if (widget.initialPosition > 0) {
         await controller.seekTo(Duration(seconds: widget.initialPosition));
       }
@@ -625,10 +771,7 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       setState(() => _initialized = true);
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _error =
-              'Video could not be played. Check your connection and try again.',
-        );
+        setState(() => _error = 'Check your connection, then try again.');
       }
     }
   }
@@ -678,7 +821,15 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return _MediaMessage(icon: Icons.error_outline, text: _error!);
+      return _MediaMessage(
+        icon: Icons.error_outline,
+        text: 'Video could not be played. ${_error!}',
+        action: TextButton.icon(
+          onPressed: widget.onRetry,
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          label: const Text('Try again', style: TextStyle(color: Colors.white)),
+        ),
+      );
     }
     final c = _controller;
     if (!_initialized || c == null) {
@@ -692,7 +843,7 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       children: [
         VideoPlayer(c),
         IconButton.filled(
-          onPressed: () => value.isPlaying ? c.pause() : c.play(),
+          onPressed: () => _togglePlayback(c),
           iconSize: 34,
           icon: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
           style: IconButton.styleFrom(
@@ -735,45 +886,20 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       ],
     );
   }
-}
 
-class _DocumentMessage extends StatelessWidget {
-  const _DocumentMessage({
-    required this.open,
-    required this.opened,
-    required this.completed,
-  });
-  final VoidCallback? open;
-  final bool opened, completed;
-  @override
-  Widget build(BuildContext context) => Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Icon(Icons.picture_as_pdf_outlined, color: Colors.white, size: 42),
-      const SizedBox(height: 8),
-      const Text(
-        'Lesson document',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 3),
-      Text(
-        completed
-            ? 'Lesson marked complete'
-            : opened
-            ? 'Keep reading to complete this lesson'
-            : 'Open the read-only document',
-        style: const TextStyle(color: Colors.white70, fontSize: 11),
-      ),
-      const SizedBox(height: 6),
-      if (!completed)
-        FilledButton.icon(
-          onPressed: open,
-          icon: const Icon(Icons.open_in_new, size: 16),
-          label: Text(opened ? 'Open again' : 'Open document'),
-          style: FilledButton.styleFrom(backgroundColor: _green),
-        ),
-    ],
-  );
+  Future<void> _togglePlayback(VideoPlayerController controller) async {
+    try {
+      if (controller.value.isPlaying) {
+        await controller.pause();
+      } else {
+        await controller.play();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Playback was interrupted. Please try again.');
+      }
+    }
+  }
 }
 
 class _MediaMessage extends StatelessWidget {
