@@ -12,14 +12,19 @@ import '../../features/courses/presentation/pages/course_details_page.dart';
 import '../../features/courses/presentation/pages/courses_page.dart';
 import '../../features/courses/presentation/widgets/landing_layout.dart';
 import '../../features/chat/presentation/pages/learner_chat_page.dart';
+import '../../features/certificates/presentation/pages/certificates_page.dart';
 import '../../features/dashboard/presentation/pages/learner_dashboard_page.dart';
 import '../../features/dashboard/presentation/widgets/learner_dashboard_layout.dart';
+import '../../features/exams/presentation/pages/course_exams_page.dart';
+import '../../features/exams/presentation/pages/exam_result_page.dart';
+import '../../features/exams/presentation/pages/take_exam_page.dart';
 import '../../features/learning/presentation/pages/lesson_page.dart';
 import '../../features/learning/presentation/pages/online_classes_page.dart';
 import '../../features/learning/presentation/pages/regular_courses_page.dart';
 import '../../features/profiles/presentation/pages/add_learner_page.dart';
 import '../../features/profiles/presentation/pages/profile_selection_page.dart';
 import '../../features/profiles/presentation/widgets/profile_layout.dart';
+import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -76,8 +81,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const LearnerDashboardPage(),
           ),
           GoRoute(
+            path: '/certificates',
+            builder: (context, state) => const CertificatesPage(),
+          ),
+          GoRoute(
+            path: '/wishlist',
+            builder: (context, state) => const WishlistPage(),
+          ),
+          GoRoute(
             path: '/my-courses',
             builder: (context, state) => const RegularCoursesPage(),
+          ),
+          GoRoute(
+            path: '/my-courses/:courseId/exams',
+            builder: (context, state) => CourseExamsPage(
+              courseId: state.pathParameters['courseId']!,
+              onlineClass: state.uri.queryParameters['online'] == 'true',
+            ),
+          ),
+          GoRoute(
+            path: '/my-courses/:courseId/exams/:examId/take',
+            builder: (context, state) => TakeExamPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+              onlineClass: state.uri.queryParameters['online'] == 'true',
+            ),
+          ),
+          GoRoute(
+            path: '/my-courses/:courseId/exams/:examId/result',
+            builder: (context, state) => ExamResultPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+              onlineClass: state.uri.queryParameters['online'] == 'true',
+            ),
           ),
           GoRoute(
             path: '/my-courses/:courseId/lessons/:lessonId',

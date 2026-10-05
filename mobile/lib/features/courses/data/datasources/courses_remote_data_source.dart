@@ -29,7 +29,10 @@ class CoursesRemoteDataSource {
     );
   }
 
-  Future<CourseDetails> getCourseDetails(String courseId, {String? learnerProfileId}) async {
+  Future<CourseDetails> getCourseDetails(
+    String courseId, {
+    String? learnerProfileId,
+  }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/courses/$courseId/details',
       queryParameters: {
@@ -42,14 +45,16 @@ class CoursesRemoteDataSource {
 
   Future<List<CourseCategory>> getCategories() async {
     final response = await _dio.get<Map<String, dynamic>>('/categories');
-    return asJsonList(response.data?['data']).map((item) {
-      final category = asJsonMap(item);
-      return CourseCategory(
-        id: stringValue(category['id']),
-        name: stringValue(category['name']),
-        courseCount: intValue(category['courseCount']),
-      );
-    }).toList(growable: false);
+    return asJsonList(response.data?['data'])
+        .map((item) {
+          final category = asJsonMap(item);
+          return CourseCategory(
+            id: stringValue(category['id']),
+            name: stringValue(category['name']),
+            courseCount: intValue(category['courseCount']),
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<Set<String>> getWishlistedCourseIds(String learnerProfileId) async {
@@ -57,28 +62,45 @@ class CoursesRemoteDataSource {
       '/wishlist',
       queryParameters: {'learnerProfileId': learnerProfileId},
     );
-    return asJsonList(response.data?['data'])
+    final payload = response.data?['data'];
+    final items = payload is Map ? payload['items'] : payload;
+    return asJsonList(items)
         .map((item) => stringValue(asJsonMap(asJsonMap(item)['course'])['id']))
         .where((id) => id.isNotEmpty)
         .toSet();
   }
 
-  Future<void> toggleWishlist({required String learnerProfileId, required String courseId, required bool add}) async {
+  Future<void> toggleWishlist({
+    required String learnerProfileId,
+    required String courseId,
+    required bool add,
+  }) async {
     if (add) {
-      await _dio.post<void>('/wishlist', data: {'learnerProfileId': learnerProfileId, 'courseId': courseId});
+      await _dio.post<void>(
+        '/wishlist',
+        data: {'learnerProfileId': learnerProfileId, 'courseId': courseId},
+      );
     } else {
-      await _dio.delete<void>('/wishlist', data: {'learnerProfileId': learnerProfileId, 'courseId': courseId});
+      await _dio.delete<void>(
+        '/wishlist',
+        data: {'learnerProfileId': learnerProfileId, 'courseId': courseId},
+      );
     }
   }
 
-  Future<bool> enrol({required String learnerProfileId, required String courseId, String? batchId}) async {
+  Future<bool> enrol({
+    required String learnerProfileId,
+    required String courseId,
+    String? batchId,
+  }) async {
+    final data = <String, dynamic>{
+      'learnerProfileId': learnerProfileId,
+      'courseId': courseId,
+    };
+    if (batchId != null) data['batchId'] = batchId;
     final response = await _dio.post<Map<String, dynamic>>(
       '/enrolments',
-      data: {
-        'learnerProfileId': learnerProfileId,
-        'courseId': courseId,
-        if (batchId != null) 'batchId': batchId,
-      },
+      data: data,
     );
     return boolValue(asJsonMap(response.data?['data'])['waitlisted']);
   }

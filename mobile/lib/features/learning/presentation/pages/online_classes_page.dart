@@ -327,6 +327,13 @@ class _OnlineClassCard extends ConsumerWidget {
                   icon: const Icon(Icons.open_in_new, size: 17),
                   label: const Text('Details'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '/my-courses/${course.courseId}/exams?online=true',
+                  ),
+                  icon: const Icon(Icons.quiz_outlined, size: 17),
+                  label: const Text('Exams'),
+                ),
                 if (nextSession?.meetingLink != null &&
                     nextSession!.meetingLink!.isNotEmpty)
                   FilledButton.icon(

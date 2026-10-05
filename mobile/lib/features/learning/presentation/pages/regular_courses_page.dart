@@ -235,36 +235,53 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                             color: _green,
                           ),
                           const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: course.continueLessonId == null
-                                  ? null
-                                  : () => context.push(
-                                      '/my-courses/${course.courseId}/lessons/${course.continueLessonId}',
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilledButton.icon(
+                                  onPressed: course.continueLessonId == null
+                                      ? null
+                                      : () => context.push(
+                                          '/my-courses/${course.courseId}/lessons/${course.continueLessonId}',
+                                        ),
+                                  icon: Icon(
+                                    course.progress > 0
+                                        ? Icons.play_arrow
+                                        : Icons.school_outlined,
+                                  ),
+                                  label: Text(
+                                    course.continueLessonId == null
+                                        ? 'No lessons'
+                                        : course.progress > 0
+                                        ? 'Resume'
+                                        : 'Start learning',
+                                  ),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: _navy,
+                                    disabledBackgroundColor: const Color(
+                                      0xFFE2E8F0,
                                     ),
-                              icon: Icon(
-                                course.progress > 0
-                                    ? Icons.play_arrow
-                                    : Icons.school_outlined,
-                              ),
-                              label: Text(
-                                course.continueLessonId == null
-                                    ? 'No lessons available'
-                                    : course.progress > 0
-                                    ? 'Resume learning'
-                                    : 'Start learning',
-                              ),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: _navy,
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 13,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 13,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 9),
+                              OutlinedButton.icon(
+                                onPressed: () => context.push(
+                                  '/my-courses/${course.courseId}/exams',
+                                ),
+                                icon: const Icon(Icons.quiz_outlined, size: 18),
+                                label: const Text('Exams'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 13,
+                                    horizontal: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

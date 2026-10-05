@@ -618,6 +618,7 @@ class _MediaPanel extends StatelessWidget {
                   }
                   return _VideoLessonPlayer(
                     url: media.url,
+                    referer: media.referer,
                     initialPosition: initialPosition,
                     onProgress: onProgress,
                     onRetry: onRetryMedia,
@@ -644,7 +645,7 @@ class _InlinePdfViewer extends StatefulWidget {
 }
 
 class _InlinePdfViewerState extends State<_InlinePdfViewer> {
-  late PdfControllerPinch _controller;
+  late PdfController _controller;
   bool _opened = false;
 
   @override
@@ -653,8 +654,8 @@ class _InlinePdfViewerState extends State<_InlinePdfViewer> {
     _controller = _createController(widget.url);
   }
 
-  PdfControllerPinch _createController(String url) =>
-      PdfControllerPinch(document: PdfDocument.openData(_fetchPdf(url)));
+  PdfController _createController(String url) =>
+      PdfController(document: PdfDocument.openData(_fetchPdf(url)));
 
   Future<Uint8List> _fetchPdf(String url) async {
     final response = await Dio().get<List<int>>(
@@ -685,14 +686,16 @@ class _InlinePdfViewerState extends State<_InlinePdfViewer> {
   }
 
   @override
-  Widget build(BuildContext context) => PdfViewPinch(
+  Widget build(BuildContext context) => PdfView(
     controller: _controller,
+    scrollDirection: Axis.vertical,
+    pageSnapping: false,
     onDocumentLoaded: (_) {
       if (_opened) return;
       _opened = true;
       widget.onOpened?.call();
     },
-    builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+    builders: PdfViewBuilders<DefaultBuilderOptions>(
       options: const DefaultBuilderOptions(),
       documentLoaderBuilder: (_) =>
           const Center(child: CircularProgressIndicator(color: _navy)),
@@ -725,11 +728,13 @@ class _InlinePdfViewerState extends State<_InlinePdfViewer> {
 class _VideoLessonPlayer extends StatefulWidget {
   const _VideoLessonPlayer({
     required this.url,
+    required this.referer,
     required this.initialPosition,
     required this.onProgress,
     required this.onRetry,
   });
   final String url;
+  final String? referer;
   final int initialPosition;
   final void Function(int, int, bool) onProgress;
   final VoidCallback onRetry;
@@ -753,6 +758,9 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(widget.url),
         formatHint: VideoFormat.hls,
+        httpHeaders: widget.referer == null
+            ? const <String, String>{}
+            : {'Referer': widget.referer!},
       );
       _controller = controller;
       await controller.initialize();

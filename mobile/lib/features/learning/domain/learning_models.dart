@@ -186,13 +186,19 @@ class CourseLearningContent {
 }
 
 class SignedLessonUrl {
-  const SignedLessonUrl(this.url, this.contentType, this.mimeType);
+  const SignedLessonUrl(
+    this.url,
+    this.contentType,
+    this.mimeType,
+    this.referer,
+  );
   final String url, contentType;
-  final String? mimeType;
+  final String? mimeType, referer;
   factory SignedLessonUrl.fromJson(Map<String, dynamic> j) => SignedLessonUrl(
     j['url'] as String? ?? '',
     j['contentType'] as String? ?? '',
     j['mimeType'] as String?,
+    j['referer'] as String?,
   );
 }
 

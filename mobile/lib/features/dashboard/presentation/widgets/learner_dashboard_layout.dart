@@ -173,8 +173,12 @@ class DashboardSidebar extends StatelessWidget {
     ),
     _DashboardNavItem('Assignments', Icons.assignment_outlined, null),
     _DashboardNavItem('Exams', Icons.description_outlined, null),
-    _DashboardNavItem('Certificates', Icons.workspace_premium_outlined, null),
-    _DashboardNavItem('Wishlist', Icons.favorite_border, null),
+    _DashboardNavItem(
+      'Certificates',
+      Icons.workspace_premium_outlined,
+      '/certificates',
+    ),
+    _DashboardNavItem('Wishlist', Icons.favorite_border, '/wishlist'),
   ];
 
   @override
