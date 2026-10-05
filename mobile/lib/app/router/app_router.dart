@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/check_email_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/instructor_login_page.dart';
+import '../../features/auth/presentation/pages/instructor_register_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
@@ -34,6 +36,11 @@ import '../../features/profiles/presentation/pages/login_security_page.dart';
 import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
+import '../../features/instructor_dashboard/presentation/pages/instructor_dashboard_page.dart';
+import '../../features/instructor_dashboard/presentation/widgets/instructor_dashboard_layout.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_courses_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -45,13 +52,124 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
+        path: '/instructor/login',
+        builder: (context, state) => const InstructorLoginPage(),
+      ),
+      GoRoute(
+        path: '/instructor/register',
+        builder: (context, state) => const InstructorRegisterPage(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) =>
+            InstructorDashboardLayout(child: child),
+        routes: [
+          GoRoute(
+            path: '/instructor/dashboard',
+            builder: (context, state) => const InstructorDashboardPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses',
+            builder: (context, state) => const InstructorCoursesPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses/create',
+            builder: (context, state) => const InstructorCourseFormPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/edit',
+            builder: (context, state) => InstructorCourseFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments',
+            builder: (context, state) => InstructorAssignmentsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments/create',
+            builder: (context, state) => InstructorAssignmentCreatePage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments/:assignmentId',
+            builder: (context, state) => InstructorAssignmentDetailPage(
+              courseId: state.pathParameters['courseId']!,
+              assignmentId: state.pathParameters['assignmentId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/materials',
+            builder: (context, state) => const InstructorSectionPlaceholderPage(
+              title: 'Course Materials',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Course Batches'),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions',
+            builder: (context, state) => const InstructorSectionPlaceholderPage(
+              title: 'Course Questions',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Course Exams'),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/students',
+            builder: (context, state) => const InstructorSectionPlaceholderPage(
+              title: 'Course Students',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/live-classes',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Live Classes'),
+          ),
+          GoRoute(
+            path: '/instructor/questions',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Questions'),
+          ),
+          GoRoute(
+            path: '/instructor/certificates',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Certificates'),
+          ),
+          GoRoute(
+            path: '/instructor/students',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Students'),
+          ),
+          GoRoute(
+            path: '/instructor/notifications',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Notifications'),
+          ),
+          GoRoute(
+            path: '/instructor/settings',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Settings'),
+          ),
+        ],
+      ),
+      GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: '/check-email',
-        builder: (context, state) =>
-            CheckEmailPage(email: state.uri.queryParameters['email'] ?? ''),
+        builder: (context, state) => CheckEmailPage(
+          email: state.uri.queryParameters['email'] ?? '',
+          instructor: state.uri.queryParameters['instructor'] == 'true',
+        ),
       ),
       GoRoute(
         path: '/forgot-password',
@@ -207,6 +325,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       const openRoutes = {
         '/login',
         '/register',
+        '/instructor/login',
+        '/instructor/register',
         '/check-email',
         '/forgot-password',
         '/reset-password',
@@ -214,8 +334,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       };
 
       if (auth.isLoading) return path == '/startup' ? null : '/startup';
-      if (path == '/startup') return account == null ? '/login' : '/profiles';
-      if (account == null && !openRoutes.contains(path)) return '/login';
+      if (path == '/startup') {
+        if (account == null) return '/login';
+        return account.role == 'Instructor'
+            ? '/instructor/dashboard'
+            : '/profiles';
+      }
+      if (account == null && !openRoutes.contains(path)) {
+        return path.startsWith('/instructor/') ? '/instructor/login' : '/login';
+      }
+      if (account?.role == 'Instructor') {
+        if ((!path.startsWith('/instructor/') &&
+                !path.startsWith('/courses')) ||
+            path == '/instructor/login' ||
+            path == '/instructor/register') {
+          return '/instructor/dashboard';
+        }
+      }
+      if (account?.role == 'Account Holder' &&
+          path == '/instructor/dashboard') {
+        return '/profiles';
+      }
       if (account != null && (path == '/login' || path == '/register')) {
         return '/profiles';
       }

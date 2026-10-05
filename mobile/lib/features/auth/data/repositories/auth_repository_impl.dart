@@ -1,4 +1,5 @@
 import '../../domain/entities/account.dart';
+import 'dart:typed_data';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
@@ -10,7 +11,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Account?> restoreSession() async {
     final account = await _remoteDataSource.restoreSession();
-    if (account != null && account.role != 'Account Holder') {
+    if (account != null &&
+        account.role != 'Account Holder' &&
+        account.role != 'Instructor') {
       await _remoteDataSource.logout();
       return null;
     }
@@ -18,53 +21,133 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Account> login({required String email, required String password}) async {
-    final account = await _remoteDataSource.login(email: email, password: password);
+  Future<Account> login({
+    required String email,
+    required String password,
+  }) async {
+    final account = await _remoteDataSource.login(
+      email: email,
+      password: password,
+    );
     if (account.role != 'Account Holder') {
       await _remoteDataSource.logout();
-      throw Exception('This app is for account holders. Please use an account holder login.');
+      throw Exception(
+        'This app is for account holders. Please use an account holder login.',
+      );
     }
     return account;
   }
 
   @override
-  Future<Account> loginWithGoogle({required String idToken, String? dateOfBirth}) async =>
-      _requireAccountHolder(await _remoteDataSource.loginWithGoogle(idToken: idToken, dateOfBirth: dateOfBirth));
+  Future<Account> loginInstructor({
+    required String email,
+    required String password,
+  }) async {
+    return _remoteDataSource.loginInstructor(email: email, password: password);
+  }
 
   @override
-  Future<Account> loginWithApple({required String identityToken, String? dateOfBirth, String? firstName, String? lastName}) async =>
-      _requireAccountHolder(await _remoteDataSource.loginWithApple(
-        identityToken: identityToken,
-        dateOfBirth: dateOfBirth,
-        firstName: firstName,
-        lastName: lastName,
-      ));
+  Future<Account> loginWithGoogle({
+    required String idToken,
+    String? dateOfBirth,
+  }) async => _requireAccountHolder(
+    await _remoteDataSource.loginWithGoogle(
+      idToken: idToken,
+      dateOfBirth: dateOfBirth,
+    ),
+  );
+
+  @override
+  Future<Account> loginWithApple({
+    required String identityToken,
+    String? dateOfBirth,
+    String? firstName,
+    String? lastName,
+  }) async => _requireAccountHolder(
+    await _remoteDataSource.loginWithApple(
+      identityToken: identityToken,
+      dateOfBirth: dateOfBirth,
+      firstName: firstName,
+      lastName: lastName,
+    ),
+  );
 
   Future<Account> _requireAccountHolder(Account account) async {
     if (account.role != 'Account Holder') {
       await _remoteDataSource.logout();
-      throw Exception('This app is for account holders. Please use an account holder login.');
+      throw Exception(
+        'This app is for account holders. Please use an account holder login.',
+      );
     }
     return account;
   }
 
   @override
-  Future<String> register({required String firstName, required String lastName, required String email, required String password, required String dateOfBirth, required String locale}) =>
-      _remoteDataSource.register(firstName: firstName, lastName: lastName, email: email, password: password, dateOfBirth: dateOfBirth, locale: locale);
+  Future<String> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required String dateOfBirth,
+    required String locale,
+  }) => _remoteDataSource.register(
+    firstName: firstName,
+    lastName: lastName,
+    email: email,
+    password: password,
+    dateOfBirth: dateOfBirth,
+    locale: locale,
+  );
+
+  @override
+  Future<String> registerInstructor({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required String dateOfBirth,
+    required String locale,
+    required String bio,
+    required String areaOfExpertise,
+    required Uint8List cvBytes,
+    required String cvFileName,
+    required String wwccNumber,
+    required String wwccState,
+    required String wwccExpiry,
+  }) => _remoteDataSource.registerInstructor(
+    firstName: firstName,
+    lastName: lastName,
+    email: email,
+    password: password,
+    dateOfBirth: dateOfBirth,
+    locale: locale,
+    bio: bio,
+    areaOfExpertise: areaOfExpertise,
+    cvBytes: cvBytes,
+    cvFileName: cvFileName,
+    wwccNumber: wwccNumber,
+    wwccState: wwccState,
+    wwccExpiry: wwccExpiry,
+  );
 
   @override
   Future<void> logout() => _remoteDataSource.logout();
 
   @override
-  Future<void> forgotPassword(String email) => _remoteDataSource.forgotPassword(email);
+  Future<void> forgotPassword(String email) =>
+      _remoteDataSource.forgotPassword(email);
 
   @override
-  Future<void> resetPassword({required String token, required String password}) =>
-      _remoteDataSource.resetPassword(token: token, password: password);
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) => _remoteDataSource.resetPassword(token: token, password: password);
 
   @override
-  Future<void> verifyEmail(String token) => _remoteDataSource.verifyEmail(token);
+  Future<void> verifyEmail(String token) =>
+      _remoteDataSource.verifyEmail(token);
 
   @override
-  Future<void> resendVerification(String email) => _remoteDataSource.resendVerification(email);
+  Future<void> resendVerification(String email) =>
+      _remoteDataSource.resendVerification(email);
 }
