@@ -12,6 +12,7 @@ import type {
   UploadVideoInput,
 } from "#/modules/material/schema";
 import { cloudinary } from "#/lib/cloudinary";
+import { env } from "#/config/env";
 
 const MAX_VIDEO_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
 
@@ -428,7 +429,12 @@ export class MaterialService {
     // Video — Bunny Stream
     if (material.type === "video") {
       const signedUrl = await bunnyStream.getSignedUrl(material.url, 3600);
-      return { url: signedUrl, expiresIn: 3600, contentType: "video" };
+      return {
+        url: signedUrl,
+        expiresIn: 3600,
+        contentType: "video",
+        referer: env.FRONTEND_URL,
+      };
     }
 
     // Document — Cloudinary authenticated URL

@@ -17,7 +17,7 @@ import {
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/instructor/dashboard" },
-  { label: "My Courses", icon: BookOpen, href: "/instructor/courses" },
+  { label: "Regular Courses", icon: BookOpen, href: "/instructor/courses" },
   { label: "Live Classes", icon: Video, href: "/instructor/live-classes" },
   {
     label: "Questions",
