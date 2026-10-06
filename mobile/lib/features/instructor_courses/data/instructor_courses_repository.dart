@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/entities/instructor_course.dart';
 import '../domain/entities/instructor_batch.dart';
+import '../domain/entities/instructor_material.dart';
+import '../domain/entities/instructor_question.dart';
 
 class InstructorCoursesRepository {
   InstructorCoursesRepository(this._client);
@@ -195,6 +197,186 @@ class InstructorCoursesRepository {
   ) async => _dio.patch<void>('/batches/sessions/$sessionId', data: input);
   Future<void> deleteSession(String sessionId) async =>
       _dio.delete<void>('/batches/sessions/$sessionId');
+
+  Future<List<InstructorMaterial>> getMaterials(String courseId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/materials/course/$courseId',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => InstructorMaterial(
+            id: '${item['id'] ?? ''}',
+            title: '${item['title'] ?? 'Material'}',
+            description: _nullable(item['description']),
+            type: '${item['type'] ?? 'document'}',
+            duration: item['duration'] is num
+                ? (item['duration'] as num).toInt()
+                : null,
+            order: _int(item['order']),
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> uploadVideo({
+    required String courseId,
+    required String title,
+    required String description,
+    required int order,
+    required int? duration,
+    required MaterialUploadFile video,
+    MaterialUploadFile? captions,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final form = FormData.fromMap({
+      'courseId': courseId,
+      'title': title,
+      'description': description,
+      'order': '$order',
+      'duration': ?duration?.toString(),
+      'video': _multipart(video),
+      'captions': ?(captions == null ? null : _multipart(captions)),
+    });
+    await _dio.post<void>(
+      '/materials/upload-video',
+      data: form,
+      onSendProgress: onProgress,
+      options: Options(
+        sendTimeout: const Duration(hours: 3),
+        receiveTimeout: const Duration(minutes: 30),
+      ),
+    );
+  }
+
+  Future<void> uploadDocument({
+    required String courseId,
+    required String title,
+    required String description,
+    required int order,
+    required MaterialUploadFile document,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final form = FormData.fromMap({
+      'courseId': courseId,
+      'title': title,
+      'description': description,
+      'order': '$order',
+      'document': _multipart(document),
+    });
+    await _dio.post<void>(
+      '/materials/upload-document',
+      data: form,
+      onSendProgress: onProgress,
+      options: Options(
+        sendTimeout: const Duration(minutes: 30),
+        receiveTimeout: const Duration(minutes: 5),
+      ),
+    );
+  }
+
+  Future<void> updateMaterial(String id, Map<String, dynamic> input) async =>
+      _dio.patch<void>('/materials/$id', data: input);
+  Future<void> deleteMaterial(String id) async =>
+      _dio.delete<void>('/materials/$id');
+
+  Future<InstructorMaterialMedia> getMaterialMedia(String id) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/materials/$id/signed-url',
+    );
+    final data = _map(response.data?['data']);
+    return InstructorMaterialMedia(
+      url: '${data['url'] ?? ''}',
+      contentType: '${data['contentType'] ?? ''}',
+      mimeType: _nullable(data['mimeType']),
+      referer: _nullable(data['referer']),
+    );
+  }
+
+  MultipartFile _multipart(MaterialUploadFile file) => MultipartFile.fromStream(
+    file.openRead,
+    file.length,
+    filename: file.name,
+    contentType: DioMediaType.parse(file.mimeType),
+  );
+
+  Future<List<InstructorQuestion>> getQuestions(String courseId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/questions',
+      queryParameters: {'courseId': courseId},
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(_question)
+        .toList();
+  }
+
+  Future<InstructorQuestion> getQuestion(String id) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/questions/$id',
+    );
+    return _question(_map(response.data?['data']));
+  }
+
+  Future<void> createQuestion(Map<String, dynamic> input) async =>
+      _dio.post<void>('/exams/questions', data: input);
+  Future<void> updateQuestion(String id, Map<String, dynamic> input) async =>
+      _dio.patch<void>('/exams/questions/$id', data: input);
+  Future<void> deleteQuestion(String id) async =>
+      _dio.delete<void>('/exams/questions/$id');
+
+  Future<QuestionImportResult> importQuestions(
+    String courseId,
+    List<int> bytes,
+    String filename,
+  ) async {
+    final form = FormData.fromMap({
+      'courseId': courseId,
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: filename,
+        contentType: DioMediaType('text', 'csv'),
+      ),
+    });
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/exams/questions/bulk-import',
+      data: form,
+      options: Options(receiveTimeout: const Duration(minutes: 2)),
+    );
+    final data = _map(response.data?['data']);
+    final errors = data['errors'];
+    return QuestionImportResult(
+      total: _int(data['total']),
+      imported: _int(data['imported']),
+      failed: _int(data['failed']),
+      errors: (errors is List ? errors : const [])
+          .whereType<Map<String, dynamic>>()
+          .map((e) => (row: _int(e['row']), message: '${e['message'] ?? ''}'))
+          .toList(),
+    );
+  }
+
+  InstructorQuestion _question(Map<String, dynamic> item) {
+    final correct = item['correctAnswer'];
+    return InstructorQuestion(
+      id: '${item['id'] ?? ''}',
+      type: '${item['type'] ?? 'mcq'}',
+      question: '${item['question'] ?? ''}',
+      options: _strings(item['options']),
+      correctAnswers: correct is String
+          ? [correct]
+          : correct is List
+          ? correct.map((e) => '$e').toList()
+          : const [],
+      suggestedAnswer: _nullable(item['suggestedAnswer']),
+      marks: _int(item['marks'], 1),
+      negativeMarks: _int(item['negativeMarks']),
+      difficulty: '${item['difficulty'] ?? 'medium'}',
+      explanation: _nullable(item['explanation']),
+    );
+  }
 
   InstructorBatch _batch(Map<String, dynamic> item) {
     final course = _map(item['course']);

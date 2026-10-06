@@ -42,6 +42,8 @@ import '../../features/instructor_courses/presentation/pages/instructor_courses_
 import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -103,14 +105,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/courses/:courseId/materials',
-            builder: (context, state) => const InstructorSectionPlaceholderPage(
-              title: 'Course Materials',
+            builder: (context, state) => InstructorMaterialsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/materials/upload',
+            builder: (context, state) => InstructorMaterialUploadPage(
+              courseId: state.pathParameters['courseId']!,
+              type: state.uri.queryParameters['type'] == 'video'
+                  ? 'video'
+                  : 'document',
             ),
           ),
           GoRoute(
             path: '/instructor/courses/:courseId/questions',
-            builder: (context, state) => const InstructorSectionPlaceholderPage(
-              title: 'Course Questions',
+            builder: (context, state) => InstructorQuestionsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions/create',
+            builder: (context, state) => InstructorQuestionFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions/:questionId/edit',
+            builder: (context, state) => InstructorQuestionFormPage(
+              courseId: state.pathParameters['courseId']!,
+              questionId: state.pathParameters['questionId']!,
             ),
           ),
           GoRoute(

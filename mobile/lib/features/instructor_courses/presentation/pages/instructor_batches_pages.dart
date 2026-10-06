@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/entities/instructor_batch.dart';
-import '../../domain/entities/instructor_course.dart';
 import '../providers/instructor_courses_providers.dart';
+import '../widgets/course_action_strip.dart';
 
 class InstructorBatchesPage extends ConsumerWidget {
   const InstructorBatchesPage({required this.courseId, super.key});
@@ -33,7 +33,7 @@ class InstructorBatchesPage extends ConsumerWidget {
             label: const Text('Back to courses'),
             style: TextButton.styleFrom(alignment: Alignment.centerLeft),
           ),
-          if (course != null) _CourseActionStrip(course: course),
+          if (course != null) CourseActionStrip(course: course),
           Row(
             children: [
               const Expanded(
@@ -1052,57 +1052,6 @@ class _SessionDraftCard extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _CourseActionStrip extends StatelessWidget {
-  const _CourseActionStrip({required this.course});
-  final InstructorCourse course;
-  @override
-  Widget build(BuildContext context) {
-    final id = course.id;
-    final items = <(String, IconData, String)>[
-      ('Details', Icons.edit_outlined, '/instructor/courses/$id/edit'),
-      if (course.type == 'REGULAR')
-        (
-          'Materials',
-          Icons.video_library_outlined,
-          '/instructor/courses/$id/materials',
-        ),
-      if (course.type == 'ONLINE_CLASS')
-        (
-          'Batches',
-          Icons.calendar_month_outlined,
-          '/instructor/courses/$id/batches',
-        ),
-      ('Questions', Icons.help_outline, '/instructor/courses/$id/questions'),
-      ('Exams', Icons.description_outlined, '/instructor/courses/$id/exams'),
-      ('Students', Icons.people_outline, '/instructor/courses/$id/students'),
-      if (course.type == 'ONLINE_CLASS')
-        (
-          'Assignments',
-          Icons.assignment_outlined,
-          '/instructor/courses/$id/assignments',
-        ),
-      ('View Course', Icons.visibility_outlined, '/courses/$id'),
-    ];
-    return SizedBox(
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (final item in items)
-            Padding(
-              padding: const EdgeInsets.only(right: 7),
-              child: ActionChip(
-                avatar: Icon(item.$2, size: 16),
-                label: Text(item.$1),
-                onPressed: () => context.go(item.$3),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 class _EmptyBatchList extends StatelessWidget {

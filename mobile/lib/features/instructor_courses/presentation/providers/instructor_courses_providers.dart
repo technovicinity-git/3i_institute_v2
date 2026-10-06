@@ -3,6 +3,8 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/instructor_courses_repository.dart';
 import '../../domain/entities/instructor_course.dart';
 import '../../domain/entities/instructor_batch.dart';
+import '../../domain/entities/instructor_material.dart';
+import '../../domain/entities/instructor_question.dart';
 
 final instructorCoursesRepositoryProvider = Provider(
   (ref) => InstructorCoursesRepository(ref.watch(apiClientProvider)),
@@ -41,3 +43,18 @@ final instructorExistingSessionsProvider = FutureProvider(
   (ref) =>
       ref.watch(instructorCoursesRepositoryProvider).getInstructorSessions(),
 );
+final instructorMaterialsProvider =
+    FutureProvider.family<List<InstructorMaterial>, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getMaterials(id),
+    );
+final instructorQuestionsProvider =
+    FutureProvider.family<List<InstructorQuestion>, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getQuestions(id),
+    );
+final instructorQuestionProvider = FutureProvider.autoDispose
+    .family<InstructorQuestion, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getQuestion(id),
+    );
