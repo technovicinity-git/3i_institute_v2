@@ -37,6 +37,7 @@ import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
 import '../../features/instructor_dashboard/presentation/pages/instructor_dashboard_page.dart';
+import '../../features/instructor_dashboard/presentation/pages/instructor_settings_page.dart';
 import '../../features/instructor_dashboard/presentation/widgets/instructor_dashboard_layout.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_courses_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
@@ -247,8 +248,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/settings',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Settings'),
+            builder: (context, state) => const InstructorSettingsPage(),
           ),
         ],
       ),

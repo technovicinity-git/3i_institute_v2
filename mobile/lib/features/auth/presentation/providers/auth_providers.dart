@@ -131,6 +131,15 @@ class AuthController extends AsyncNotifier<Account?> {
     );
   }
 
+  /// Reloads the signed-in account (e.g. after a profile edit) without
+  /// putting the app back into a loading state.
+  Future<void> refreshAccount() async {
+    try {
+      final account = await _repository.restoreSession();
+      if (account != null) state = AsyncData(account);
+    } catch (_) {}
+  }
+
   Future<void> logout() async {
     try {
       await _repository.logout();
