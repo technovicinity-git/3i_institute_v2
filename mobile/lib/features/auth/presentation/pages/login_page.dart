@@ -121,6 +121,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () => context.push('/instructor/login'),
+                  child: const Text('Instructor portal'),
+                ),
+              ),
             ],
           ),
         ),

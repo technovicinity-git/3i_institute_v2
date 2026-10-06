@@ -7,6 +7,7 @@ class Account {
     required this.locale,
     required this.emailVerified,
     required this.role,
+    this.avatarUrl,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class Account {
   final String locale;
   final bool emailVerified;
   final String role;
+  final String? avatarUrl;
 
   String get fullName => '$firstName $lastName'.trim();
 }

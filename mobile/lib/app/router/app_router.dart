@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/check_email_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/instructor_login_page.dart';
+import '../../features/auth/presentation/pages/instructor_register_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
@@ -34,6 +36,18 @@ import '../../features/profiles/presentation/pages/login_security_page.dart';
 import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
+import '../../features/instructor_dashboard/presentation/pages/instructor_dashboard_page.dart';
+import '../../features/instructor_dashboard/presentation/pages/instructor_settings_page.dart';
+import '../../features/instructor_dashboard/presentation/widgets/instructor_dashboard_layout.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_courses_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_exams_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_live_classes_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_students_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -45,13 +59,209 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
+        path: '/instructor/login',
+        builder: (context, state) => const InstructorLoginPage(),
+      ),
+      GoRoute(
+        path: '/instructor/register',
+        builder: (context, state) => const InstructorRegisterPage(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) =>
+            InstructorDashboardLayout(child: child),
+        routes: [
+          GoRoute(
+            path: '/instructor/dashboard',
+            builder: (context, state) => const InstructorDashboardPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses',
+            builder: (context, state) => const InstructorCoursesPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses/create',
+            builder: (context, state) => const InstructorCourseFormPage(),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/edit',
+            builder: (context, state) => InstructorCourseFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments',
+            builder: (context, state) => InstructorAssignmentsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments/create',
+            builder: (context, state) => InstructorAssignmentCreatePage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/assignments/:assignmentId',
+            builder: (context, state) => InstructorAssignmentDetailPage(
+              courseId: state.pathParameters['courseId']!,
+              assignmentId: state.pathParameters['assignmentId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/materials',
+            builder: (context, state) => InstructorMaterialsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/materials/upload',
+            builder: (context, state) => InstructorMaterialUploadPage(
+              courseId: state.pathParameters['courseId']!,
+              type: state.uri.queryParameters['type'] == 'video'
+                  ? 'video'
+                  : 'document',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions',
+            builder: (context, state) => InstructorQuestionsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions/create',
+            builder: (context, state) => InstructorQuestionFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/questions/:questionId/edit',
+            builder: (context, state) => InstructorQuestionFormPage(
+              courseId: state.pathParameters['courseId']!,
+              questionId: state.pathParameters['questionId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams',
+            builder: (context, state) => InstructorExamsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/create',
+            builder: (context, state) => InstructorExamFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/:examId/edit',
+            builder: (context, state) => InstructorExamFormPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/:examId/attempts',
+            builder: (context, state) => InstructorExamAttemptsPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+            ),
+          ),
+          GoRoute(
+            path:
+                '/instructor/courses/:courseId/exams/:examId/attempts/:attemptId/grade',
+            builder: (context, state) => InstructorGradeAttemptPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+              attemptId: state.pathParameters['attemptId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/students',
+            builder: (context, state) => InstructorStudentsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches',
+            builder: (context, state) => InstructorBatchesPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/create',
+            builder: (context, state) => InstructorBatchCreatePage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/:batchId/edit',
+            builder: (context, state) => InstructorBatchEditPage(
+              courseId: state.pathParameters['courseId']!,
+              batchId: state.pathParameters['batchId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/batches/:batchId',
+            builder: (context, state) => InstructorBatchDetailPage(
+              courseId: state.pathParameters['courseId']!,
+              batchId: state.pathParameters['batchId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/chat',
+            builder: (context, state) => LearnerChatPage(
+              courseId: state.uri.queryParameters['courseId'] ?? '',
+              courseTitle: state.uri.queryParameters['courseTitle'] ?? 'Course',
+              batchId: state.uri.queryParameters['batchId'],
+              batchName: state.uri.queryParameters['batchName'] ?? 'Batch',
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/attendance/:sessionId',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Attendance'),
+          ),
+          GoRoute(
+            path: '/instructor/live-classes',
+            builder: (context, state) => const InstructorLiveClassesPage(),
+          ),
+          GoRoute(
+            path: '/instructor/questions',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Questions'),
+          ),
+          GoRoute(
+            path: '/instructor/certificates',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Certificates'),
+          ),
+          GoRoute(
+            path: '/instructor/students',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Students'),
+          ),
+          GoRoute(
+            path: '/instructor/notifications',
+            builder: (context, state) =>
+                const InstructorSectionPlaceholderPage(title: 'Notifications'),
+          ),
+          GoRoute(
+            path: '/instructor/settings',
+            builder: (context, state) => const InstructorSettingsPage(),
+          ),
+        ],
+      ),
+      GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: '/check-email',
-        builder: (context, state) =>
-            CheckEmailPage(email: state.uri.queryParameters['email'] ?? ''),
+        builder: (context, state) => CheckEmailPage(
+          email: state.uri.queryParameters['email'] ?? '',
+          instructor: state.uri.queryParameters['instructor'] == 'true',
+        ),
       ),
       GoRoute(
         path: '/forgot-password',
@@ -207,6 +417,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       const openRoutes = {
         '/login',
         '/register',
+        '/instructor/login',
+        '/instructor/register',
         '/check-email',
         '/forgot-password',
         '/reset-password',
@@ -214,8 +426,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       };
 
       if (auth.isLoading) return path == '/startup' ? null : '/startup';
-      if (path == '/startup') return account == null ? '/login' : '/profiles';
-      if (account == null && !openRoutes.contains(path)) return '/login';
+      if (path == '/startup') {
+        if (account == null) return '/login';
+        return account.role == 'Instructor'
+            ? '/instructor/dashboard'
+            : '/profiles';
+      }
+      if (account == null && !openRoutes.contains(path)) {
+        return path.startsWith('/instructor/') ? '/instructor/login' : '/login';
+      }
+      if (account?.role == 'Instructor') {
+        if ((!path.startsWith('/instructor/') &&
+                !path.startsWith('/courses')) ||
+            path == '/instructor/login' ||
+            path == '/instructor/register') {
+          return '/instructor/dashboard';
+        }
+      }
+      if (account?.role == 'Account Holder' &&
+          path == '/instructor/dashboard') {
+        return '/profiles';
+      }
       if (account != null && (path == '/login' || path == '/register')) {
         return '/profiles';
       }

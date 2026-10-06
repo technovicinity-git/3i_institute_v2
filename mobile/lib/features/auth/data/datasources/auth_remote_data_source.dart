@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:typed_data';
 
 import '../../../../core/network/api_client.dart';
 import '../models/account_model.dart';
@@ -28,7 +29,10 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<AccountModel> login({required String email, required String password}) async {
+  Future<AccountModel> login({
+    required String email,
+    required String password,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/login',
       data: {'email': email.trim().toLowerCase(), 'password': password},
@@ -43,15 +47,48 @@ class AuthRemoteDataSource {
     return AccountModel.fromJson(data['user'] as Map<String, dynamic>);
   }
 
-  Future<AccountModel> loginWithGoogle({required String idToken, String? dateOfBirth}) async {
+  Future<AccountModel> loginInstructor({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/login',
+      data: {'email': email.trim().toLowerCase(), 'password': password},
+    );
+    final data = _data(response.data);
+    final account = AccountModel.fromJson(data['user'] as Map<String, dynamic>);
+    if (account.role != 'Instructor') {
+      throw Exception('This account is not an instructor account.');
+    }
+    final accessToken = data['accessToken'] as String?;
+    if (accessToken == null || accessToken.isEmpty) {
+      throw const FormatException('The server did not return an access token.');
+    }
+    await _apiClient.captureRefreshToken(response);
+    await _apiClient.saveTokens(accessToken: accessToken);
+    return account;
+  }
+
+  Future<AccountModel> loginWithGoogle({
+    required String idToken,
+    String? dateOfBirth,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/google',
-      data: {'idToken': idToken, if (dateOfBirth != null) 'dateOfBirth': dateOfBirth},
+      data: {
+        'idToken': idToken,
+        if (dateOfBirth != null) 'dateOfBirth': dateOfBirth,
+      },
     );
     return _saveSocialSession(response);
   }
 
-  Future<AccountModel> loginWithApple({required String identityToken, String? dateOfBirth, String? firstName, String? lastName}) async {
+  Future<AccountModel> loginWithApple({
+    required String identityToken,
+    String? dateOfBirth,
+    String? firstName,
+    String? lastName,
+  }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/apple',
       data: {
@@ -64,7 +101,9 @@ class AuthRemoteDataSource {
     return _saveSocialSession(response);
   }
 
-  Future<AccountModel> _saveSocialSession(Response<Map<String, dynamic>> response) async {
+  Future<AccountModel> _saveSocialSession(
+    Response<Map<String, dynamic>> response,
+  ) async {
     await _apiClient.captureRefreshToken(response);
     final data = _data(response.data);
     final accessToken = data['accessToken'] as String?;
@@ -94,7 +133,62 @@ class AuthRemoteDataSource {
         'locale': locale,
       },
     );
-    return (_data(response.data)['user'] as Map<String, dynamic>)['email'] as String;
+    return (_data(response.data)['user'] as Map<String, dynamic>)['email']
+        as String;
+  }
+
+  Future<String> registerInstructor({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required String dateOfBirth,
+    required String locale,
+    required String bio,
+    required String areaOfExpertise,
+    required Uint8List cvBytes,
+    required String cvFileName,
+    required String wwccNumber,
+    required String wwccState,
+    required String wwccExpiry,
+  }) async {
+    final uploadResponse = await _dio.post<Map<String, dynamic>>(
+      '/uploads/images',
+      data: FormData.fromMap({
+        'image': MultipartFile.fromBytes(
+          cvBytes,
+          filename: cvFileName,
+          contentType: DioMediaType('application', 'pdf'),
+        ),
+        'folder': 'instructors',
+      }),
+    );
+    final uploadData = _data(uploadResponse.data);
+    final cvUrl = uploadData['url'] as String?;
+    if (cvUrl == null || cvUrl.isEmpty) {
+      throw const FormatException('The CV upload did not return a file URL.');
+    }
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/auth/register/instructor',
+      data: {
+        'firstName': firstName.trim(),
+        'lastName': lastName.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'dateOfBirth': dateOfBirth,
+        'locale': locale,
+        'bio': bio.trim(),
+        'areaOfExpertise': areaOfExpertise.trim(),
+        'cvUrl': cvUrl,
+        'wwccNumber': wwccNumber.trim(),
+        'wwccState': wwccState,
+        'wwccExpiry': wwccExpiry,
+      },
+    );
+    final user = _data(response.data)['user'];
+    if (user is Map<String, dynamic>) return user['email'] as String? ?? email;
+    return email;
   }
 
   Future<void> logout() async {
@@ -106,11 +200,20 @@ class AuthRemoteDataSource {
   }
 
   Future<void> forgotPassword(String email) async {
-    await _dio.post<void>('/auth/forgot-password', data: {'email': email.trim().toLowerCase()});
+    await _dio.post<void>(
+      '/auth/forgot-password',
+      data: {'email': email.trim().toLowerCase()},
+    );
   }
 
-  Future<void> resetPassword({required String token, required String password}) async {
-    await _dio.post<void>('/auth/reset-password', data: {'token': token, 'password': password});
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    await _dio.post<void>(
+      '/auth/reset-password',
+      data: {'token': token, 'password': password},
+    );
   }
 
   Future<void> verifyEmail(String token) async {
@@ -118,7 +221,10 @@ class AuthRemoteDataSource {
   }
 
   Future<void> resendVerification(String email) async {
-    await _dio.post<void>('/auth/resend-verification', data: {'email': email.trim().toLowerCase()});
+    await _dio.post<void>(
+      '/auth/resend-verification',
+      data: {'email': email.trim().toLowerCase()},
+    );
   }
 
   Map<String, dynamic> _data(Map<String, dynamic>? response) {

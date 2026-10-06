@@ -9,9 +9,14 @@ import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
 
 class CheckEmailPage extends ConsumerStatefulWidget {
-  const CheckEmailPage({required this.email, super.key});
+  const CheckEmailPage({
+    required this.email,
+    this.instructor = false,
+    super.key,
+  });
 
   final String email;
+  final bool instructor;
 
   @override
   ConsumerState<CheckEmailPage> createState() => _CheckEmailPageState();
@@ -54,9 +59,18 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).resendVerification(widget.email);
+      await ref
+          .read(authControllerProvider.notifier)
+          .resendVerification(widget.email);
     } catch (error) {
-      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Could not resend the email.'));
+      if (mounted) {
+        setState(
+          () => _error = apiErrorMessage(
+            error,
+            fallback: 'Could not resend the email.',
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -67,29 +81,46 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
 
   @override
   Widget build(BuildContext context) => AuthScaffold(
-        title: 'Check your email',
-        description: 'We have sent a verification link to ${widget.email}.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.mark_email_unread_outlined, size: 56, color: Color(0xFFB28A39)),
-            const SizedBox(height: 20),
-            AuthInlineError(_error),
-            AuthPrimaryButton(
-              label: _sending ? 'Sending...' : 'Resend email',
-              onPressed: _secondsRemaining == 0 && !_sending ? _resend : null,
-              loading: _sending,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _secondsRemaining == 0 ? 'You can resend now' : 'You can resend in $_secondsRemaining seconds',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 18),
-            TextButton(onPressed: () => context.go('/register'), child: const Text('Wrong email? Go back')),
-            TextButton(onPressed: () => context.go('/login'), child: const Text('Back to log in')),
-          ],
+    title: 'Check your email',
+    description: 'We have sent a verification link to ${widget.email}.',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Icon(
+          Icons.mark_email_unread_outlined,
+          size: 56,
+          color: Color(0xFFB28A39),
         ),
-      );
+        const SizedBox(height: 20),
+        AuthInlineError(_error),
+        AuthPrimaryButton(
+          label: _sending ? 'Sending...' : 'Resend email',
+          onPressed: _secondsRemaining == 0 && !_sending ? _resend : null,
+          loading: _sending,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _secondsRemaining == 0
+              ? 'You can resend now'
+              : 'You can resend in $_secondsRemaining seconds',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 18),
+        TextButton(
+          onPressed: () => context.go(
+            widget.instructor ? '/instructor/register' : '/register',
+          ),
+          child: const Text('Wrong email? Go back'),
+        ),
+        TextButton(
+          onPressed: () =>
+              context.go(widget.instructor ? '/instructor/login' : '/login'),
+          child: Text(
+            widget.instructor ? 'Back to instructor sign in' : 'Back to log in',
+          ),
+        ),
+      ],
+    ),
+  );
 }

@@ -37,7 +37,8 @@ class ChatRepository {
     required String token,
     required String courseId,
     required String? batchId,
-    required String learnerProfileId,
+    // Null for the course instructor, who chats as themselves.
+    required String? learnerProfileId,
     required void Function(bool) onConnection,
     required void Function(List<ChatMessage>) onHistory,
     required void Function(ChatMessage) onMessage,
@@ -60,7 +61,7 @@ class ChatRepository {
       socket.emit('join-course', {
         'courseId': courseId,
         'batchId': batchId,
-        'learnerProfileId': learnerProfileId,
+        'learnerProfileId': ?learnerProfileId,
       });
     });
     socket.on('disconnect', (_) => onConnection(false));
@@ -104,12 +105,12 @@ class ChatSocketSession {
   final String? _batchId;
   bool get connected => _socket.connected;
 
-  void send({required String message, required String learnerProfileId}) {
+  void send({required String message, String? learnerProfileId}) {
     _socket.emit('send-message', {
       'courseId': _courseId,
       'batchId': _batchId,
       'message': message,
-      'learnerProfileId': learnerProfileId,
+      'learnerProfileId': ?learnerProfileId,
     });
   }
 
