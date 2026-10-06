@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,6 +56,8 @@ class AuthController extends AsyncNotifier<Account?> {
       password: password,
     );
     state = AsyncData(account);
+    // The login response has no profile photo; load it in the background.
+    unawaited(refreshAccount());
   }
 
   Future<String> register({

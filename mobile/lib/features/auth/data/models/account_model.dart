@@ -9,17 +9,22 @@ class AccountModel extends Account {
     required super.locale,
     required super.emailVerified,
     required super.role,
+    super.avatarUrl,
   });
 
   factory AccountModel.fromJson(Map<String, dynamic> json) => AccountModel(
-        id: json['id'] as String? ?? '',
-        firstName: json['firstName'] as String? ?? '',
-        lastName: json['lastName'] as String? ?? '',
-        email: json['email'] as String? ?? '',
-        locale: json['locale'] as String? ?? 'en',
-        emailVerified: json['emailVerified'] as bool? ?? false,
-        role: _roleName(json['role']),
-      );
+    id: json['id'] as String? ?? '',
+    firstName: json['firstName'] as String? ?? '',
+    lastName: json['lastName'] as String? ?? '',
+    email: json['email'] as String? ?? '',
+    locale: json['locale'] as String? ?? 'en',
+    emailVerified: json['emailVerified'] as bool? ?? false,
+    role: _roleName(json['role']),
+    avatarUrl: _avatarUrl(json['avatarUrl']),
+  );
+
+  static String? _avatarUrl(Object? value) =>
+      value is String && value.trim().isNotEmpty ? value.trim() : null;
 
   static String _roleName(Object? role) {
     if (role is String) return role;

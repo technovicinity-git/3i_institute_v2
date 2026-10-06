@@ -54,20 +54,29 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
     super.dispose();
   }
 
+  /// Instructors chat as themselves; learners chat as their active profile.
+  bool get _isInstructor =>
+      ref.read(authControllerProvider).asData?.value?.role == 'Instructor';
+
+  /// The learner profile to send as, or null for an instructor.
+  String? get _senderProfileId =>
+      _isInstructor ? null : ref.read(activeLearnerProfileProvider)?.id;
+
   Future<void> _initializeChat() async {
-    final profile = ref.read(activeLearnerProfileProvider);
-    if (widget.courseId.isEmpty || profile == null) {
+    final profileId = _senderProfileId;
+    if (widget.courseId.isEmpty || (!_isInstructor && profileId == null)) {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = profile == null
-              ? 'Select a learner profile to join this class chat.'
-              : 'Course not specified.';
+          _error = widget.courseId.isEmpty
+              ? 'Course not specified.'
+              : 'Select a learner profile to join this class chat.';
         });
       }
       return;
     }
-    final roomKey = '${widget.courseId}|${widget.batchId ?? ''}|${profile.id}';
+    final roomKey =
+        '${widget.courseId}|${widget.batchId ?? ''}|${profileId ?? 'instructor'}';
     if (_socketRoomKey == roomKey) return;
     _socketRoomKey = roomKey;
     try {
@@ -89,7 +98,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
         token: token,
         courseId: widget.courseId,
         batchId: widget.batchId,
-        learnerProfileId: profile.id,
+        learnerProfileId: profileId,
         onConnection: (connected) {
           if (mounted) setState(() => _connected = connected);
         },
@@ -148,8 +157,9 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
 
   void _sendMessage() {
     final text = _input.text.trim();
-    final profile = ref.read(activeLearnerProfileProvider);
-    if (text.isEmpty || !_connected || profile == null) return;
+    final profileId = _senderProfileId;
+    if (text.isEmpty || !_connected) return;
+    if (!_isInstructor && profileId == null) return;
     if (text.length > 2000) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -158,7 +168,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
       );
       return;
     }
-    _session?.send(message: text, learnerProfileId: profile.id);
+    _session?.send(message: text, learnerProfileId: profileId);
     _input.clear();
     _autoScroll = true;
   }
@@ -220,8 +230,11 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(activeLearnerProfileProvider);
     final account = ref.watch(authControllerProvider).asData?.value;
+    final isInstructor = account?.role == 'Instructor';
+    final profile = isInstructor
+        ? null
+        : ref.watch(activeLearnerProfileProvider);
     final sessionAsync = ref.watch(
       nextLiveSessionProvider(widget.batchId ?? ''),
     );
@@ -359,7 +372,9 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
                           isSelf: isSelf,
                           showName: showName,
                           currentName: currentName,
-                          currentAvatarUrl: profile?.avatarUrl,
+                          currentAvatarUrl: isInstructor
+                              ? account?.avatarUrl
+                              : profile?.avatarUrl,
                           onReport: isSelf ? null : () => _report(message),
                         ),
                       ],

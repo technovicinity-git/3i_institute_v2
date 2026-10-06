@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profiles/presentation/widgets/learner_avatar.dart';
 
 class InstructorDashboardLayout extends ConsumerWidget {
   const InstructorDashboardLayout({required this.child, super.key});
@@ -83,6 +84,14 @@ class InstructorDashboardLayout extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  LearnerAvatar(
+                    initials: _initials(name),
+                    imageUrl: account?.avatarUrl,
+                    radius: 24,
+                    backgroundColor: const Color(0xFF12304E),
+                    foregroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     name.isEmpty ? 'Instructor' : name,
                     style: const TextStyle(fontWeight: FontWeight.w600),
@@ -106,16 +115,12 @@ class InstructorDashboardLayout extends ConsumerWidget {
           ],
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: CircleAvatar(
+            child: LearnerAvatar(
+              initials: _initials(name),
+              imageUrl: account?.avatarUrl,
               radius: 18,
               backgroundColor: const Color(0xFF12304E),
-              child: Text(
-                name.isEmpty ? 'I' : name[0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              foregroundColor: Colors.white,
             ),
           ),
         ),
@@ -128,7 +133,13 @@ class InstructorDashboardLayout extends ConsumerWidget {
   }
 }
 
-class InstructorSidebar extends StatelessWidget {
+String _initials(String name) {
+  final parts = name.split(' ').where((p) => p.isNotEmpty).take(2);
+  final initials = parts.map((p) => p[0].toUpperCase()).join();
+  return initials.isEmpty ? 'I' : initials;
+}
+
+class InstructorSidebar extends ConsumerWidget {
   const InstructorSidebar({super.key});
   static const items = <(String, IconData, String)>[
     ('Dashboard', Icons.dashboard_outlined, '/instructor/dashboard'),
@@ -146,8 +157,10 @@ class InstructorSidebar extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final path = GoRouterState.of(context).uri.path;
+    final account = ref.watch(authControllerProvider).asData?.value;
+    final name = account?.fullName ?? '';
     return ColoredBox(
       color: const Color(0xFF12304E),
       child: SafeArea(
@@ -176,30 +189,77 @@ class InstructorSidebar extends StatelessWidget {
                 ],
               ),
             ),
-            for (final item in items)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 2,
-                ),
-                child: ListTile(
-                  selected: path == item.$3 || path.startsWith('${item.$3}/'),
-                  selectedTileColor: Colors.white.withValues(alpha: .08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  leading: Icon(item.$2, size: 20),
-                  title: Text(item.$1, style: const TextStyle(fontSize: 13)),
-                  textColor: Colors.white.withValues(alpha: .76),
-                  iconColor: Colors.white.withValues(alpha: .76),
-                  selectedColor: Colors.white,
-                  dense: true,
-                  onTap: () {
-                    Scaffold.maybeOf(context)?.closeDrawer();
-                    context.go(item.$3);
-                  },
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final item in items)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
+                      child: ListTile(
+                        selected:
+                            path == item.$3 || path.startsWith('${item.$3}/'),
+                        selectedTileColor: Colors.white.withValues(alpha: .08),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        leading: Icon(item.$2, size: 20),
+                        title: Text(
+                          item.$1,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        textColor: Colors.white.withValues(alpha: .76),
+                        iconColor: Colors.white.withValues(alpha: .76),
+                        selectedColor: Colors.white,
+                        dense: true,
+                        onTap: () {
+                          Scaffold.maybeOf(context)?.closeDrawer();
+                          context.go(item.$3);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: Colors.white.withValues(alpha: .12)),
+            ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+              leading: LearnerAvatar(
+                initials: _initials(name),
+                imageUrl: account?.avatarUrl,
+                radius: 19,
+                backgroundColor: Colors.white.withValues(alpha: .15),
+                foregroundColor: Colors.white,
+              ),
+              title: Text(
+                name.isEmpty ? 'Instructor' : name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              subtitle: account?.email.isNotEmpty == true
+                  ? Text(
+                      account!.email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: .6),
+                        fontSize: 11,
+                      ),
+                    )
+                  : null,
+              onTap: () {
+                Scaffold.maybeOf(context)?.closeDrawer();
+                context.go('/instructor/settings');
+              },
+            ),
           ],
         ),
       ),

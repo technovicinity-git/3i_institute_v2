@@ -13,7 +13,11 @@ class LandingLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final account = ref.watch(authControllerProvider).asData?.value;
-    final profile = ref.watch(activeLearnerProfileProvider);
+    final isInstructor = account?.role == 'Instructor';
+    // Instructors browse as themselves, never as a learner profile.
+    final profile = isInstructor
+        ? null
+        : ref.watch(activeLearnerProfileProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -43,7 +47,11 @@ class LandingLayout extends ConsumerWidget {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
                 context.go('/profiles');
               } else if (value == 'dashboard') {
-                context.go('/dashboard');
+                context.go(
+                  isInstructor ? '/instructor/dashboard' : '/dashboard',
+                );
+              } else if (value == 'my-courses') {
+                context.go('/my-courses');
               } else if (value == 'logout') {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
                 try {
@@ -51,7 +59,9 @@ class LandingLayout extends ConsumerWidget {
                 } catch (_) {
                   // The auth controller clears its local session on failure too.
                 }
-                if (context.mounted) context.go('/login');
+                if (context.mounted) {
+                  context.go(isInstructor ? '/instructor/login' : '/login');
+                }
               }
             },
             itemBuilder: (context) => [
@@ -61,7 +71,10 @@ class LandingLayout extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      profile?.displayName ?? account?.firstName ?? 'Account',
+                      profile?.displayName ??
+                          (account == null || account.fullName.isEmpty
+                              ? 'Account'
+                              : account.fullName),
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF12304E),
@@ -75,23 +88,43 @@ class LandingLayout extends ConsumerWidget {
                           color: Color(0xFF64748B),
                         ),
                       ),
+                    if (isInstructor)
+                      Container(
+                        margin: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x1A22A146),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'INSTRUCTOR',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF22A146),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
-                value: 'switch',
-                child: Text('Switch learner profile'),
-              ),
-              const PopupMenuItem(
-                value: 'dashboard',
-                child: Text('Learner dashboard'),
-              ),
+              const PopupMenuItem(value: 'dashboard', child: Text('Dashboard')),
+              if (!isInstructor) ...const [
+                PopupMenuItem(value: 'my-courses', child: Text('My Courses')),
+                PopupMenuItem(
+                  value: 'switch',
+                  child: Text('Switch learner profile'),
+                ),
+              ],
               const PopupMenuItem(value: 'logout', child: Text('Log out')),
             ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: LearnerAvatar(
-                imageUrl: profile?.avatarUrl,
+                imageUrl: profile?.avatarUrl ?? account?.avatarUrl,
                 initials:
                     profile?.initials ??
                     (account?.firstName.isNotEmpty == true

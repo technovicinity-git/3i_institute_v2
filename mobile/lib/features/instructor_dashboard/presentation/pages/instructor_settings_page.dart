@@ -384,6 +384,8 @@ class _InstructorSettingsPageState
         _preview = null;
       });
       _notify('Profile photo updated');
+      // Keep the header avatar and chat avatar in sync.
+      await ref.read(authControllerProvider.notifier).refreshAccount();
     } catch (error) {
       if (mounted) setState(() => _preview = null);
       _notify(apiErrorMessage(error, fallback: 'Failed to upload photo'));
