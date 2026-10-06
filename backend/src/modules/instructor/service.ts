@@ -6,6 +6,7 @@ import {
   ValidationError,
 } from "#/shared/errors";
 import type { InstructorApplicationInput } from "#/modules/instructor/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class InstructorService {
   async apply(userId: string, input: InstructorApplicationInput) {
@@ -53,6 +54,8 @@ export class InstructorService {
       },
     });
 
+    notificationEvents.instructorApplicationSubmitted(userId);
+
     return { message: "Application submitted successfully" };
   }
 
@@ -96,6 +99,8 @@ export class InstructorService {
       },
     });
 
+    notificationEvents.instructorApplicationReviewed(userId, true);
+
     return { message: "Instructor approved" };
   }
 
@@ -123,6 +128,8 @@ export class InstructorService {
         details: { rejectedBy: adminId, reason: reason ?? null },
       },
     });
+
+    notificationEvents.instructorApplicationReviewed(userId, false, reason);
 
     return { message: "Application rejected" };
   }

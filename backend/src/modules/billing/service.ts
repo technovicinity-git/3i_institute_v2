@@ -6,6 +6,7 @@ import type {
   WaiverDecisionInput,
 } from "#/modules/billing/schema";
 import { env } from "#/config/env";
+import { notificationEvents } from "#/modules/notification/events";
 
 // Stripe is lazy-loaded to avoid initialization in non-billing contexts
 let stripeClient: any = null;
@@ -180,6 +181,8 @@ export class BillingService {
       },
     });
 
+    notificationEvents.waiverRequested(waiver.id);
+
     return waiver;
   }
 
@@ -256,6 +259,8 @@ export class BillingService {
         }
       }
 
+      notificationEvents.waiverDecided(updated.id);
+
       return updated;
     } else {
       const updated = await prisma.waiver.update({
@@ -276,6 +281,8 @@ export class BillingService {
           details: { reason: input.reason ?? null },
         },
       });
+
+      notificationEvents.waiverDecided(updated.id);
 
       return updated;
     }
@@ -312,6 +319,8 @@ export class BillingService {
         details: { reason },
       },
     });
+
+    notificationEvents.waiverDecided(updated.id, reason);
 
     return updated;
   }

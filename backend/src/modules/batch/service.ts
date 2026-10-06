@@ -10,6 +10,7 @@ import type {
   AddSessionInput,
   MarkAttendanceInput,
 } from "#/modules/batch/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class BatchService {
   async create(instructorId: string, input: CreateBatchInput) {
@@ -250,6 +251,8 @@ export class BatchService {
       },
     });
 
+    notificationEvents.sessionScheduled(session.id);
+
     return session;
   }
 
@@ -271,6 +274,8 @@ export class BatchService {
       where: { id: batchId },
       data: { status: "COMPLETED" },
     });
+
+    notificationEvents.batchClosed(batchId);
 
     return updated;
   }
@@ -629,6 +634,8 @@ export class BatchService {
       },
     });
 
+    notificationEvents.sessionUpdated(session);
+
     return updated;
   }
 
@@ -652,6 +659,14 @@ export class BatchService {
 
     await prisma.session.delete({
       where: { id: sessionId },
+    });
+
+    notificationEvents.sessionCancelled({
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      batchId: session.batchId,
+      courseId: session.batch.courseId,
+      courseTitle: session.batch.course.title,
     });
   }
 

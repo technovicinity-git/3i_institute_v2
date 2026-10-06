@@ -9,6 +9,7 @@ import type {
   CreateExamInput,
   SubmitExamInput,
 } from "#/modules/exam/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class ExamService {
   // ──────────────────────────────────
@@ -257,6 +258,8 @@ export class ExamService {
       },
     });
 
+    notificationEvents.examPublished(exam.id);
+
     return exam;
   }
 
@@ -313,7 +316,7 @@ export class ExamService {
       }
     }
 
-    return prisma.exam.update({
+    const updatedExam = await prisma.exam.update({
       where: { id: examId },
       data: {
         title: input.title,
@@ -331,6 +334,10 @@ export class ExamService {
         questions: JSON.parse(JSON.stringify(input.questions)),
       },
     });
+
+    notificationEvents.examUpdated(examId, existingExam.openDate);
+
+    return updatedExam;
   }
 
   async getCourseExams(courseId: string, learnerProfileId?: string) {
@@ -648,6 +655,8 @@ export class ExamService {
       },
     });
 
+    notificationEvents.examSubmitted(attempt.id);
+
     return attempt;
   }
 
@@ -808,6 +817,8 @@ export class ExamService {
           : {}),
       },
     });
+
+    if (allGraded) notificationEvents.examGraded(attemptId);
 
     return {
       message: allGraded ? "Attempt fully graded" : "Answer graded",

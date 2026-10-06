@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 
 class InstructorDashboardLayout extends ConsumerWidget {
   const InstructorDashboardLayout({required this.child, super.key});
@@ -62,11 +63,7 @@ class InstructorDashboardLayout extends ConsumerWidget {
         ),
       ),
       actions: [
-        IconButton(
-          tooltip: 'Notifications',
-          onPressed: () => context.go('/instructor/notifications'),
-          icon: const Icon(Icons.notifications_none, color: Color(0xFF12304E)),
-        ),
+        const NotificationBell(notificationsRoute: '/instructor/notifications'),
         PopupMenuButton<String>(
           tooltip: 'Account menu',
           onSelected: (value) async {

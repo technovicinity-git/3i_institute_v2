@@ -9,6 +9,7 @@ import type {
   UpdateCourseInput,
   ListCoursesQuery,
 } from "#/modules/course/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class CourseService {
   async create(instructorId: string, input: CreateCourseInput) {
@@ -54,6 +55,10 @@ export class CourseService {
         requirements: input.requirements ?? [],
       },
     });
+
+    if (course.status === "PENDING_REVIEW") {
+      notificationEvents.courseSubmittedForReview(course.id);
+    }
 
     return course;
   }
@@ -113,6 +118,10 @@ export class CourseService {
         approvedBy: null,
       },
     });
+
+    if (status === "PENDING_REVIEW" && course.status !== "PENDING_REVIEW") {
+      notificationEvents.courseSubmittedForReview(updated.id);
+    }
 
     return updated;
   }
@@ -420,6 +429,8 @@ export class CourseService {
       },
     });
 
+    notificationEvents.courseReviewed(courseId, true);
+
     return updated;
   }
 
@@ -450,6 +461,8 @@ export class CourseService {
         details: { reason: reason ?? null },
       },
     });
+
+    notificationEvents.courseReviewed(courseId, false, reason);
 
     return updated;
   }

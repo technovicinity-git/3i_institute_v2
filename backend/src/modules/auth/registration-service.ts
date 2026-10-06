@@ -7,6 +7,7 @@ import type {
   LearnerRegistrationInput,
   InstructorRegistrationInput,
 } from "#/modules/auth/registration-schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 function calculateAge(dateOfBirth: Date): number {
   const today = new Date();
@@ -245,6 +246,8 @@ export class RegistrationService {
 
       return newUser;
     });
+
+    notificationEvents.instructorApplicationSubmitted(user.id);
 
     // Get user with role for response
     const userWithRole = await prisma.user.findUnique({

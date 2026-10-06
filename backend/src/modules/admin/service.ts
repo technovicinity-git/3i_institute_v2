@@ -1,5 +1,6 @@
 import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class AdminService {
   async getLearnerProfiles(
@@ -423,6 +424,8 @@ export class AdminService {
       where: { id: courseId },
       data: { status: "SUSPENDED" },
     });
+
+    notificationEvents.courseSuspended(courseId);
 
     return updated;
   }

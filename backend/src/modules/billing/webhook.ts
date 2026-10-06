@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { notificationEvents } from "#/modules/notification/events";
 
 interface StripeSubscriptionData {
   id: string;
@@ -128,6 +129,8 @@ async function handleSubscriptionDeleted(subscription: StripeSubscriptionData) {
     },
   });
 
+  notificationEvents.subscriptionCancelled(subscription.id);
+
   console.log(`❌ Subscription cancelled: ${subscription.id}`);
 }
 
@@ -146,6 +149,8 @@ async function handleCheckoutSessionCompleted(session: any) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: any) {
+  notificationEvents.paymentSucceeded(invoice);
+
   console.log(`💵 Invoice paid: ${invoice.id}`);
 }
 
@@ -165,6 +170,8 @@ async function handleInvoicePaymentFailed(invoice: any) {
       });
     }
   }
+
+  notificationEvents.paymentFailed(invoice);
 
   console.log(`⚠️ Invoice payment failed: ${invoice.id}`);
 }

@@ -1,11 +1,21 @@
 import type { Request, Response, NextFunction } from "express";
 import { notificationService } from "#/modules/notification/service";
-import { sendSuccess, sendPaginated } from "#/shared/response";
+import { sendSuccess } from "#/shared/response";
 import { z } from "zod";
 
 const listQuerySchema = z.object({
+  learnerProfileId: z.string().uuid().optional(),
+  category: z.string().max(50).optional(),
+  unreadOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const scopeSchema = z.object({
+  learnerProfileId: z.string().uuid().optional(),
 });
 
 export class NotificationController {
@@ -15,19 +25,9 @@ export class NotificationController {
     next: NextFunction,
   ) => {
     try {
-      const userId = req.user?.sub!;
-      const { page, limit } = listQuerySchema.parse(req.query);
-      const result = await notificationService.getMyNotifications(
-        userId,
-        page,
-        limit,
-      );
-
-      sendPaginated(res, result.notifications, {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-      });
+      const query = listQuerySchema.parse(req.query);
+      const result = await notificationService.list(req.user!.sub, query);
+      sendSuccess(res, result, 200);
     } catch (error) {
       next(error);
     }
@@ -35,9 +35,12 @@ export class NotificationController {
 
   getUnreadCount = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.sub!;
-      const count = await notificationService.getUnreadCount(userId);
-      sendSuccess(res, { unreadCount: count }, 200);
+      const { learnerProfileId } = scopeSchema.parse(req.query);
+      const counts = await notificationService.getUnreadCounts(
+        req.user!.sub,
+        learnerProfileId,
+      );
+      sendSuccess(res, counts, 200);
     } catch (error) {
       next(error);
     }
@@ -45,8 +48,10 @@ export class NotificationController {
 
   markAsRead = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.sub!;
-      await notificationService.markAsRead(userId, req.params["id"] as string);
+      await notificationService.markAsRead(
+        req.user!.sub,
+        req.params["id"] as string,
+      );
       sendSuccess(res, null, 200, "Notification marked as read");
     } catch (error) {
       next(error);
@@ -55,9 +60,28 @@ export class NotificationController {
 
   markAllAsRead = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.sub!;
-      await notificationService.markAllAsRead(userId);
-      sendSuccess(res, null, 200, "All notifications marked as read");
+      // Accept the scope from the body or the query string.
+      const { learnerProfileId } = scopeSchema.parse({
+        ...req.query,
+        ...(req.body ?? {}),
+      });
+      const result = await notificationService.markAllAsRead(
+        req.user!.sub,
+        learnerProfileId,
+      );
+      sendSuccess(res, result, 200, "All notifications marked as read");
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  archive = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await notificationService.archive(
+        req.user!.sub,
+        req.params["id"] as string,
+      );
+      sendSuccess(res, null, 200, "Notification removed");
     } catch (error) {
       next(error);
     }

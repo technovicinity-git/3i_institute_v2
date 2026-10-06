@@ -48,6 +48,7 @@ import '../../features/instructor_courses/presentation/pages/instructor_live_cla
 import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_students_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -243,8 +244,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/notifications',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Notifications'),
+            builder: (context, state) => const NotificationsPage(),
           ),
           GoRoute(
             path: '/instructor/settings',
@@ -339,6 +339,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/wishlist',
             builder: (context, state) => const WishlistPage(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const NotificationsPage(),
           ),
           GoRoute(
             path: '/my-courses',

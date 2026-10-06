@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 
 class LearnerDashboardLayout extends ConsumerWidget {
   const LearnerDashboardLayout({required this.child, super.key});
@@ -82,17 +83,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
           onPressed: () => context.go('/courses'),
           icon: const Icon(Icons.search, color: Color(0xFF12304E)),
         ),
-        IconButton(
-          tooltip: 'Notifications',
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You’re all caught up.')),
-          ),
-          icon: const Badge(
-            smallSize: 8,
-            backgroundColor: Color(0xFF22A146),
-            child: Icon(Icons.notifications_none, color: Color(0xFF12304E)),
-          ),
-        ),
+        const NotificationBell(notificationsRoute: '/notifications'),
         PopupMenuButton<String>(
           tooltip: 'Learner profile',
           onSelected: (value) {
