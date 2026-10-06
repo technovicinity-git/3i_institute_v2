@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/network/api_error_message.dart';
 import '../../domain/entities/instructor_batch.dart';
 import '../providers/instructor_courses_providers.dart';
 import '../widgets/course_action_strip.dart';
@@ -419,12 +420,12 @@ class _InstructorBatchCreatePageState
                     'title': s.title.text.trim(),
                     'scheduledAt': s.scheduledAt!.toUtc().toIso8601String(),
                     'durationMinutes': int.parse(s.duration.text),
-                    'meetingLink': s.meeting.text.trim().isEmpty
-                        ? null
-                        : s.meeting.text.trim(),
-                    'notes': s.notes.text.trim().isEmpty
-                        ? null
-                        : s.notes.text.trim(),
+                    // Optional fields must be omitted, not null, or the API
+                    // rejects the request.
+                    if (s.meeting.text.trim().isNotEmpty)
+                      'meetingLink': s.meeting.text.trim(),
+                    if (s.notes.text.trim().isNotEmpty)
+                      'notes': s.notes.text.trim(),
                   },
                 )
                 .toList(),
@@ -434,9 +435,10 @@ class _InstructorBatchCreatePageState
     } catch (error) {
       if (mounted) {
         _notify(
-          error.toString().contains('409')
-              ? 'This session conflicts with another scheduled session.'
-              : 'Could not create batch. Try again.',
+          apiErrorMessage(
+            error,
+            fallback: 'Could not create batch. Try again.',
+          ),
         );
       }
     } finally {
@@ -758,13 +760,35 @@ class _InstructorBatchDetailPageState
                   return;
                 }
                 final duration = int.tryParse(draft.duration.text);
-                if (duration == null || duration < 15 || duration > 480) return;
+                if (duration == null || duration < 15 || duration > 480) {
+                  _showDialogError(
+                    dialogContext,
+                    'Duration must be 15 to 480 minutes.',
+                  );
+                  return;
+                }
+                final meeting = draft.meeting.text.trim();
+                final notes = draft.notes.text.trim();
+                final meetingUri = Uri.tryParse(meeting);
+                if (meeting.isNotEmpty &&
+                    (meetingUri?.hasScheme != true ||
+                        meetingUri?.host.isEmpty == true)) {
+                  _showDialogError(
+                    dialogContext,
+                    'Enter a valid meeting link.',
+                  );
+                  return;
+                }
                 final input = {
                   'title': draft.title.text.trim(),
                   'scheduledAt': draft.scheduledAt!.toUtc().toIso8601String(),
                   'durationMinutes': duration,
-                  'meetingLink': draft.meeting.text.trim(),
-                  'notes': draft.notes.text.trim(),
+                  // The add-session endpoint rejects empty strings for these
+                  // optional fields, so only send them when filled in. Edits
+                  // still send '' so an existing link or note can be cleared.
+                  if (meeting.isNotEmpty || session != null)
+                    'meetingLink': meeting,
+                  if (notes.isNotEmpty || session != null) 'notes': notes,
                 };
                 try {
                   if (session == null) {
@@ -778,13 +802,13 @@ class _InstructorBatchDetailPageState
                   }
                   _invalidate();
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
-                } catch (_) {
+                } catch (error) {
                   if (dialogContext.mounted) {
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not save session. Check for schedule conflicts.',
-                        ),
+                    _showDialogError(
+                      dialogContext,
+                      apiErrorMessage(
+                        error,
+                        fallback: 'Could not save session. Try again.',
                       ),
                     );
                   }
@@ -798,6 +822,11 @@ class _InstructorBatchDetailPageState
     );
     draft.dispose();
   }
+
+  void _showDialogError(BuildContext context, String message) =>
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
 
   void _invalidate() {
     ref.invalidate(instructorBatchProvider(widget.batchId));
