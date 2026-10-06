@@ -3,8 +3,10 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/instructor_courses_repository.dart';
 import '../../domain/entities/instructor_course.dart';
 import '../../domain/entities/instructor_batch.dart';
+import '../../domain/entities/instructor_exam.dart';
 import '../../domain/entities/instructor_material.dart';
 import '../../domain/entities/instructor_question.dart';
+import '../../domain/entities/instructor_student.dart';
 
 final instructorCoursesRepositoryProvider = Provider(
   (ref) => InstructorCoursesRepository(ref.watch(apiClientProvider)),
@@ -57,4 +59,23 @@ final instructorQuestionProvider = FutureProvider.autoDispose
     .family<InstructorQuestion, String>(
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getQuestion(id),
+    );
+final instructorExamsProvider =
+    FutureProvider.family<List<InstructorExam>, String>(
+      (ref, id) => ref.watch(instructorCoursesRepositoryProvider).getExams(id),
+    );
+final instructorExamAttemptsProvider =
+    FutureProvider.family<List<InstructorExamAttempt>, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getExamAttempts(id),
+    );
+final instructorAttemptDetailsProvider = FutureProvider.autoDispose
+    .family<InstructorExamAttempt, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getAttemptDetails(id),
+    );
+final instructorCourseStudentsProvider =
+    FutureProvider.family<InstructorCourseStudents, String>(
+      (ref, id) =>
+          ref.watch(instructorCoursesRepositoryProvider).getCourseStudents(id),
     );

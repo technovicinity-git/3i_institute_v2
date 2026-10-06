@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/entities/instructor_course.dart';
 import '../domain/entities/instructor_batch.dart';
+import '../domain/entities/instructor_exam.dart';
 import '../domain/entities/instructor_material.dart';
 import '../domain/entities/instructor_question.dart';
+import '../domain/entities/instructor_student.dart';
 
 class InstructorCoursesRepository {
   InstructorCoursesRepository(this._client);
@@ -355,6 +357,145 @@ class InstructorCoursesRepository {
           .whereType<Map<String, dynamic>>()
           .map((e) => (row: _int(e['row']), message: '${e['message'] ?? ''}'))
           .toList(),
+    );
+  }
+
+  Future<List<InstructorExam>> getExams(String courseId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/course/$courseId',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(_exam)
+        .toList();
+  }
+
+  Future<void> createExam(Map<String, dynamic> input) async =>
+      _dio.post<void>('/exams', data: input);
+  Future<void> updateExam(String id, Map<String, dynamic> input) async =>
+      _dio.patch<void>('/exams/$id', data: input);
+
+  Future<List<InstructorExamAttempt>> getExamAttempts(String examId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/attempts/$examId',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(_attempt)
+        .toList();
+  }
+
+  Future<InstructorExamAttempt> getAttemptDetails(String attemptId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/attempts-details/$attemptId',
+    );
+    return _attempt(_map(response.data?['data']));
+  }
+
+  Future<void> gradeAttempt(
+    String attemptId,
+    List<({String questionId, num marksAwarded})> grades,
+  ) async => _dio.post<void>(
+    '/exams/grade/$attemptId',
+    data: {
+      'grades': [
+        for (final g in grades)
+          {'questionId': g.questionId, 'marksAwarded': g.marksAwarded},
+      ],
+    },
+  );
+
+  Future<CertificateIssueResult> issueFinalExamCertificates(
+    String examId,
+  ) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/certificates/issue/final-exam/$examId',
+    );
+    final data = _map(response.data?['data']);
+    return CertificateIssueResult(
+      issued: _int(data['issued']),
+      alreadyIssued: _int(data['alreadyIssued']),
+      notPassed: _int(data['notPassed']),
+    );
+  }
+
+  InstructorExam _exam(Map<String, dynamic> item) {
+    final questions = item['questions'];
+    return InstructorExam(
+      id: '${item['id'] ?? ''}',
+      title: '${item['title'] ?? 'Exam'}',
+      type: '${item['type'] ?? 'practice'}',
+      duration: _int(item['duration'], 60),
+      passMark: _int(item['passMark'], 50),
+      totalMarks: _int(item['totalMarks']),
+      maxAttempts: _int(item['maxAttempts'], 1),
+      cooldownHours: _int(item['cooldownHours']),
+      openDate: DateTime.tryParse('${item['openDate'] ?? ''}')?.toLocal(),
+      randomizeQuestions: item['randomizeQuestions'] == true,
+      randomizeOptions: item['randomizeOptions'] == true,
+      questions: (questions is List ? questions : const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (q) => (
+              questionId: '${q['questionId'] ?? ''}',
+              marks: _int(q['marks'], 1),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  InstructorExamAttempt _attempt(Map<String, dynamic> item) {
+    final questions = item['questions'];
+    return InstructorExamAttempt(
+      id: '${item['id'] ?? ''}',
+      learnerName: '${item['learnerName'] ?? 'Unknown'}',
+      attemptNumber: _int(item['attemptNumber'], 1),
+      submittedAt: DateTime.tryParse('${item['submittedAt'] ?? ''}')?.toLocal(),
+      score: item['score'] is num ? item['score'] as num : null,
+      totalMarks: _int(item['totalMarks']),
+      passed: item['passed'] is bool ? item['passed'] as bool : null,
+      graded: item['graded'] == true,
+      answers: _map(item['answers']),
+      questions: (questions is List ? questions : const [])
+          .whereType<Map<String, dynamic>>()
+          .map(_question)
+          .toList(),
+    );
+  }
+
+  Future<InstructorCourseStudents> getCourseStudents(String courseId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/instructors/courses/$courseId/students',
+    );
+    final data = _map(response.data?['data']);
+    final students = data['students'];
+    final items = (students is List ? students : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => InstructorStudent(
+            id: '${item['id'] ?? ''}',
+            displayName: '${item['displayName'] ?? 'Learner'}',
+            dateOfBirth: DateTime.tryParse('${item['dateOfBirth'] ?? ''}'),
+            avatarUrl: _nullable(item['avatarUrl']),
+            batchName: _nullable(item['batchName']),
+            enrolledAt: DateTime.tryParse(
+              '${item['enrolledAt'] ?? ''}',
+            )?.toLocal(),
+            progress: _int(item['progress']).clamp(0, 100),
+            examAverage: item['examAverage'] is num
+                ? item['examAverage'] as num
+                : null,
+            examAttempts: _int(item['examAttempts']),
+          ),
+        )
+        .toList();
+    return InstructorCourseStudents(
+      courseTitle: '${_map(data['course'])['title'] ?? 'this course'}',
+      total: data['total'] is num ? _int(data['total']) : items.length,
+      students: items,
     );
   }
 

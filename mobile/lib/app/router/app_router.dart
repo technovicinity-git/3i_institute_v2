@@ -42,8 +42,10 @@ import '../../features/instructor_courses/presentation/pages/instructor_courses_
 import '../../features/instructor_courses/presentation/pages/instructor_course_form_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_exams_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_students_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -139,13 +141,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/courses/:courseId/exams',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Course Exams'),
+            builder: (context, state) => InstructorExamsPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/create',
+            builder: (context, state) => InstructorExamFormPage(
+              courseId: state.pathParameters['courseId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/:examId/edit',
+            builder: (context, state) => InstructorExamFormPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/instructor/courses/:courseId/exams/:examId/attempts',
+            builder: (context, state) => InstructorExamAttemptsPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+            ),
+          ),
+          GoRoute(
+            path:
+                '/instructor/courses/:courseId/exams/:examId/attempts/:attemptId/grade',
+            builder: (context, state) => InstructorGradeAttemptPage(
+              courseId: state.pathParameters['courseId']!,
+              examId: state.pathParameters['examId']!,
+              attemptId: state.pathParameters['attemptId']!,
+            ),
           ),
           GoRoute(
             path: '/instructor/courses/:courseId/students',
-            builder: (context, state) => const InstructorSectionPlaceholderPage(
-              title: 'Course Students',
+            builder: (context, state) => InstructorStudentsPage(
+              courseId: state.pathParameters['courseId']!,
             ),
           ),
           GoRoute(
