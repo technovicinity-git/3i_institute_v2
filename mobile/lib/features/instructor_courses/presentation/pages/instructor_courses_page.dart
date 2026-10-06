@@ -42,148 +42,158 @@ class _InstructorCoursesPageState extends ConsumerState<InstructorCoursesPage> {
                   (_status == null || _status == course.status),
             )
             .toList();
-        return ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'My Courses',
-                    style: TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 28,
-                      color: Color(0xFF0C1F33),
-                    ),
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: () => context.push('/instructor/courses/create'),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${shown.length} of ${all.length} courses',
-              style: const TextStyle(color: Color(0xFF64748B)),
-            ),
-            if (all.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _search,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: 'Search courses...',
-                  suffixIcon: _search.text.isEmpty
-                      ? null
-                      : IconButton(
-                          onPressed: () {
-                            _search.clear();
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.close),
-                        ),
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(instructorCoursesProvider.future),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(18),
+            children: [
               Row(
                 children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: _type,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        border: OutlineInputBorder(),
-                        isDense: true,
+                  const Expanded(
+                    child: Text(
+                      'My Courses',
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 28,
+                        color: Color(0xFF0C1F33),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: null, child: Text('All types')),
-                        DropdownMenuItem(
-                          value: 'REGULAR',
-                          child: Text('Regular'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'ONLINE_CLASS',
-                          child: Text('Online class'),
-                        ),
-                      ],
-                      onChanged: (value) => setState(() => _type = value),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: _status,
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: null,
-                          child: Text('All statuses'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'PUBLISHED',
-                          child: Text('Published'),
-                        ),
-                        DropdownMenuItem(value: 'DRAFT', child: Text('Draft')),
-                        DropdownMenuItem(
-                          value: 'PENDING_REVIEW',
-                          child: Text('Pending'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'SUSPENDED',
-                          child: Text('Suspended'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'ARCHIVED',
-                          child: Text('Archived'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'REJECTED',
-                          child: Text('Rejected'),
-                        ),
-                      ],
-                      onChanged: (value) => setState(() => _status = value),
-                    ),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/instructor/courses/create'),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Create'),
                   ),
                 ],
               ),
-            ],
-            const SizedBox(height: 16),
-            if (all.isEmpty)
-              _empty(
-                context,
-                'You haven’t created any courses yet.',
-                action: 'Create your first course',
-                onTap: () => context.push('/instructor/courses/create'),
-              )
-            else if (shown.isEmpty)
-              _empty(
-                context,
-                'No courses match your filters.',
-                action: 'Clear filters',
-                onTap: () {
-                  _search.clear();
-                  setState(() {
-                    _type = null;
-                    _status = null;
-                  });
-                },
-              )
-            else
-              for (final course in shown)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _CourseCard(course: course),
+              const SizedBox(height: 4),
+              Text(
+                '${shown.length} of ${all.length} courses',
+                style: const TextStyle(color: Color(0xFF64748B)),
+              ),
+              if (all.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _search,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Search courses...',
+                    suffixIcon: _search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: () {
+                              _search.clear();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.close),
+                          ),
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-          ],
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: _type,
+                        decoration: const InputDecoration(
+                          labelText: 'Type',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text('All types'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'REGULAR',
+                            child: Text('Regular'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'ONLINE_CLASS',
+                            child: Text('Online class'),
+                          ),
+                        ],
+                        onChanged: (value) => setState(() => _type = value),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: _status,
+                        decoration: const InputDecoration(
+                          labelText: 'Status',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text('All statuses'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'PUBLISHED',
+                            child: Text('Published'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'DRAFT',
+                            child: Text('Draft'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'PENDING_REVIEW',
+                            child: Text('Pending'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'SUSPENDED',
+                            child: Text('Suspended'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'ARCHIVED',
+                            child: Text('Archived'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'REJECTED',
+                            child: Text('Rejected'),
+                          ),
+                        ],
+                        onChanged: (value) => setState(() => _status = value),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (all.isEmpty)
+                _empty(
+                  context,
+                  'You haven’t created any courses yet.',
+                  action: 'Create your first course',
+                  onTap: () => context.push('/instructor/courses/create'),
+                )
+              else if (shown.isEmpty)
+                _empty(
+                  context,
+                  'No courses match your filters.',
+                  action: 'Clear filters',
+                  onTap: () {
+                    _search.clear();
+                    setState(() {
+                      _type = null;
+                      _status = null;
+                    });
+                  },
+                )
+              else
+                for (final course in shown)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _CourseCard(course: course),
+                  ),
+            ],
+          ),
         );
       },
     );
