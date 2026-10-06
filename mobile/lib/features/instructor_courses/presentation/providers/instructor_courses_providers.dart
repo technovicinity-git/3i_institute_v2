@@ -79,3 +79,7 @@ final instructorCourseStudentsProvider =
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getCourseStudents(id),
     );
+final instructorBatchCountProvider = FutureProvider(
+  (ref) =>
+      ref.watch(instructorCoursesRepositoryProvider).getInstructorBatchCount(),
+);

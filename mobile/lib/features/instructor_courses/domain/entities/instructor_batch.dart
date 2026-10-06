@@ -28,6 +28,7 @@ class InstructorBatchSession {
   final String? meetingLink, notes;
 }
 
+/// An upcoming session from any of the instructor's batches.
 class InstructorExistingSession {
   const InstructorExistingSession({
     required this.id,
@@ -36,7 +37,13 @@ class InstructorExistingSession {
     required this.durationMinutes,
     required this.batchName,
     required this.courseTitle,
+    this.batchId = '',
+    this.courseId = '',
+    this.meetingLink,
+    this.enrolmentCount = 0,
   });
   final String id, title, scheduledAt, batchName, courseTitle;
-  final int durationMinutes;
+  final String batchId, courseId;
+  final String? meetingLink;
+  final int durationMinutes, enrolmentCount;
 }

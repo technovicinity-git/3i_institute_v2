@@ -162,9 +162,21 @@ class InstructorCoursesRepository {
             durationMinutes: _int(item['durationMinutes']),
             batchName: '${item['batchName'] ?? ''}',
             courseTitle: '${item['courseTitle'] ?? ''}',
+            batchId: '${item['batchId'] ?? ''}',
+            courseId: '${item['courseId'] ?? ''}',
+            meetingLink: _nullable(item['meetingLink']),
+            enrolmentCount: _int(item['enrolmentCount']),
           ),
         )
         .toList();
+  }
+
+  Future<int> getInstructorBatchCount() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/batches/instructor/all',
+    );
+    final data = response.data?['data'];
+    return data is List ? data.length : 0;
   }
 
   Future<void> createBatch({
