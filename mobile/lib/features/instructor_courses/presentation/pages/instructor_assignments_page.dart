@@ -22,72 +22,77 @@ class InstructorAssignmentsPage extends ConsumerWidget {
       error: (_, _) => _Retry(
         onRetry: () => ref.invalidate(instructorAssignmentsProvider(courseId)),
       ),
-      data: (items) => ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          TextButton.icon(
-            onPressed: () => context.go('/instructor/courses'),
-            icon: const Icon(Icons.chevron_left),
-            label: const Text('Back to courses'),
-            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-          ),
-          if (course != null) _CourseActionStrip(course: course),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Assignments',
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 27,
-                    color: Color(0xFF0C1F33),
-                  ),
-                ),
-              ),
-              IconButton.filled(
-                onPressed: () => context.push(
-                  '/instructor/courses/$courseId/assignments/create',
-                ),
-                icon: const Icon(Icons.add),
-                tooltip: 'Create assignment',
-              ),
-            ],
-          ),
-          Text(
-            '${items.length} assignments for this course',
-            style: const TextStyle(color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 16),
-          if (items.isEmpty)
-            const _EmptyAssignments()
-          else
-            ...items.map(
-              (item) => Card(
-                color: Colors.white,
-                child: ListTile(
-                  onTap: () => context.push(
-                    '/instructor/courses/$courseId/assignments/${item.id}',
-                  ),
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFF9F6F0),
-                    child: Icon(
-                      Icons.description_outlined,
-                      color: Color(0xFFB8912F),
+      data: (items) => RefreshIndicator(
+        onRefresh: () =>
+            ref.refresh(instructorAssignmentsProvider(courseId).future),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(18),
+          children: [
+            TextButton.icon(
+              onPressed: () => context.go('/instructor/courses'),
+              icon: const Icon(Icons.chevron_left),
+              label: const Text('Back to courses'),
+              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
+            ),
+            if (course != null) _CourseActionStrip(course: course),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Assignments',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 27,
+                      color: Color(0xFF0C1F33),
                     ),
                   ),
-                  title: Text(
-                    item.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                IconButton.filled(
+                  onPressed: () => context.push(
+                    '/instructor/courses/$courseId/assignments/create',
                   ),
-                  subtitle: Text(
-                    '${item.status} · Due ${_date(item.dueDate)} · ${item.submissionCount} submissions · ${item.totalMarks} marks${item.batchName == null ? '' : ' · ${item.batchName}'}',
-                    maxLines: 3,
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Create assignment',
+                ),
+              ],
+            ),
+            Text(
+              '${items.length} assignments for this course',
+              style: const TextStyle(color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 16),
+            if (items.isEmpty)
+              const _EmptyAssignments()
+            else
+              ...items.map(
+                (item) => Card(
+                  color: Colors.white,
+                  child: ListTile(
+                    onTap: () => context.push(
+                      '/instructor/courses/$courseId/assignments/${item.id}',
+                    ),
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFF9F6F0),
+                      child: Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFFB8912F),
+                      ),
+                    ),
+                    title: Text(
+                      item.title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      '${item.status} · Due ${_date(item.dueDate)} · ${item.submissionCount} submissions · ${item.totalMarks} marks${item.batchName == null ? '' : ' · ${item.batchName}'}',
+                      maxLines: 3,
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
                   ),
-                  trailing: const Icon(Icons.chevron_right),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -311,61 +316,69 @@ class InstructorAssignmentDetailPage extends ConsumerWidget {
       data: (items) {
         final pending = items.where((s) => !s.graded).toList();
         final graded = items.where((s) => s.graded).toList();
-        return ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            TextButton.icon(
-              onPressed: () =>
-                  context.go('/instructor/courses/$courseId/assignments'),
-              icon: const Icon(Icons.chevron_left),
-              label: const Text('Back to assignments'),
-              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-            ),
-            if (course != null) _CourseActionStrip(course: course),
-            const Text(
-              'Submissions',
-              style: TextStyle(
-                fontFamily: 'serif',
-                fontSize: 27,
-                color: Color(0xFF0C1F33),
+        return RefreshIndicator(
+          onRefresh: () =>
+              ref.refresh(instructorSubmissionsProvider(assignmentId).future),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(18),
+            children: [
+              TextButton.icon(
+                onPressed: () =>
+                    context.go('/instructor/courses/$courseId/assignments'),
+                icon: const Icon(Icons.chevron_left),
+                label: const Text('Back to assignments'),
+                style: TextButton.styleFrom(alignment: Alignment.centerLeft),
               ),
-            ),
-            Text(
-              '${items.length} total · ${pending.length} needs grading',
-              style: const TextStyle(color: Color(0xFF64748B)),
-            ),
-            if (items.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(28),
-                child: Text('No submissions yet.', textAlign: TextAlign.center),
-              ),
-            if (pending.isNotEmpty) ...[
-              const SizedBox(height: 20),
+              if (course != null) _CourseActionStrip(course: course),
               const Text(
-                'Needs Grading',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              for (final submission in pending)
-                _SubmissionCard(
-                  submission: submission,
-                  pending: true,
-                  onGrade: () => _grade(context, ref, submission),
+                'Submissions',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 27,
+                  color: Color(0xFF0C1F33),
                 ),
-            ],
-            if (graded.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              const Text(
-                'Graded',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
-              for (final submission in graded)
-                _SubmissionCard(
-                  submission: submission,
-                  pending: false,
-                  onGrade: () => _grade(context, ref, submission),
+              Text(
+                '${items.length} total · ${pending.length} needs grading',
+                style: const TextStyle(color: Color(0xFF64748B)),
+              ),
+              if (items.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(28),
+                  child: Text(
+                    'No submissions yet.',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
+              if (pending.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Needs Grading',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                for (final submission in pending)
+                  _SubmissionCard(
+                    submission: submission,
+                    pending: true,
+                    onGrade: () => _grade(context, ref, submission),
+                  ),
+              ],
+              if (graded.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Graded',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                for (final submission in graded)
+                  _SubmissionCard(
+                    submission: submission,
+                    pending: false,
+                    onGrade: () => _grade(context, ref, submission),
+                  ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );

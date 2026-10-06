@@ -25,54 +25,59 @@ class InstructorBatchesPage extends ConsumerWidget {
         onRetry: () =>
             ref.invalidate(instructorCourseBatchesProvider(courseId)),
       ),
-      data: (items) => ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          TextButton.icon(
-            onPressed: () => context.go('/instructor/courses'),
-            icon: const Icon(Icons.chevron_left),
-            label: const Text('Back to courses'),
-            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-          ),
-          if (course != null) CourseActionStrip(course: course),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Batches',
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 27,
-                    color: Color(0xFF0C1F33),
+      data: (items) => RefreshIndicator(
+        onRefresh: () =>
+            ref.refresh(instructorCourseBatchesProvider(courseId).future),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(18),
+          children: [
+            TextButton.icon(
+              onPressed: () => context.go('/instructor/courses'),
+              icon: const Icon(Icons.chevron_left),
+              label: const Text('Back to courses'),
+              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
+            ),
+            if (course != null) CourseActionStrip(course: course),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Batches',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 27,
+                      color: Color(0xFF0C1F33),
+                    ),
                   ),
                 ),
-              ),
-              FilledButton.icon(
-                onPressed: () => context.push(
-                  '/instructor/courses/$courseId/batches/create',
+                FilledButton.icon(
+                  onPressed: () => context.push(
+                    '/instructor/courses/$courseId/batches/create',
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create'),
                 ),
-                icon: const Icon(Icons.add),
-                label: const Text('Create'),
-              ),
-            ],
-          ),
-          Text(
-            '${items.length} batches for this course',
-            style: const TextStyle(color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 16),
-          if (items.isEmpty)
-            const _EmptyBatchList()
-          else
-            for (final batch in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _BatchCard(
-                  batch: batch,
-                  onClose: () => _closeBatch(context, ref, batch),
+              ],
+            ),
+            Text(
+              '${items.length} batches for this course',
+              style: const TextStyle(color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 16),
+            if (items.isEmpty)
+              const _EmptyBatchList()
+            else
+              for (final batch in items)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _BatchCard(
+                    batch: batch,
+                    onClose: () => _closeBatch(context, ref, batch),
+                  ),
                 ),
-              ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -587,60 +592,66 @@ class _InstructorBatchDetailPageState
       data: (batch) {
         final sessions = [...batch.sessions]
           ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
-        return ListView(
-          padding: const EdgeInsets.all(18),
-          children: [
-            TextButton.icon(
-              onPressed: () =>
-                  context.go('/instructor/courses/${widget.courseId}/batches'),
-              icon: const Icon(Icons.chevron_left),
-              label: const Text('Back to batches'),
-              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-            ),
-            Text(
-              batch.name,
-              style: const TextStyle(
-                fontFamily: 'serif',
-                fontSize: 28,
-                color: Color(0xFF0C1F33),
+        return RefreshIndicator(
+          onRefresh: () =>
+              ref.refresh(instructorBatchProvider(widget.batchId).future),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(18),
+            children: [
+              TextButton.icon(
+                onPressed: () => context.go(
+                  '/instructor/courses/${widget.courseId}/batches',
+                ),
+                icon: const Icon(Icons.chevron_left),
+                label: const Text('Back to batches'),
+                style: TextButton.styleFrom(alignment: Alignment.centerLeft),
               ),
-            ),
-            Wrap(
-              spacing: 14,
-              children: [
-                Text('${batch.enrolmentCount}/${batch.capacity} enrolled'),
-                Text('${sessions.length} sessions'),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: () => context.push(
-                    '/instructor/chat?courseId=${widget.courseId}&courseTitle=${Uri.encodeComponent(batch.courseTitle)}&batchId=${batch.id}&batchName=${Uri.encodeComponent(batch.name)}',
+              Text(
+                batch.name,
+                style: const TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 28,
+                  color: Color(0xFF0C1F33),
+                ),
+              ),
+              Wrap(
+                spacing: 14,
+                children: [
+                  Text('${batch.enrolmentCount}/${batch.capacity} enrolled'),
+                  Text('${sessions.length} sessions'),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => context.push(
+                      '/instructor/chat?courseId=${widget.courseId}&courseTitle=${Uri.encodeComponent(batch.courseTitle)}&batchId=${batch.id}&batchName=${Uri.encodeComponent(batch.name)}',
+                    ),
+                    icon: const Icon(Icons.chat),
+                    label: const Text('Open Chat'),
                   ),
-                  icon: const Icon(Icons.chat),
-                  label: const Text('Open Chat'),
-                ),
-                FilledButton.icon(
-                  onPressed: () => _sessionDialog(batch, null),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Session'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (sessions.isEmpty)
-              _emptySessions(context, batch)
-            else
-              for (var i = 0; i < sessions.length; i++)
-                _SessionTile(
-                  index: i,
-                  session: sessions[i],
-                  onEdit: () => _sessionDialog(batch, sessions[i]),
-                ),
-          ],
+                  FilledButton.icon(
+                    onPressed: () => _sessionDialog(batch, null),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Session'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (sessions.isEmpty)
+                _emptySessions(context, batch)
+              else
+                for (var i = 0; i < sessions.length; i++)
+                  _SessionTile(
+                    index: i,
+                    session: sessions[i],
+                    onEdit: () => _sessionDialog(batch, sessions[i]),
+                  ),
+            ],
+          ),
         );
       },
     );
@@ -677,150 +688,197 @@ class _InstructorBatchDetailPageState
   ) async {
     final draft = _SessionDraft.fromSession(session);
     final form = GlobalKey<FormState>();
-    var deleting = false;
+    // `saving`/`deleting` block every action while a request is in flight so
+    // repeated taps can't create duplicate sessions.
+    var saving = false, deleting = false, confirmDelete = false;
     await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(session == null ? 'Add New Session' : 'Edit Session'),
-          content: SizedBox(
-            width: 480,
-            child: SingleChildScrollView(
-              child: Form(
-                key: form,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: draft.title,
-                      validator: (v) => v == null || v.trim().isEmpty
-                          ? 'Session title is required'
-                          : null,
-                      decoration: const InputDecoration(
-                        labelText: 'Session Title *',
+        builder: (context, setDialogState) {
+          final busy = saving || deleting;
+
+          Future<void> save() async {
+            if (busy) return;
+            if (!form.currentState!.validate()) return;
+            if (draft.scheduledAt == null) {
+              _showDialogError(dialogContext, 'Choose a date and time.');
+              return;
+            }
+            final duration = int.tryParse(draft.duration.text);
+            if (duration == null || duration < 15 || duration > 480) {
+              _showDialogError(
+                dialogContext,
+                'Duration must be 15 to 480 minutes.',
+              );
+              return;
+            }
+            final meeting = draft.meeting.text.trim();
+            final notes = draft.notes.text.trim();
+            final meetingUri = Uri.tryParse(meeting);
+            if (meeting.isNotEmpty &&
+                (meetingUri?.hasScheme != true ||
+                    meetingUri?.host.isEmpty == true)) {
+              _showDialogError(dialogContext, 'Enter a valid meeting link.');
+              return;
+            }
+            final input = {
+              'title': draft.title.text.trim(),
+              'scheduledAt': draft.scheduledAt!.toUtc().toIso8601String(),
+              'durationMinutes': duration,
+              // The add-session endpoint rejects empty strings for these
+              // optional fields, so only send them when filled in. Edits
+              // still send '' so an existing link or note can be cleared.
+              if (meeting.isNotEmpty || session != null) 'meetingLink': meeting,
+              if (notes.isNotEmpty || session != null) 'notes': notes,
+            };
+            setDialogState(() {
+              saving = true;
+              confirmDelete = false;
+            });
+            final repository = ref.read(instructorCoursesRepositoryProvider);
+            try {
+              if (session == null) {
+                await repository.addSession(batch.id, input);
+              } else {
+                await repository.updateSession(session.id, input);
+              }
+              _invalidate();
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              _notify(session == null ? 'Session added' : 'Session updated');
+            } catch (error) {
+              if (dialogContext.mounted) {
+                setDialogState(() => saving = false);
+                _showDialogError(
+                  dialogContext,
+                  apiErrorMessage(
+                    error,
+                    fallback: 'Could not save session. Try again.',
+                  ),
+                );
+              }
+            }
+          }
+
+          Future<void> delete() async {
+            if (busy || session == null) return;
+            if (!confirmDelete) {
+              setDialogState(() => confirmDelete = true);
+              return;
+            }
+            setDialogState(() => deleting = true);
+            try {
+              await ref
+                  .read(instructorCoursesRepositoryProvider)
+                  .deleteSession(session.id);
+              _invalidate();
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              _notify('Session deleted');
+            } catch (error) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  deleting = false;
+                  confirmDelete = false;
+                });
+                _showDialogError(
+                  dialogContext,
+                  apiErrorMessage(
+                    error,
+                    fallback: 'Could not delete session. Try again.',
+                  ),
+                );
+              }
+            }
+          }
+
+          return PopScope(
+            canPop: !busy,
+            child: AlertDialog(
+              title: Text(session == null ? 'Add New Session' : 'Edit Session'),
+              content: SizedBox(
+                width: 480,
+                child: SingleChildScrollView(
+                  child: AbsorbPointer(
+                    absorbing: busy,
+                    child: Form(
+                      key: form,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: draft.title,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Session title is required'
+                                : null,
+                            decoration: const InputDecoration(
+                              labelText: 'Session Title *',
+                            ),
+                          ),
+                          _SessionDatePicker(draft: draft),
+                          TextField(
+                            controller: draft.duration,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Duration (minutes)',
+                            ),
+                          ),
+                          TextField(
+                            controller: draft.meeting,
+                            keyboardType: TextInputType.url,
+                            decoration: const InputDecoration(
+                              labelText: 'Meeting Link',
+                            ),
+                          ),
+                          TextField(
+                            controller: draft.notes,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              labelText: 'Notes',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    _SessionDatePicker(draft: draft),
-                    TextField(
-                      controller: draft.duration,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Duration (minutes)',
-                      ),
-                    ),
-                    TextField(
-                      controller: draft.meeting,
-                      decoration: const InputDecoration(
-                        labelText: 'Meeting Link',
-                      ),
-                    ),
-                    TextField(
-                      controller: draft.notes,
-                      maxLines: 3,
-                      decoration: const InputDecoration(labelText: 'Notes'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+              actions: [
+                if (session != null)
+                  TextButton(
+                    onPressed: busy ? null : delete,
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: deleting
+                        ? const _ButtonSpinner(color: Colors.red)
+                        : Text(confirmDelete ? 'Confirm Delete?' : 'Delete'),
+                  ),
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : confirmDelete
+                      ? () => setDialogState(() => confirmDelete = false)
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: busy ? null : save,
+                  child: saving
+                      ? const _ButtonSpinner()
+                      : Text(session == null ? 'Add Session' : 'Save Changes'),
+                ),
+              ],
             ),
-          ),
-          actions: [
-            if (session != null)
-              TextButton(
-                onPressed: deleting
-                    ? null
-                    : () async {
-                        if (!deleting) {
-                          setDialogState(() => deleting = true);
-                          return;
-                        }
-                        try {
-                          await ref
-                              .read(instructorCoursesRepositoryProvider)
-                              .deleteSession(session.id);
-                          _invalidate();
-                          if (dialogContext.mounted) {
-                            Navigator.pop(dialogContext);
-                          }
-                        } catch (_) {
-                          setDialogState(() => deleting = false);
-                        }
-                      },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: Text(deleting ? 'Confirm Delete?' : 'Delete'),
-              ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                if (!form.currentState!.validate() ||
-                    draft.scheduledAt == null) {
-                  return;
-                }
-                final duration = int.tryParse(draft.duration.text);
-                if (duration == null || duration < 15 || duration > 480) {
-                  _showDialogError(
-                    dialogContext,
-                    'Duration must be 15 to 480 minutes.',
-                  );
-                  return;
-                }
-                final meeting = draft.meeting.text.trim();
-                final notes = draft.notes.text.trim();
-                final meetingUri = Uri.tryParse(meeting);
-                if (meeting.isNotEmpty &&
-                    (meetingUri?.hasScheme != true ||
-                        meetingUri?.host.isEmpty == true)) {
-                  _showDialogError(
-                    dialogContext,
-                    'Enter a valid meeting link.',
-                  );
-                  return;
-                }
-                final input = {
-                  'title': draft.title.text.trim(),
-                  'scheduledAt': draft.scheduledAt!.toUtc().toIso8601String(),
-                  'durationMinutes': duration,
-                  // The add-session endpoint rejects empty strings for these
-                  // optional fields, so only send them when filled in. Edits
-                  // still send '' so an existing link or note can be cleared.
-                  if (meeting.isNotEmpty || session != null)
-                    'meetingLink': meeting,
-                  if (notes.isNotEmpty || session != null) 'notes': notes,
-                };
-                try {
-                  if (session == null) {
-                    await ref
-                        .read(instructorCoursesRepositoryProvider)
-                        .addSession(batch.id, input);
-                  } else {
-                    await ref
-                        .read(instructorCoursesRepositoryProvider)
-                        .updateSession(session.id, input);
-                  }
-                  _invalidate();
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
-                } catch (error) {
-                  if (dialogContext.mounted) {
-                    _showDialogError(
-                      dialogContext,
-                      apiErrorMessage(
-                        error,
-                        fallback: 'Could not save session. Try again.',
-                      ),
-                    );
-                  }
-                }
-              },
-              child: Text(session == null ? 'Add Session' : 'Save Changes'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
     draft.dispose();
+  }
+
+  void _notify(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showDialogError(BuildContext context, String message) =>
@@ -833,6 +891,17 @@ class _InstructorBatchDetailPageState
     ref.invalidate(instructorCourseBatchesProvider(widget.courseId));
     ref.invalidate(instructorExistingSessionsProvider);
   }
+}
+
+class _ButtonSpinner extends StatelessWidget {
+  const _ButtonSpinner({this.color});
+  final Color? color;
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 18,
+    height: 18,
+    child: CircularProgressIndicator(strokeWidth: 2, color: color),
+  );
 }
 
 class _SessionTile extends StatelessWidget {
