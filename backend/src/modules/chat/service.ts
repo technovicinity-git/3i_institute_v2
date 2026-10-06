@@ -1,5 +1,6 @@
 import { prisma } from "#/lib/prisma";
 import { ForbiddenError, NotFoundError } from "#/shared/errors";
+import { notificationEvents } from "#/modules/notification/events";
 
 interface SendMessageInput {
   courseId: string;
@@ -140,6 +141,8 @@ export class ChatService {
         },
       },
     });
+
+    notificationEvents.chatMessageReported(messageId);
 
     return report;
   }

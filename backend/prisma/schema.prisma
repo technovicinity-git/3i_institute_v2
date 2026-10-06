@@ -64,6 +64,20 @@ enum SeatStatus {
   EXPIRED
 }
 
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  DEAD
+  SKIPPED
+}
+
 // ──────────────────────────────────────
 // Models
 // ──────────────────────────────────────
@@ -104,6 +118,7 @@ model User {
   avatarUrl    String? 
   dateOfBirth   DateTime
   locale        String      @default("en")
+  timezone      String      @default("UTC")
   accountType   AccountType
   emailVerified Boolean     @default(false)
   emailVerifyToken String?
@@ -124,6 +139,9 @@ model User {
   subscriptions    Subscription[]
   waivers          Waiver[]
   courseRatings CourseRating[]
+  notifications           Notification[]
+  pushTokens              PushToken[]
+  notificationPreferences NotificationPreference[]
 
   stripeCustomerId   String?
   billingContactName  String?
@@ -188,6 +206,8 @@ model LearnerProfile {
   attendance    Attendance[]
   certificates  Certificate[]
   assignmentSubmissions AssignmentSubmission[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
 
   createdAt     DateTime  @default(now())
   deletedAt     DateTime?
@@ -635,4 +655,94 @@ model AssignmentSubmission {
   @@unique([assignmentId, learnerProfileId])
   @@index([assignmentId])
   @@index([learnerProfileId])
+}
+
+// ──────────────────────────────────────
+// Notifications
+// ──────────────────────────────────────
+
+// One row per recipient. Learner-profile notifications are owned by the
+// profile's account holder (userId) and scoped by learnerProfileId; account,
+// instructor and admin notifications have learnerProfileId = null.
+model Notification {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learnerProfileId String?
+  learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+
+  type             String    // event key, e.g. "exam.graded"
+  category         String    // learning, schedule, enrolment, billing, account, admin, course, chat
+  priority         String    @default("normal") // low | normal | high
+  title            String
+  body             String
+  data             Json?     // ids + deep link route
+  imageUrl         String?
+
+  dedupeKey        String?   // idempotency per recipient
+  groupKey         String?   // collapse/resolve related notifications
+
+  readAt           DateTime?
+  archivedAt       DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  deliveries       NotificationDelivery[]
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, learnerProfileId, readAt])
+  @@index([userId, createdAt])
+  @@index([groupKey])
+}
+
+// Outbox for email/push delivery (processed by the notification worker).
+model NotificationDelivery {
+  id                String              @id @default(uuid())
+  notificationId    String
+  notification      Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channel           NotificationChannel
+  status            DeliveryStatus      @default(PENDING)
+  attempts          Int                 @default(0)
+  nextAttemptAt     DateTime            @default(now())
+  lastError         String?
+  providerMessageId String?
+  sentAt            DateTime?
+  createdAt         DateTime            @default(now())
+
+  @@unique([notificationId, channel])
+  @@index([status, nextAttemptAt])
+}
+
+// Push registration tokens (FCM). Separate from Device, which tracks
+// device-limit slots.
+model PushToken {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token         String    @unique
+  platform      String    // ios | android | web
+  deviceId      String?
+  appVersion    String?
+  locale        String?
+  lastSeenAt    DateTime  @default(now())
+  invalidatedAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Only stores changes from the catalog defaults.
+model NotificationPreference {
+  id               String              @id @default(uuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learnerProfileId String?
+  learnerProfile   LearnerProfile?     @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  category         String
+  channel          NotificationChannel
+  enabled          Boolean
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([userId, learnerProfileId, category, channel])
 }

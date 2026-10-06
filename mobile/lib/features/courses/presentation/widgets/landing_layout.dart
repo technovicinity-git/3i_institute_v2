@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 
 class LandingLayout extends ConsumerWidget {
   const LandingLayout({required this.child, super.key});
@@ -40,6 +41,12 @@ class LandingLayout extends ConsumerWidget {
             icon: const Icon(Icons.menu_book_outlined, size: 19),
             label: const Text('Courses'),
           ),
+          if (account != null)
+            NotificationBell(
+              notificationsRoute: isInstructor
+                  ? '/instructor/notifications'
+                  : '/notifications',
+            ),
           PopupMenuButton<String>(
             tooltip: 'Account and learner menu',
             onSelected: (value) async {

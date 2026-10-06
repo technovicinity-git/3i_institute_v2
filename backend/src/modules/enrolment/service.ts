@@ -6,6 +6,7 @@ import {
   ValidationError,
 } from "#/shared/errors";
 import type { EnrolInput } from "#/modules/enrolment/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 function calculateAge(dateOfBirth: Date): number {
   const today = new Date();
@@ -135,6 +136,8 @@ export class EnrolmentService {
       },
     });
 
+    notificationEvents.enrolmentCreated(enrolment.id);
+
     return enrolment;
   }
 
@@ -213,6 +216,8 @@ export class EnrolmentService {
         data: { waitlistPosition: i + 1 },
       });
     }
+
+    notificationEvents.waitlistPromoted(promoted.id);
 
     return promoted;
   }

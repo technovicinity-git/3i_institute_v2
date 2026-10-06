@@ -18,6 +18,7 @@ export class UserService {
         lastName: true,
         email: true,
         locale: true,
+        timezone: true,
         accountType: true,
         emailVerified: true,
         dateOfBirth: true,

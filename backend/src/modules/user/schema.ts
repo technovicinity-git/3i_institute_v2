@@ -5,6 +5,19 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   locale: z.enum(["en", "bn", "hi", "ur", "ar"]).optional(),
   bio: z.string().max(1000).nullable().optional(),
+  // IANA timezone (e.g. "Asia/Dhaka"), used to show dates in notifications.
+  timezone: z
+    .string()
+    .max(64)
+    .refine((value) => {
+      try {
+        new Intl.DateTimeFormat("en-US", { timeZone: value });
+        return true;
+      } catch {
+        return false;
+      }
+    }, "Invalid timezone")
+    .optional(),
   billingContactName: z.string().max(200).optional(),
   billingContactEmail: z.string().email().max(255).optional(),
 });

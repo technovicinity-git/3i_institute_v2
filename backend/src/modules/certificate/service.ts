@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { prisma } from "#/lib/prisma";
 import { NotFoundError, ValidationError } from "#/shared/errors";
+import { notificationEvents } from "#/modules/notification/events";
 
 function generateVerificationCode(): string {
   return crypto.randomBytes(16).toString("hex").toUpperCase();
@@ -55,6 +56,8 @@ export class CertificateService {
         issuerName: "3i International Islamic Institute",
       },
     });
+
+    notificationEvents.certificatesIssued(courseId, [learnerProfileId], "ATTENDANCE");
 
     return certificate;
   }
@@ -118,6 +121,8 @@ export class CertificateService {
         issuerName: "3i International Islamic Institute",
       },
     });
+
+    notificationEvents.certificatesIssued(courseId, [learnerProfileId], "COMPLETION");
 
     return certificate;
   }
@@ -250,6 +255,11 @@ export class CertificateService {
         }),
       ]);
       createdCount = created.count;
+      notificationEvents.certificatesIssued(
+        exam.courseId,
+        records.map((record) => record.learnerProfileId),
+        "COMPLETION",
+      );
     }
 
     return {
@@ -348,7 +358,7 @@ export class CertificateService {
         : 0;
 
     try {
-      return await prisma.certificate.create({
+      const certificate = await prisma.certificate.create({
         data: {
           learnerProfileId,
           courseId,
@@ -373,6 +383,8 @@ export class CertificateService {
           ),
         },
       });
+      notificationEvents.certificatesIssued(courseId, [learnerProfileId], "EXAM");
+      return certificate;
     } catch (error) {
       // The unique key makes concurrent requests issue at most one record.
       if (

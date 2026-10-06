@@ -1,6 +1,7 @@
 import { prisma } from "#/lib/prisma";
 import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type { CreateRatingInput } from "#/modules/rating/schema";
+import { notificationEvents } from "#/modules/notification/events";
 
 export class RatingService {
   async create(
@@ -43,6 +44,8 @@ export class RatingService {
         review: input.review ?? null,
       },
     });
+
+    notificationEvents.courseRated(rating.id);
 
     return rating;
   }

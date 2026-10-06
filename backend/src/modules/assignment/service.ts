@@ -4,6 +4,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "#/shared/errors";
+import { notificationEvents } from "#/modules/notification/events";
 
 interface CreateAssignmentInput {
   courseId: string;
@@ -58,6 +59,8 @@ export class AssignmentService {
         batchId: input.batchId ?? null,
       },
     });
+
+    notificationEvents.assignmentPublished(assignment.id);
 
     return assignment;
   }
@@ -195,6 +198,8 @@ export class AssignmentService {
       },
     });
 
+    notificationEvents.assignmentGraded(updated.id);
+
     return updated;
   }
 
@@ -331,6 +336,8 @@ export class AssignmentService {
         fileUrl: input.fileUrl ?? null,
       },
     });
+
+    notificationEvents.assignmentSubmitted(submission.id);
 
     return submission;
   }

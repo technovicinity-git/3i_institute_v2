@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Search,
-  Bell,
   Menu,
   ChevronDown,
   LogOut,
@@ -17,6 +16,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useProfileStore } from "@/stores/profile-store";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface AdminNavbarProps {
   onMenuClick: () => void;
@@ -30,9 +30,7 @@ export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
   const logoutMutation = useLogoutMutation();
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -41,12 +39,6 @@ export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setShowDropdown(false);
-      }
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -102,69 +94,16 @@ export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
         </div>
 
         {/* Notification */}
-        <div className="relative" ref={notificationRef}>
-          <button
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowDropdown(false);
-            }}
-            className="relative p-2 rounded-lg hover:bg-gray-50"
-          >
-            <Bell className="w-5 h-5 text-[#0D2B45]" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#22A146] rounded-full" />
-          </button>
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-lg z-30 overflow-hidden">
-              <div className="px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
-                <p className="text-sm font-semibold text-[#0D2B45]">
-                  Notifications
-                </p>
-              </div>
-              <div className="max-h-[320px] overflow-y-auto">
-                {[
-                  {
-                    title: "New instructor application",
-                    desc: "Dr. Sarah Khan applied to teach",
-                    time: "2 hours ago",
-                  },
-                  {
-                    title: "Waiver request",
-                    desc: "Amina requested 50% waiver",
-                    time: "5 hours ago",
-                  },
-                  {
-                    title: "Course pending review",
-                    desc: "Children's course needs approval",
-                    time: "1 day ago",
-                  },
-                ].map((notification, i) => (
-                  <div
-                    key={i}
-                    className="px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <p className="text-sm font-semibold text-[#0C1F33]">
-                      {notification.title}
-                    </p>
-                    <p className="text-xs text-[#64748B]">
-                      {notification.desc}
-                    </p>
-                    <p className="text-[10px] text-[#94A3B8] mt-1">
-                      {notification.time}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <NotificationBell
+          viewAllHref="/admin/notifications"
+          onOpenChange={(open) => open && setShowDropdown(false)}
+        />
 
         {/* Profile */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => {
               setShowDropdown(!showDropdown);
-              setShowNotifications(false);
             }}
             className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50"
           >

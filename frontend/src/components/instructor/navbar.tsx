@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Search,
-  Bell,
   Menu,
   ChevronDown,
   LogOut,
@@ -17,6 +16,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useProfileStore } from "@/stores/profile-store";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface InstructorNavbarProps {
   onMenuClick: () => void;
@@ -32,9 +32,7 @@ export default function InstructorNavbar({
   const logoutMutation = useLogoutMutation();
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,12 +41,6 @@ export default function InstructorNavbar({
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setShowDropdown(false);
-      }
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
       }
     };
 
@@ -105,77 +97,16 @@ export default function InstructorNavbar({
         </div>
 
         {/* Notification */}
-        <div className="relative" ref={notificationRef}>
-          <button
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowDropdown(false);
-            }}
-            className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Bell className="w-5 h-5 text-[#12304E]" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#22A146] rounded-full" />
-          </button>
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-lg z-30 overflow-hidden">
-              <div className="px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
-                <p className="text-sm font-semibold text-[#12304E]">
-                  Notifications
-                </p>
-              </div>
-              <div className="max-h-[320px] overflow-y-auto">
-                {[
-                  {
-                    title: "New student enrolled",
-                    desc: "Amina joined Foundations of Prophetic Medicine",
-                    time: "2 hours ago",
-                  },
-                  {
-                    title: "Assignment submitted",
-                    desc: "Yusuf submitted Anatomy System Assignment",
-                    time: "5 hours ago",
-                  },
-                  {
-                    title: "Live class reminder",
-                    desc: "Anatomy Q&A Session starts in 1 hour",
-                    time: "1 day ago",
-                  },
-                ].map((notification, i) => (
-                  <div
-                    key={i}
-                    className="px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <p className="text-sm font-semibold text-[#0C1F33]">
-                      {notification.title}
-                    </p>
-                    <p className="text-xs text-[#64748B]">
-                      {notification.desc}
-                    </p>
-                    <p className="text-[10px] text-[#94A3B8] mt-1">
-                      {notification.time}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-gray-100">
-                <button
-                  onClick={() => router.push("/instructor/notifications")}
-                  className="w-full text-center px-4 py-2.5 text-sm font-semibold text-[#22A146] hover:bg-gray-50"
-                >
-                  View all notifications
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <NotificationBell
+          viewAllHref="/instructor/notifications"
+          onOpenChange={(open) => open && setShowDropdown(false)}
+        />
 
         {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => {
               setShowDropdown(!showDropdown);
-              setShowNotifications(false);
             }}
             className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
           >

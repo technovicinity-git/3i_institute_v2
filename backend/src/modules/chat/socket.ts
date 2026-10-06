@@ -4,6 +4,10 @@ import { verifyAccessToken } from "#/lib/jwt";
 import { chatService } from "#/modules/chat/service";
 import { env } from "#/config/env";
 import { prisma } from "#/lib/prisma";
+import {
+  registerNotificationSocket,
+  userRoom,
+} from "#/modules/notification/realtime";
 
 let io: SocketIOServer | null = null;
 
@@ -41,6 +45,9 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
   io.on("connection", (socket) => {
     const user = socket.data.user;
     console.log(`🔌 User connected: ${user.email} (${socket.id})`);
+
+    // Personal room for realtime notifications.
+    socket.join(userRoom(user.sub));
 
     // Join course chat room
     socket.on(
@@ -193,6 +200,8 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
       console.log(`🔌 User disconnected: ${user.email}`);
     });
   });
+
+  registerNotificationSocket(io);
 
   return io;
 }

@@ -13,6 +13,7 @@ import type {
 } from "#/modules/material/schema";
 import { cloudinary } from "#/lib/cloudinary";
 import { env } from "#/config/env";
+import { notificationEvents } from "#/modules/notification/events";
 
 const MAX_VIDEO_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
 
@@ -43,6 +44,8 @@ export class MaterialService {
         duration: input.duration ?? null,
       },
     });
+
+    notificationEvents.materialPublished(material.id);
 
     return material;
   }
@@ -128,6 +131,8 @@ export class MaterialService {
           captionUrl: null,
         },
       });
+
+      notificationEvents.materialPublished(material.id);
 
       return {
         material,
@@ -379,6 +384,8 @@ export class MaterialService {
         order,
       },
     });
+
+    notificationEvents.materialPublished(material.id);
 
     return material;
   }

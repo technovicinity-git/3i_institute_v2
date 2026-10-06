@@ -16,6 +16,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useSessionRestore } from "@/hooks/use-session-restore";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function Navbar() {
   const router = useRouter();
@@ -130,6 +131,22 @@ export function Navbar() {
           <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
         ) : isLoggedIn ? (
           <>
+            <NotificationBell
+              learnerProfileId={
+                userRole === "Admin" || userRole === "Instructor"
+                  ? null
+                  : activeProfile?.id
+              }
+              viewAllHref={
+                userRole === "Admin"
+                  ? "/admin/notifications"
+                  : userRole === "Instructor"
+                    ? "/instructor/notifications"
+                    : "/notifications"
+              }
+              onOpenChange={(open) => open && setShowDropdown(false)}
+            />
+
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
