@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
+import '../../../../core/share/course_share.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/entities/course_details.dart';
 import '../providers/courses_providers.dart';
@@ -579,9 +579,15 @@ class _ShareCourseButton extends StatelessWidget {
   Widget build(BuildContext context) => Align(
         alignment: Alignment.centerLeft,
         child: TextButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: '3i course: ${course.title}'));
-            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Course title copied.')));
+          onPressed: () {
+            // Anchor the share sheet to the button (required on iPad).
+            final box = context.findRenderObject() as RenderBox?;
+            shareCourse(
+              context,
+              courseId: course.id,
+              title: course.title,
+              anchor: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+            );
           },
           icon: const Icon(Icons.share_outlined, size: 18),
           label: const Text('Share this course'),
