@@ -30,9 +30,12 @@ import { useCourseDetails } from "@/hooks/use-course-details";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolMutation } from "@/hooks/use-enrolment";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareDialog } from "@/components/share/share-dialog";
+import { siteUrl } from "@/lib/share";
 
 export default function CourseDetailsPage() {
   const [showRateModal, setShowRateModal] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [expandedBatch, setExpandedBatch] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
@@ -929,15 +932,23 @@ export default function CourseDetailsPage() {
                   </div>
 
                   {/* Share */}
-                  <p
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast.success("Link copied");
-                    }}
-                    className="flex items-center gap-2 text-sm text-[#0C1F33] cursor-pointer"
+                  <button
+                    type="button"
+                    onClick={() => setShowShare(true)}
+                    className="flex items-center gap-2 text-sm text-[#0C1F33] hover:text-[#22A146] transition-colors"
                   >
                     <Share2 className="w-3.5 h-3.5" /> Share this course
-                  </p>
+                  </button>
+                  <ShareDialog
+                    open={showShare}
+                    onOpenChange={setShowShare}
+                    url={`${siteUrl()}/courses/${course.id}`}
+                    title={course.title}
+                    text={`Check out "${course.title}" at 3i International Islamic Institute`}
+                    campaign="course_share"
+                    imageUrl={course.thumbnailUrl ?? course.coverImageUrl}
+                    subtitle={course.instructor?.name}
+                  />
                 </div>
               </div>
             </div>

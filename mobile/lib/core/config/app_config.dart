@@ -4,6 +4,10 @@ abstract final class AppConfig {
     defaultValue: 'https://threei-institute-v2.onrender.com/api/v1',
   );
 
+  /// Public website origin used for shareable links, e.g.
+  /// `--dart-define=WEB_BASE_URL=https://example.com`.
+  static const webBaseUrl = String.fromEnvironment('WEB_BASE_URL');
+
   static String get socketBaseUrl {
     const configured = String.fromEnvironment('SOCKET_BASE_URL');
     if (configured.isNotEmpty) return configured;
