@@ -1,8 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "#/lib/jwt";
 import { UnauthorizedError } from "#/shared/errors";
+import { assertAccountActive } from "#/modules/user/account-status";
 
-function authenticate(req: Request, _res: Response, next: NextFunction): void {
+async function authenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -15,13 +20,18 @@ function authenticate(req: Request, _res: Response, next: NextFunction): void {
     throw new UnauthorizedError("Access token is required");
   }
 
+  let payload;
   try {
-    const payload = verifyAccessToken(token);
-    req.user = payload;
-    next();
+    payload = verifyAccessToken(token);
   } catch {
     throw new UnauthorizedError("Invalid or expired access token");
   }
+
+  // Tokens stay valid until they expire, so deactivation is enforced here.
+  await assertAccountActive(payload.sub);
+
+  req.user = payload;
+  next();
 }
 
 export { authenticate };

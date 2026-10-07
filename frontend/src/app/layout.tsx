@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Libre_Caslon_Text } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
 import { Toaster } from "sonner";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
+import { AccountStatusWatcher } from "@/components/layout/account-status-watcher";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,7 +38,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${libreCaslon.variable} antialiased`}>
         <QueryProvider>
-          {children}
+          <ConfirmProvider>
+            {children}
+            <AccountStatusWatcher />
+          </ConfirmProvider>
           <Toaster position="top-right" richColors />
         </QueryProvider>
       </body>

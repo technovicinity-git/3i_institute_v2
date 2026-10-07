@@ -54,3 +54,12 @@ export class RateLimitError extends AppError {
     Object.setPrototypeOf(this, RateLimitError.prototype);
   }
 }
+
+export class AccountInactiveError extends AppError {
+  constructor(
+    message = "Your account has been deactivated. Please contact support.",
+  ) {
+    super(403, "ACCOUNT_INACTIVE", message);
+    Object.setPrototypeOf(this, AccountInactiveError.prototype);
+  }
+}

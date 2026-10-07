@@ -3,7 +3,11 @@ import { hash } from "argon2";
 import { prisma } from "#/lib/prisma";
 import { generateTokenPair } from "#/lib/jwt";
 import { verifyGoogleToken, verifyAppleToken } from "#/lib/social-auth";
-import { UnauthorizedError, ValidationError } from "#/shared/errors";
+import {
+  AccountInactiveError,
+  UnauthorizedError,
+  ValidationError,
+} from "#/shared/errors";
 import type {
   GoogleLoginInput,
   AppleLoginInput,
@@ -189,6 +193,10 @@ export class SocialAuthService {
   }
 
   private async generateTokens(user: any) {
+    if (!user.isActive) {
+      throw new AccountInactiveError();
+    }
+
     const permissions = user.role.permissions.map(
       (rp: any) => rp.permission.key,
     );

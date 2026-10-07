@@ -46,6 +46,17 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Account deactivated by an admin while this session was active.
+    if (
+      isAccountInactiveError(error) &&
+      !AUTH_NO_REFRESH_PATHS.some((path) =>
+        originalRequest?.url?.includes(path),
+      )
+    ) {
+      forceLogout("deactivated");
+      return Promise.reject(error);
+    }
+
     // If 401 and not already retried, try refresh
     if (
       error.response?.status === 401 &&
@@ -69,6 +80,11 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
+        if (isAccountInactiveError(refreshError)) {
+          forceLogout("deactivated");
+          return Promise.reject(refreshError);
+        }
+
         // Refresh failed — logout
         useAuthStore.getState().logout();
         window.location.href = "/login";
@@ -82,3 +98,4 @@ apiClient.interceptors.response.use(
 
 // Import auth store (circular — must be after interceptor setup)
 import { useAuthStore } from "@/stores/auth-store";
+import { forceLogout, isAccountInactiveError } from "@/lib/force-logout";
