@@ -17,19 +17,26 @@ class ThreeIApp extends ConsumerStatefulWidget {
 }
 
 class _ThreeIAppState extends ConsumerState<ThreeIApp> {
-  final _subscriptions = <StreamSubscription<RemoteMessage>>[];
-  // A tapped push waiting for sign-in to finish (e.g. cold start).
-  RemoteMessage? _pendingTap;
+  final _subscriptions = <StreamSubscription<Object?>>[];
+  // Data of a tapped notification waiting for sign-in to finish (e.g. cold
+  // start).
+  Map<String, dynamic>? _pendingTap;
 
   @override
   void initState() {
     super.initState();
     if (!PushNotifications.available) return;
     _subscriptions
-      ..add(FirebaseMessaging.onMessage.listen(_showForeground))
-      ..add(FirebaseMessaging.onMessageOpenedApp.listen(_openFromTap));
+      // Shown in the notification bar even while the app is open.
+      ..add(
+        FirebaseMessaging.onMessage.listen(PushNotifications.showForeground),
+      )
+      ..add(
+        FirebaseMessaging.onMessageOpenedApp.listen((m) => _openFromTap(m.data)),
+      )
+      ..add(PushNotifications.localTaps.listen(_openFromTap));
     FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) _openFromTap(message);
+      if (message != null) _openFromTap(message.data);
     });
   }
 
@@ -41,47 +48,15 @@ class _ThreeIAppState extends ConsumerState<ThreeIApp> {
     super.dispose();
   }
 
-  // Phones don't show pushes while the app is open, so show a snackbar —
-  // unless the in-app copy already triggered the notification banner.
-  void _showForeground(RemoteMessage message) {
-    final notification = message.notification;
-    if (notification == null || PushNotifications.hasInAppCopy(message)) {
-      return;
-    }
-    rootScaffoldMessengerKey.currentState
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                notification.title ?? '',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              if ((notification.body ?? '').isNotEmpty)
-                Text(
-                  notification.body!,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ],
-          ),
-        ),
-      );
-  }
-
-  void _openFromTap(RemoteMessage message) {
+  void _openFromTap(Map<String, dynamic> data) {
     final account = ref.read(authControllerProvider).asData?.value;
     if (account == null) {
-      _pendingTap = message;
+      _pendingTap = data;
       return;
     }
     _pendingTap = null;
     final route = PushNotifications.routeFor(
-      message,
+      data,
       instructor: account.role == 'Instructor',
     );
     // Let the router finish any redirect (e.g. startup) first.
@@ -105,7 +80,6 @@ class _ThreeIAppState extends ConsumerState<ThreeIApp> {
       title: '3i International Islamic Institute',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: ref.watch(appRouterProvider),
     );
   }

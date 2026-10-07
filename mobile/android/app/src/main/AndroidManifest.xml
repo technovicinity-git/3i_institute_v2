@@ -6,6 +6,11 @@
         android:label="3i International Islamic Institute"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Pushes received in the background use this high-importance
+             channel (created by the app) so they pop up like other apps. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="announcements" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
