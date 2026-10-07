@@ -54,7 +54,12 @@ export async function sendPushToUsers(
         tokens: batch,
         notification: { title: message.title, body: message.body },
         data: message.data,
-        android: { priority: "high" },
+        // "announcements" is the high-importance channel the app creates,
+        // so the notification pops up instead of arriving silently.
+        android: {
+          priority: "high",
+          notification: { channelId: "announcements" },
+        },
         apns: { payload: { aps: { sound: "default" } } },
       });
       result.sent += response.successCount;
