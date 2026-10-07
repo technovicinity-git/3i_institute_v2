@@ -60,6 +60,13 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
+
+  // Firebase Admin (FCM push). Set one of these; push is disabled when
+  // neither is present. Never commit the service-account file.
+  //   FIREBASE_SERVICE_ACCOUNT_PATH   path to the JSON key file (local dev)
+  //   FIREBASE_SERVICE_ACCOUNT_BASE64 base64 of the JSON key (hosted envs)
+  FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT_BASE64: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;

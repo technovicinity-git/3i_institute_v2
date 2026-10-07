@@ -13,7 +13,8 @@ export type NotificationCategory =
   | "billing"
   | "account"
   | "course" // instructor course lifecycle + activity
-  | "admin";
+  | "admin"
+  | "announcement"; // custom notifications from admins and instructors
 
 export type NotificationPriority = "low" | "normal" | "high";
 
@@ -95,6 +96,10 @@ export const NOTIFICATION_EVENTS = {
     priority: "high",
   }),
   "admin.payment_failed": event("admin"),
+
+  // ── Custom (sent from the admin / instructor panels) ──
+  "announcement.admin": event("announcement", { push: true }),
+  "announcement.instructor": event("announcement", { push: true }),
 } as const satisfies Record<string, NotificationEventDefinition>;
 
 export type NotificationType = keyof typeof NOTIFICATION_EVENTS;
