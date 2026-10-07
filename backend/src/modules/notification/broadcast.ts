@@ -195,7 +195,13 @@ async function deliver(
     push = await sendPushToUsers(userIds, {
       title: content.title,
       body: content.body,
-      data: { ...data, type: "announcement" },
+      data: {
+        ...data,
+        type: "announcement",
+        // Tells the app an in-app copy arrives too, so it can skip a
+        // duplicate banner while open.
+        inApp: channels.includes("IN_APP") ? "1" : "0",
+      },
     });
     await prisma.notificationBroadcast.update({
       where: { id: broadcast.id },

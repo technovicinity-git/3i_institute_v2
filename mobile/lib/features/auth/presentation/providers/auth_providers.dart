@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/push/push_notifications.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/account.dart';
@@ -144,6 +145,8 @@ class AuthController extends AsyncNotifier<Account?> {
   }
 
   Future<void> logout() async {
+    // Stop pushes to this device while the session can still authorise it.
+    await ref.read(pushRegistrationProvider.notifier).unregister();
     try {
       await _repository.logout();
     } finally {

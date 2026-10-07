@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "997232416008",
+    "project_id": "iinstitute-43580",
+    "storage_bucket": "iinstitute-43580.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997232416008:android:a02101883f53587232c8bd",
+        "android_client_info": {
+          "package_name": "com.technovicinity.three_i_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQl_ide7su3XuzNAnGRo0swMLhueG1CLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
