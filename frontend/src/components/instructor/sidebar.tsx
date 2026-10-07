@@ -13,6 +13,7 @@ import {
   Settings,
   X,
   Bell,
+  Megaphone,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +28,11 @@ const navItems = [
   { label: "Certificates", icon: Award, href: "/instructor/certificates" },
   { label: "Students", icon: Users, href: "/instructor/students" },
   { label: "Notifications", icon: Bell, href: "/instructor/notifications" },
+  {
+    label: "Send Notification",
+    icon: Megaphone,
+    href: "/instructor/send-notification",
+  },
   { label: "Settings", icon: Settings, href: "/instructor/settings" },
 ];
 

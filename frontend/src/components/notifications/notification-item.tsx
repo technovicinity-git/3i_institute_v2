@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   UserCheck,
   X,
+  Megaphone,
 } from "lucide-react";
 import type { AppNotification } from "@/services/notification.service";
 
@@ -28,6 +29,7 @@ const CATEGORY_STYLE: Record<
   account: { icon: UserCheck, color: "#12304E", background: "#12304E1A" },
   course: { icon: GraduationCap, color: "#22A146", background: "#22A1461A" },
   admin: { icon: ShieldAlert, color: "#DC2626", background: "#DC26261A" },
+  announcement: { icon: Megaphone, color: "#B8912F", background: "#B8912F1A" },
 };
 
 export function NotificationIcon({ category }: { category: string }) {

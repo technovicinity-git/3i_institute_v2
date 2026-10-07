@@ -31,3 +31,7 @@ coverage/
 
 # TypeScript build info
 *.tsbuildinfo
+# Firebase / service-account credentials
+secrets/
+*firebase-adminsdk*.json
+firebase-service-account*.json

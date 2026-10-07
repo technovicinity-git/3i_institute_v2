@@ -141,6 +141,7 @@ model User {
   courseRatings CourseRating[]
   notifications           Notification[]
   pushTokens              PushToken[]
+  notificationBroadcasts  NotificationBroadcast[]
   notificationPreferences NotificationPreference[]
 
   stripeCustomerId   String?
@@ -735,6 +736,31 @@ model PushToken {
   createdAt     DateTime  @default(now())
 
   @@index([userId])
+}
+
+// Custom notifications sent by an admin (to instructors and/or learners) or by
+// an instructor (to a course or one of its batches). Kept as sent history;
+// course and batch names are snapshots so history survives deletion.
+model NotificationBroadcast {
+  id              String                @id @default(uuid())
+  senderId        String
+  sender          User                  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderRole      String                // admin | instructor
+  audience        String                // INSTRUCTORS | LEARNERS | ALL | COURSE | BATCH
+  courseId        String?
+  courseTitle     String?
+  batchId         String?
+  batchName       String?
+  title           String
+  body            String
+  channels        NotificationChannel[]
+  recipientCount  Int                   @default(0)
+  pushDeviceCount Int                   @default(0)
+  pushSentCount   Int                   @default(0)
+  createdAt       DateTime              @default(now())
+
+  @@index([senderId, createdAt])
+  @@index([createdAt])
 }
 
 // Only stores changes from the catalog defaults.

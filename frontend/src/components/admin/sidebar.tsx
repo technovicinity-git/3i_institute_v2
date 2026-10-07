@@ -18,6 +18,7 @@ import {
   X,
   Tags,
   UsersRound,
+  Megaphone,
 } from "lucide-react";
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { label: "Subscriptions", icon: CreditCard, href: "/admin/subscriptions" },
   { label: "Waivers", icon: AlertTriangle, href: "/admin/waivers" },
   { label: "Moderation", icon: MessageSquare, href: "/admin/moderation" },
+  { label: "Send Notification", icon: Megaphone, href: "/admin/send-notification" },
   { label: "Reports", icon: BarChart3, href: "/admin/reports" },
   { label: "Categories", icon: Tags, href: "/admin/categories" },
   { label: "Settings", icon: Settings, href: "/admin/settings" },

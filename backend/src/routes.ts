@@ -12,6 +12,10 @@ import { certificateRoutes } from "#/modules/certificate/routes";
 import { billingRoutes } from "#/modules/billing/routes";
 import { chatRoutes } from "#/modules/chat/routes";
 import { notificationRoutes } from "#/modules/notification/routes";
+import {
+  adminBroadcastRoutes,
+  instructorBroadcastRoutes,
+} from "#/modules/notification/broadcast-routes";
 import { reportRoutes } from "#/modules/report/routes";
 import { materialRoutes } from "#/modules/material/routes";
 import { progressRoutes } from "#/modules/progress/routes";
@@ -32,6 +36,9 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/learners", learnerRoutes);
 // router.use("/devices", deviceRoutes);
+// Mounted before the broader /instructors and /admin routers.
+router.use("/instructors/notifications", instructorBroadcastRoutes);
+router.use("/admin/notifications", adminBroadcastRoutes);
 router.use("/instructors", instructorRoutes);
 router.use("/courses", courseRoutes);
 router.use("/enrolments", enrolmentRoutes);

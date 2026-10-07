@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { notificationController } from "#/modules/notification/controller";
 import { authenticate } from "#/middleware/authenticate";
+import { validate } from "#/middleware/validate";
+import {
+  broadcastController,
+  pushTokenSchema,
+} from "#/modules/notification/broadcast-controller";
 
 const router: Router = Router();
 
@@ -73,6 +78,57 @@ router.get(
  *         description: All marked as read
  */
 router.post("/read-all", authenticate, notificationController.markAllAsRead);
+
+/**
+ * @swagger
+ * /api/v1/notifications/push-tokens:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Register this device for push notifications (FCM token)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, platform]
+ *             properties:
+ *               token: { type: string }
+ *               platform: { type: string, enum: [ios, android, web] }
+ *               deviceId: { type: string }
+ *               appVersion: { type: string }
+ *               locale: { type: string }
+ *     responses:
+ *       200:
+ *         description: Registered
+ */
+router.post(
+  "/push-tokens",
+  authenticate,
+  validate(pushTokenSchema),
+  broadcastController.registerPushToken,
+);
+
+/**
+ * @swagger
+ * /api/v1/notifications/push-tokens/{token}:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Unregister a device (call on logout)
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Removed
+ */
+router.delete(
+  "/push-tokens/:token",
+  authenticate,
+  broadcastController.unregisterPushToken,
+);
 
 /**
  * @swagger
