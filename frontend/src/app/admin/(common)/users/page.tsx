@@ -16,6 +16,9 @@ import {
   useActivateUserMutation,
   useDeleteUserMutation,
 } from "@/hooks/use-admin";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useAuthStore } from "@/stores/auth-store";
+import type { AdminUser } from "@/services/admin.service";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -49,7 +52,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "" });
+  const [filters, setFilters] = useState({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "", status: "" });
   const [actionUser, setActionUser] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useAdminUsers(
@@ -59,6 +62,8 @@ export default function AdminUsersPage() {
   const suspendMutation = useSuspendUserMutation();
   const activateMutation = useActivateUserMutation();
   const deleteMutation = useDeleteUserMutation();
+  const confirm = useConfirm();
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -69,23 +74,53 @@ export default function AdminUsersPage() {
     return () => clearTimeout(timer);
   };
 
-  const handleSuspend = (userId: string) => {
-    if (window.confirm("Suspend this user?")) {
-      suspendMutation.mutate(userId);
-    }
+  const userName = (user: AdminUser) => (
+    <span className="font-semibold text-[#0C1F33]">
+      {user.firstName} {user.lastName}
+    </span>
+  );
+
+  const handleDeactivate = (user: AdminUser) => {
     setActionUser(null);
+    confirm({
+      tone: "warning",
+      title: "Deactivate this user?",
+      description: (
+        <>
+          {userName(user)} will be signed out of every device right away and
+          won&apos;t be able to log in until you reactivate the account.
+        </>
+      ),
+      confirmLabel: "Deactivate",
+      onConfirm: () => suspendMutation.mutateAsync(user.id),
+    });
   };
 
-  const handleActivate = (userId: string) => {
-    activateMutation.mutate(userId);
+  const handleActivate = (user: AdminUser) => {
     setActionUser(null);
+    confirm({
+      tone: "success",
+      title: "Reactivate this user?",
+      description: <>{userName(user)} will be able to log in again.</>,
+      confirmLabel: "Activate",
+      onConfirm: () => activateMutation.mutateAsync(user.id),
+    });
   };
 
-  const handleDelete = (userId: string) => {
-    if (window.confirm("Delete this user? This cannot be undone.")) {
-      deleteMutation.mutate(userId);
-    }
+  const handleDelete = (user: AdminUser) => {
     setActionUser(null);
+    confirm({
+      tone: "danger",
+      title: "Delete this user?",
+      description: (
+        <>
+          {userName(user)} and all of their data will be permanently deleted.
+          This cannot be undone.
+        </>
+      ),
+      confirmLabel: "Delete user",
+      onConfirm: () => deleteMutation.mutateAsync(user.id),
+    });
   };
 
   return (
@@ -116,7 +151,7 @@ export default function AdminUsersPage() {
           />
         </div>
         <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-[#334155]"><Filter className="w-4 h-4" /> Filters</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
           <select aria-label="Filter by role" value={filters.role} onChange={(event) => { setFilters({ ...filters, role: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
             <option value="">All roles</option><option value="Admin">Admin</option><option value="Instructor">Instructor</option><option value="Account Holder">Account Holder</option>
           </select>
@@ -129,8 +164,11 @@ export default function AdminUsersPage() {
           <select aria-label="Filter by subscription" value={filters.subscriptionStatus} onChange={(event) => { setFilters({ ...filters, subscriptionStatus: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
             <option value="">Any subscription</option><option value="ACTIVE">Active subscription</option><option value="INACTIVE">No active subscription</option>
           </select>
+          <select aria-label="Filter by account status" value={filters.status} onChange={(event) => { setFilters({ ...filters, status: event.target.value }); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]">
+            <option value="">Any status</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option>
+          </select>
         </div>
-        {(filters.role || filters.accountType || filters.emailVerified || filters.subscriptionStatus || debouncedSearch) && <button onClick={() => { setFilters({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "" }); setSearchQuery(""); setDebouncedSearch(""); setPage(1); }} className="mt-3 text-sm font-semibold text-[#2563EB] hover:underline">Clear filters</button>}
+        {(filters.role || filters.accountType || filters.emailVerified || filters.subscriptionStatus || filters.status || debouncedSearch) && <button onClick={() => { setFilters({ role: "", accountType: "", emailVerified: "", subscriptionStatus: "", status: "" }); setSearchQuery(""); setDebouncedSearch(""); setPage(1); }} className="mt-3 text-sm font-semibold text-[#2563EB] hover:underline">Clear filters</button>}
       </div>
 
       {/* Loading */}
@@ -152,9 +190,10 @@ export default function AdminUsersPage() {
       {!isLoading && !isError && data && data.users.length > 0 && (
         <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden">
           {/* Header */}
-          <div className="hidden md:grid grid-cols-6 gap-4 px-6 py-3 bg-[#FBF9F4] border-b border-[#E3E8EF] text-xs font-bold text-[#64748B] uppercase">
+          <div className="hidden md:grid grid-cols-7 gap-4 px-6 py-3 bg-[#FBF9F4] border-b border-[#E3E8EF] text-xs font-bold text-[#64748B] uppercase">
             <span>User</span>
             <span>Role</span>
+            <span>Status</span>
             <span>Type</span>
             <span>Profiles</span>
             <span>Joined</span>
@@ -167,7 +206,7 @@ export default function AdminUsersPage() {
               return (
                 <div
                   key={user.id}
-                  className="grid grid-cols-1 md:grid-cols-6 gap-2 md:gap-4 px-6 py-4 items-center hover:bg-gray-50"
+                  className={`grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 px-6 py-4 items-center hover:bg-gray-50 ${user.isActive ? "" : "bg-gray-50/60"}`}
                 >
                   {/* User info */}
                   <div className="flex items-center gap-3">
@@ -193,6 +232,22 @@ export default function AdminUsersPage() {
                   >
                     {role.label}
                   </span>
+
+                  {/* Status */}
+                  {user.isActive ? (
+                    <span className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#22A146]/10 text-[#22A146]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#22A146]" />
+                      Active
+                    </span>
+                  ) : (
+                    <span
+                      title={user.deactivatedAt ? `Deactivated ${formatDate(user.deactivatedAt)}` : undefined}
+                      className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                      Inactive
+                    </span>
+                  )}
 
                   {/* Type */}
                   <span className="text-sm text-[#64748B]">
@@ -222,17 +277,18 @@ export default function AdminUsersPage() {
 
                     {actionUser === user.id && (
                       <div className="absolute right-0 mt-1 w-44 bg-white border border-[#E3E8EF] rounded-lg shadow-lg z-20">
-                        {user.subscriptionStatus === "ACTIVE" ? (
+                        {user.isActive ? (
                           <button
-                            onClick={() => handleSuspend(user.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50"
+                            onClick={() => handleDeactivate(user)}
+                            disabled={user.id === currentUserId}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 disabled:opacity-40 disabled:hover:bg-transparent"
                           >
                             <Ban className="w-4 h-4" />
-                            Suspend
+                            Deactivate
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleActivate(user.id)}
+                            onClick={() => handleActivate(user)}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#22A146] hover:bg-green-50"
                           >
                             <CheckCircle className="w-4 h-4" />
@@ -240,8 +296,9 @@ export default function AdminUsersPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(user.id)}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                          onClick={() => handleDelete(user)}
+                          disabled={user.id === currentUserId}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete

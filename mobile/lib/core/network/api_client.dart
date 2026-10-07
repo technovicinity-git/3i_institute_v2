@@ -26,6 +26,14 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
+          // An admin deactivated this account while the session was active.
+          if (isAccountInactiveError(error) &&
+              !_isPublicAuthPath(error.requestOptions.path)) {
+            await forceLogout();
+            handler.next(error);
+            return;
+          }
+
           if (error.response?.statusCode != 401 ||
               error.requestOptions.extra['skipAuthRefresh'] == true ||
               error.requestOptions.extra['authRetried'] == true ||
@@ -95,6 +103,13 @@ class ApiClient {
     return _refresh();
   }
 
+  /// Ends the local session after the server revoked it (e.g. the account
+  /// was deactivated); the router then sends the user back to login.
+  Future<void> forceLogout() async {
+    await clearSession();
+    await onSessionExpired?.call();
+  }
+
   Future<void> clearSession() async {
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _refreshTokenKey);
@@ -129,6 +144,14 @@ class ApiClient {
         '/auth/google',
         '/auth/apple',
       }.any(path.endsWith);
+}
+
+bool isAccountInactiveError(DioException error) {
+  final body = error.response?.data;
+  return error.response?.statusCode == 403 &&
+      body is Map &&
+      body['error'] is Map &&
+      (body['error'] as Map)['code'] == 'ACCOUNT_INACTIVE';
 }
 
 Map<String, dynamic> _responseData(Map<String, dynamic>? response) {

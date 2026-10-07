@@ -88,6 +88,9 @@ class NotificationCenter extends Notifier<UnreadCounts> {
         ref.invalidate(notificationFeedProvider);
         ref.read(latestNotificationProvider.notifier).push(notification);
       },
+      onAccountDeactivated: () {
+        if (ref.mounted) ref.read(apiClientProvider).forceLogout();
+      },
     );
   }
 }

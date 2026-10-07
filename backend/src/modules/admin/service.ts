@@ -1,5 +1,9 @@
 import { prisma } from "#/lib/prisma";
-import { NotFoundError } from "#/shared/errors";
+import { ForbiddenError, NotFoundError } from "#/shared/errors";
+import {
+  setCachedStatus,
+  terminateUserSessions,
+} from "#/modules/user/account-status";
 import { notificationEvents } from "#/modules/notification/events";
 
 export class AdminService {
@@ -92,7 +96,7 @@ export class AdminService {
   async getUsers(
     page: number,
     limit: number,
-    filters: { search?: string; role?: string; accountType?: string; emailVerified?: boolean; subscriptionStatus?: string } = {},
+    filters: { search?: string; role?: string; accountType?: string; emailVerified?: boolean; subscriptionStatus?: string; status?: string } = {},
   ) {
     const where: any = {
       ...(filters.search ? { OR: [
@@ -105,6 +109,8 @@ export class AdminService {
       ...(filters.emailVerified !== undefined ? { emailVerified: filters.emailVerified } : {}),
       ...(filters.subscriptionStatus === "ACTIVE" ? { subscriptions: { some: { status: "ACTIVE" } } } : {}),
       ...(filters.subscriptionStatus === "INACTIVE" ? { subscriptions: { none: { status: "ACTIVE" } } } : {}),
+      ...(filters.status === "ACTIVE" ? { isActive: true } : {}),
+      ...(filters.status === "INACTIVE" ? { isActive: false } : {}),
     };
 
     const [total, users] = await Promise.all([
@@ -118,6 +124,8 @@ export class AdminService {
           email: true,
           accountType: true,
           emailVerified: true,
+          isActive: true,
+          deactivatedAt: true,
           createdAt: true,
           role: {
             select: { name: true },
@@ -147,6 +155,8 @@ export class AdminService {
       role: user.role.name,
       accountType: user.accountType,
       emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      deactivatedAt: user.deactivatedAt,
       createdAt: user.createdAt,
       learnerProfilesCount: user._count.learnerProfiles,
       subscriptionStatus: user.subscriptions[0]?.status ?? null,
@@ -155,20 +165,29 @@ export class AdminService {
     return { users: formattedUsers, total };
   }
 
-  async suspendUser(userId: string) {
+  // Deactivates the account: the user can no longer log in and every
+  // existing session (web and mobile) is ended immediately.
+  async suspendUser(userId: string, actorId: string) {
+    if (userId === actorId) {
+      throw new ForbiddenError("You cannot deactivate your own account");
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundError("User not found");
     }
 
-    // Suspend all active subscriptions
-    await prisma.subscription.updateMany({
-      where: { accountId: userId, status: "ACTIVE" },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
-    });
+    if (user.isActive) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { isActive: false, deactivatedAt: new Date() },
+      });
+    }
 
-    return { message: "User suspended" };
+    await terminateUserSessions(userId, "deactivated");
+
+    return { id: userId, isActive: false };
   }
 
   async activateUser(userId: string) {
@@ -178,10 +197,25 @@ export class AdminService {
       throw new NotFoundError("User not found");
     }
 
-    return { message: "User activated" };
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: true,
+        deactivatedAt: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
+    });
+    setCachedStatus(userId, true);
+
+    return { id: userId, isActive: true };
   }
 
-  async deleteUser(userId: string) {
+  async deleteUser(userId: string, actorId: string) {
+    if (userId === actorId) {
+      throw new ForbiddenError("You cannot delete your own account");
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
@@ -189,6 +223,7 @@ export class AdminService {
     }
 
     await prisma.user.delete({ where: { id: userId } });
+    await terminateUserSessions(userId, "deleted");
 
     return { message: "User deleted" };
   }

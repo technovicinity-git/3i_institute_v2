@@ -26,6 +26,9 @@ router.post("/learner-profiles/:id/restore", authenticate, authorize("admin.acce
  *       - in: query
  *         name: search
  *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [ACTIVE, INACTIVE] }
  *     responses:
  *       200:
  *         description: Users list
@@ -42,7 +45,7 @@ router.get(
  * /api/v1/admin/users/{id}/suspend:
  *   post:
  *     tags: [Admin]
- *     summary: Suspend a user
+ *     summary: Deactivate a user (blocks login and ends all active sessions)
  *     parameters:
  *       - in: path
  *         name: id
@@ -50,7 +53,7 @@ router.get(
  *         schema: { type: string, format: uuid }
  *     responses:
  *       200:
- *         description: User suspended
+ *         description: User deactivated
  */
 router.post(
   "/users/:id/suspend",
@@ -64,7 +67,7 @@ router.post(
  * /api/v1/admin/users/{id}/activate:
  *   post:
  *     tags: [Admin]
- *     summary: Activate a user
+ *     summary: Reactivate a deactivated user
  *     parameters:
  *       - in: path
  *         name: id

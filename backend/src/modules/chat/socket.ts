@@ -4,6 +4,7 @@ import { verifyAccessToken } from "#/lib/jwt";
 import { chatService } from "#/modules/chat/service";
 import { env } from "#/config/env";
 import { prisma } from "#/lib/prisma";
+import { isAccountActive } from "#/modules/user/account-status";
 import {
   registerNotificationSocket,
   userRoom,
@@ -22,7 +23,7 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
   // ──────────────────────────────────
   // Authentication middleware
   // ──────────────────────────────────
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token as string | undefined;
 
     if (!token) {
@@ -30,13 +31,26 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
       return;
     }
 
+    let payload;
     try {
-      const payload = verifyAccessToken(token);
-      socket.data.user = payload;
-      next();
+      payload = verifyAccessToken(token);
     } catch {
       next(new Error("Invalid or expired token"));
+      return;
     }
+
+    try {
+      if (!(await isAccountActive(payload.sub))) {
+        next(new Error("ACCOUNT_INACTIVE"));
+        return;
+      }
+    } catch {
+      next(new Error("Authentication failed"));
+      return;
+    }
+
+    socket.data.user = payload;
+    next();
   });
 
   // ──────────────────────────────────

@@ -63,6 +63,7 @@ class NotificationsRepository {
     required String token,
     required void Function(AppNotification) onNotification,
     required void Function(UnreadCounts) onUnread,
+    void Function()? onAccountDeactivated,
   }) {
     final socket = io.io(
       AppConfig.socketBaseUrl,
@@ -85,6 +86,11 @@ class NotificationsRepository {
       if (value is Map) {
         onUnread(UnreadCounts.fromJson(Map<String, dynamic>.from(value)));
       }
+    });
+    // Sent when an admin deactivates or deletes this account.
+    socket.on('account:deactivated', (_) => onAccountDeactivated?.call());
+    socket.onConnectError((dynamic error) {
+      if ('$error'.contains('ACCOUNT_INACTIVE')) onAccountDeactivated?.call();
     });
     socket.connect();
     return NotificationSocket(socket);

@@ -18,3 +18,7 @@ export function emitToUser(
 ): void {
   io?.to(userRoom(userId)).emit(event, payload);
 }
+
+export function disconnectUser(userId: string): void {
+  io?.in(userRoom(userId)).disconnectSockets(true);
+}

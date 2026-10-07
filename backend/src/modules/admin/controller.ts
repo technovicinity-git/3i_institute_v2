@@ -45,12 +45,14 @@ export class AdminController {
       const accountType = req.query["accountType"] as string | undefined;
       const verifiedValue = req.query["emailVerified"] as string | undefined;
       const subscriptionStatus = req.query["subscriptionStatus"] as string | undefined;
+      const status = req.query["status"] as string | undefined;
       const result = await adminService.getUsers(page, limit, {
         search,
         role,
         accountType,
         emailVerified: verifiedValue === undefined ? undefined : verifiedValue === "true",
         subscriptionStatus,
+        status,
       });
       sendSuccess(res, result, 200);
     } catch (error) {
@@ -61,8 +63,8 @@ export class AdminController {
   suspendUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.params["id"] as string;
-      const result = await adminService.suspendUser(userId);
-      sendSuccess(res, result, 200, "User suspended");
+      const result = await adminService.suspendUser(userId, req.user!.sub);
+      sendSuccess(res, result, 200, "User deactivated");
     } catch (error) {
       next(error);
     }
@@ -81,7 +83,7 @@ export class AdminController {
   deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.params["id"] as string;
-      const result = await adminService.deleteUser(userId);
+      const result = await adminService.deleteUser(userId, req.user!.sub);
       sendSuccess(res, result, 200, "User deleted");
     } catch (error) {
       next(error);

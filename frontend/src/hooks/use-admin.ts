@@ -54,11 +54,11 @@ export function useSuspendUserMutation() {
     mutationFn: (userId: string) => adminService.suspendUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      toast.success("User suspended");
+      toast.success("User deactivated and signed out");
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to suspend user");
+      toast.error(message ?? "Failed to deactivate user");
     },
   });
 }

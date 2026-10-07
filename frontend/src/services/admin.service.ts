@@ -8,6 +8,8 @@ export interface AdminUser {
   role: string;
   accountType: string;
   emailVerified: boolean;
+  isActive: boolean;
+  deactivatedAt: string | null;
   createdAt: string;
   learnerProfilesCount: number;
   subscriptionStatus: string | null;
@@ -57,6 +59,7 @@ export interface AdminUserFilters {
   accountType?: string;
   emailVerified?: string;
   subscriptionStatus?: string;
+  status?: string;
 }
 
 export interface AdminInstructor {
@@ -295,6 +298,7 @@ export const adminService = {
     if (filters.accountType) params.set("accountType", filters.accountType);
     if (filters.emailVerified) params.set("emailVerified", filters.emailVerified);
     if (filters.subscriptionStatus) params.set("subscriptionStatus", filters.subscriptionStatus);
+    if (filters.status) params.set("status", filters.status);
     const response = await apiClient.get(`/admin/users?${params.toString()}`);
     return response.data.data;
   },

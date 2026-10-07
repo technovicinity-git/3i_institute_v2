@@ -6,6 +6,7 @@ import { generateTokenPair, verifyRefreshToken } from "#/lib/jwt";
 import {
   ConflictError,
   UnauthorizedError,
+  AccountInactiveError,
   ValidationError,
 } from "#/shared/errors";
 import type {
@@ -166,6 +167,12 @@ export class AuthService {
       throw new UnauthorizedError("Invalid email or password");
     }
 
+    // Checked after the password so account status is not revealed to
+    // someone who does not know the credentials.
+    if (!user.isActive) {
+      throw new AccountInactiveError();
+    }
+
     // Reset failed attempts on success
     await prisma.user.update({
       where: { id: user.id },
@@ -266,6 +273,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedError("User not found");
+    }
+
+    if (!user.isActive) {
+      throw new AccountInactiveError();
     }
 
     const permissions = user.role.permissions.map(
