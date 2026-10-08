@@ -14,13 +14,11 @@ import {
   X,
   BookOpen,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useCourses } from "@/hooks/use-courses";
 import { useCategories } from "@/hooks/use-categories";
 import { useProfileStore } from "@/stores/profile-store";
 import {
-  useAddToWishlistMutation,
-  useRemoveFromWishlistMutation,
+  useWishlistToggle,
 } from "@/hooks/use-wishlist";
 import type { Course, CourseFilters, SortOption } from "@/types/course";
 
@@ -84,33 +82,11 @@ function Checkbox({
 
 function CourseCard({ course }: { course: Course }) {
   const router = useRouter();
-  const { activeProfile } = useProfileStore();
-  const addWishlist = useAddToWishlistMutation();
-  const removeWishlist = useRemoveFromWishlistMutation();
-  const [liked, setLiked] = useState(course.wishlisted);
+  const { wishlisted: liked, toggle, pending } = useWishlistToggle(course.id);
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (!activeProfile) {
-      toast.error("Please select a profile first");
-      return;
-    }
-
-    const newLiked = !liked;
-    setLiked(newLiked);
-
-    if (newLiked) {
-      addWishlist.mutate({
-        learnerProfileId: activeProfile.id,
-        courseId: course.id,
-      });
-    } else {
-      removeWishlist.mutate({
-        learnerProfileId: activeProfile.id,
-        courseId: course.id,
-      });
-    }
+    void toggle();
   };
 
   return (
@@ -136,7 +112,9 @@ function CourseCard({ course }: { course: Course }) {
         {/* Wishlist button */}
         <button
           onClick={handleWishlist}
-          aria-label="Toggle wishlist"
+          disabled={pending}
+          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={liked}
           className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm transition-opacity ${
             liked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}

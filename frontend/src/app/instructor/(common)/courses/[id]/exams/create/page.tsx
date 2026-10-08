@@ -10,8 +10,8 @@ import { Search, Check, X, ChevronLeft } from "lucide-react";
 import { useCreateExamMutation } from "@/hooks/use-exams";
 import { useMyQuestions } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 const createExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -33,6 +33,7 @@ const createExamSchema = z.object({
 type CreateExamFormData = z.infer<typeof createExamSchema>;
 
 export default function CreateExamPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -41,7 +42,7 @@ export default function CreateExamPage() {
   const { data: allQuestions, isLoading: questionsLoading } =
     useMyQuestions(courseId);
 
-  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
 
   const [selectedQuestions, setSelectedQuestions] = useState<
@@ -189,7 +190,7 @@ export default function CreateExamPage() {
       },
       {
         onSuccess: () => {
-          router.push(`/instructor/courses/${courseId}/exams`);
+          router.push(`${basePath}/${courseId}/exams`);
         },
       },
     );
@@ -199,7 +200,7 @@ export default function CreateExamPage() {
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
+          onClick={() => router.push(`${basePath}/${courseId}/exams`)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
@@ -493,7 +494,7 @@ export default function CreateExamPage() {
                       No questions found.
                     </p>
                     <Link
-                      href={`/instructor/courses/${courseId}/questions`}
+                      href={`${basePath}/${courseId}/questions`}
                       className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#12304E] text-[#12304E] rounded-lg text-sm font-semibold hover:bg-gray-50"
                     >
                       Manage Questions
@@ -509,7 +510,7 @@ export default function CreateExamPage() {
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
+            onClick={() => router.push(`${basePath}/${courseId}/exams`)}
             className="px-4 py-2 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
           >
             Cancel

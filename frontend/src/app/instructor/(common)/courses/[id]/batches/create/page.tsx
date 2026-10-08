@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { useCreateBatchMutation } from "@/hooks/use-batches";
 import { useInstructorSessions } from "@/hooks/use-batches";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 const sessionSchema = z.object({
   title: z.string().min(1, "Session title is required"),
@@ -25,6 +26,7 @@ const createBatchSchema = z.object({
 type CreateBatchFormData = z.infer<typeof createBatchSchema>;
 
 export default function CreateBatchPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -73,7 +75,7 @@ export default function CreateBatchPage() {
       },
       {
         onSuccess: () => {
-          router.push(`/instructor/courses/${courseId}/batches`);
+          router.push(`${basePath}/${courseId}/batches`);
         },
       },
     );
@@ -93,7 +95,7 @@ export default function CreateBatchPage() {
     <div className="p-6 md:p-10 max-w-[800px] mx-auto">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/batches`)}
+          onClick={() => router.push(`${basePath}/${courseId}/batches`)}
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           ← Back to batches
@@ -269,7 +271,7 @@ export default function CreateBatchPage() {
           <button
             type="button"
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/batches`)
+              router.push(`${basePath}/${courseId}/batches`)
             }
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >

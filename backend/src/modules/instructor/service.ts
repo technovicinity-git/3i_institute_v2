@@ -7,6 +7,7 @@ import {
 } from "#/shared/errors";
 import type { InstructorApplicationInput } from "#/modules/instructor/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 export class InstructorService {
   async apply(userId: string, input: InstructorApplicationInput) {
@@ -407,7 +408,7 @@ export class InstructorService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only view students for your own courses",
       );

@@ -23,6 +23,17 @@ class ExamResultPage extends ConsumerWidget {
   String get _examsPath =>
       '/my-courses/$courseId/exams${onlineClass ? '?online=true' : ''}';
 
+  Future<void> _reload(WidgetRef ref, String resultKey, String examsKey) async {
+    ref
+      ..invalidate(examResultProvider(resultKey))
+      ..invalidate(courseExamsProvider(examsKey));
+    try {
+      await ref.read(examResultProvider(resultKey).future);
+    } catch (_) {
+      // The error state shows its own retry button.
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(activeLearnerProfileProvider);
@@ -71,173 +82,192 @@ class ExamResultPage extends ConsumerWidget {
         final percent = score == null || total == 0
             ? null
             : (score / total * 100).round();
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
-          children: [
-            TextButton.icon(
-              onPressed: () => context.go(_examsPath),
-              icon: const Icon(Icons.arrow_back, size: 18),
-              label: const Text('Back to exams'),
-              style: TextButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                foregroundColor: const Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE3E8EF)),
-              ),
-              child: Column(
+        return RefreshIndicator(
+          color: _navy,
+          onRefresh: () => _reload(ref, resultKey, examsKey),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+            children: [
+              Row(
                 children: [
-                  Container(
-                    width: 66,
-                    height: 66,
-                    decoration: BoxDecoration(
-                      color: passed
-                          ? _green.withValues(alpha: .1)
-                          : pending
-                          ? const Color(0xFFFFF7ED)
-                          : const Color(0xFFFEF2F2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      passed
-                          ? Icons.emoji_events_outlined
-                          : pending
-                          ? Icons.hourglass_top
-                          : Icons.cancel_outlined,
-                      size: 36,
-                      color: passed
-                          ? _green
-                          : pending
-                          ? Colors.orange
-                          : Colors.red,
+                  TextButton.icon(
+                    onPressed: () => context.go(_examsPath),
+                    icon: const Icon(Icons.arrow_back, size: 18),
+                    label: const Text('Back to exams'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 13),
-                  Text(
-                    data.exam.title,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF0C1F33),
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Reload',
+                    onPressed: () => _reload(ref, resultKey, examsKey),
+                    icon: const Icon(Icons.refresh, color: _navy),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    passed
-                        ? 'Congratulations! You passed.'
-                        : pending
-                        ? 'Your written answers are being graded.'
-                        : 'You did not pass. Review your answers and try again.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: passed
-                          ? _green
-                          : pending
-                          ? Colors.orange.shade800
-                          : Colors.red.shade700,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (score != null) ...[
-                    const SizedBox(height: 19),
-                    Text(
-                      '${_number(score)} / $total',
-                      style: const TextStyle(
-                        fontSize: 34,
-                        color: Color(0xFF0C1F33),
-                        fontWeight: FontWeight.w700,
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE3E8EF)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 66,
+                      height: 66,
+                      decoration: BoxDecoration(
+                        color: passed
+                            ? _green.withValues(alpha: .1)
+                            : pending
+                            ? const Color(0xFFFFF7ED)
+                            : const Color(0xFFFEF2F2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        passed
+                            ? Icons.emoji_events_outlined
+                            : pending
+                            ? Icons.hourglass_top
+                            : Icons.cancel_outlined,
+                        size: 36,
+                        color: passed
+                            ? _green
+                            : pending
+                            ? Colors.orange
+                            : Colors.red,
                       ),
                     ),
+                    const SizedBox(height: 13),
                     Text(
-                      'Pass mark: ${data.exam.passMark}%  •  ${data.exam.duration} mins',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
+                      data.exam.title,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF0C1F33),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      passed
+                          ? 'Congratulations! You passed.'
+                          : pending
+                          ? 'Your written answers are being graded.'
+                          : 'You did not pass. Review your answers and try again.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: passed
+                            ? _green
+                            : pending
+                            ? Colors.orange.shade800
+                            : Colors.red.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (score != null) ...[
+                      const SizedBox(height: 19),
+                      Text(
+                        '${_number(score)} / $total',
+                        style: const TextStyle(
+                          fontSize: 34,
+                          color: Color(0xFF0C1F33),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Pass mark: ${data.exam.passMark}%  •  ${data.exam.duration} mins',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        _Stat(
+                          icon: Icons.track_changes,
+                          label: 'Score',
+                          value: percent == null ? '—' : '$percent%',
+                        ),
+                        const SizedBox(width: 8),
+                        _Stat(
+                          icon: Icons.description_outlined,
+                          label: 'Attempts',
+                          value: '${data.attempts.length}',
+                        ),
+                        const SizedBox(width: 8),
+                        _Stat(
+                          icon: Icons.timer_outlined,
+                          label: 'Time taken',
+                          value: _timeTaken(latest),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (data.attempts.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const _SectionTitle('Attempt history'),
+                const SizedBox(height: 9),
+                ...data.attempts.map(
+                  (attempt) => _AttemptTile(attempt: attempt),
+                ),
+              ],
+              if (data.questionResults.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const _SectionTitle('Question review'),
+                const SizedBox(height: 4),
+                const Text(
+                  'Review your responses and the correct answers.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 10),
+                ...data.questionResults.asMap().entries.map(
+                  (entry) =>
+                      _QuestionReview(index: entry.key + 1, item: entry.value),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  best == null
+                      ? 'No attempts found.'
+                      : 'Showing answers from Attempt #${best.attemptNumber}.',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => context.go(_examsPath),
+                      child: const Text('Back to exams'),
+                    ),
+                  ),
+                  if (canRetry) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => context.go(
+                          '/my-courses/$courseId/exams/$examId/take${onlineClass ? '?online=true' : ''}',
+                        ),
+                        style: FilledButton.styleFrom(backgroundColor: _green),
+                        child: const Text('Retake exam'),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      _Stat(
-                        icon: Icons.track_changes,
-                        label: 'Score',
-                        value: percent == null ? '—' : '$percent%',
-                      ),
-                      const SizedBox(width: 8),
-                      _Stat(
-                        icon: Icons.description_outlined,
-                        label: 'Attempts',
-                        value: '${data.attempts.length}',
-                      ),
-                      const SizedBox(width: 8),
-                      _Stat(
-                        icon: Icons.timer_outlined,
-                        label: 'Time taken',
-                        value: _timeTaken(latest),
-                      ),
-                    ],
-                  ),
                 ],
               ),
-            ),
-            if (data.attempts.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              const _SectionTitle('Attempt history'),
-              const SizedBox(height: 9),
-              ...data.attempts.map((attempt) => _AttemptTile(attempt: attempt)),
             ],
-            if (data.questionResults.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              const _SectionTitle('Question review'),
-              const SizedBox(height: 4),
-              const Text(
-                'Review your responses and the correct answers.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 10),
-              ...data.questionResults.asMap().entries.map(
-                (entry) =>
-                    _QuestionReview(index: entry.key + 1, item: entry.value),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                best == null
-                    ? 'No attempts found.'
-                    : 'Showing answers from Attempt #${best.attemptNumber}.',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-              ),
-            ],
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context.go(_examsPath),
-                    child: const Text('Back to exams'),
-                  ),
-                ),
-                if (canRetry) ...[
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => context.go(
-                        '/my-courses/$courseId/exams/$examId/take${onlineClass ? '?online=true' : ''}',
-                      ),
-                      style: FilledButton.styleFrom(backgroundColor: _green),
-                      child: const Text('Retake exam'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
+          ),
         );
       },
     );

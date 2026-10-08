@@ -5,6 +5,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "#/shared/errors";
+import { canManageCourse } from "#/shared/course-access";
 
 interface CsvRow {
   type?: string;
@@ -87,7 +88,7 @@ export class BulkImportService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only import questions to your own courses",
       );

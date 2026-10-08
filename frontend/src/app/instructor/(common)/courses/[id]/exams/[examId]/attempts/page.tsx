@@ -8,8 +8,8 @@ import {
   useExamAttempts,
   useIssueOnlineFinalExamCertificatesMutation,
 } from "@/hooks/use-exams";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "Not submitted";
@@ -23,6 +23,7 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function ExamAttemptsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -30,7 +31,7 @@ export default function ExamAttemptsPage() {
 
   const { data: attempts, isLoading, isError } = useExamAttempts(examId);
   const { data: courseExams } = useCourseExams(courseId);
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((item) => item.id === courseId);
   const exam = courseExams?.find((item) => item.id === examId);
   const issueCertificatesMutation = useIssueOnlineFinalExamCertificatesMutation();
@@ -40,7 +41,7 @@ export default function ExamAttemptsPage() {
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
+          onClick={() => router.push(`${basePath}/${courseId}/exams`)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
@@ -123,7 +124,7 @@ export default function ExamAttemptsPage() {
                   </td>
                   <td className="px-5 py-4 text-right">
                     <Link
-                      href={`/instructor/courses/${courseId}/exams/${examId}/attempts/${attempt.id}/grade`}
+                      href={`${basePath}/${courseId}/exams/${examId}/attempts/${attempt.id}/grade`}
                       className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${attempt.graded ? "border border-[#E3E8EF] text-[#12304E] hover:bg-gray-50" : "bg-[#22A146] text-white hover:bg-[#1E9040]"}`}
                     >
                       {attempt.graded ? <><Eye className="h-4 w-4" /> View</> : "Grade now"}

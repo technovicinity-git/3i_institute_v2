@@ -47,6 +47,30 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     ref.invalidate(enrolledCoursesProvider(profileId));
   }
 
+  // Reloads the lesson list, video/document link, progress and note.
+  Future<void> _reload(String profileId) async {
+    ref
+      ..invalidate(signedLessonUrlProvider(widget.lessonId))
+      ..invalidate(lessonNoteProvider('$profileId|${widget.lessonId}'));
+    _refreshLearning(profileId);
+    try {
+      await Future.wait([
+        ref.read(
+          courseLearningContentProvider('${widget.courseId}|$profileId').future,
+        ),
+        ref.read(signedLessonUrlProvider(widget.lessonId).future),
+      ]);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not reload. Check your connection.'),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _saveProgress(
     String profileId, {
     required int watched,
@@ -206,6 +230,11 @@ class _LessonPageState extends ConsumerState<LessonPage> {
             ),
             actions: [
               IconButton(
+                tooltip: 'Reload',
+                onPressed: () => _reload(profileId),
+                icon: const Icon(Icons.refresh, color: _navy),
+              ),
+              IconButton(
                 tooltip: 'Course content',
                 onPressed: () =>
                     _showCourseContent(content, widget.courseId, lesson.id),
@@ -214,181 +243,186 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               const SizedBox(width: 8),
             ],
           ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            children: [
-              _MediaPanel(
-                signedAsync: signedAsync,
-                isDocument: isDocument,
-                initialPosition: progress.lastPosition,
-                onProgress: (seconds, position, completed) => _saveProgress(
-                  profileId,
-                  watched: seconds,
-                  position: position,
-                  completed: completed,
+          body: RefreshIndicator(
+            color: _navy,
+            onRefresh: () => _reload(profileId),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                _MediaPanel(
+                  signedAsync: signedAsync,
+                  isDocument: isDocument,
+                  initialPosition: progress.lastPosition,
+                  onProgress: (seconds, position, completed) => _saveProgress(
+                    profileId,
+                    watched: seconds,
+                    position: position,
+                    completed: completed,
+                  ),
+                  onRetryMedia: () =>
+                      ref.invalidate(signedLessonUrlProvider(widget.lessonId)),
+                  onDocumentOpen: signed == null
+                      ? null
+                      : () => _openDocument(signed.url, profileId),
+                  documentOpened: _documentOpened,
+                  documentCompleted: _documentCompleted,
                 ),
-                onRetryMedia: () =>
-                    ref.invalidate(signedLessonUrlProvider(widget.lessonId)),
-                onDocumentOpen: signed == null
-                    ? null
-                    : () => _openDocument(signed.url, profileId),
-                documentOpened: _documentOpened,
-                documentCompleted: _documentCompleted,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: previous == null
-                          ? null
-                          : () => _goLesson(widget.courseId, previous.id),
-                      icon: const Icon(Icons.chevron_left),
-                      label: const Text('Previous'),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: previous == null
+                            ? null
+                            : () => _goLesson(widget.courseId, previous.id),
+                        icon: const Icon(Icons.chevron_left),
+                        label: const Text('Previous'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: next == null
-                          ? null
-                          : () => _goLesson(widget.courseId, next.id),
-                      iconAlignment: IconAlignment.end,
-                      icon: const Icon(Icons.chevron_right),
-                      label: const Text('Next'),
-                      style: FilledButton.styleFrom(backgroundColor: _green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: next == null
+                            ? null
+                            : () => _goLesson(widget.courseId, next.id),
+                        iconAlignment: IconAlignment.end,
+                        icon: const Icon(Icons.chevron_right),
+                        label: const Text('Next'),
+                        style: FilledButton.styleFrom(backgroundColor: _green),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                lesson.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0C1F33),
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 14,
-                runSpacing: 6,
-                children: [
-                  Text(
-                    'Course: ${content.courseTitle}',
-                    style: const TextStyle(
-                      color: Color(0xFF475569),
-                      fontSize: 13,
-                    ),
+                const SizedBox(height: 24),
+                Text(
+                  lesson.title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: const Color(0xFF0C1F33),
+                    fontWeight: FontWeight.w600,
                   ),
-                  if (lesson.duration != null &&
-                      lesson.type.toLowerCase() == 'video')
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 6,
+                  children: [
                     Text(
-                      '◷ ${_formatDuration(lesson.duration!)}',
+                      'Course: ${content.courseTitle}',
                       style: const TextStyle(
                         color: Color(0xFF475569),
                         fontSize: 13,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  _TabButton(
-                    text: 'Overview',
-                    selected: _tab == 'overview',
-                    onTap: () => setState(() => _tab = 'overview'),
-                  ),
-                  const SizedBox(width: 22),
-                  _TabButton(
-                    text: 'Notes',
-                    selected: _tab == 'notes',
-                    onTap: () => setState(() => _tab = 'notes'),
-                  ),
-                ],
-              ),
-              const Divider(height: 1, color: Color(0xFFE3E8EF)),
-              if (_tab == 'overview')
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Text(
-                    lesson.description?.trim().isNotEmpty == true
-                        ? lesson.description!
-                        : 'Continue through this lesson, then use the course content button to move between topics.',
-                    style: const TextStyle(
-                      height: 1.6,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.only(top: 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      TextField(
-                        controller: _noteController,
-                        minLines: 5,
-                        maxLines: 10,
-                        decoration: InputDecoration(
-                          hintText: 'Write your notes for this lesson...',
-                          alignLabelWithHint: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                    if (lesson.duration != null &&
+                        lesson.type.toLowerCase() == 'video')
+                      Text(
+                        '◷ ${_formatDuration(lesson.duration!)}',
+                        style: const TextStyle(
+                          color: Color(0xFF475569),
+                          fontSize: 13,
                         ),
-                        onChanged: (_) {
-                          if (_noteSaved) setState(() => _noteSaved = false);
-                        },
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (_noteSaved)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 12),
-                              child: Text(
-                                'Saved',
-                                style: TextStyle(color: _green),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    _TabButton(
+                      text: 'Overview',
+                      selected: _tab == 'overview',
+                      onTap: () => setState(() => _tab = 'overview'),
+                    ),
+                    const SizedBox(width: 22),
+                    _TabButton(
+                      text: 'Notes',
+                      selected: _tab == 'notes',
+                      onTap: () => setState(() => _tab = 'notes'),
+                    ),
+                  ],
+                ),
+                const Divider(height: 1, color: Color(0xFFE3E8EF)),
+                if (_tab == 'overview')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Text(
+                      lesson.description?.trim().isNotEmpty == true
+                          ? lesson.description!
+                          : 'Continue through this lesson, then use the course content button to move between topics.',
+                      style: const TextStyle(
+                        height: 1.6,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        TextField(
+                          controller: _noteController,
+                          minLines: 5,
+                          maxLines: 10,
+                          decoration: InputDecoration(
+                            hintText: 'Write your notes for this lesson...',
+                            alignLabelWithHint: true,
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (_) {
+                            if (_noteSaved) setState(() => _noteSaved = false);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (_noteSaved)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 12),
+                                child: Text(
+                                  'Saved',
+                                  style: TextStyle(color: _green),
+                                ),
+                              ),
+                            FilledButton.icon(
+                              onPressed: _saving
+                                  ? null
+                                  : () => _saveNote(profileId),
+                              icon: _saving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.save_outlined, size: 18),
+                              label: const Text('Save note'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _navy,
                               ),
                             ),
-                          FilledButton.icon(
-                            onPressed: _saving
-                                ? null
-                                : () => _saveNote(profileId),
-                            icon: _saving
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.save_outlined, size: 18),
-                            label: const Text('Save note'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _navy,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
+                const SizedBox(height: 26),
+                _ExamEligibilityCard(
+                  progress: content.progress,
+                  unlocked: courseUnlocked,
+                  onTakeExam: () =>
+                      context.push('/my-courses/${widget.courseId}/exams'),
                 ),
-              const SizedBox(height: 26),
-              _ExamEligibilityCard(
-                progress: content.progress,
-                unlocked: courseUnlocked,
-                onTakeExam: () =>
-                    context.push('/my-courses/${widget.courseId}/exams'),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -913,7 +947,8 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     try {
       if (!mounted) return;
-      await Navigator.of(context).push<void>(
+      // Root navigator so the page covers the learner layout's app bar/nav.
+      await Navigator.of(context, rootNavigator: true).push<void>(
         MaterialPageRoute<void>(
           builder: (_) => _FullscreenVideoPage(controller: controller),
         ),

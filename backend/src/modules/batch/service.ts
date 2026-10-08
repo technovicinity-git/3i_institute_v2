@@ -11,6 +11,7 @@ import type {
   MarkAttendanceInput,
 } from "#/modules/batch/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 export class BatchService {
   async create(instructorId: string, input: CreateBatchInput) {
@@ -23,7 +24,7 @@ export class BatchService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only create batches for your own courses",
       );
@@ -37,7 +38,7 @@ export class BatchService {
     const existingSessions = await prisma.session.findMany({
       where: {
         batch: {
-          course: { instructorId },
+          course: { instructorId: course.instructorId },
         },
       },
       include: {
@@ -171,7 +172,7 @@ export class BatchService {
       throw new NotFoundError("Batch not found");
     }
 
-    if (batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, batch.course.instructorId))) {
       throw new ForbiddenError("You can only update your own batches");
     }
 
@@ -197,7 +198,7 @@ export class BatchService {
       throw new NotFoundError("Batch not found");
     }
 
-    if (batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, batch.course.instructorId))) {
       throw new ForbiddenError("You can only modify your own batches");
     }
 
@@ -205,7 +206,7 @@ export class BatchService {
     const existingSessions = await prisma.session.findMany({
       where: {
         batch: {
-          course: { instructorId },
+          course: { instructorId: batch.course.instructorId },
         },
         NOT: { batchId },
       },
@@ -266,7 +267,7 @@ export class BatchService {
       throw new NotFoundError("Batch not found");
     }
 
-    if (batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, batch.course.instructorId))) {
       throw new ForbiddenError("You can only close your own batches");
     }
 
@@ -290,7 +291,7 @@ export class BatchService {
       throw new NotFoundError("Session not found");
     }
 
-    if (session.batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, session.batch.course.instructorId))) {
       throw new ForbiddenError(
         "You can only mark attendance for your own sessions",
       );
@@ -566,7 +567,7 @@ export class BatchService {
       throw new NotFoundError("Session not found");
     }
 
-    if (session.batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, session.batch.course.instructorId))) {
       throw new ForbiddenError("You can only update your own sessions");
     }
 
@@ -581,7 +582,7 @@ export class BatchService {
       const existingSessions = await prisma.session.findMany({
         where: {
           batch: {
-            course: { instructorId },
+            course: { instructorId: session.batch.course.instructorId },
           },
           NOT: { id: sessionId },
         },
@@ -653,7 +654,7 @@ export class BatchService {
       throw new NotFoundError("Session not found");
     }
 
-    if (session.batch.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, session.batch.course.instructorId))) {
       throw new ForbiddenError("You can only delete your own sessions");
     }
 

@@ -9,6 +9,7 @@ import { z } from "zod";
 import { batchService } from "@/services/batch.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 const editBatchSchema = z.object({
   name: z.string().min(1, "Batch name is required").max(255),
@@ -18,6 +19,7 @@ const editBatchSchema = z.object({
 type EditBatchFormData = z.infer<typeof editBatchSchema>;
 
 export default function EditBatchPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -35,7 +37,7 @@ export default function EditBatchPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-batches"] });
       toast.success("Batch updated");
-      router.push(`/instructor/courses/${courseId}/batches`);
+      router.push(`${basePath}/${courseId}/batches`);
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
@@ -77,7 +79,7 @@ export default function EditBatchPage() {
     <div className="p-6 md:p-10 max-w-[600px] mx-auto">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/batches`)}
+          onClick={() => router.push(`${basePath}/${courseId}/batches`)}
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           ← Back to batches
@@ -127,7 +129,7 @@ export default function EditBatchPage() {
           <button
             type="button"
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/batches`)
+              router.push(`${basePath}/${courseId}/batches`)
             }
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg"
           >

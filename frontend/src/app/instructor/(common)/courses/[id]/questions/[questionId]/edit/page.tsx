@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { questionService } from "@/services/question.service";
 import type { Question } from "@/types/question";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 const editQuestionSchema = z.object({
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),
@@ -24,9 +25,11 @@ const editQuestionSchema = z.object({
 type EditQuestionFormData = z.infer<typeof editQuestionSchema>;
 
 export default function EditQuestionPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
-  const questionId = params.id as string;
+  const courseId = params.id as string;
+  const questionId = params.questionId as string;
   const queryClient = useQueryClient();
 
   const { data: question, isLoading } = useQuery({
@@ -42,7 +45,7 @@ export default function EditQuestionPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-questions"] });
       toast.success("Question updated");
-      router.push("/instructor/questions");
+      router.push(`${basePath}/${courseId}/questions`);
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
@@ -147,7 +150,7 @@ export default function EditQuestionPage() {
     <div className="p-6 md:p-10 max-w-[800px] mx-auto">
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/questions")}
+          onClick={() => router.push(`${basePath}/${courseId}/questions`)}
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           ← Back to questions
@@ -357,7 +360,7 @@ export default function EditQuestionPage() {
         <div className="flex gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => router.push("/instructor/questions")}
+            onClick={() => router.push(`${basePath}/${courseId}/questions`)}
             className="px-6 py-3 border border-[#E3E8EF] rounded-lg"
           >
             Cancel

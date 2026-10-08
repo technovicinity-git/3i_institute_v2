@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { prisma } from "#/lib/prisma";
 import { NotFoundError, ValidationError } from "#/shared/errors";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 function generateVerificationCode(): string {
   return crypto.randomBytes(16).toString("hex").toUpperCase();
@@ -161,7 +162,7 @@ export class CertificateService {
       include: { course: true },
     });
     if (!exam) throw new NotFoundError("Exam not found");
-    if (exam.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, exam.course.instructorId))) {
       throw new NotFoundError("Exam not found");
     }
     if (exam.type !== "final" || exam.course.type !== "ONLINE_CLASS") {

@@ -5,7 +5,7 @@ import { FileText, Clock, Plus, CheckCircle, ChevronLeft } from "lucide-react";
 import { useCourseExams } from "@/hooks/use-exams";
 import Link from "next/link";
 import { CourseActions } from "@/components/instructor/CourseActions";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function getTypeBadge(type: string) {
   return type === "final"
@@ -14,19 +14,20 @@ function getTypeBadge(type: string) {
 }
 
 export default function ExamsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
 
   const { data: exams, isLoading, isError } = useCourseExams(courseId);
 
-  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
   return (
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -49,7 +50,7 @@ export default function ExamsPage() {
           </div>
           <button
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/exams/create`)
+              router.push(`${basePath}/${courseId}/exams/create`)
             }
             className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
           >
@@ -128,13 +129,13 @@ export default function ExamsPage() {
                   </div>
 
                   <Link
-                    href={`/instructor/courses/${courseId}/exams/${exam.id}/attempts`}
+                    href={`${basePath}/${courseId}/exams/${exam.id}/attempts`}
                     className="text-sm font-semibold text-[#22A146] hover:underline"
                   >
                     View Attempts
                   </Link>
                   <Link
-                    href={`/instructor/courses/${courseId}/exams/${exam.id}/edit`}
+                    href={`${basePath}/${courseId}/exams/${exam.id}/edit`}
                     className="text-sm font-semibold text-[#2563EB] hover:underline"
                   >
                     Edit

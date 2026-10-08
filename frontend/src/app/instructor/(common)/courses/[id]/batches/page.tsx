@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
 import { CourseActions } from "@/components/instructor/CourseActions";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -55,12 +55,13 @@ function formatTime(dateStr: string): string {
 }
 
 export default function BatchesPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
 
   const { data: batches, isLoading, isError } = useCourseBatches(courseId);
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
   const closeBatchMutation = useCloseBatchMutation();
 
@@ -81,7 +82,7 @@ export default function BatchesPage() {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -104,7 +105,7 @@ export default function BatchesPage() {
           </div>
           <button
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/batches/create`)
+              router.push(`${basePath}/${courseId}/batches/create`)
             }
             className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
           >
@@ -168,7 +169,7 @@ export default function BatchesPage() {
 
                     {/* Sessions */}
                     <Link
-                      href={`/instructor/courses/${courseId}/batches/${batch.id}`}
+                      href={`${basePath}/${courseId}/batches/${batch.id}`}
                       className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-sm font-semibold text-[#22A146] hover:bg-emerald-100 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
@@ -177,7 +178,7 @@ export default function BatchesPage() {
 
                     {/* Edit */}
                     <Link
-                      href={`/instructor/courses/${courseId}/batches/${batch.id}/edit`}
+                      href={`${basePath}/${courseId}/batches/${batch.id}/edit`}
                       className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-sm font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors"
                     >
                       <Pencil className="w-4 h-4" />

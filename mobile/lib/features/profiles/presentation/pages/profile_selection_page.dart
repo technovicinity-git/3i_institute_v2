@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
 import '../widgets/learner_avatar.dart';
+import '../widgets/pin_entry_sheet.dart';
 
 class ProfileSelectionPage extends ConsumerWidget {
   const ProfileSelectionPage({super.key});
@@ -167,89 +169,44 @@ class ProfileSelectionPage extends ConsumerWidget {
     LearnerProfile profile,
   ) async {
     if (profile.hasPin) {
-      final pin = await showDialog<String>(
-        context: context,
-        builder: (context) => _PinDialog(profile: profile),
+      final verified = await showPinEntrySheet(
+        context,
+        profile: profile,
+        verify: (pin) => _verifyPin(ref, profile.id, pin),
       );
-      if (pin == null || !context.mounted) return;
-      try {
-        final response = await ref
-            .read(apiClientProvider)
-            .dio
-            .post<Map<String, dynamic>>(
-              '/learners/${profile.id}/verify-pin',
-              data: {'pin': pin},
-            );
-        if (response.data?['data'] is Map &&
-            (response.data!['data'] as Map)['valid'] != true) {
-          throw Exception('Invalid PIN');
-        }
-      } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('The PIN is incorrect.')),
-          );
-        }
-        return;
-      }
+      if (verified != true || !context.mounted) return;
     }
     ref.read(activeLearnerProfileProvider.notifier).select(profile);
     if (context.mounted) context.go('/courses');
   }
 }
 
-class _PinDialog extends StatefulWidget {
-  const _PinDialog({required this.profile});
-  final LearnerProfile profile;
-  @override
-  State<_PinDialog> createState() => _PinDialogState();
-}
-
-class _PinDialogState extends State<_PinDialog> {
-  final _controller = TextEditingController();
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+Future<PinCheckResult> _verifyPin(
+  WidgetRef ref,
+  String profileId,
+  String pin,
+) async {
+  try {
+    final response = await ref
+        .read(apiClientProvider)
+        .dio
+        .post<Map<String, dynamic>>(
+          '/learners/$profileId/verify-pin',
+          data: {'pin': pin},
+        );
+    final data = response.data?['data'];
+    return data is Map && data['valid'] == false
+        ? PinCheckResult.incorrect
+        : PinCheckResult.valid;
+  } on DioException catch (error) {
+    final status = error.response?.statusCode;
+    // The API answers a wrong PIN with a 4xx validation error.
+    return status != null && status >= 400 && status < 500
+        ? PinCheckResult.incorrect
+        : PinCheckResult.failed;
+  } catch (_) {
+    return PinCheckResult.failed;
   }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Column(
-      children: [
-        LearnerAvatar(
-          imageUrl: widget.profile.avatarUrl,
-          initials: widget.profile.initials,
-          radius: 30,
-        ),
-        const SizedBox(height: 12),
-        Text('Enter ${widget.profile.displayName}’s PIN'),
-      ],
-    ),
-    content: TextField(
-      controller: _controller,
-      autofocus: true,
-      obscureText: true,
-      keyboardType: TextInputType.number,
-      maxLength: 4,
-      decoration: const InputDecoration(
-        labelText: '4-digit PIN',
-        counterText: '',
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: () => _controller.text.length == 4
-            ? Navigator.pop(context, _controller.text)
-            : null,
-        child: const Text('Continue'),
-      ),
-    ],
-  );
 }
 
 String _ageLabel(String dateOfBirth) {

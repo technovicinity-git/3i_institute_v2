@@ -32,6 +32,7 @@ import { useEnrolMutation } from "@/hooks/use-enrolment";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareDialog } from "@/components/share/share-dialog";
 import { siteUrl } from "@/lib/share";
+import { useWishlistToggle } from "@/hooks/use-wishlist";
 
 export default function CourseDetailsPage() {
   const [showRateModal, setShowRateModal] = useState(false);
@@ -44,6 +45,7 @@ export default function CourseDetailsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const courseId = params.id as string;
+  const wishlist = useWishlistToggle(courseId);
   const { activeProfile } = useProfileStore();
   const enrolMutation = useEnrolMutation();
   const {
@@ -867,11 +869,24 @@ export default function CourseDetailsPage() {
 
                         {/* Wishlist */}
                         <button
-                          onClick={() => toast.success("Added to wishlist")}
-                          className="w-full py-3 border border-[#12304E] text-[#12304E] rounded-lg text-[15px] font-semibold hover:bg-[#12304E] hover:text-white transition-colors flex items-center justify-center gap-2"
+                          type="button"
+                          onClick={() => void wishlist.toggle()}
+                          disabled={wishlist.pending}
+                          aria-pressed={wishlist.wishlisted}
+                          className={`w-full py-3 border rounded-lg text-[15px] font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
+                            wishlist.wishlisted
+                              ? "border-[#2D6CDF] bg-[#2D6CDF]/5 text-[#2D6CDF] hover:bg-[#2D6CDF]/10"
+                              : "border-[#12304E] text-[#12304E] hover:bg-[#12304E] hover:text-white"
+                          }`}
                         >
-                          <Heart className="w-4 h-4" />
-                          Add to wishlist
+                          <Heart
+                            className={`w-4 h-4 ${
+                              wishlist.wishlisted ? "fill-[#2D6CDF]" : ""
+                            }`}
+                          />
+                          {wishlist.wishlisted
+                            ? "Wishlisted"
+                            : "Add to wishlist"}
                         </button>
                       </>
                     )}
