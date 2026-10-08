@@ -10,6 +10,7 @@ import type {
   SubmitExamInput,
 } from "#/modules/exam/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 export class ExamService {
   // ──────────────────────────────────
@@ -26,7 +27,7 @@ export class ExamService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== ownerId) {
+    if (!(await canManageCourse(ownerId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only add questions to your own courses",
       );
@@ -67,7 +68,7 @@ export class ExamService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== ownerId) {
+    if (!(await canManageCourse(ownerId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only view questions for your own courses",
       );
@@ -76,7 +77,6 @@ export class ExamService {
     return prisma.question.findMany({
       where: {
         scope: "INSTRUCTOR",
-        ownerId,
         courseId,
       },
       orderBy: { createdAt: "desc" },
@@ -103,7 +103,7 @@ export class ExamService {
     }
 
     if (userRole === "INSTRUCTOR") {
-      if (question.course.instructorId !== userId) {
+      if (!(await canManageCourse(userId, question.course.instructorId))) {
         throw new NotFoundError("Question not found");
       }
     }
@@ -127,7 +127,7 @@ export class ExamService {
       throw new NotFoundError("Question not found");
     }
 
-    if (question.course.instructorId !== ownerId) {
+    if (!(await canManageCourse(ownerId, question.course.instructorId))) {
       throw new NotFoundError("Question not found");
     }
 
@@ -159,7 +159,7 @@ export class ExamService {
       throw new NotFoundError("Question not found");
     }
 
-    if (question.course.instructorId !== ownerId) {
+    if (!(await canManageCourse(ownerId, question.course.instructorId))) {
       throw new NotFoundError("Question not found");
     }
 
@@ -181,7 +181,7 @@ export class ExamService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only create exams for your own courses",
       );
@@ -272,7 +272,7 @@ export class ExamService {
     if (!existingExam) {
       throw new NotFoundError("Exam not found");
     }
-    if (existingExam.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, existingExam.course.instructorId))) {
       throw new ForbiddenError("You can only update your own course exams");
     }
     if (input.courseId !== existingExam.courseId) {
@@ -694,7 +694,7 @@ export class ExamService {
       throw new NotFoundError("Attempt not found");
     }
 
-    if (attempt.exam.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, attempt.exam.course.instructorId))) {
       throw new ForbiddenError("You can only grade your own course exams");
     }
 

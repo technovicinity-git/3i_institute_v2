@@ -6,9 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronLeft } from "lucide-react";
 import { useCreateAssignmentMutation } from "@/hooks/use-assignments";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { useCourseBatches } from "@/hooks/use-batches";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 const createAssignmentSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -21,11 +21,12 @@ const createAssignmentSchema = z.object({
 type CreateAssignmentFormData = z.infer<typeof createAssignmentSchema>;
 
 export default function CreateAssignmentPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
 
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
 
   // Get batches belonging to this course
@@ -58,7 +59,7 @@ export default function CreateAssignmentPage() {
       },
       {
         onSuccess: () => {
-          router.push(`/instructor/courses/${courseId}/assignments`);
+          router.push(`${basePath}/${courseId}/assignments`);
         },
       },
     );
@@ -70,7 +71,7 @@ export default function CreateAssignmentPage() {
       <div className="mb-8">
         <button
           onClick={() =>
-            router.push(`/instructor/courses/${courseId}/assignments`)
+            router.push(`${basePath}/${courseId}/assignments`)
           }
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
@@ -206,7 +207,7 @@ export default function CreateAssignmentPage() {
           <button
             type="button"
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/assignments`)
+              router.push(`${basePath}/${courseId}/assignments`)
             }
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >

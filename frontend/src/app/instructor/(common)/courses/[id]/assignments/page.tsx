@@ -13,8 +13,8 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useAssignments } from "@/hooks/use-assignments";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "No deadline";
@@ -43,11 +43,12 @@ function getStatusBadge(status: string) {
 }
 
 export default function CourseAssignmentsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
 
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
 
   const { data: assignments, isLoading, isError } = useAssignments(courseId);
@@ -58,7 +59,7 @@ export default function CourseAssignmentsPage() {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -83,7 +84,7 @@ export default function CourseAssignmentsPage() {
           </div>
           <button
             onClick={() =>
-              router.push(`/instructor/courses/${courseId}/assignments/create`)
+              router.push(`${basePath}/${courseId}/assignments/create`)
             }
             className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
           >
@@ -122,7 +123,7 @@ export default function CourseAssignmentsPage() {
             return (
               <Link
                 key={assignment.id}
-                href={`/instructor/courses/${courseId}/assignments/${assignment.id}`}
+                href={`${basePath}/${courseId}/assignments/${assignment.id}`}
                 className="bg-white rounded-xl border border-[#E3E8EF] p-5 flex items-center justify-between hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-4 flex-1 min-w-0">

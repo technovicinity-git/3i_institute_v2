@@ -11,9 +11,9 @@ import { Check, ChevronLeft, Search } from "lucide-react";
 import { examService } from "@/services/exam.service";
 import type { CreateExamInput } from "@/types/exam";
 import type { Question } from "@/types/question";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { useMyQuestions } from "@/hooks/use-questions";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 const editExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -39,6 +39,7 @@ function toLocalDateTime(value: string | null) {
 }
 
 export default function EditExamPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -47,7 +48,7 @@ export default function EditExamPage() {
   const [selectedQuestions, setSelectedQuestions] = useState<SelectedQuestion[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
   const course = courses?.find((item) => item.id === courseId);
   const { data: allQuestions, isLoading: questionsLoading } = useMyQuestions(courseId);
   const { data: exam, isLoading } = useQuery({
@@ -65,7 +66,7 @@ export default function EditExamPage() {
       queryClient.invalidateQueries({ queryKey: ["course-exams", courseId] });
       queryClient.invalidateQueries({ queryKey: ["exam-details", examId] });
       toast.success("Exam updated");
-      router.push(`/instructor/courses/${courseId}/exams`);
+      router.push(`${basePath}/${courseId}/exams`);
     },
     onError: () => toast.error("Failed to update exam"),
   });
@@ -171,7 +172,7 @@ export default function EditExamPage() {
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push(`/instructor/courses/${courseId}/exams`)}
+          onClick={() => router.push(`${basePath}/${courseId}/exams`)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
@@ -281,7 +282,7 @@ export default function EditExamPage() {
         )}
 
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => router.push(`/instructor/courses/${courseId}/exams`)} className="px-4 py-2 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={() => router.push(`${basePath}/${courseId}/exams`)} className="px-4 py-2 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50">Cancel</button>
           <button type="submit" disabled={updateMutation.isPending || (course.type === "ONLINE_CLASS" && selectedQuestions.length === 0)} className="px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50">
             {updateMutation.isPending ? "Saving..." : course.type === "ONLINE_CLASS" && selectedQuestions.length === 0 ? "Select at least one question" : "Save Changes"}
           </button>

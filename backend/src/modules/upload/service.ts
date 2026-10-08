@@ -1,6 +1,7 @@
 import { cloudinary } from "#/lib/cloudinary";
 import { prisma } from "#/lib/prisma";
 import { NotFoundError, ValidationError } from "#/shared/errors";
+import { canManageCourse } from "#/shared/course-access";
 
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
@@ -318,7 +319,7 @@ export class UploadService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== accountId) {
+    if (!(await canManageCourse(accountId, course.instructorId))) {
       throw new ValidationError(
         "You can only upload thumbnails for your own courses",
       );
@@ -362,7 +363,7 @@ export class UploadService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== accountId) {
+    if (!(await canManageCourse(accountId, course.instructorId))) {
       throw new ValidationError(
         "You can only upload covers for your own courses",
       );

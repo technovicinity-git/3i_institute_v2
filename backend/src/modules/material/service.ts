@@ -14,6 +14,7 @@ import type {
 import { cloudinary } from "#/lib/cloudinary";
 import { env } from "#/config/env";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 const MAX_VIDEO_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
 
@@ -28,7 +29,7 @@ export class MaterialService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only add materials to your own courses",
       );
@@ -84,7 +85,7 @@ export class MaterialService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only upload videos to your own courses",
       );
@@ -175,7 +176,7 @@ export class MaterialService {
       throw new NotFoundError("Material not found");
     }
 
-    if (material.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, material.course.instructorId))) {
       throw new ForbiddenError("You can only update your own materials");
     }
 
@@ -203,7 +204,7 @@ export class MaterialService {
       throw new NotFoundError("Material not found");
     }
 
-    if (material.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, material.course.instructorId))) {
       throw new ForbiddenError("You can only delete your own materials");
     }
 
@@ -326,7 +327,7 @@ export class MaterialService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError("You can only upload to your own courses");
     }
 

@@ -5,6 +5,7 @@ import {
   ValidationError,
 } from "#/shared/errors";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse, isAdmin } from "#/shared/course-access";
 
 interface CreateAssignmentInput {
   courseId: string;
@@ -26,7 +27,7 @@ export class AssignmentService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError(
         "You can only create assignments for your own courses",
       );
@@ -66,9 +67,11 @@ export class AssignmentService {
   }
 
   async getAssignments(instructorId: string, courseId?: string) {
+    // Admins can list a specific course's assignments.
+    const adminForCourse = courseId ? await isAdmin(instructorId) : false;
     const courses = await prisma.course.findMany({
       where: {
-        instructorId,
+        ...(adminForCourse ? {} : { instructorId }),
         ...(courseId ? { id: courseId } : {}),
       },
       select: { id: true, title: true },
@@ -123,7 +126,7 @@ export class AssignmentService {
       throw new NotFoundError("Assignment not found");
     }
 
-    if (assignment.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, assignment.course.instructorId))) {
       throw new ForbiddenError(
         "You can only view submissions for your own assignments",
       );
@@ -177,7 +180,7 @@ export class AssignmentService {
       throw new NotFoundError("Submission not found");
     }
 
-    if (submission.assignment.course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, submission.assignment.course.instructorId))) {
       throw new ForbiddenError(
         "You can only grade submissions for your own assignments",
       );

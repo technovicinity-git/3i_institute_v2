@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 import {
   Eye,
   Edit,
@@ -24,7 +25,8 @@ interface CourseActionsProps {
 export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   const pathname = usePathname();
 
-  const basePath = `/instructor/courses/${courseId}`;
+  const { basePath: coursesPath } = useCourseWorkspace();
+  const basePath = `${coursesPath}/${courseId}`;
 
   const isActive = (path: string) => pathname === path;
 

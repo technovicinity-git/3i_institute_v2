@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, X, Check } from "lucide-react";
 import { useCreateQuestionMutation } from "@/hooks/use-questions";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 const createQuestionSchema = z.object({
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),
@@ -20,6 +21,7 @@ const createQuestionSchema = z.object({
 type CreateQuestionFormData = z.infer<typeof createQuestionSchema>;
 
 export default function CreateQuestionPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -145,7 +147,7 @@ export default function CreateQuestionPage() {
       },
       {
         onSuccess: () => {
-          router.push(`/instructor/courses/${courseId}/questions`);
+          router.push(`${basePath}/${courseId}/questions`);
         },
       },
     );
@@ -156,7 +158,7 @@ export default function CreateQuestionPage() {
       <div className="mb-8">
         <button
           onClick={() =>
-            router.push(`/instructor/courses/${courseId}/questions`)
+            router.push(`${basePath}/${courseId}/questions`)
           }
           className="text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
@@ -422,7 +424,7 @@ export default function CreateQuestionPage() {
         <div className="flex gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => router.push("/instructor/questions")}
+            onClick={() => router.push(`${basePath}/${courseId}/questions`)}
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >
             Cancel

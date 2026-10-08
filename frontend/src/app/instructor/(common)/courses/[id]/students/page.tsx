@@ -12,8 +12,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useCourseStudents } from "@/hooks/use-instructor-students";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -45,11 +45,12 @@ function getInitials(name: string): string {
 }
 
 export default function CourseStudentsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
 
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
 
   const { data, isLoading, isError } = useCourseStudents(courseId);
@@ -64,7 +65,7 @@ export default function CourseStudentsPage() {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />

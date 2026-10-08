@@ -6,11 +6,12 @@ import {
   type CreateCourseInput,
 } from "@/services/instructor-course.service";
 
-export function useInstructorCourses() {
+export function useInstructorCourses({ enabled = true } = {}) {
   return useQuery({
     queryKey: ["instructor-courses"],
     queryFn: () => instructorCourseService.getMyCourses(),
     staleTime: 60 * 1000,
+    enabled,
   });
 }
 

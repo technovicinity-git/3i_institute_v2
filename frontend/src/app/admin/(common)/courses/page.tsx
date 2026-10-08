@@ -11,6 +11,7 @@ import {
   Ban,
   PlayCircle,
   Eye,
+  Settings2,
 } from "lucide-react";
 import {
   useApproveCourseMutation,
@@ -259,6 +260,13 @@ export default function AdminCoursesPage() {
                     >
                       <Eye className="w-3.5 h-3.5" />
                       View
+                    </Link>
+                    <Link
+                      href={`/admin/courses/${course.id}/edit`}
+                      className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold bg-[#12304E] text-white hover:bg-[#1a4268]"
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                      Manage
                     </Link>
 
                     {course.status === "PENDING_REVIEW" && (

@@ -18,6 +18,7 @@ import { CreateSessionModal } from "@/components/instructor/create-session-modal
 import { EditSessionModal } from "@/components/instructor/edit-session-modal";
 import Link from "next/link";
 import type { Session } from "@/types/batch";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -39,6 +40,7 @@ function formatTime(dateStr: string): string {
 }
 
 export default function BatchDetailsPage() {
+  const { panelPath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -170,7 +172,7 @@ export default function BatchDetailsPage() {
                         )}
 
                         <Link
-                          href={`/instructor/attendance/${session.id}`}
+                          href={`${panelPath}/attendance/${session.id}`}
                           className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-sm font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors"
                         >
                           <Users className="w-4 h-4" />

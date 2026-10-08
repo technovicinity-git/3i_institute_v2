@@ -10,6 +10,7 @@ import type {
   ListCoursesQuery,
 } from "#/modules/course/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { canManageCourse } from "#/shared/course-access";
 
 export class CourseService {
   async create(instructorId: string, input: CreateCourseInput) {
@@ -77,7 +78,7 @@ export class CourseService {
     }
 
     // Only the assigned instructor or admin can update
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError("You can only update your own courses");
     }
 
@@ -109,13 +110,15 @@ export class CourseService {
       }
     }
 
+    const editedByAdmin = course.instructorId !== instructorId;
+    if (editedByAdmin) status = course.status;
+
     const updated = await prisma.course.update({
       where: { id: courseId },
       data: {
         ...input,
         status,
-        approvedAt: null,
-        approvedBy: null,
+        ...(editedByAdmin ? {} : { approvedAt: null, approvedBy: null }),
       },
     });
 
@@ -395,7 +398,7 @@ export class CourseService {
       throw new NotFoundError("Course not found");
     }
 
-    if (course.instructorId !== instructorId) {
+    if (!(await canManageCourse(instructorId, course.instructorId))) {
       throw new ForbiddenError("You can only suspend your own courses");
     }
 

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, X, ChevronLeft } from "lucide-react";
 import {
-  useInstructorCourses,
   useUpdateCourseMutation,
 } from "@/hooks/use-instructor-courses";
 import { useCategories } from "@/hooks/use-categories";
@@ -15,6 +14,7 @@ import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 const editCourseSchema = z.object({
   title: z
@@ -64,12 +64,13 @@ const LANGUAGES = [
 ];
 
 export default function EditCoursePage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
   const queryClient = useQueryClient();
 
-  const { data: courses, isLoading: coursesLoading } = useInstructorCourses();
+  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const updateMutation = useUpdateCourseMutation();
 
@@ -206,7 +207,7 @@ export default function EditCoursePage() {
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -528,7 +529,7 @@ export default function EditCoursePage() {
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => router.push("/instructor/courses")}
+            onClick={() => router.push(basePath)}
             className="px-6 py-3 border border-[#E3E8EF] text-[#0C1F33] rounded-lg hover:bg-gray-50"
           >
             Cancel

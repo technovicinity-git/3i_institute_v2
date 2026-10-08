@@ -33,8 +33,8 @@ import {
 } from "@/hooks/use-materials";
 import { MaterialPreviewModal } from "@/components/instructor/material-preview-modal";
 import { CourseActions } from "@/components/instructor/CourseActions";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { EditMaterialModal } from "@/components/instructor/edit-material-modal";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -97,6 +97,7 @@ function readVideoDuration(file: File): Promise<number> {
 }
 
 export default function CourseMaterialsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
@@ -129,7 +130,7 @@ export default function CourseMaterialsPage() {
   // Upload progress simulation
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const captionInputRef = useRef<HTMLInputElement>(null);
@@ -287,7 +288,7 @@ export default function CourseMaterialsPage() {
     <div className="p-6 md:p-10">
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />

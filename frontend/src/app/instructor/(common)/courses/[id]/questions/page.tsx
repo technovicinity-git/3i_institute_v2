@@ -9,8 +9,8 @@ import {
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
 import Link from "next/link";
-import { useInstructorCourses } from "@/hooks/use-instructor-courses";
 import { CourseActions } from "@/components/instructor/CourseActions";
+import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function getTypeBadge(type: string) {
   const typeMap: Record<string, { label: string; className: string }> = {
@@ -47,10 +47,11 @@ function getDifficultyBadge(difficulty: string) {
 }
 
 export default function QuestionsPage() {
+  const { basePath } = useCourseWorkspace();
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
-  const { data: courses } = useInstructorCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
   const { data: questions, isLoading, isError } = useMyQuestions(courseId);
   const deleteMutation = useDeleteQuestionMutation();
@@ -83,7 +84,7 @@ export default function QuestionsPage() {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => router.push("/instructor/courses")}
+          onClick={() => router.push(basePath)}
           className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -115,7 +116,7 @@ export default function QuestionsPage() {
             </button>
             <button
               onClick={() =>
-                router.push(`/instructor/courses/${courseId}/questions/create`)
+                router.push(`${basePath}/${courseId}/questions/create`)
               }
               className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
             >
@@ -201,7 +202,7 @@ export default function QuestionsPage() {
                       </p>
                     </div>
                     <Link
-                      href={`/instructor/questions/${question.id}/edit`}
+                      href={`${basePath}/${courseId}/questions/${question.id}/edit`}
                       className="p-2 rounded-lg hover:bg-blue-50 text-[#2563EB]"
                     >
                       <Eye className="w-4 h-4" />
