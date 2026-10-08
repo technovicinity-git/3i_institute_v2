@@ -16,6 +16,9 @@ export const courseService = {
     if (filters.search) params.set("search", filters.search);
     if (filters.sortBy) params.set("sortBy", filters.sortBy);
     if (filters.minRating) params.set("minRating", String(filters.minRating));
+    // Lets the API mark enrolled/wishlisted courses for this learner.
+    if (filters.learnerProfileId)
+      params.set("learnerProfileId", filters.learnerProfileId);
 
     const response = await apiClient.get(`/courses?${params.toString()}`);
 
