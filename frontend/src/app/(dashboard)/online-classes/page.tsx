@@ -13,12 +13,19 @@ import {
   FileText,
   CalendarDays,
   Download,
+  MoreVertical,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 import { SearchInput } from "@/components/dashboard/search-input";
 import { useLearnerCertificates } from "@/hooks/use-learner-certificates";
 import { downloadExamCertificatePdf } from "@/services/learner-certificate.service";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function getLevelBadge(level: string): string {
   const levels: Record<string, string> = {
@@ -48,6 +55,66 @@ function formatSessionTime(dateStr: string): string {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+type EnrolledCourse = NonNullable<
+  ReturnType<typeof useEnrolledCourses>["data"]
+>[number];
+type LearnerCertificate = NonNullable<
+  ReturnType<typeof useLearnerCertificates>["data"]
+>[number];
+
+function CourseActionsMenu({
+  course,
+  completionCertificate,
+}: {
+  course: EnrolledCourse;
+  completionCertificate?: LearnerCertificate;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="More actions"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E3E8EF] text-[#64748B] hover:bg-gray-100 transition-colors"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44 bg-white">
+        <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
+          <Link href={`/courses/${course.courseId}`}>
+            <ExternalLink className="text-[#12304E]" />
+            Details
+          </Link>
+        </DropdownMenuItem>
+        {course.batchId && (
+          <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
+            <Link href={`/online-classes/${course.batchId}`}>
+              <CalendarDays className="text-[#B8912F]" />
+              Sessions
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
+          <Link href={`/my-courses/${course.courseId}/exams`}>
+            <FileText className="text-[#12304E]" />
+            Exams
+          </Link>
+        </DropdownMenuItem>
+        {completionCertificate && (
+          <DropdownMenuItem
+            onSelect={() => downloadExamCertificatePdf(completionCertificate)}
+            className="cursor-pointer px-3 py-2 text-[#22A146]"
+          >
+            <Download className="text-[#22A146]" />
+            Certificate
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 export default function OnlineClassesPage() {
@@ -151,10 +218,11 @@ export default function OnlineClassesPage() {
       {!isLoading && !isError && filteredCourses.length > 0 && (
         <div className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden">
           {/* Desktop header */}
-          <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_220px_240px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+          <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(180px,220px)_100px_36px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
             <div>Course</div>
             <div>Next Session</div>
-            <div>Actions</div>
+            <div>Chat</div>
+            <div className="sr-only">Actions</div>
           </div>
 
           {/* Rows */}
@@ -172,7 +240,7 @@ export default function OnlineClassesPage() {
                 className="px-5 py-5 hover:bg-[#F8FAFC] transition-colors"
               >
                 {/* Desktop */}
-                <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(180px,220px)_minmax(280px,auto)] items-center gap-6">
+                <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(180px,220px)_100px_36px] items-center gap-6">
                   {/* Course info */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-gradient-to-br from-[#12304E] to-[#2a5070]">
@@ -234,25 +302,8 @@ export default function OnlineClassesPage() {
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
-                    <Link
-                      href={`/courses/${course.courseId}`}
-                      className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Details
-                    </Link>
-                    {course.batchId && (
-                      <Link
-                        href={`/online-classes/${course.batchId}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#B8912F] px-4 py-2 text-xs font-semibold text-[#9A7624] transition-colors hover:bg-[#F9F6F0]"
-                      >
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        Sessions
-                      </Link>
-                    )}
-
+                  {/* Chat */}
+                  <div>
                     <button
                       onClick={() => {
                         router.push(
@@ -264,22 +315,14 @@ export default function OnlineClassesPage() {
                       <MessageSquare className="w-3.5 h-3.5" />
                       Chat
                     </button>
-                    <Link
-                      href={`/my-courses/${course.courseId}/exams`}
-                      className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      Exams
-                    </Link>
-                    {completionCertificate && (
-                      <button
-                        type="button"
-                        onClick={() => downloadExamCertificatePdf(completionCertificate)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#22A146] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1E9040]"
-                      >
-                        <Download className="h-3.5 w-3.5" /> Certificate
-                      </button>
-                    )}
+                  </div>
+
+                  {/* More actions */}
+                  <div className="flex justify-end">
+                    <CourseActionsMenu
+                      course={course}
+                      completionCertificate={completionCertificate}
+                    />
                   </div>
                 </div>
 
@@ -339,24 +382,7 @@ export default function OnlineClassesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-gray-100">
-                    <Link
-                      href={`/courses/${course.courseId}`}
-                      className="flex-1 py-2.5 border border-[#12304E] text-[#12304E] text-sm font-semibold rounded-lg text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Details
-                    </Link>
-                    {course.batchId && (
-                      <Link
-                        href={`/online-classes/${course.batchId}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#B8912F] px-4 py-2 text-xs font-semibold text-[#9A7624] transition-colors hover:bg-[#F9F6F0]"
-                      >
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        Sessions
-                      </Link>
-                    )}
-
+                  <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
                     <button
                       onClick={() => {
                         router.push(
@@ -368,22 +394,10 @@ export default function OnlineClassesPage() {
                       <MessageSquare className="w-4 h-4" />
                       Chat
                     </button>
-                    <Link
-                      href={`/my-courses/${course.courseId}/exams`}
-                      className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      Exams
-                    </Link>
-                    {completionCertificate && (
-                      <button
-                        type="button"
-                        onClick={() => downloadExamCertificatePdf(completionCertificate)}
-                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#22A146] px-3 py-2 text-xs font-semibold text-white"
-                      >
-                        <Download className="h-3.5 w-3.5" /> Certificate
-                      </button>
-                    )}
+                    <CourseActionsMenu
+                      course={course}
+                      completionCertificate={completionCertificate}
+                    />
                   </div>
                 </div>
               </div>
