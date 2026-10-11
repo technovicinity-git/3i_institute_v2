@@ -212,6 +212,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(waitlisted ? 'Added to waitlist.' : 'Enrolled successfully.')),
         );
+        if (!waitlisted && batchId != null) context.go('/online-classes/$batchId');
       }
     } catch (error) {
       if (mounted) {

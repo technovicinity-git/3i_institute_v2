@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../../certificates/domain/certificate.dart';
+import '../../../certificates/presentation/certificates_providers.dart';
+import '../../../certificates/presentation/pages/certificates_page.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
@@ -130,10 +132,15 @@ class _OnlineClassCard extends ConsumerWidget {
   final EnrolledCourse course;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessionAsync = ref.watch(
-      nextLiveSessionProvider(course.batchId ?? ''),
-    );
-    final nextSession = sessionAsync.asData?.value;
+    final profile = ref.watch(activeLearnerProfileProvider);
+    final certificates = profile == null
+        ? null
+        : ref.watch(learnerCertificatesProvider(profile.id)).asData?.value;
+    final completionCertificate = certificates
+        ?.where(
+          (c) => c.courseId == course.courseId && c.type == 'COMPLETION',
+        )
+        .firstOrNull;
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 14),
@@ -220,53 +227,7 @@ class _OnlineClassCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 14),
-            if (sessionAsync.isLoading)
-              const LinearProgressIndicator(minHeight: 2, color: _green)
-            else if (nextSession != null)
-              Container(
-                padding: const EdgeInsets.all(11),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F6F0),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      color: _gold,
-                      size: 19,
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            nextSession.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF0C1F33),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            _formatDateTime(nextSession.scheduledAt),
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else if (course.nextSession != null)
+            if (course.nextSession != null)
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
@@ -318,68 +279,130 @@ class _OnlineClassCard extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => context.push('/courses/${course.courseId}'),
-                  icon: const Icon(Icons.open_in_new, size: 17),
-                  label: const Text('Details'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(
-                    '/my-courses/${course.courseId}/exams?online=true',
+            Container(
+              padding: const EdgeInsets.only(top: 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => context.push(
+                        Uri(
+                          path: '/chat',
+                          queryParameters: {
+                            'courseId': course.courseId,
+                            'courseTitle': course.title,
+                            if (course.batchId?.isNotEmpty == true)
+                              'batchId': course.batchId!,
+                            'batchName': course.batchName ?? 'Batch',
+                          },
+                        ).toString(),
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text('Chat'),
+                      style: FilledButton.styleFrom(backgroundColor: _navy),
+                    ),
                   ),
-                  icon: const Icon(Icons.quiz_outlined, size: 17),
-                  label: const Text('Exams'),
-                ),
-                if (nextSession?.meetingLink != null &&
-                    nextSession!.meetingLink!.isNotEmpty)
-                  FilledButton.icon(
-                    onPressed: () =>
-                        _openMeeting(context, nextSession.meetingLink!),
-                    icon: const Icon(Icons.video_call_outlined, size: 18),
-                    label: const Text('Join class'),
-                    style: FilledButton.styleFrom(backgroundColor: _green),
+                  const SizedBox(width: 8),
+                  _CourseActionsMenu(
+                    course: course,
+                    completionCertificate: completionCertificate,
                   ),
-                FilledButton.icon(
-                  onPressed: () => context.push(
-                    Uri(
-                      path: '/chat',
-                      queryParameters: {
-                        'courseId': course.courseId,
-                        'courseTitle': course.title,
-                        if (course.batchId?.isNotEmpty == true)
-                          'batchId': course.batchId!,
-                        'batchName': course.batchName ?? 'Batch',
-                      },
-                    ).toString(),
-                  ),
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Chat'),
-                  style: FilledButton.styleFrom(backgroundColor: _navy),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Future<void> _openMeeting(BuildContext context, String link) async {
-    final uri = Uri.tryParse(link);
-    if (uri != null &&
-        await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      return;
-    }
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the meeting link.')),
-      );
-    }
-  }
+class _CourseActionsMenu extends StatelessWidget {
+  const _CourseActionsMenu({required this.course, this.completionCertificate});
+  final EnrolledCourse course;
+  final LearnerCertificate? completionCertificate;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<String>(
+    tooltip: 'More actions',
+    color: Colors.white,
+    position: PopupMenuPosition.under,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    onSelected: (value) => switch (value) {
+      'details' => context.push('/courses/${course.courseId}'),
+      'sessions' => context.push('/online-classes/${course.batchId}'),
+      'exams' => context.push(
+        '/my-courses/${course.courseId}/exams?online=true',
+      ),
+      'certificate' => printCertificatePdf(context, completionCertificate!),
+      _ => null,
+    },
+    itemBuilder: (_) => [
+      const PopupMenuItem(
+        value: 'details',
+        child: _MenuRow(icon: Icons.open_in_new, label: 'Details', color: _navy),
+      ),
+      if (course.batchId?.isNotEmpty == true)
+        const PopupMenuItem(
+          value: 'sessions',
+          child: _MenuRow(
+            icon: Icons.calendar_month_outlined,
+            label: 'Sessions',
+            color: _gold,
+          ),
+        ),
+      const PopupMenuItem(
+        value: 'exams',
+        child: _MenuRow(
+          icon: Icons.description_outlined,
+          label: 'Exams',
+          color: _navy,
+        ),
+      ),
+      if (completionCertificate != null)
+        const PopupMenuItem(
+          value: 'certificate',
+          child: _MenuRow(
+            icon: Icons.download_outlined,
+            label: 'Certificate',
+            color: _green,
+            labelColor: _green,
+          ),
+        ),
+    ],
+    child: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+      ),
+      child: const Icon(Icons.more_vert, size: 18, color: Color(0xFF64748B)),
+    ),
+  );
+}
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.labelColor = const Color(0xFF0C1F33),
+  });
+  final IconData icon;
+  final String label;
+  final Color color, labelColor;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 18, color: color),
+      const SizedBox(width: 10),
+      Text(label, style: TextStyle(color: labelColor)),
+    ],
+  );
 }
 
 class _Badge extends StatelessWidget {

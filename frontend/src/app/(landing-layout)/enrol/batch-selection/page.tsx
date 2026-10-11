@@ -51,9 +51,10 @@ function BatchSelectionContent() {
             router.push("/dashboard");
           } else {
             toast.success("Enrolled successfully!");
-            router.push(
-              `/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(courseTitle)}&batchId=${selectedBatchId}&batchName=${encodeURIComponent(selectedBatchName)}`,
-            );
+            // router.push(
+            //   `/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(courseTitle)}&batchId=${selectedBatchId}&batchName=${encodeURIComponent(selectedBatchName)}`,
+            // );
+            router.push(`/online-classes/${selectedBatchId}`);
           }
         },
       },
