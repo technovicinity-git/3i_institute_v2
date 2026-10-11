@@ -264,14 +264,7 @@ class _WishlistCourseCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Text(
-                        course.ageLabel,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0C1F33),
-                        ),
-                      ),
+                      _AgeBadge(label: course.ageLabel),
                     ],
                   ),
                   if (course.summary.isNotEmpty) ...[
@@ -394,3 +387,26 @@ String _formatLabel(String value) => switch (value) {
   'hybrid' => 'Hybrid',
   _ => value,
 };
+
+/// Pill showing the recommended age group, e.g. "Ages 9–12".
+class _AgeBadge extends StatelessWidget {
+  const _AgeBadge({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: 'Recommended age group',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(24)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.groups_outlined, size: 13, color: Color(0xFF9A7624)),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(color: Color(0xFF9A7624), fontSize: 11, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+}

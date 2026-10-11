@@ -48,11 +48,11 @@ class Course {
   }
 
   String get ageLabel {
-    if (minimumAge >= 18) return '18+';
-    if (minimumAge >= 16) return '16-17';
-    if (minimumAge >= 13) return '13-15';
-    if (minimumAge >= 9) return '9-12';
-    if (minimumAge >= 5) return '5-8';
+    if (minimumAge >= 18) return 'Ages 18+';
+    if (minimumAge >= 16) return 'Ages 16–17';
+    if (minimumAge >= 13) return 'Ages 13–15';
+    if (minimumAge >= 9) return 'Ages 9–12';
+    if (minimumAge >= 5) return 'Ages 5–8';
     return 'All ages';
   }
 }

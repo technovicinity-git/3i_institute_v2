@@ -116,7 +116,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                       ],
                     ),
                     const SizedBox(height: 9),
-                    _CourseBadge(label: course.ageLabel, color: const Color(0xFF0C1F33), outlined: true, rounded: true),
+                    _AgeBadge(label: course.ageLabel),
                   ],
                 ),
               ),
@@ -156,20 +156,42 @@ class _CourseImage extends StatelessWidget {
 }
 
 class _CourseBadge extends StatelessWidget {
-  const _CourseBadge({required this.label, required this.color, this.outlined = false, this.rounded = false});
+  const _CourseBadge({required this.label, required this.color, this.outlined = false});
   final String label;
   final Color color;
   final bool outlined;
-  final bool rounded;
 
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: outlined ? Colors.white : color,
-          borderRadius: BorderRadius.circular(rounded ? 24 : 5),
+          borderRadius: BorderRadius.circular(5),
           border: outlined ? Border.all(color: const Color(0xFFE3E8EF)) : null,
         ),
         child: Text(label, style: TextStyle(color: outlined ? color : Colors.white, fontSize: 9, letterSpacing: .3, fontWeight: FontWeight.w700)),
+      );
+}
+
+/// Pill showing the recommended age group, e.g. "Ages 9–12".
+class _AgeBadge extends StatelessWidget {
+  const _AgeBadge({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: 'Recommended age group',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(24)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.groups_outlined, size: 13, color: Color(0xFF9A7624)),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(color: Color(0xFF9A7624), fontSize: 11, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
       );
 }
