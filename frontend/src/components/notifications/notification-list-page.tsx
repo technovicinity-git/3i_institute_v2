@@ -50,7 +50,7 @@ export function NotificationListPage({
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[900px]">
+    <div className="p-6 md:p-10">
       <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
           <h1

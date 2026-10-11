@@ -1,17 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
+  AlertCircle,
+  BookOpen,
   Calendar,
   CalendarDays,
+  ChevronLeft,
   Clock,
   ExternalLink,
   GraduationCap,
-  Video,
-  User,
   CheckCircle2,
   Download,
 } from "lucide-react";
@@ -36,6 +36,67 @@ interface SessionWithStatus {
     className: string;
     dotClassName: string;
   };
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatShortDate(date: string): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(date: string): string {
+  return new Date(date).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatMonth(date: string): string {
+  return new Date(date)
+    .toLocaleDateString("en-US", { month: "short" })
+    .toUpperCase();
+}
+
+function PageHeader({
+  title,
+  subtitle,
+  onBack,
+}: {
+  title: string;
+  subtitle?: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="mb-6">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Back to Online Classes
+      </button>
+      <h1
+        className="text-3xl md:text-[36px] text-[#0C1F33]"
+        style={{ fontFamily: "'Marcellus', serif" }}
+      >
+        {title}
+      </h1>
+      {subtitle && <p className="text-base text-[#64748B]">{subtitle}</p>}
+    </div>
+  );
 }
 
 export default function OnlineClassBatchPage() {
@@ -67,6 +128,8 @@ export default function OnlineClassBatchPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const goBack = () => router.push("/online-classes");
+
   /*
    * Determine the current status of a session.
    */
@@ -84,8 +147,8 @@ export default function OnlineClassBatchPage() {
       return {
         key: "LIVE" as const,
         label: "Live Now",
-        className: "bg-green-50 text-green-700",
-        dotClassName: "bg-green-500",
+        className: "bg-[#22A146]/10 text-[#22A146]",
+        dotClassName: "bg-[#22A146]",
       };
     }
 
@@ -96,8 +159,8 @@ export default function OnlineClassBatchPage() {
       return {
         key: "STARTING_SOON" as const,
         label: "Starting Soon",
-        className: "bg-amber-50 text-amber-700",
-        dotClassName: "bg-amber-500",
+        className: "bg-yellow-50 text-yellow-700",
+        dotClassName: "bg-yellow-500",
       };
     }
 
@@ -108,8 +171,8 @@ export default function OnlineClassBatchPage() {
       return {
         key: "UPCOMING" as const,
         label: "Upcoming",
-        className: "bg-blue-50 text-blue-700",
-        dotClassName: "bg-blue-500",
+        className: "bg-[#2563EB]/10 text-[#2563EB]",
+        dotClassName: "bg-[#2563EB]",
       };
     }
 
@@ -119,8 +182,8 @@ export default function OnlineClassBatchPage() {
     return {
       key: "COMPLETED" as const,
       label: "Completed",
-      className: "bg-slate-100 text-slate-500",
-      dotClassName: "bg-slate-400",
+      className: "bg-slate-100 text-[#64748B]",
+      dotClassName: "bg-[#94A3B8]",
     };
   };
 
@@ -129,28 +192,10 @@ export default function OnlineClassBatchPage() {
    */
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC]">
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-8 h-5 w-32 animate-pulse rounded bg-slate-200" />
-
-          <div className="overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white">
-            <div className="h-48 animate-pulse bg-slate-100 sm:h-56" />
-
-            <div className="space-y-4 p-6">
-              <div className="h-7 w-2/3 animate-pulse rounded bg-slate-200" />
-              <div className="h-4 w-1/3 animate-pulse rounded bg-slate-200" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-3">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-24 animate-pulse rounded-xl border border-[#E3E8EF] bg-white"
-              />
-            ))}
-          </div>
+      <div className="p-6 md:p-10">
+        <PageHeader title="Class Schedule" onBack={goBack} />
+        <div className="flex items-center justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
         </div>
       </div>
     );
@@ -161,31 +206,17 @@ export default function OnlineClassBatchPage() {
    */
   if (isError || !batch) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC]">
-        <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center px-4">
-          <div className="w-full rounded-2xl border border-[#E3E8EF] bg-white p-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-              <CalendarDays className="h-7 w-7 text-red-500" />
-            </div>
-
-            <h1 className="mt-5 font-serif text-2xl text-[#0C1F33]">
-              Class schedule unavailable
-            </h1>
-
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#64748B]">
-              We could not load this batch. You may no longer be enrolled in
-              this batch, or the batch may no longer be available.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#0C1F33] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#162E48]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Go Back
-            </button>
-          </div>
+      <div className="p-6 md:p-10">
+        <PageHeader title="Class Schedule" onBack={goBack} />
+        <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="font-semibold text-[#0C1F33]">
+            Class schedule unavailable
+          </p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-[#64748B]">
+            We could not load this batch. You may no longer be enrolled in this
+            batch, or the batch may no longer be available.
+          </p>
         </div>
       </div>
     );
@@ -204,21 +235,20 @@ export default function OnlineClassBatchPage() {
   /*
    * Group sessions by status.
    */
-  const liveSessions = sessionsWithStatus.filter(
-    (session) => session.status.key === "LIVE",
-  );
+  const sections = [
+    { key: "LIVE", label: "Live Now" },
+    { key: "STARTING_SOON", label: "Starting Soon" },
+    { key: "UPCOMING", label: "Upcoming Sessions" },
+    { key: "COMPLETED", label: "Previous Sessions" },
+  ]
+    .map((section) => ({
+      ...section,
+      sessions: sessionsWithStatus.filter(
+        (session) => session.status.key === section.key,
+      ),
+    }))
+    .filter((section) => section.sessions.length > 0);
 
-  const startingSoonSessions = sessionsWithStatus.filter(
-    (session) => session.status.key === "STARTING_SOON",
-  );
-
-  const upcomingSessions = sessionsWithStatus.filter(
-    (session) => session.status.key === "UPCOMING",
-  );
-
-  const completedSessions = sessionsWithStatus.filter(
-    (session) => session.status.key === "COMPLETED",
-  );
   const completionCertificate = certificates?.find(
     (certificate) =>
       certificate.courseId === batch.course.id &&
@@ -234,402 +264,245 @@ export default function OnlineClassBatchPage() {
         )
       : batch.status !== "ACTIVE";
 
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString(undefined, {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-  const formatTime = (date: string) =>
-    new Date(date).toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-
-  const formatShortDate = (date: string) =>
-    new Date(date).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
   /*
    * Reusable session card.
    */
-  const renderSession = (session: SessionWithStatus, showJoinButton = true) => {
+  const renderSession = (session: SessionWithStatus) => {
     const sessionNumber =
       batch.sessions.findIndex((item) => item.id === session.id) + 1;
+    const isLive = session.status.key === "LIVE";
+    const isJoinable = isLive || session.status.key === "STARTING_SOON";
+    const isCompleted = session.status.key === "COMPLETED";
 
     return (
       <div
         key={session.id}
-        className="overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white"
+        className={`bg-white rounded-xl border p-5 hover:shadow-md transition-shadow ${
+          isLive ? "border-[#22A146]/40" : "border-[#E3E8EF]"
+        }`}
       >
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 gap-4">
-              {/* Session Number */}
-              <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
-                  session.status.key === "LIVE"
-                    ? "bg-green-50 text-green-700"
-                    : session.status.key === "STARTING_SOON"
-                      ? "bg-amber-50 text-amber-700"
-                      : session.status.key === "COMPLETED"
-                        ? "bg-slate-100 text-slate-500"
-                        : "bg-[#F8F3E8] text-[#B8912F]"
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            {/* Date box */}
+            <div
+              className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center shrink-0 ${
+                isCompleted ? "bg-[#F8FAFC]" : "bg-[#F9F6F0]"
+              }`}
+            >
+              <span
+                className={`text-[10px] font-bold tracking-wide ${
+                  isCompleted ? "text-[#94A3B8]" : "text-[#B8912F]"
                 }`}
               >
-                {sessionNumber}
-              </div>
-
-              <div className="min-w-0">
-                {/* Title + Status */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4
-                    className={`text-[16px] font-semibold ${
-                      session.status.key === "COMPLETED"
-                        ? "text-[#64748B]"
-                        : "text-[#0C1F33]"
-                    }`}
-                  >
-                    {session.title}
-                  </h4>
-
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${session.status.className}`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${session.status.dotClassName}`}
-                    />
-
-                    {session.status.label}
-                  </span>
-                </div>
-
-                {/* Date / Time / Duration */}
-                <div
-                  className={`mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm ${
-                    session.status.key === "COMPLETED"
-                      ? "text-[#94A3B8]"
-                      : "text-[#64748B]"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {formatDate(session.scheduledAt)}
-                  </span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatTime(session.scheduledAt)}
-                  </span>
-
-                  <span>{session.durationMinutes} min</span>
-                </div>
-              </div>
+                {formatMonth(session.scheduledAt)}
+              </span>
+              <span
+                className={`text-xl font-bold leading-6 ${
+                  isCompleted ? "text-[#64748B]" : "text-[#0C1F33]"
+                }`}
+              >
+                {new Date(session.scheduledAt).getDate()}
+              </span>
             </div>
 
-            {/* Action */}
-            {showJoinButton && (
-              <div className="shrink-0">
-                {session.status.key === "LIVE" && session.meetingLink && (
-                  <a
-                    href={session.meetingLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0C1F33] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#162E48] sm:w-auto"
-                  >
-                    <Video className="h-4 w-4" />
-                    Join Class
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-
-                {session.status.key === "STARTING_SOON" &&
-                  session.meetingLink && (
-                    <a
-                      href={session.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#B8912F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#9A7624] sm:w-auto"
-                    >
-                      <Video className="h-4 w-4" />
-                      Join Soon
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-
-                {session.status.key === "UPCOMING" && (
-                  <span className="inline-flex items-center rounded-lg bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#94A3B8]">
-                    Not Started
-                  </span>
-                )}
-
-                {session.status.key === "COMPLETED" && (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-[#94A3B8]">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Completed
-                  </span>
-                )}
-
-                {session.status.key === "LIVE" && !session.meetingLink && (
-                  <span className="inline-flex items-center rounded-lg bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#94A3B8]">
-                    Link unavailable
-                  </span>
-                )}
-
-                {session.status.key === "STARTING_SOON" &&
-                  !session.meetingLink && (
-                    <span className="inline-flex items-center rounded-lg bg-slate-50 px-4 py-2.5 text-sm font-medium text-[#94A3B8]">
-                      Link unavailable
-                    </span>
-                  )}
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white border border-[#E3E8EF] text-[#0C1F33]">
+                  SESSION {sessionNumber}
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${session.status.className}`}
+                >
+                  {session.status.label}
+                </span>
               </div>
-            )}
+              <p
+                className={`text-sm font-semibold mt-1.5 truncate ${
+                  isCompleted ? "text-[#64748B]" : "text-[#0C1F33]"
+                }`}
+              >
+                {session.title}
+              </p>
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-[#64748B] flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(session.scheduledAt)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatTime(session.scheduledAt)} •{" "}
+                  {session.durationMinutes} min
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Notes */}
-          {session.notes && (
-            <div className="mt-5 rounded-xl bg-[#FAFBFC] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                Session Notes
-              </p>
-
-              <p className="mt-1.5 text-sm leading-6 text-[#475569]">
-                {session.notes}
-              </p>
-            </div>
-          )}
+          {/* Action */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isJoinable && session.meetingLink ? (
+              <a
+                href={session.meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-1.5 px-4 py-2 text-white rounded-lg text-xs font-semibold transition-colors ${
+                  isLive
+                    ? "bg-[#22A146] hover:bg-[#1E9040]"
+                    : "bg-[#12304E] hover:bg-[#1a4268]"
+                }`}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {isLive ? "Join Class" : "Join Soon"}
+              </a>
+            ) : isJoinable ? (
+              <span className="text-xs font-semibold text-yellow-600 px-3 py-2">
+                No link yet
+              </span>
+            ) : isCompleted ? (
+              <span className="flex items-center gap-1 text-xs font-semibold text-[#94A3B8] px-3 py-2">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Completed
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-[#94A3B8] px-3 py-2">
+                Not started
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Notes */}
+        {session.notes && (
+          <div className="mt-4 rounded-lg bg-[#F8FAFC] px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+              Session Notes
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[#64748B]">
+              {session.notes}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Back */}
-        <Link
-          href="/online-classes"
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#64748B] transition-colors hover:text-[#0C1F33]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Online Classes
-        </Link>
+    <div className="p-6 md:p-10">
+      <PageHeader
+        title="Class Schedule"
+        subtitle={`${batch.sessions.length} session${
+          batch.sessions.length !== 1 ? "s" : ""
+        } scheduled`}
+        onBack={goBack}
+      />
 
-        {/* Course / Batch Header */}
-        <div className="overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white">
-          <div className="relative h-48 overflow-hidden bg-[#0C1F33] sm:h-56">
-            {batch.course.thumbnailUrl ? (
-              <img
-                src={batch.course.thumbnailUrl}
-                alt={batch.course.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <GraduationCap className="h-16 w-16 text-white/30" />
-              </div>
-            )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0C1F33]/80 via-[#0C1F33]/20 to-transparent" />
-
-            <div className="absolute bottom-5 left-5 right-5 sm:left-7 sm:right-7">
-              <span className="inline-flex rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#9A7624]">
-                Online Class
-              </span>
-
-              <h1 className="mt-2 font-serif text-2xl text-white sm:text-3xl">
-                {batch.course.title}
-              </h1>
-            </div>
-          </div>
-
-          <div className="p-5 sm:p-7">
-            <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                  Enrolled Batch
-                </p>
-
-                <h2 className="mt-1 font-serif text-2xl text-[#0C1F33]">
-                  {batch.name}
-                </h2>
-
-                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#64748B]">
-                  <span className="inline-flex items-center gap-1.5">
-                    <User className="h-4 w-4" />
-                    {batch.course.instructorName}
-                  </span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    Enrolled {formatShortDate(batch.enrolledAt)}
-                  </span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <CalendarDays className="h-4 w-4" />
-                    {batch.sessions.length}{" "}
-                    {batch.sessions.length === 1 ? "session" : "sessions"}
-                  </span>
+      {/* Course / Batch summary */}
+      <div className="bg-white border border-[#E3E8EF] rounded-xl p-5 mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-gradient-to-br from-[#12304E] to-[#2a5070]">
+              {batch.course.thumbnailUrl ? (
+                <Image
+                  src={batch.course.thumbnailUrl}
+                  alt={batch.course.title}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/30">
+                  <BookOpen className="w-8 h-8" />
                 </div>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                <span className="text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
+                  LIVE
+                </span>
+                <span
+                  className={`text-[9px] font-bold px-2 py-0.5 rounded ${
+                    isUpcomingBatch
+                      ? "bg-[#F9F6F0] text-[#9A7624]"
+                      : "bg-[#22A146]/10 text-[#22A146]"
+                  }`}
+                >
+                  {isUpcomingBatch ? "UPCOMING" : "ONGOING"}
+                </span>
               </div>
-
-              <span
-                className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  isUpcomingBatch
-                    ? "bg-[#F8F3E8] text-[#9A7624]"
-                    : "bg-green-50 text-green-700"
-                }`}
+              <h2
+                className="text-base text-[#0C1F33] leading-5 line-clamp-2"
+                style={{ fontFamily: "'Marcellus', serif" }}
               >
-                {isUpcomingBatch ? "Upcoming" : "Ongoing"}
-              </span>
+                {batch.course.title}
+              </h2>
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-[#64748B] flex-wrap">
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3" />
+                  {batch.name}
+                </span>
+                <span className="flex items-center gap-1">
+                  <GraduationCap className="w-3 h-3" />
+                  {batch.course.instructorName}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Enrolled {formatShortDate(batch.enrolledAt)}
+                </span>
+              </div>
             </div>
-            {completionCertificate && (
-              <button
-                type="button"
-                onClick={() => downloadExamCertificatePdf(completionCertificate)}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#22A146] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E9040]"
-              >
-                <Download className="h-4 w-4" /> Download Certificate
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Schedule */}
-        <div className="mt-8">
-          <div className="mb-5">
-            <p className="text-sm font-bold uppercase tracking-wide text-[#B8912F]">
-              Class Schedule
-            </p>
-
-            <h2 className="mt-1 font-serif text-2xl text-[#0C1F33] sm:text-[28px]">
-              All Sessions
-            </h2>
-
-            <p className="mt-2 text-sm text-[#64748B]">
-              View the complete schedule for your enrolled batch.
-            </p>
           </div>
 
-          {batch.sessions.length === 0 ? (
-            <div className="rounded-2xl border border-[#E3E8EF] bg-white p-8 text-center">
-              <CalendarDays className="mx-auto h-8 w-8 text-[#94A3B8]" />
-
-              <p className="mt-3 text-sm font-medium text-[#334155]">
-                No sessions scheduled yet
-              </p>
-
-              <p className="mt-1 text-sm text-[#64748B]">
-                Your instructor has not added any sessions to this batch.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-7">
-              {/* Live Now */}
-              {liveSessions.length > 0 && (
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-
-                    <h3 className="text-sm font-semibold text-[#334155]">
-                      Live Now
-                    </h3>
-
-                    <span className="text-xs text-[#94A3B8]">
-                      ({liveSessions.length})
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {liveSessions.map((session) => renderSession(session))}
-                  </div>
-                </section>
-              )}
-
-              {/* Starting Soon */}
-              {startingSoonSessions.length > 0 && (
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />
-
-                    <h3 className="text-sm font-semibold text-[#334155]">
-                      Starting Soon
-                    </h3>
-
-                    <span className="text-xs text-[#94A3B8]">
-                      ({startingSoonSessions.length})
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {startingSoonSessions.map((session) =>
-                      renderSession(session),
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {/* Upcoming */}
-              {upcomingSessions.length > 0 && (
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
-
-                    <h3 className="text-sm font-semibold text-[#334155]">
-                      Upcoming Sessions
-                    </h3>
-
-                    <span className="text-xs text-[#94A3B8]">
-                      ({upcomingSessions.length})
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {upcomingSessions.map((session) => renderSession(session))}
-                  </div>
-                </section>
-              )}
-
-              {/* Completed */}
-              {completedSessions.length > 0 && (
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#94A3B8]" />
-
-                    <h3 className="text-sm font-semibold text-[#334155]">
-                      Previous Sessions
-                    </h3>
-
-                    <span className="text-xs text-[#94A3B8]">
-                      ({completedSessions.length})
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {completedSessions.map((session) => renderSession(session))}
-                  </div>
-                </section>
-              )}
-            </div>
+          {completionCertificate && (
+            <button
+              type="button"
+              onClick={() => downloadExamCertificatePdf(completionCertificate)}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#22A146] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1E9040]"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Certificate
+            </button>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="mt-8 border-t border-[#E3E8EF] pt-6">
-          <Link
-            href="/online-classes"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0C1F33] transition-colors hover:text-[#B8912F]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to My Online Classes
-          </Link>
-        </div>
       </div>
+
+      {/* Schedule */}
+      {batch.sessions.length === 0 ? (
+        <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
+          <CalendarDays className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-[#64748B] mb-2">No sessions scheduled yet.</p>
+          <p className="text-xs text-[#94A3B8]">
+            Your instructor has not added any sessions to this batch.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {sections.map((section) => (
+            <section key={section.key}>
+              {/* Section header */}
+              <div className="flex items-center gap-3 mb-4">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    section.sessions[0]!.status.dotClassName
+                  } ${section.key === "LIVE" ? "animate-pulse" : ""}`}
+                />
+                <p className="text-sm font-bold text-[#0C1F33]">
+                  {section.label}
+                </p>
+                <div className="flex-1 h-px bg-[#E3E8EF]" />
+                <span className="text-xs text-[#64748B]">
+                  {section.sessions.length} session
+                  {section.sessions.length > 1 ? "s" : ""}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {section.sessions.map((session) => renderSession(session))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
