@@ -46,15 +46,15 @@ class WishlistCourse {
     _ => 'ALL LEVELS',
   };
   String get ageLabel => minimumAge >= 18
-      ? '18+'
+      ? 'Ages 18+'
       : minimumAge >= 16
-      ? '16–17'
+      ? 'Ages 16–17'
       : minimumAge >= 13
-      ? '13–15'
+      ? 'Ages 13–15'
       : minimumAge >= 9
-      ? '9–12'
+      ? 'Ages 9–12'
       : minimumAge >= 5
-      ? '5–8'
+      ? 'Ages 5–8'
       : 'All ages';
 
   factory WishlistCourse.fromJson(Map<String, dynamic> j) {
