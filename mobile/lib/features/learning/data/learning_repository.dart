@@ -65,6 +65,14 @@ class LearningRepository {
     return data is Map<String, dynamic> ? LiveSession.fromJson(data) : null;
   }
 
+  Future<LearnerBatch> getLearnerBatch(String profileId, String batchId) async {
+    final response = await _api.dio.get<Map<String, dynamic>>(
+      '/batches/learner/$batchId',
+      queryParameters: {'learnerProfileId': profileId},
+    );
+    return LearnerBatch.fromJson(_data(response.data));
+  }
+
   Future<void> saveNote(
     String profileId,
     String lessonId,

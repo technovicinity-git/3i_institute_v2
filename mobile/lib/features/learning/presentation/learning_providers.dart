@@ -38,3 +38,12 @@ final nextLiveSessionProvider = FutureProvider.family<LiveSession?, String>(
   (ref, batchId) =>
       ref.watch(learningRepositoryProvider).getNextSession(batchId),
 );
+final learnerBatchProvider = FutureProvider.family<LearnerBatch, String>((
+  ref,
+  key,
+) {
+  final parts = key.split('|');
+  return ref
+      .watch(learningRepositoryProvider)
+      .getLearnerBatch(parts[0], parts[1]);
+});

@@ -74,6 +74,68 @@ class LiveSession {
   );
 }
 
+class BatchSession {
+  const BatchSession({
+    required this.id,
+    required this.title,
+    required this.scheduledAt,
+    required this.durationMinutes,
+    this.meetingLink,
+    this.notes,
+  });
+  final String id, title, scheduledAt;
+  final int durationMinutes;
+  final String? meetingLink, notes;
+  factory BatchSession.fromJson(Map<String, dynamic> json) => BatchSession(
+    id: json['id'] as String? ?? '',
+    title: json['title'] as String? ?? 'Live class',
+    scheduledAt: json['scheduledAt'] as String? ?? '',
+    durationMinutes: _int(json['durationMinutes']),
+    meetingLink: json['meetingLink'] as String?,
+    notes: json['notes'] as String?,
+  );
+}
+
+class LearnerBatch {
+  const LearnerBatch({
+    required this.id,
+    required this.name,
+    required this.status,
+    required this.courseId,
+    required this.courseTitle,
+    required this.instructorName,
+    required this.enrolledAt,
+    required this.sessions,
+    this.thumbnailUrl,
+  });
+  final String id, name, status, courseId, courseTitle, instructorName;
+  final String enrolledAt;
+  final String? thumbnailUrl;
+  final List<BatchSession> sessions;
+  factory LearnerBatch.fromJson(Map<String, dynamic> json) {
+    final course = json['course'] is Map<String, dynamic>
+        ? json['course'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final sessions = json['sessions'];
+    return LearnerBatch(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Batch',
+      status: json['status'] as String? ?? '',
+      courseId: course['id'] as String? ?? '',
+      courseTitle: course['title'] as String? ?? 'Course',
+      instructorName: course['instructorName'] as String? ?? 'Instructor',
+      thumbnailUrl: course['thumbnailUrl'] as String?,
+      enrolledAt: json['enrolledAt'] as String? ?? '',
+      sessions: sessions is List
+          ? sessions
+                .whereType<Map<String, dynamic>>()
+                .map(BatchSession.fromJson)
+                .toList(growable: false)
+          : const [],
+    );
+  }
+}
+
 class ChatMessage {
   const ChatMessage({
     required this.id,

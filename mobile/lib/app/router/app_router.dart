@@ -24,6 +24,7 @@ import '../../features/exams/presentation/pages/course_exams_page.dart';
 import '../../features/exams/presentation/pages/exam_result_page.dart';
 import '../../features/exams/presentation/pages/take_exam_page.dart';
 import '../../features/learning/presentation/pages/lesson_page.dart';
+import '../../features/learning/presentation/pages/online_class_batch_page.dart';
 import '../../features/learning/presentation/pages/online_classes_page.dart';
 import '../../features/learning/presentation/pages/regular_courses_page.dart';
 import '../../features/profiles/presentation/pages/add_learner_page.dart';
@@ -387,6 +388,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/online-classes',
             builder: (context, state) => const OnlineClassesPage(),
+          ),
+          GoRoute(
+            path: '/online-classes/:batchId',
+            builder: (context, state) => OnlineClassBatchPage(
+              batchId: state.pathParameters['batchId']!,
+            ),
           ),
           GoRoute(
             path: '/chat',

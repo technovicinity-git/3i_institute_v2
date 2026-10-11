@@ -356,7 +356,7 @@ class _CertificateCard extends StatelessWidget {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () =>
-                            _printCertificate(context, certificate),
+                            printCertificatePdf(context, certificate),
                         icon: const Icon(
                           Icons.picture_as_pdf_outlined,
                           size: 17,
@@ -562,7 +562,7 @@ class _CertificateState extends StatelessWidget {
   );
 }
 
-Future<void> _printCertificate(
+Future<void> printCertificatePdf(
   BuildContext context,
   LearnerCertificate certificate,
 ) async {
