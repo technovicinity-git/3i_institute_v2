@@ -25,6 +25,16 @@ export interface InstructorDashboardData {
     durationMinutes: number;
     meetingLink: string | null;
   }>;
+  pendingAttempts: Array<{
+    id: string;
+    examId: string;
+    examTitle: string;
+    courseId: string;
+    courseTitle: string;
+    learnerName: string;
+    attemptNumber: number;
+    submittedAt: string;
+  }>;
   recentEnrolments: Array<{
     id: string;
     learnerName: string;

@@ -4,12 +4,14 @@ class InstructorDashboardData {
     required this.recentCourses,
     required this.upcomingClasses,
     required this.recentEnrolments,
+    this.pendingAttempts = const [],
   });
 
   final InstructorDashboardStats stats;
   final List<InstructorCourseSummary> recentCourses;
   final List<InstructorClassSummary> upcomingClasses;
   final List<InstructorEnrolmentSummary> recentEnrolments;
+  final List<InstructorPendingAttempt> pendingAttempts;
 }
 
 class InstructorDashboardStats {
@@ -60,4 +62,34 @@ class InstructorEnrolmentSummary {
     required this.enrolledAt,
   });
   final String id, learnerName, courseTitle, enrolledAt;
+}
+
+class InstructorPendingAttempt {
+  const InstructorPendingAttempt({
+    required this.id,
+    required this.examId,
+    required this.examTitle,
+    required this.courseId,
+    required this.courseTitle,
+    required this.learnerName,
+    required this.attemptNumber,
+    required this.submittedAt,
+  });
+  final String id, examId, examTitle, courseId, courseTitle, learnerName;
+  final String submittedAt;
+  final int attemptNumber;
+
+  factory InstructorPendingAttempt.fromJson(Map<String, dynamic> item) =>
+      InstructorPendingAttempt(
+        id: '${item['id'] ?? ''}',
+        examId: '${item['examId'] ?? ''}',
+        examTitle: '${item['examTitle'] ?? 'Exam'}',
+        courseId: '${item['courseId'] ?? ''}',
+        courseTitle: '${item['courseTitle'] ?? 'Course'}',
+        learnerName: '${item['learnerName'] ?? 'Learner'}',
+        attemptNumber: item['attemptNumber'] is num
+            ? (item['attemptNumber'] as num).toInt()
+            : 1,
+        submittedAt: '${item['submittedAt'] ?? ''}',
+      );
 }

@@ -14,12 +14,15 @@ import {
   X,
   Bell,
   Megaphone,
+  ClipboardCheck,
 } from "lucide-react";
+import { usePendingAttempts } from "@/hooks/use-exams";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/instructor/dashboard" },
   { label: "My Courses", icon: BookOpen, href: "/instructor/courses" },
   { label: "Live Classes", icon: Video, href: "/instructor/live-classes" },
+  { label: "Grading", icon: ClipboardCheck, href: "/instructor/grading" },
   {
     label: "Questions",
     icon: FileQuestionMark,
@@ -42,6 +45,8 @@ interface InstructorSidebarProps {
 
 export default function InstructorSidebar({ onClose }: InstructorSidebarProps) {
   const pathname = usePathname();
+  const { data: pendingAttempts } = usePendingAttempts();
+  const pendingCount = pendingAttempts?.length ?? 0;
 
   return (
     <aside className="w-[260px] h-full bg-[#12304E] p-6 flex flex-col shrink-0">
@@ -88,7 +93,12 @@ export default function InstructorSidebar({ onClose }: InstructorSidebarProps) {
               }`}
             >
               <Icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/instructor/grading" && pendingCount > 0 && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-[#B8912F] text-white text-[11px] font-bold flex items-center justify-center">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
             </Link>
           );
         })}

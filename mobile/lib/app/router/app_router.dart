@@ -45,6 +45,7 @@ import '../../features/instructor_courses/presentation/pages/instructor_course_f
 import '../../features/instructor_courses/presentation/pages/instructor_assignments_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_exams_pages.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_grading_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_live_classes_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
@@ -227,6 +228,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/instructor/live-classes',
             builder: (context, state) => const InstructorLiveClassesPage(),
+          ),
+          GoRoute(
+            path: '/instructor/grading',
+            builder: (context, state) => const InstructorGradingPage(),
           ),
           GoRoute(
             path: '/instructor/questions',

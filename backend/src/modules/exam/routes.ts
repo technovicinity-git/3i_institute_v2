@@ -101,6 +101,13 @@ router.get(
 );
 
 router.get(
+  "/pending-attempts",
+  authenticate,
+  authorize("exams.grade"),
+  examController.getPendingAttempts,
+);
+
+router.get(
   "/attempts/:examId",
   authenticate,
   authorize("exams.grade"),

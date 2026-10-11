@@ -160,6 +160,24 @@ export class ExamController {
     }
   };
 
+  getPendingAttempts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user?.sub!;
+      const { courseId, examId } = req.query;
+      const attempts = await examService.getPendingAttempts(userId, {
+        courseId: typeof courseId === "string" ? courseId : undefined,
+        examId: typeof examId === "string" ? examId : undefined,
+      });
+      sendSuccess(res, attempts, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getExamAttempts = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const examId = req.params["examId"] as string;

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
+import '../../../instructor_dashboard/domain/entities/instructor_dashboard_data.dart';
+import '../../../instructor_dashboard/presentation/providers/instructor_dashboard_providers.dart';
 import '../../domain/entities/instructor_course.dart';
 import '../../domain/entities/instructor_exam.dart';
 import '../../domain/entities/instructor_question.dart';
@@ -38,6 +40,8 @@ class InstructorExamsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final exams = ref.watch(instructorExamsProvider(courseId));
     final course = _findCourse(ref, courseId);
+    final pending =
+        ref.watch(instructorPendingAttemptsProvider).asData?.value ?? const [];
     final items = exams.asData?.value ?? const <InstructorExam>[];
     return RefreshIndicator(
       onRefresh: () => ref.refresh(instructorExamsProvider(courseId).future),
@@ -105,7 +109,13 @@ class InstructorExamsPage extends ConsumerWidget {
                 for (final exam in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _ExamCard(courseId: courseId, exam: exam),
+                    child: _ExamCard(
+                      courseId: courseId,
+                      exam: exam,
+                      pendingCount: pending
+                          .where((a) => a.examId == exam.id)
+                          .length,
+                    ),
                   ),
             ],
           ),
@@ -116,9 +126,14 @@ class InstructorExamsPage extends ConsumerWidget {
 }
 
 class _ExamCard extends StatelessWidget {
-  const _ExamCard({required this.courseId, required this.exam});
+  const _ExamCard({
+    required this.courseId,
+    required this.exam,
+    this.pendingCount = 0,
+  });
   final String courseId;
   final InstructorExam exam;
+  final int pendingCount;
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +164,13 @@ class _ExamCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: Color(0xFFCA8A04),
                   ),
+                ),
+              ],
+              if (pendingCount > 0) ...[
+                const SizedBox(width: 8),
+                _Badge(
+                  label: '$pendingCount TO GRADE',
+                  color: const Color(0xFFA16207),
                 ),
               ],
             ],
@@ -1177,6 +1199,17 @@ class _InstructorGradeAttemptPageState
       data: (attempt) {
         final written = attempt.questions.where(_isWritten).toList();
         final shown = attempt.graded ? attempt.questions : written;
+        final pending = ref
+            .watch(instructorPendingAttemptsProvider)
+            .asData
+            ?.value;
+        final otherPending = (pending ?? const <InstructorPendingAttempt>[])
+            .where((a) => a.id != widget.attemptId)
+            .toList();
+        // Prefer the oldest pending attempt of the same exam, then any.
+        final next =
+            otherPending.where((a) => a.examId == widget.examId).firstOrNull ??
+            otherPending.firstOrNull;
         for (final q in written) {
           _controllerFor(q, attempt);
         }
@@ -1202,6 +1235,14 @@ class _InstructorGradeAttemptPageState
               '${attempt.learnerName} • Attempt #${attempt.attemptNumber}',
               style: const TextStyle(color: _muted),
             ),
+            if (pending != null)
+              Text(
+                otherPending.isEmpty
+                    ? 'No other submissions waiting'
+                    : '${otherPending.length} other submission'
+                          '${otherPending.length == 1 ? '' : 's'} waiting',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -1293,6 +1334,49 @@ class _InstructorGradeAttemptPageState
                       ],
                     ],
                   ),
+                  if (next != null) ...[
+                    const SizedBox(height: 10),
+                    attempt.graded
+                        ? FilledButton.icon(
+                            onPressed: () => _openNext(next),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _deepNavy,
+                            ),
+                            icon: const Icon(Icons.chevron_right),
+                            label: Text(
+                              'Grade next (${otherPending.length} left)',
+                            ),
+                          )
+                        : TextButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => _openNext(next),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _muted,
+                            ),
+                            child: const Text('Skip to next submission'),
+                          ),
+                  ] else if (attempt.graded && pending != null) ...[
+                    const SizedBox(height: 10),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: _green,
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'All caught up',
+                          style: TextStyle(
+                            color: _green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1301,6 +1385,12 @@ class _InstructorGradeAttemptPageState
       },
     );
   }
+
+  // Replace rather than push so working through the queue doesn't build up
+  // a long back stack.
+  void _openNext(InstructorPendingAttempt next) => context.pushReplacement(
+    '/instructor/courses/${next.courseId}/exams/${next.examId}/attempts/${next.id}/grade',
+  );
 
   Future<void> _submit(List<InstructorQuestion> written) async {
     final grades = [
@@ -1314,7 +1404,9 @@ class _InstructorGradeAttemptPageState
           .gradeAttempt(widget.attemptId, grades);
       ref
         ..invalidate(instructorAttemptDetailsProvider(widget.attemptId))
-        ..invalidate(instructorExamAttemptsProvider(widget.examId));
+        ..invalidate(instructorExamAttemptsProvider(widget.examId))
+        ..invalidate(instructorPendingAttemptsProvider)
+        ..invalidate(instructorDashboardProvider);
       _notify('Answers graded');
     } catch (error) {
       _notify(apiErrorMessage(error, fallback: 'Failed to grade answers'));

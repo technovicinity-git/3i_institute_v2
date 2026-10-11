@@ -36,6 +36,18 @@ export function useExamAttempts(examId: string) {
   });
 }
 
+// Submitted attempts waiting for manual grading, oldest first. Shared by the
+// dashboard, sidebar badge, grading queue, exam list and "grade next".
+export function usePendingAttempts(
+  filters: { courseId?: string; examId?: string } = {},
+) {
+  return useQuery({
+    queryKey: ["pending-attempts", filters.courseId ?? "", filters.examId ?? ""],
+    queryFn: () => examService.getPendingAttempts(filters),
+    staleTime: 30 * 1000,
+  });
+}
+
 export function useIssueOnlineFinalExamCertificatesMutation() {
   const queryClient = useQueryClient();
 
@@ -69,6 +81,8 @@ export function useGradeAnswerMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exam-attempts"] });
       queryClient.invalidateQueries({ queryKey: ["attempt-details"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-attempts"] });
       toast.success("Answer graded");
     },
     onError: (error: any) => {

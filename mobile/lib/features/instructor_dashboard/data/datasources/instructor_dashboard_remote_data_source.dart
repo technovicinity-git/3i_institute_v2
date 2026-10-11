@@ -51,6 +51,9 @@ class InstructorDashboardRemoteDataSource {
             ),
           )
           .toList(),
+      pendingAttempts: _list(
+        data['pendingAttempts'],
+      ).map(InstructorPendingAttempt.fromJson).toList(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type {
+  PendingAttempt,
   Exam,
   CreateExamInput,
   ExamAttempt,
@@ -28,6 +29,15 @@ export const examService = {
 
   updateExam: async (examId: string, input: CreateExamInput): Promise<Exam> => {
     const response = await apiClient.patch(`/exams/${examId}`, input);
+    return response.data.data;
+  },
+
+  getPendingAttempts: async (
+    filters: { courseId?: string; examId?: string } = {},
+  ): Promise<PendingAttempt[]> => {
+    const response = await apiClient.get("/exams/pending-attempts", {
+      params: filters,
+    });
     return response.data.data;
   },
 

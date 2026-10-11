@@ -10,7 +10,7 @@ import type {
   SubmitExamInput,
 } from "#/modules/exam/schema";
 import { notificationEvents } from "#/modules/notification/events";
-import { canManageCourse } from "#/shared/course-access";
+import { canManageCourse, isAdmin } from "#/shared/course-access";
 
 export class ExamService {
   // ──────────────────────────────────
@@ -825,6 +825,55 @@ export class ExamService {
       graded: allGraded,
       ...(allGraded ? { score, passed: score >= passThreshold } : {}),
     };
+  }
+
+  /**
+   * Submitted attempts still waiting for manual grading, oldest first.
+   * Instructors only see their own courses; admins see every course.
+   */
+  async getPendingAttempts(
+    userId: string,
+    filters: { courseId?: string; examId?: string } = {},
+  ) {
+    const admin = await isAdmin(userId);
+
+    const attempts = await prisma.examAttempt.findMany({
+      where: {
+        graded: false,
+        submittedAt: { not: null },
+        ...(filters.examId ? { examId: filters.examId } : {}),
+        exam: {
+          ...(filters.courseId ? { courseId: filters.courseId } : {}),
+          ...(admin ? {} : { course: { instructorId: userId } }),
+        },
+      },
+      select: {
+        id: true,
+        examId: true,
+        attemptNumber: true,
+        submittedAt: true,
+        exam: {
+          select: {
+            title: true,
+            courseId: true,
+            course: { select: { title: true } },
+          },
+        },
+        learnerProfile: { select: { displayName: true } },
+      },
+      orderBy: { submittedAt: "asc" },
+    });
+
+    return attempts.map((attempt) => ({
+      id: attempt.id,
+      examId: attempt.examId,
+      examTitle: attempt.exam.title,
+      courseId: attempt.exam.courseId,
+      courseTitle: attempt.exam.course.title,
+      learnerName: attempt.learnerProfile?.displayName ?? "Unknown",
+      attemptNumber: attempt.attemptNumber,
+      submittedAt: attempt.submittedAt,
+    }));
   }
 
   async getExamAttempts(examId: string) {
