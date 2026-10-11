@@ -66,3 +66,14 @@ export interface GradeAnswerInput {
   questionId: string;
   marksAwarded: number;
 }
+
+export interface PendingAttempt {
+  id: string;
+  examId: string;
+  examTitle: string;
+  courseId: string;
+  courseTitle: string;
+  learnerName: string;
+  attemptNumber: number;
+  submittedAt: string;
+}

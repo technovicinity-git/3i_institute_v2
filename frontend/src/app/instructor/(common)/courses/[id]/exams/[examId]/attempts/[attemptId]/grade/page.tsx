@@ -4,8 +4,12 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { FileText, Clock } from "lucide-react";
-import { useGradeAnswerMutation } from "@/hooks/use-exams";
+import { FileText, Clock, ChevronRight, CheckCircle2 } from "lucide-react";
+import {
+  useGradeAnswerMutation,
+  usePendingAttempts,
+} from "@/hooks/use-exams";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 import type { ExamAttempt } from "@/types/exam";
 import type { Question } from "@/types/question";
 
@@ -20,8 +24,25 @@ export default function GradeAttemptPage() {
   const params = useParams();
   const router = useRouter();
   const attemptId = params.attemptId as string;
+  const examId = params.examId as string;
+  const { basePath } = useCourseWorkspace();
 
   const gradeMutation = useGradeAnswerMutation();
+
+  // "Grade next": prefer the oldest pending attempt of the same exam, then the
+  // oldest pending attempt anywhere.
+  const { data: pendingAttempts } = usePendingAttempts();
+  const otherPending = (pendingAttempts ?? []).filter(
+    (a) => a.id !== attemptId,
+  );
+  const nextAttempt =
+    otherPending.find((a) => a.examId === examId) ?? otherPending[0];
+  const goToNext = () => {
+    if (!nextAttempt) return;
+    router.push(
+      `${basePath}/${nextAttempt.courseId}/exams/${nextAttempt.examId}/attempts/${nextAttempt.id}/grade`,
+    );
+  };
 
   const [marksMap, setMarksMap] = useState<Record<string, string>>({});
 
@@ -116,6 +137,13 @@ export default function GradeAttemptPage() {
             <p className="text-base text-[#64748B] mt-1">
               {attempt.learnerName} • Attempt #{attempt.attemptNumber}
             </p>
+            {pendingAttempts && (
+              <p className="text-xs text-[#94A3B8] mt-1">
+                {otherPending.length === 0
+                  ? "No other submissions waiting"
+                  : `${otherPending.length} other submission${otherPending.length === 1 ? "" : "s"} waiting`}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-sm text-[#64748B]">
@@ -234,7 +262,7 @@ export default function GradeAttemptPage() {
       )}
 
       {/* Summary */}
-      <div className="mt-8 flex items-center justify-between bg-white rounded-xl border border-[#E3E8EF] p-5">
+      <div className="mt-8 flex items-center justify-between flex-wrap gap-4 bg-white rounded-xl border border-[#E3E8EF] p-5">
         <div>
           <p className="text-sm font-semibold text-[#0C1F33]">
             Grading Summary
@@ -245,13 +273,36 @@ export default function GradeAttemptPage() {
               : `${writtenQuestions.length} written question(s) to grade manually. MCQ/True-False are auto-graded.`}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => router.back()}
             className="px-5 py-2.5 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
           >
             Done
           </button>
+          {!attempt.graded && nextAttempt && (
+            <button
+              onClick={goToNext}
+              className="px-4 py-2.5 text-[#64748B] rounded-lg text-sm font-semibold hover:text-[#0C1F33] hover:bg-gray-50"
+            >
+              Skip
+            </button>
+          )}
+          {attempt.graded && nextAttempt && (
+            <button
+              onClick={goToNext}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268]"
+            >
+              Grade next ({otherPending.length} left)
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+          {attempt.graded && pendingAttempts && !nextAttempt && (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#22A146]">
+              <CheckCircle2 className="w-4 h-4" />
+              All caught up
+            </span>
+          )}
           {!attempt.graded && writtenQuestions.length > 0 && (
             <button
               onClick={handleSubmitAllGrades}

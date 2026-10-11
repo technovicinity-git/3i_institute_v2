@@ -77,6 +77,33 @@ export class InstructorDashboardService {
       },
     });
 
+    // Oldest pending attempts first, so instructors grade in submission order
+    const pendingAttempts = await prisma.examAttempt.findMany({
+      where: {
+        graded: false,
+        submittedAt: { not: null },
+        exam: {
+          courseId: { in: courseIds },
+        },
+      },
+      select: {
+        id: true,
+        examId: true,
+        attemptNumber: true,
+        submittedAt: true,
+        exam: {
+          select: {
+            title: true,
+            courseId: true,
+            course: { select: { title: true } },
+          },
+        },
+        learnerProfile: { select: { displayName: true } },
+      },
+      orderBy: { submittedAt: "asc" },
+      take: 5,
+    });
+
     // Recent courses
     const recentCourses = courses.slice(0, 5).map((course) => {
       const avgRating =
@@ -133,6 +160,16 @@ export class InstructorDashboardService {
         scheduledAt: session.scheduledAt,
         durationMinutes: session.durationMinutes,
         meetingLink: session.meetingLink,
+      })),
+      pendingAttempts: pendingAttempts.map((attempt) => ({
+        id: attempt.id,
+        examId: attempt.examId,
+        examTitle: attempt.exam.title,
+        courseId: attempt.exam.courseId,
+        courseTitle: attempt.exam.course.title,
+        learnerName: attempt.learnerProfile?.displayName ?? "Unknown",
+        attemptNumber: attempt.attemptNumber,
+        submittedAt: attempt.submittedAt,
       })),
       recentEnrolments: recentEnrolments.map((enrolment) => ({
         id: enrolment.id,

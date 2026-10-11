@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../instructor_courses/presentation/providers/instructor_courses_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 
@@ -142,6 +143,7 @@ class InstructorSidebar extends ConsumerWidget {
     ('Dashboard', Icons.dashboard_outlined, '/instructor/dashboard'),
     ('My Courses', Icons.menu_book_outlined, '/instructor/courses'),
     ('Live Classes', Icons.video_library_outlined, '/instructor/live-classes'),
+    ('Grading', Icons.fact_check_outlined, '/instructor/grading'),
     ('Questions', Icons.quiz_outlined, '/instructor/questions'),
     (
       'Certificates',
@@ -158,6 +160,8 @@ class InstructorSidebar extends ConsumerWidget {
     final path = GoRouterState.of(context).uri.path;
     final account = ref.watch(authControllerProvider).asData?.value;
     final name = account?.fullName ?? '';
+    final pendingCount =
+        ref.watch(instructorPendingAttemptsProvider).asData?.value.length ?? 0;
     return ColoredBox(
       color: const Color(0xFF12304E),
       child: SafeArea(
@@ -208,6 +212,27 @@ class InstructorSidebar extends ConsumerWidget {
                           item.$1,
                           style: const TextStyle(fontSize: 13),
                         ),
+                        trailing:
+                            item.$3 == '/instructor/grading' && pendingCount > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFB8912F),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  pendingCount > 99 ? '99+' : '$pendingCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              )
+                            : null,
                         textColor: Colors.white.withValues(alpha: .76),
                         iconColor: Colors.white.withValues(alpha: .76),
                         selectedColor: Colors.white,

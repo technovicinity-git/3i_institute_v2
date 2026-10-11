@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../instructor_courses/presentation/pages/instructor_grading_page.dart';
 import '../../domain/entities/instructor_dashboard_data.dart';
 import '../providers/instructor_dashboard_providers.dart';
 
@@ -72,7 +73,10 @@ class InstructorDashboardPage extends ConsumerWidget {
             ),
             if (data.stats.pendingGrading > 0) ...[
               const SizedBox(height: 20),
-              _PendingAlert(count: data.stats.pendingGrading),
+              _PendingAlert(
+                count: data.stats.pendingGrading,
+                attempts: data.pendingAttempts,
+              ),
             ],
             const SizedBox(height: 20),
             _StatsGrid(stats: data.stats),
@@ -332,26 +336,61 @@ class InstructorDashboardPage extends ConsumerWidget {
 }
 
 class _PendingAlert extends StatelessWidget {
-  const _PendingAlert({required this.count});
+  const _PendingAlert({required this.count, required this.attempts});
   final int count;
+  final List<InstructorPendingAttempt> attempts;
+
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: const Color(0xFFFFF8E5),
+      color: Colors.white,
       border: Border.all(color: const Color(0xFFF1D98A)),
       borderRadius: BorderRadius.circular(12),
     ),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.error_outline, color: Color(0xFFB8912F)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'You have $count exam ${count == 1 ? 'attempt' : 'attempts'} waiting for grading.',
-            style: const TextStyle(color: Color(0xFF755B16), height: 1.35),
+        Container(
+          color: const Color(0xFFFFF8E5),
+          padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Color(0xFFB8912F)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$count exam ${count == 1 ? 'attempt is' : 'attempts are'} waiting for grading',
+                  style: const TextStyle(
+                    color: Color(0xFF755B16),
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.go('/instructor/grading'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF755B16),
+                ),
+                child: const Text('View all'),
+              ),
+            ],
           ),
         ),
+        for (final (i, attempt) in attempts.indexed) ...[
+          if (i > 0) const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          PendingAttemptTile(attempt: attempt),
+        ],
+        if (count > attempts.length && attempts.isNotEmpty)
+          Container(
+            color: const Color(0xFFF8FAFC),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Text(
+              'Showing the ${attempts.length} oldest of $count submissions.',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+          ),
       ],
     ),
   );

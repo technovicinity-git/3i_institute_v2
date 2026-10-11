@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../../instructor_dashboard/domain/entities/instructor_dashboard_data.dart';
 import '../domain/entities/instructor_course.dart';
 import '../domain/entities/instructor_batch.dart';
 import '../domain/entities/instructor_exam.dart';
@@ -396,6 +397,18 @@ class InstructorCoursesRepository {
     return (data is List ? data : const [])
         .whereType<Map<String, dynamic>>()
         .map(_attempt)
+        .toList();
+  }
+
+  /// Submitted attempts waiting for manual grading, oldest first.
+  Future<List<InstructorPendingAttempt>> getPendingAttempts() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/exams/pending-attempts',
+    );
+    final data = response.data?['data'];
+    return (data is List ? data : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(InstructorPendingAttempt.fromJson)
         .toList();
   }
 

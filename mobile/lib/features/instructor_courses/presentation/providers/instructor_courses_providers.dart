@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../instructor_dashboard/domain/entities/instructor_dashboard_data.dart';
 import '../../data/instructor_courses_repository.dart';
 import '../../domain/entities/instructor_course.dart';
 import '../../domain/entities/instructor_batch.dart';
@@ -68,6 +69,13 @@ final instructorExamAttemptsProvider =
     FutureProvider.family<List<InstructorExamAttempt>, String>(
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getExamAttempts(id),
+    );
+/// Every attempt waiting for grading. Shared by the grading queue, sidebar
+/// badge, exam list badges and "grade next".
+final instructorPendingAttemptsProvider =
+    FutureProvider<List<InstructorPendingAttempt>>(
+      (ref) =>
+          ref.watch(instructorCoursesRepositoryProvider).getPendingAttempts(),
     );
 final instructorAttemptDetailsProvider = FutureProvider.autoDispose
     .family<InstructorExamAttempt, String>(

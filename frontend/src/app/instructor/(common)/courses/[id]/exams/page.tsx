@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { FileText, Clock, Plus, CheckCircle, ChevronLeft } from "lucide-react";
-import { useCourseExams } from "@/hooks/use-exams";
+import { useCourseExams, usePendingAttempts } from "@/hooks/use-exams";
 import Link from "next/link";
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
@@ -20,6 +20,7 @@ export default function ExamsPage() {
   const courseId = params.id as string;
 
   const { data: exams, isLoading, isError } = useCourseExams(courseId);
+  const { data: pendingAttempts } = usePendingAttempts({ courseId });
 
   const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
@@ -79,6 +80,8 @@ export default function ExamsPage() {
         <div className="space-y-4">
           {exams.map((exam) => {
             const type = getTypeBadge(exam.type);
+            const pendingCount =
+              pendingAttempts?.filter((a) => a.examId === exam.id).length ?? 0;
             return (
               <div
                 key={exam.id}
@@ -98,6 +101,14 @@ export default function ExamsPage() {
                             SCHEDULED
                           </span>
                         )}
+                      {pendingCount > 0 && (
+                        <Link
+                          href={`${basePath}/${courseId}/exams/${exam.id}/attempts`}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded bg-yellow-50 text-yellow-700 hover:bg-yellow-100"
+                        >
+                          {pendingCount} TO GRADE
+                        </Link>
+                      )}
                     </div>
                     <h2
                       className="text-lg font-semibold text-[#0C1F33]"
