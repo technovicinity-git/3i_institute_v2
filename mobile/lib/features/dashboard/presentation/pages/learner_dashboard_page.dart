@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
@@ -8,10 +12,15 @@ import '../../domain/entities/dashboard_data.dart';
 import '../providers/dashboard_providers.dart';
 
 const _navy = Color(0xFF12304E);
+const _ink = Color(0xFF0C1F33);
 const _green = Color(0xFF22A146);
 const _gold = Color(0xFFB8912F);
+const _blue = Color(0xFF2563EB);
+const _red = Color(0xFFDC2626);
 const _muted = Color(0xFF64748B);
-const _border = Color(0xFFE7E9E8);
+const _faint = Color(0xFF94A3B8);
+const _border = Color(0xFFE3E8EF);
+const _cream = Color(0xFFF9F6F0);
 
 class LearnerDashboardPage extends ConsumerWidget {
   const LearnerDashboardPage({super.key});
@@ -53,113 +62,314 @@ class LearnerDashboardPage extends ConsumerWidget {
   }
 }
 
-class _DashboardContent extends StatelessWidget {
+class _DashboardContent extends StatefulWidget {
   const _DashboardContent({required this.data, required this.onRefresh});
   final DashboardData data;
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => RefreshIndicator(
-      onRefresh: onRefresh,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(constraints.maxWidth < 600 ? 16 : 28),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1440),
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent> {
+  // Keep "live now" / "starting soon" accurate without a refresh.
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => setState(() => _now = DateTime.now()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.data;
+    final happeningNow = data.liveClasses
+        .where((c) => _classStatus(c, _now) != _ClassStatus.later)
+        .firstOrNull;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 850;
+        return RefreshIndicator(
+          onRefresh: widget.onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(constraints.maxWidth < 600 ? 16 : 28),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1440),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Greeting(data: data),
+                    if (happeningNow != null) ...[
+                      const SizedBox(height: 16),
+                      _HappeningNowBanner(liveClass: happeningNow, now: _now),
+                    ],
+                    const SizedBox(height: 18),
+                    _StatsGrid(stats: data.stats),
+                    const SizedBox(height: 18),
+                    _TwoColumn(
+                      wide: wide,
+                      left: _ContinueLearning(
+                        courses: data.continueLearning,
+                        hasCourses:
+                            data.stats.coursesInProgress +
+                                data.stats.coursesCompleted >
+                            0,
+                      ),
+                      right: Column(
+                        children: [
+                          _LiveClasses(classes: data.liveClasses, now: _now),
+                          const SizedBox(height: 18),
+                          _Deadlines(deadlines: data.deadlines),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _TwoColumn(
+                      wide: wide,
+                      equal: true,
+                      left: _WeeklyActivityChart(weeks: data.weeklyActivity),
+                      right: _RecentResults(results: data.recentResults),
+                    ),
+                    if (data.notes.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      _RecentNotes(notes: data.notes),
+                    ],
+                    if (data.recommended.isNotEmpty) ...[
+                      const SizedBox(height: 22),
+                      _Recommendations(courses: data.recommended),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TwoColumn extends StatelessWidget {
+  const _TwoColumn({
+    required this.wide,
+    required this.left,
+    required this.right,
+    this.equal = false,
+  });
+  final bool wide, equal;
+  final Widget left, right;
+
+  @override
+  Widget build(BuildContext context) => wide
+      ? Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: equal ? 1 : 3, child: left),
+            const SizedBox(width: 18),
+            Expanded(flex: equal ? 1 : 2, child: right),
+          ],
+        )
+      : Column(children: [left, const SizedBox(height: 18), right]);
+}
+
+// ─── Greeting & live banner ───
+
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.data});
+  final DashboardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+        ? 'Good afternoon'
+        : 'Good evening';
+    final stats = data.stats;
+    final hasCourses = stats.coursesInProgress + stats.coursesCompleted > 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$greeting, ${data.learnerName}',
+          style: const TextStyle(
+            fontFamily: 'serif',
+            fontSize: 26,
+            color: _ink,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          !hasCourses
+              ? 'Find your first course to start learning.'
+              : stats.studiedToday
+              ? 'Nice work today — keep the momentum going.'
+              : 'Pick up where you left off.',
+          style: const TextStyle(color: _muted),
+        ),
+      ],
+    );
+  }
+}
+
+enum _ClassStatus { live, soon, later }
+
+_ClassStatus _classStatus(UpcomingLiveClass c, DateTime now) {
+  final start = c.scheduledAt;
+  if (start == null) return _ClassStatus.later;
+  final end = start.add(Duration(minutes: c.durationMinutes));
+  if (!now.isBefore(start) && !now.isAfter(end)) return _ClassStatus.live;
+  if (start.difference(now).inMinutes <= 30) return _ClassStatus.soon;
+  return _ClassStatus.later;
+}
+
+class _HappeningNowBanner extends StatelessWidget {
+  const _HappeningNowBanner({required this.liveClass, required this.now});
+  final UpcomingLiveClass liveClass;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final live = _classStatus(liveClass, now) == _ClassStatus.live;
+    final link = liveClass.meetingLink;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: live ? _green : _navy,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sensors, color: Colors.white),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatsGrid(stats: data.stats),
-                const SizedBox(height: 22),
-                _MainDashboardRow(data: data),
-                const SizedBox(height: 22),
-                _ProgressAndNotes(data: data),
-                const SizedBox(height: 24),
-                _Recommendations(courses: data.recommended),
+                Text(
+                  live
+                      ? 'Your class is live now'
+                      : 'Your class starts at ${_time(liveClass.scheduledAt)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '${liveClass.title} • ${liveClass.courseTitle}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 10),
+          FilledButton(
+            onPressed: link != null
+                ? () => _openLink(context, link)
+                : () => context.push('/online-classes/${liveClass.batchId}'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: _ink,
+            ),
+            child: Text(link != null ? 'Join' : 'View'),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
+
+// ─── Stats ───
 
 class _StatsGrid extends StatelessWidget {
   const _StatsGrid({required this.stats});
   final DashboardStats stats;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 1000
-          ? 4
-          : constraints.maxWidth >= 540
-          ? 2
-          : 1;
-      final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
-      final items = [
-        _StatItem(
-          icon: Icons.menu_book_outlined,
-          value: '${stats.coursesInProgress}',
-          label: 'Courses in Progress',
-          badge: '+${stats.coursesInProgressDelta} This week',
-          badgeColor: _green,
-        ),
-        _StatItem(
-          icon: Icons.access_time,
-          value: _number(stats.hoursLearned),
-          label: 'Hours learned this month',
-          badge: '${stats.hoursLearnedDelta}% of Goal',
-          badgeColor: _green,
-        ),
-        _StatItem(
-          icon: Icons.workspace_premium_outlined,
-          value: '${stats.certificatesEarned}',
-          label: 'Certificates Earned',
-          badge: '${stats.certificatesPending} pending',
-          badgeColor: _gold,
-        ),
-        _StatItem(
-          icon: Icons.local_fire_department_outlined,
-          value: '${stats.currentStreak} Days',
-          label: 'Current Streak',
-          badge: stats.currentStreak >= stats.streakRecord
-              ? 'Personal Record'
-              : 'Record: ${stats.streakRecord} days',
-          badgeColor: _green,
-        ),
-      ];
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          for (final item in items)
-            SizedBox(
-              width: width,
-              child: _StatCard(item: item),
-            ),
-        ],
-      );
-    },
-  );
+  Widget build(BuildContext context) {
+    final items = [
+      _StatItem(
+        icon: Icons.menu_book_outlined,
+        color: _blue,
+        value: stats.coursesInProgress,
+        label: 'Courses in progress',
+        sub: '${stats.coursesCompleted} completed',
+      ),
+      _StatItem(
+        icon: Icons.check_circle_outline,
+        color: _green,
+        value: stats.lessonsCompleted,
+        label: 'Lessons completed',
+        sub: '${stats.lessonsThisWeek} this week',
+      ),
+      _StatItem(
+        icon: Icons.workspace_premium_outlined,
+        color: _gold,
+        value: stats.certificatesEarned,
+        label: 'Certificates earned',
+        sub: 'View certificates',
+        route: '/certificates',
+      ),
+      _StatItem(
+        icon: Icons.local_fire_department_outlined,
+        color: const Color(0xFFF97316),
+        value: stats.currentStreak,
+        label: 'Day streak',
+        sub: stats.currentStreak > 0 && !stats.studiedToday
+            ? 'Study today to keep it'
+            : 'Best: ${stats.longestStreak} day${stats.longestStreak == 1 ? '' : 's'}',
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 900 ? 4 : 2;
+        final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: width,
+                child: _StatCard(item: item),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _StatItem {
   const _StatItem({
     required this.icon,
+    required this.color,
     required this.value,
     required this.label,
-    required this.badge,
-    required this.badgeColor,
+    required this.sub,
+    this.route,
   });
   final IconData icon;
-  final String value;
-  final String label;
-  final String badge;
-  final Color badgeColor;
+  final Color color;
+  final int value;
+  final String label, sub;
+  final String? route;
 }
 
 class _StatCard extends StatelessWidget {
@@ -167,107 +377,88 @@ class _StatCard extends StatelessWidget {
   final _StatItem item;
 
   @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 145),
-    padding: const EdgeInsets.all(16),
-    decoration: _cardDecoration(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: const BorderSide(color: _border),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: item.route == null ? null : () => context.go(item.route!),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(10),
+                color: item.color.withValues(alpha: .1),
+                borderRadius: BorderRadius.circular(9),
               ),
-              child: Icon(item.icon, size: 20, color: _green),
+              child: Icon(item.icon, size: 19, color: item.color),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                item.badge,
-                textAlign: TextAlign.end,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: item.badgeColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
+            const SizedBox(height: 10),
+            Text(
+              '${item.value}',
+              style: const TextStyle(
+                fontFamily: 'serif',
+                fontSize: 26,
+                color: _ink,
+              ),
+            ),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: _muted),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              item.sub,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: item.route != null ? _green : _faint,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          item.value,
-          style: const TextStyle(
-            fontFamily: 'serif',
-            fontSize: 27,
-            color: _navy,
-          ),
-        ),
-        Text(item.label, style: const TextStyle(fontSize: 11, color: _muted)),
-      ],
+      ),
     ),
   );
 }
 
-class _MainDashboardRow extends StatelessWidget {
-  const _MainDashboardRow({required this.data});
-  final DashboardData data;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final continueCard = _ContinueLearning(courses: data.continueLearning);
-      final rightColumn = Column(
-        children: [
-          _LiveClasses(classes: data.liveClasses),
-          const SizedBox(height: 18),
-          _Deadlines(deadlines: data.deadlines),
-        ],
-      );
-      if (constraints.maxWidth < 850) {
-        return Column(
-          children: [continueCard, const SizedBox(height: 18), rightColumn],
-        );
-      }
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(flex: 3, child: continueCard),
-          const SizedBox(width: 18),
-          Expanded(flex: 2, child: rightColumn),
-        ],
-      );
-    },
-  );
-}
+// ─── Continue learning ───
 
 class _ContinueLearning extends StatelessWidget {
-  const _ContinueLearning({required this.courses});
+  const _ContinueLearning({required this.courses, required this.hasCourses});
   final List<ContinueLearningCourse> courses;
+  final bool hasCourses;
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
     title: 'Continue learning',
+    actionLabel: 'View all',
+    actionRoute: '/my-courses',
     child: courses.isEmpty
-        ? const _EmptyState(
-            icon: Icons.menu_book_outlined,
-            message: 'No courses enrolled yet.',
-            actionLabel: 'Explore courses',
+        ? _EmptyState(
+            icon: Icons.school_outlined,
+            message: hasCourses
+                ? "You've finished all your courses!"
+                : "You haven't started a course yet.",
+            actionLabel: 'Browse courses',
             onActionRoute: '/courses',
           )
         : Column(
             children: [
-              for (var index = 0; index < courses.length; index++) ...[
-                if (index > 0) const Divider(height: 20),
-                _ContinueLearningRow(course: courses[index]),
+              for (final (i, course) in courses.indexed) ...[
+                if (i > 0) const Divider(height: 22, color: Color(0xFFF1F5F9)),
+                _ContinueLearningRow(course: course),
               ],
             ],
           ),
@@ -278,80 +469,116 @@ class _ContinueLearningRow extends StatelessWidget {
   const _ContinueLearningRow({required this.course});
   final ContinueLearningCourse course;
 
+  String get _route {
+    if (course.isOnlineClass && course.batchId != null) {
+      return '/online-classes/${course.batchId}';
+    }
+    if (course.nextLessonId != null) {
+      return '/my-courses/${course.id}/lessons/${course.nextLessonId}';
+    }
+    return '/my-courses';
+  }
+
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final compact = constraints.maxWidth < 570;
-      return InkWell(
-        onTap: () => context.push('/courses/${course.id}'),
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => context.push(_route),
+    borderRadius: BorderRadius.circular(10),
+    child: Row(
+      children: [
+        _CourseThumbnail(url: course.thumbnailUrl, width: 76, height: 54),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CourseThumbnail(url: course.thumbnailUrl, width: 76, height: 54),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                course.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                course.nextLessonTitle != null
+                    ? 'Next: ${course.nextLessonTitle}'
+                    : course.isOnlineClass
+                    ? 'Live online class'
+                    : 'No lessons yet',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: _muted),
+              ),
+              if (course.totalLessons > 0) ...[
+                const SizedBox(height: 7),
+                Row(
                   children: [
-                    Text(
-                      course.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _navy,
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: course.progress / 100,
+                          minHeight: 6,
+                          color: _green,
+                          backgroundColor: const Color(0xFFF1F5F9),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 8),
                     Text(
-                      course.moduleInfo,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      '${course.completedLessons}/${course.totalLessons}',
                       style: const TextStyle(fontSize: 11, color: _muted),
                     ),
-                    const SizedBox(height: 7),
-                    _ProgressTrack(value: course.progress / 100),
                   ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${course.progress}%',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _navy,
-                ),
-              ),
-              if (!compact) ...[
-                const SizedBox(width: 12),
-                const Icon(Icons.chevron_right, color: _muted, size: 19),
               ],
             ],
           ),
         ),
-      );
-    },
+        const SizedBox(width: 10),
+        FilledButton(
+          onPressed: () => context.push(_route),
+          style: FilledButton.styleFrom(
+            backgroundColor: _navy,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(
+            course.isOnlineClass
+                ? 'Schedule'
+                : course.completedLessons > 0
+                ? 'Resume'
+                : 'Start',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+      ],
+    ),
   );
 }
 
+// ─── Live classes ───
+
 class _LiveClasses extends StatelessWidget {
-  const _LiveClasses({required this.classes});
+  const _LiveClasses({required this.classes, required this.now});
   final List<UpcomingLiveClass> classes;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
     title: 'Upcoming live classes',
+    actionLabel: 'View all',
+    actionRoute: '/online-classes',
     child: classes.isEmpty
         ? const _EmptyMessage('No upcoming live classes.')
         : Column(
             children: [
-              for (var index = 0; index < classes.length; index++) ...[
-                if (index > 0) const Divider(height: 18),
-                _LiveClassRow(liveClass: classes[index]),
+              for (final (i, c) in classes.indexed) ...[
+                if (i > 0) const SizedBox(height: 12),
+                _LiveClassRow(liveClass: c, status: _classStatus(c, now)),
               ],
             ],
           ),
@@ -359,73 +586,103 @@ class _LiveClasses extends StatelessWidget {
 }
 
 class _LiveClassRow extends StatelessWidget {
-  const _LiveClassRow({required this.liveClass});
+  const _LiveClassRow({required this.liveClass, required this.status});
   final UpcomingLiveClass liveClass;
+  final _ClassStatus status;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Container(
-        width: 42,
-        height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFBF9F4),
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: _border),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              liveClass.date,
-              style: const TextStyle(
-                fontFamily: 'serif',
-                fontSize: 16,
-                color: _navy,
-                height: 1,
+  Widget build(BuildContext context) {
+    final date = liveClass.scheduledAt;
+    final link = liveClass.meetingLink;
+    final joinable = status != _ClassStatus.later && link != null;
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 48,
+          decoration: BoxDecoration(
+            color: _cream,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                date == null
+                    ? '--'
+                    : DateFormat('MMM').format(date).toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: _gold,
+                ),
               ),
-            ),
-            Text(
-              liveClass.month.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: _muted,
+              Text(
+                date == null ? '--' : '${date.day}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _ink,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              liveClass.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: _navy,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                liveClass.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _ink,
+                ),
               ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              '${liveClass.instructor} · ${liveClass.time}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, color: _muted),
-            ),
-          ],
+              Text(
+                '${status == _ClassStatus.live ? 'Live now' : _time(date)} • ${liveClass.courseTitle}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: status == _ClassStatus.live ? _green : _muted,
+                  fontWeight: status == _ClassStatus.live
+                      ? FontWeight.w600
+                      : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      const SizedBox(width: 6),
-      const Icon(Icons.video_call_outlined, size: 18, color: _green),
-    ],
-  );
+        const SizedBox(width: 8),
+        joinable
+            ? FilledButton(
+                onPressed: () => _openLink(context, link),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _green,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('Join', style: TextStyle(fontSize: 12)),
+              )
+            : OutlinedButton(
+                onPressed: () =>
+                    context.push('/online-classes/${liveClass.batchId}'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _navy,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('View', style: TextStyle(fontSize: 12)),
+              ),
+      ],
+    );
+  }
 }
+
+// ─── Deadlines ───
 
 class _Deadlines extends StatelessWidget {
   const _Deadlines({required this.deadlines});
@@ -435,14 +692,9 @@ class _Deadlines extends StatelessWidget {
   Widget build(BuildContext context) => _DashboardPanel(
     title: 'Deadlines',
     child: deadlines.isEmpty
-        ? const _EmptyMessage('No upcoming deadlines.')
+        ? const _EmptyMessage("Nothing due — you're all set.")
         : Column(
-            children: [
-              for (var index = 0; index < deadlines.length; index++) ...[
-                if (index > 0) const Divider(height: 18),
-                _DeadlineRow(deadline: deadlines[index]),
-              ],
-            ],
+            children: [for (final d in deadlines) _DeadlineRow(deadline: d)],
           ),
   );
 }
@@ -453,141 +705,209 @@ class _DeadlineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dueLabel = deadline.daysRemaining <= 0
+    final urgent = deadline.daysRemaining <= 1;
+    final due = deadline.daysRemaining <= 0
         ? 'Due today'
         : deadline.daysRemaining == 1
         ? 'Due tomorrow'
         : 'Due in ${deadline.daysRemaining} days';
-    final color = deadline.urgent ? const Color(0xFFDC4C42) : _muted;
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: deadline.urgent
-              ? const Color(0xFFFFF0EE)
-              : const Color(0xFFF4F5F5),
-          child: Icon(Icons.warning_amber_rounded, size: 17, color: color),
+    return _TapRow(
+      route: deadline.isExam
+          ? '/my-courses/${deadline.courseId}/exams'
+          : '/my-courses/${deadline.courseId}/assignments',
+      leading: CircleAvatar(
+        radius: 17,
+        backgroundColor: urgent
+            ? const Color(0xFFFEF2F2)
+            : const Color(0xFFF1F5F9),
+        child: Icon(
+          urgent
+              ? Icons.warning_amber_rounded
+              : deadline.isExam
+              ? Icons.description_outlined
+              : Icons.assignment_outlined,
+          size: 17,
+          color: urgent ? _red : _muted,
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                deadline.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _navy,
-                ),
-              ),
-              Text(
-                dueLabel,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
+      ),
+      title: deadline.title,
+      subtitle: TextSpan(
+        children: [
+          TextSpan(
+            text: due,
+            style: TextStyle(
+              color: urgent ? _red : _muted,
+              fontWeight: urgent ? FontWeight.w600 : FontWeight.normal,
+            ),
           ),
-        ),
-      ],
+          TextSpan(
+            text:
+                ' • ${deadline.isExam ? 'Exam' : 'Assignment'} · ${deadline.courseTitle}',
+          ),
+        ],
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 18, color: _faint),
     );
   }
 }
 
-class _ProgressAndNotes extends StatelessWidget {
-  const _ProgressAndNotes({required this.data});
-  final DashboardData data;
+// ─── Activity chart ───
 
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final progress = _WeeklyProgressChart(weeks: data.weeklyProgress);
-      final notes = _RecentNotes(notes: data.notes);
-      if (constraints.maxWidth < 700) {
-        return Column(children: [progress, const SizedBox(height: 18), notes]);
-      }
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: progress),
-          const SizedBox(width: 18),
-          Expanded(child: notes),
-        ],
-      );
-    },
-  );
-}
-
-class _WeeklyProgressChart extends StatelessWidget {
-  const _WeeklyProgressChart({required this.weeks});
-  final List<WeeklyStudyProgress> weeks;
+class _WeeklyActivityChart extends StatelessWidget {
+  const _WeeklyActivityChart({required this.weeks});
+  final List<WeeklyActivity> weeks;
 
   @override
   Widget build(BuildContext context) {
-    final maxHours = weeks.fold<double>(
-      0,
-      (maximum, week) => week.hours > maximum ? week.hours : maximum,
+    final maxValue = weeks.fold<int>(
+      1,
+      (max, w) => w.lessonsCompleted > max ? w.lessonsCompleted : max,
     );
+    final total = weeks.fold<int>(0, (sum, w) => sum + w.lessonsCompleted);
     return _DashboardPanel(
-      title: 'Your progress',
-      subtitle: 'Weekly study hours',
+      title: 'Your activity',
+      subtitle:
+          'Lessons completed per week · $total in the last ${weeks.length} weeks',
       child: SizedBox(
-        height: 176,
-        child: weeks.isEmpty
-            ? const Center(child: _EmptyMessage('Study time will appear here.'))
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (final week in weeks)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              _number(week.hours),
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: _muted,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Container(
-                              width: 30,
-                              height: maxHours <= 0
-                                  ? 4
-                                  : 116 * (week.hours / maxHours),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF12304E),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(5),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 7),
-                            Text(
-                              'W${week.week}',
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: _muted,
-                              ),
-                            ),
-                          ],
+        height: 150,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (final (i, week) in weeks.indexed)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        week.lessonsCompleted > 0
+                            ? '${week.lessonsCompleted}'
+                            : '',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _muted,
                         ),
                       ),
-                    ),
-                ],
+                      const SizedBox(height: 4),
+                      Container(
+                        height: week.lessonsCompleted == 0
+                            ? 4
+                            : 100 * week.lessonsCompleted / maxValue,
+                        constraints: const BoxConstraints(maxWidth: 34),
+                        decoration: BoxDecoration(
+                          color: (i == weeks.length - 1 ? _green : _navy)
+                              .withValues(
+                                alpha: week.lessonsCompleted == 0 ? .15 : 1,
+                              ),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        i == weeks.length - 1
+                            ? 'This wk'
+                            : week.weekStart == null
+                            ? ''
+                            : DateFormat('MMM d').format(week.weekStart!),
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: i == weeks.length - 1 ? _green : _faint,
+                          fontWeight: i == weeks.length - 1
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+          ],
+        ),
       ),
     );
   }
 }
+
+// ─── Recent results ───
+
+class _RecentResults extends StatelessWidget {
+  const _RecentResults({required this.results});
+  final List<DashboardResult> results;
+
+  @override
+  Widget build(BuildContext context) => _DashboardPanel(
+    title: 'Recent results',
+    actionLabel: 'View all',
+    actionRoute: '/exams',
+    child: results.isEmpty
+        ? const _EmptyMessage(
+            'Your exam and assignment results will appear here.',
+          )
+        : Column(children: [for (final r in results) _ResultRow(result: r)]),
+  );
+}
+
+class _ResultRow extends StatelessWidget {
+  const _ResultRow({required this.result});
+  final DashboardResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, color) = switch (result.status) {
+      'PASSED' => (Icons.check_circle_outline, 'Passed', _green),
+      'FAILED' => (Icons.cancel_outlined, 'Not passed', _red),
+      'GRADED' => (Icons.check_circle_outline, 'Graded', _blue),
+      _ => (Icons.hourglass_bottom, 'Awaiting grade', const Color(0xFFA16207)),
+    };
+    final score = result.score;
+    return _TapRow(
+      route: result.isExam && result.examId != null
+          ? '/my-courses/${result.courseId}/exams/${result.examId}/result'
+          : '/my-courses/${result.courseId}/assignments',
+      leading: CircleAvatar(
+        radius: 17,
+        backgroundColor: color.withValues(alpha: .1),
+        child: Icon(icon, size: 17, color: color),
+      ),
+      title: result.title,
+      subtitle: TextSpan(
+        text:
+            '${result.isExam ? 'Exam' : 'Assignment'} · ${result.courseTitle}'
+            '${result.submittedAt == null ? '' : ' • ${_ago(result.submittedAt!)}'}',
+      ),
+      trailing: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (score != null)
+            Text(
+              '${_number(score)}/${result.totalMarks}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: _ink,
+                fontSize: 13,
+              ),
+            ),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Notes ───
 
 class _RecentNotes extends StatelessWidget {
   const _RecentNotes({required this.notes});
@@ -596,64 +916,67 @@ class _RecentNotes extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _DashboardPanel(
     title: 'Recent notes',
-    child: notes.isEmpty
-        ? const _EmptyMessage('No notes yet.')
-        : Column(
-            children: [
-              for (var index = 0; index < notes.length; index++) ...[
-                if (index > 0) const Divider(height: 20),
-                _NoteRow(note: notes[index]),
-              ],
-            ],
-          ),
-  );
-}
-
-class _NoteRow extends StatelessWidget {
-  const _NoteRow({required this.note});
-  final DashboardNote note;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.only(left: 12),
-    decoration: const BoxDecoration(
-      border: Border(left: BorderSide(color: _gold, width: 3)),
-    ),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                note.subject.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: _gold,
-                ),
+        for (final (i, note) in notes.indexed) ...[
+          if (i > 0) const SizedBox(height: 10),
+          InkWell(
+            onTap: () => context.push(
+              '/my-courses/${note.courseId}/lessons/${note.lessonId}',
+            ),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+              decoration: const BoxDecoration(
+                border: Border(left: BorderSide(color: _gold, width: 3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    note.courseTitle.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _gold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    note.lessonTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _ink,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    note.text,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: Color(0xFF4B5563),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              note.timeAgo,
-              style: const TextStyle(fontSize: 9, color: _muted),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        Text(
-          note.text,
-          style: const TextStyle(
-            fontSize: 11,
-            height: 1.4,
-            color: Color(0xFF4B5563),
           ),
-        ),
+        ],
       ],
     ),
   );
 }
+
+// ─── Recommendations ───
 
 class _Recommendations extends StatelessWidget {
   const _Recommendations({required this.courses});
@@ -661,39 +984,34 @@ class _Recommendations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text(
-        'Recommended for you',
-        style: TextStyle(fontFamily: 'serif', fontSize: 20, color: _navy),
+      Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Recommended for you',
+              style: TextStyle(fontFamily: 'serif', fontSize: 18, color: _ink),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/courses'),
+            style: TextButton.styleFrom(foregroundColor: _green),
+            child: const Text('Browse all'),
+          ),
+        ],
       ),
-      const SizedBox(height: 14),
-      if (courses.isEmpty)
-        const _DashboardPanel(
-          child: _EmptyMessage('No recommendations available right now.'),
-        )
-      else
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900
-                ? 3
-                : constraints.maxWidth >= 560
-                ? 2
-                : 1;
-            final width = (constraints.maxWidth - 14 * (columns - 1)) / columns;
-            return Wrap(
-              spacing: 14,
-              runSpacing: 14,
-              children: [
-                for (final course in courses)
-                  SizedBox(
-                    width: width,
-                    child: _RecommendedCourseCard(course: course),
-                  ),
-              ],
-            );
-          },
+      const SizedBox(height: 8),
+      SizedBox(
+        height: 236,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: courses.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
+          itemBuilder: (context, i) =>
+              _RecommendedCourseCard(course: courses[i]),
         ),
+      ),
     ],
   );
 }
@@ -703,67 +1021,67 @@ class _RecommendedCourseCard extends StatelessWidget {
   final RecommendedCourse course;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: () => context.push('/courses/${course.id}'),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _border),
-        ),
+  Widget build(BuildContext context) => SizedBox(
+    width: 240,
+    child: Material(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
+      child: InkWell(
+        onTap: () => context.push('/courses/${course.id}'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _CourseThumbnail(
-              url: course.thumbnailUrl,
-              width: double.infinity,
-              height: 146,
+            Stack(
+              children: [
+                _CourseThumbnail(
+                  url: course.thumbnailUrl,
+                  width: 240,
+                  height: 120,
+                  radius: 0,
+                ),
+                if (course.type == 'ONLINE_CLASS')
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7C3AED),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Text(
+                        'LIVE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             Padding(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          course.level.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            color: _green,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const Icon(Icons.star, size: 14, color: _gold),
-                      const SizedBox(width: 4),
-                      Text(
-                        _number(course.rating),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _gold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 9),
                   Text(
                     course.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'serif',
-                      fontSize: 17,
-                      height: 1.2,
-                      color: _navy,
+                      fontSize: 15,
+                      height: 1.25,
+                      color: _ink,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -771,22 +1089,89 @@ class _RecommendedCourseCard extends StatelessWidget {
                     course.instructor,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: _muted),
+                    style: const TextStyle(fontSize: 12, color: _muted),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Learn more  →',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: _green,
-                    ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, size: 14, color: _gold),
+                      const SizedBox(width: 3),
+                      Text(
+                        course.rating?.toStringAsFixed(1) ?? 'New',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _ink,
+                        ),
+                      ),
+                      if (course.ratingCount > 0)
+                        Text(
+                          ' (${course.ratingCount})',
+                          style: const TextStyle(fontSize: 11, color: _faint),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+// ─── Shared pieces ───
+
+class _TapRow extends StatelessWidget {
+  const _TapRow({
+    required this.route,
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+  final String route;
+  final Widget leading, trailing;
+  final String title;
+  final TextSpan subtitle;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => context.push(route),
+    borderRadius: BorderRadius.circular(8),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          leading,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _ink,
+                  ),
+                ),
+                Text.rich(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: _muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          trailing,
+        ],
       ),
     ),
   );
@@ -797,95 +1182,89 @@ class _CourseThumbnail extends StatelessWidget {
     required this.url,
     required this.width,
     required this.height,
+    this.radius = 9,
   });
   final String? url;
-  final double width;
-  final double height;
+  final double width, height, radius;
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = url?.trim();
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return Container(
+    const fallback = ColoredBox(
+      color: _navy,
+      child: Center(child: Icon(Icons.menu_book, color: Colors.white54)),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: SizedBox(
         width: width,
         height: height,
-        color: const Color(0xFFEFF2F0),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.menu_book_outlined,
-          color: Color(0xFF94A3B8),
-          size: 28,
-        ),
-      );
-    }
-    return Image.network(
-      imageUrl,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: width,
-        height: height,
-        color: const Color(0xFFEFF2F0),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.menu_book_outlined,
-          color: Color(0xFF94A3B8),
-          size: 28,
-        ),
+        child: url == null
+            ? fallback
+            : Image.network(
+                url!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => fallback,
+              ),
       ),
     );
   }
 }
 
-class _ProgressTrack extends StatelessWidget {
-  const _ProgressTrack({required this.value});
-  final double value;
-
-  @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(20),
-    child: LinearProgressIndicator(
-      value: value.clamp(0, 1),
-      minHeight: 6,
-      backgroundColor: const Color(0xFFF0F2F2),
-      color: _green,
-    ),
-  );
-}
-
 class _DashboardPanel extends StatelessWidget {
-  const _DashboardPanel({this.title, this.subtitle, required this.child});
-  final String? title;
-  final String? subtitle;
+  const _DashboardPanel({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.actionLabel,
+    this.actionRoute,
+  });
+  final String title;
+  final String? subtitle, actionLabel, actionRoute;
   final Widget child;
 
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(18),
-    decoration: _cardDecoration(),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _border),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (title != null) ...[
-          Text(
-            title!,
-            style: const TextStyle(
-              fontFamily: 'serif',
-              fontSize: 18,
-              color: _navy,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 18,
+                  color: _ink,
+                ),
+              ),
             ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 3),
-            Text(
-              subtitle!,
-              style: const TextStyle(fontSize: 10, color: _muted),
-            ),
+            if (actionLabel != null && actionRoute != null)
+              GestureDetector(
+                onTap: () => context.go(actionRoute!),
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _green,
+                  ),
+                ),
+              ),
           ],
-          const SizedBox(height: 14),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 3),
+          Text(subtitle!, style: const TextStyle(fontSize: 11, color: _muted)),
         ],
+        const SizedBox(height: 12),
         child,
       ],
     ),
@@ -900,25 +1279,31 @@ class _EmptyState extends StatelessWidget {
     required this.onActionRoute,
   });
   final IconData icon;
-  final String message;
-  final String actionLabel;
-  final String onActionRoute;
+  final String message, actionLabel, onActionRoute;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        children: [
-          Icon(icon, size: 32, color: const Color(0xFF94A3B8)),
-          const SizedBox(height: 6),
-          Text(message, style: const TextStyle(fontSize: 12, color: _muted)),
-          TextButton(
-            onPressed: () => context.go(onActionRoute),
-            child: Text(actionLabel),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFBF9F4),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, size: 34, color: _gold),
+        const SizedBox(height: 8),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w600, color: _ink),
+        ),
+        TextButton(
+          onPressed: () => context.go(onActionRoute),
+          style: TextButton.styleFrom(foregroundColor: _green),
+          child: Text(actionLabel),
+        ),
+      ],
     ),
   );
 }
@@ -928,10 +1313,8 @@ class _EmptyMessage extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Text(message, style: const TextStyle(fontSize: 12, color: _muted)),
-  );
+  Widget build(BuildContext context) =>
+      Text(message, style: const TextStyle(fontSize: 13, color: _muted));
 }
 
 class _DashboardError extends StatelessWidget {
@@ -951,11 +1334,7 @@ class _DashboardError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.cloud_off_outlined,
-            size: 42,
-            color: Color(0xFF94A3B8),
-          ),
+          const Icon(Icons.cloud_off_outlined, size: 42, color: _faint),
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
@@ -978,11 +1357,29 @@ class _DashboardError extends StatelessWidget {
   );
 }
 
-BoxDecoration _cardDecoration() => BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(12),
-  border: Border.all(color: _border),
-);
+Future<void> _openLink(BuildContext context, String link) async {
+  final uri = Uri.tryParse(link);
+  if (uri != null &&
+      await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    return;
+  }
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open the meeting link.')),
+    );
+  }
+}
+
+String _time(DateTime? date) =>
+    date == null ? 'Time TBA' : DateFormat('h:mm a').format(date);
+
+String _ago(DateTime date) {
+  final diff = DateTime.now().difference(date);
+  if (diff.inHours < 1) return 'Just now';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  return DateFormat('MMM d').format(date);
+}
 
 String _number(num value) => value == value.roundToDouble()
     ? value.toStringAsFixed(0)

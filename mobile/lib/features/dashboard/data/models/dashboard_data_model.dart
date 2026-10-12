@@ -2,109 +2,140 @@ import '../../domain/entities/dashboard_data.dart';
 
 Map<String, dynamic> _map(Object? value) =>
     value is Map<String, dynamic> ? value : const {};
-List<Object?> _list(Object? value) =>
-    value is List ? value.cast<Object?>() : const [];
+List<Map<String, dynamic>> _list(Object? value) => value is List
+    ? value.whereType<Map<String, dynamic>>().toList(growable: false)
+    : const [];
 String _string(Object? value, [String fallback = '']) =>
     value is String ? value : fallback;
+String? _nullableString(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;
 int _int(Object? value) => value is num ? value.toInt() : 0;
-double _double(Object? value) => value is num ? value.toDouble() : 0;
 bool _bool(Object? value) => value is bool && value;
+DateTime? _date(Object? value) =>
+    value is String ? DateTime.tryParse(value)?.toLocal() : null;
 
 class DashboardDataModel extends DashboardData {
   const DashboardDataModel({
+    required super.learnerName,
     required super.stats,
     required super.continueLearning,
     required super.liveClasses,
     required super.deadlines,
+    required super.recentResults,
     required super.notes,
+    required super.weeklyActivity,
     required super.recommended,
-    required super.weeklyProgress,
   });
 
   factory DashboardDataModel.fromJson(Map<String, dynamic> json) {
     final stats = _map(json['stats']);
     return DashboardDataModel(
+      learnerName: _string(_map(json['learner'])['displayName'], 'Learner'),
       stats: DashboardStats(
         coursesInProgress: _int(stats['coursesInProgress']),
-        hoursLearned: _double(stats['hoursLearned']),
+        coursesCompleted: _int(stats['coursesCompleted']),
+        lessonsCompleted: _int(stats['lessonsCompleted']),
+        lessonsThisWeek: _int(stats['lessonsThisWeek']),
         certificatesEarned: _int(stats['certificatesEarned']),
         currentStreak: _int(stats['currentStreak']),
-        coursesInProgressDelta: _int(stats['coursesInProgressDelta']),
-        hoursLearnedDelta: _int(stats['hoursLearnedDelta']),
-        certificatesPending: _int(stats['certificatesPending']),
-        streakRecord: _int(stats['streakRecord']),
+        longestStreak: _int(stats['longestStreak']),
+        studiedToday: _bool(stats['studiedToday']),
       ),
       continueLearning: _list(json['continueLearning'])
-          .map((value) {
-            final course = _map(value);
-            return ContinueLearningCourse(
-              id: _string(course['id']),
-              title: _string(course['title'], 'Course'),
-              thumbnailUrl: course['thumbnailUrl'] as String?,
-              moduleInfo: _string(course['moduleInfo']),
-              progress: _int(course['progress']).clamp(0, 100),
-            );
-          })
+          .map(
+            (c) => ContinueLearningCourse(
+              id: _string(c['id']),
+              title: _string(c['title'], 'Course'),
+              thumbnailUrl: _nullableString(c['thumbnailUrl']),
+              type: _string(c['type']),
+              batchId: _nullableString(c['batchId']),
+              progress: _int(c['progress']).clamp(0, 100),
+              completedLessons: _int(c['completedLessons']),
+              totalLessons: _int(c['totalLessons']),
+              nextLessonId: _nullableString(c['nextLessonId']),
+              nextLessonTitle: _nullableString(c['nextLessonTitle']),
+            ),
+          )
           .toList(growable: false),
       liveClasses: _list(json['liveClasses'])
-          .map((value) {
-            final liveClass = _map(value);
-            return UpcomingLiveClass(
-              id: _string(liveClass['id']),
-              sessionId: _string(liveClass['sessionId']),
-              date: _string(liveClass['date']),
-              month: _string(liveClass['month']),
-              title: _string(liveClass['title'], 'Live class'),
-              instructor: _string(liveClass['instructor']),
-              time: _string(liveClass['time']),
-              meetingLink: _string(liveClass['meetingLink']),
-            );
-          })
+          .map(
+            (c) => UpcomingLiveClass(
+              id: _string(c['id']),
+              batchId: _string(c['batchId']),
+              title: _string(c['title'], 'Live class'),
+              courseTitle: _string(c['courseTitle']),
+              instructor: _string(c['instructor']),
+              scheduledAt: _date(c['scheduledAt']),
+              durationMinutes: _int(c['durationMinutes']),
+              meetingLink: _nullableString(c['meetingLink']),
+            ),
+          )
           .toList(growable: false),
       deadlines: _list(json['deadlines'])
-          .map((value) {
-            final deadline = _map(value);
-            return DashboardDeadline(
-              id: _string(deadline['id']),
-              title: _string(deadline['title'], 'Upcoming deadline'),
-              dueDate: DateTime.tryParse(_string(deadline['dueDate'])),
-              urgent: _bool(deadline['urgent']),
-              daysRemaining: _int(deadline['daysRemaining']),
-            );
-          })
+          .map(
+            (d) => DashboardDeadline(
+              id: _string(d['id']),
+              isExam: d['kind'] == 'EXAM',
+              title: _string(d['title'], 'Upcoming deadline'),
+              courseId: _string(d['courseId']),
+              courseTitle: _string(d['courseTitle']),
+              dueDate: _date(d['dueDate']),
+              daysRemaining: _int(d['daysRemaining']),
+            ),
+          )
+          .toList(growable: false),
+      recentResults: _list(json['recentResults'])
+          .map(
+            (r) => DashboardResult(
+              id: _string(r['id']),
+              isExam: r['kind'] == 'EXAM',
+              title: _string(r['title'], 'Result'),
+              courseId: _string(r['courseId']),
+              courseTitle: _string(r['courseTitle']),
+              examId: _nullableString(r['examId']),
+              status: _string(r['status'], 'AWAITING_GRADE'),
+              score: r['score'] is num ? r['score'] as num : null,
+              totalMarks: _int(r['totalMarks']),
+              submittedAt: _date(r['submittedAt']),
+            ),
+          )
           .toList(growable: false),
       notes: _list(json['notes'])
-          .map((value) {
-            final note = _map(value);
-            return DashboardNote(
-              id: _string(note['id']),
-              subject: _string(note['subject'], 'Note'),
-              timeAgo: _string(note['timeAgo']),
-              text: _string(note['text']),
-            );
-          })
+          .map(
+            (n) => DashboardNote(
+              id: _string(n['id']),
+              lessonId: _string(n['lessonId']),
+              lessonTitle: _string(n['lessonTitle'], 'Lesson'),
+              courseId: _string(n['courseId']),
+              courseTitle: _string(n['courseTitle']),
+              text: _string(n['text']),
+              createdAt: _date(n['createdAt']),
+            ),
+          )
+          .toList(growable: false),
+      weeklyActivity: _list(json['weeklyActivity'])
+          .map(
+            (w) => WeeklyActivity(
+              weekStart: DateTime.tryParse(_string(w['weekStart'])),
+              lessonsCompleted: _int(w['lessonsCompleted']),
+            ),
+          )
           .toList(growable: false),
       recommended: _list(json['recommended'])
-          .map((value) {
-            final course = _map(value);
-            return RecommendedCourse(
-              id: _string(course['id']),
-              title: _string(course['title'], 'Course'),
-              thumbnailUrl: course['thumbnailUrl'] as String?,
-              instructor: _string(course['instructor']),
-              level: _string(course['level']),
-              rating: _double(course['rating']),
-            );
-          })
-          .toList(growable: false),
-      weeklyProgress: _list(json['weeklyProgress'])
-          .map((value) {
-            final week = _map(value);
-            return WeeklyStudyProgress(
-              week: _int(week['week']),
-              hours: _double(week['hours']),
-            );
-          })
+          .map(
+            (c) => RecommendedCourse(
+              id: _string(c['id']),
+              title: _string(c['title'], 'Course'),
+              thumbnailUrl: _nullableString(c['thumbnailUrl']),
+              instructor: _string(c['instructor']),
+              level: _string(c['level']),
+              type: _string(c['type']),
+              rating: c['rating'] is num
+                  ? (c['rating'] as num).toDouble()
+                  : null,
+              ratingCount: _int(c['ratingCount']),
+            ),
+          )
           .toList(growable: false),
     );
   }

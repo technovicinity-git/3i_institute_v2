@@ -9,7 +9,11 @@ class DashboardRemoteDataSource {
   Future<DashboardDataModel> getDashboard(String learnerProfileId) async {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/dashboard',
-      queryParameters: {'learnerProfileId': learnerProfileId},
+      queryParameters: {
+        'learnerProfileId': learnerProfileId,
+        // Same convention as JS getTimezoneOffset(): UTC minus local time.
+        'tzOffset': -DateTime.now().timeZoneOffset.inMinutes,
+      },
     );
     final data = response.data?['data'];
     return DashboardDataModel.fromJson(
