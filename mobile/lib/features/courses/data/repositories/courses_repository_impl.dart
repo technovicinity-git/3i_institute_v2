@@ -28,4 +28,8 @@ class CoursesRepositoryImpl implements CoursesRepository {
   @override
   Future<bool> enrol({required String learnerProfileId, required String courseId, String? batchId}) =>
       _remoteDataSource.enrol(learnerProfileId: learnerProfileId, courseId: courseId, batchId: batchId);
+
+  @override
+  Future<void> rateCourse({required String courseId, required String learnerProfileId, required int rating, String? review}) =>
+      _remoteDataSource.rateCourse(courseId: courseId, learnerProfileId: learnerProfileId, rating: rating, review: review);
 }

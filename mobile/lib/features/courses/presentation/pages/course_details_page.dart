@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/share/course_share.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/entities/course_details.dart';
 import '../providers/courses_providers.dart';
@@ -80,9 +81,9 @@ class _CourseDetailBody extends StatelessWidget {
                         const SizedBox(height: 28),
                         _CurriculumSection(course: course),
                       ],
-                      if (course.reviews.isNotEmpty || course.ratingCount > 0) ...[
+                      if (course.reviews.isNotEmpty || course.ratingCount > 0 || course.enrolled) ...[
                         const SizedBox(height: 28),
-                        _ReviewsSection(course: course),
+                        _ReviewsSection(course: course, detailKey: detailKey),
                       ],
                       if (course.faq.isNotEmpty) ...[
                         const SizedBox(height: 28),
@@ -255,12 +256,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
           Text(course.enrolled ? 'You’re enrolled' : 'Start learning today', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: const Color(0xFF0C1F33))),
           const SizedBox(height: 14),
           if (course.enrolled)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: const Color(0xFFEAF6ED), borderRadius: BorderRadius.circular(10)),
-              child: const Row(children: [Icon(Icons.check_circle, color: Color(0xFF22A146)), SizedBox(width: 8), Text('Enrolled', style: TextStyle(color: Color(0xFF1D8F3D), fontWeight: FontWeight.w700))]),
-            )
+            _EnrolledActions(course: course)
           else
             SizedBox(
               width: double.infinity,
@@ -475,12 +471,13 @@ class _CurriculumSection extends StatelessWidget {
       );
 }
 
-class _ReviewsSection extends StatelessWidget {
-  const _ReviewsSection({required this.course});
+class _ReviewsSection extends ConsumerWidget {
+  const _ReviewsSection({required this.course, required this.detailKey});
   final CourseDetails course;
+  final String detailKey;
 
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context, WidgetRef ref) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle(title: 'Learner reviews'),
@@ -492,6 +489,27 @@ class _ReviewsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [const Icon(Icons.star, color: Color(0xFFB8912F)), const SizedBox(width: 5), Text(course.averageRating?.toStringAsFixed(1) ?? 'New', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)), const SizedBox(width: 8), Text('${course.ratingCount} reviews', style: const TextStyle(color: Color(0xFF64748B)))]),
+                if (course.enrolled) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(10)),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text('You’re enrolled in this course. Share how it’s going.', style: TextStyle(fontSize: 13, color: Color(0xFF0C1F33))),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton.icon(
+                          onPressed: () => _openRateSheet(context, ref),
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF12304E), visualDensity: VisualDensity.compact),
+                          icon: const Icon(Icons.star_outline, size: 18),
+                          label: const Text('Rate & review'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 if (course.reviews.isEmpty) const Padding(padding: EdgeInsets.only(top: 10), child: Text('No reviews yet.', style: TextStyle(color: Color(0xFF64748B)))),
                 ...course.reviews.map((review) => Padding(
                       padding: const EdgeInsets.only(top: 16),
@@ -510,6 +528,247 @@ class _ReviewsSection extends StatelessWidget {
           ),
         ],
       );
+
+  Future<void> _openRateSheet(BuildContext context, WidgetRef ref) async {
+    final profile = ref.read(activeLearnerProfileProvider);
+    if (profile == null) {
+      context.go('/profiles');
+      return;
+    }
+    final account = ref.read(authControllerProvider).asData?.value;
+    final submitted = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _RateReviewSheet(
+        courseId: course.id,
+        courseTitle: course.title,
+        learnerProfileId: profile.id,
+        learnerName: profile.displayName,
+        accountName: account?.fullName.isNotEmpty == true ? account!.fullName : 'Parent',
+      ),
+    );
+    if (submitted == true) {
+      ref.invalidate(courseDetailsProvider(detailKey));
+      ref.invalidate(coursesProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks! Your review has been submitted.')));
+      }
+    }
+  }
+}
+
+class _RateReviewSheet extends ConsumerStatefulWidget {
+  const _RateReviewSheet({
+    required this.courseId,
+    required this.courseTitle,
+    required this.learnerProfileId,
+    required this.learnerName,
+    required this.accountName,
+  });
+  final String courseId, courseTitle, learnerProfileId, learnerName, accountName;
+
+  @override
+  ConsumerState<_RateReviewSheet> createState() => _RateReviewSheetState();
+}
+
+class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
+  final _review = TextEditingController();
+  int _rating = 0;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _review.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_rating == 0) {
+      setState(() => _error = 'Please select a rating.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(coursesRepositoryProvider).rateCourse(
+            courseId: widget.courseId,
+            learnerProfileId: widget.learnerProfileId,
+            rating: _rating,
+            review: _review.text.trim(),
+          );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _error = apiErrorMessage(error, fallback: 'Could not submit your review.');
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Rate this course', style: TextStyle(fontFamily: 'serif', fontSize: 26, color: Color(0xFF0C1F33))),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(10)),
+                child: Text('Submitting as ${widget.accountName} on behalf of ${widget.learnerName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF0C1F33))),
+              ),
+              const SizedBox(height: 12),
+              Text(widget.courseTitle, style: const TextStyle(color: Color(0xFF475569))),
+              const SizedBox(height: 16),
+              const Text('Your rating', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  for (var star = 1; star <= 5; star++)
+                    IconButton(
+                      onPressed: _submitting
+                          ? null
+                          : () => setState(() {
+                                _rating = star;
+                                _error = null;
+                              }),
+                      tooltip: '$star star${star == 1 ? '' : 's'}',
+                      icon: Icon(
+                        star <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                        size: 36,
+                        color: star <= _rating ? const Color(0xFFB8912F) : const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text('Write a review (optional)', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _review,
+                enabled: !_submitting,
+                maxLines: 4,
+                maxLength: 2000,
+                decoration: InputDecoration(
+                  hintText: 'Share your experience with this course...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              if (_error != null) ...[
+                Text(_error!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13)),
+                const SizedBox(height: 10),
+              ],
+              SizedBox(
+                height: 50,
+                child: FilledButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF22A146)),
+                  child: _submitting
+                      ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Submit review'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+/// What an enrolled learner can do next (mirrors the web course page).
+class _EnrolledActions extends StatelessWidget {
+  const _EnrolledActions({required this.course});
+  final CourseDetails course;
+
+  static const _green = Color(0xFF22A146);
+  static const _navy = Color(0xFF12304E);
+
+  @override
+  Widget build(BuildContext context) {
+    final batchId = course.enrolmentBatchId;
+    // Resume the last watched lesson unless the course is finished.
+    final lessonId = course.continueLessonId == null
+        ? null
+        : course.lastWatchedLessonId != null && !course.isCompleted
+            ? course.lastWatchedLessonId
+            : course.continueLessonId;
+
+    Widget primary(String label, IconData icon, VoidCallback? onPressed, {Color color = _green}) => SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: FilledButton.icon(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(backgroundColor: color),
+            icon: Icon(icon, size: 20),
+            label: Text(label),
+          ),
+        );
+
+    return Column(
+      children: [
+        if (course.type == 'REGULAR')
+          lessonId != null
+              ? primary(
+                  course.isCompleted
+                      ? 'Review Course'
+                      : course.lastWatchedLessonId != null
+                          ? 'Continue Learning'
+                          : 'Start Learning',
+                  course.isCompleted ? Icons.replay : Icons.play_arrow_rounded,
+                  () => context.push('/my-courses/${course.id}/lessons/$lessonId'),
+                )
+              : const SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(onPressed: null, child: Text('Lessons coming soon')),
+                )
+        else ...[
+          if (batchId != null) ...[
+            primary('Class Schedule', Icons.calendar_month_outlined, () => context.push('/online-classes/$batchId')),
+            const SizedBox(height: 10),
+          ],
+          primary(
+            'Chat Room',
+            Icons.chat_bubble_outline,
+            () => context.push(Uri(path: '/chat', queryParameters: {
+              'courseId': course.id,
+              'courseTitle': course.title,
+              'batchId': ?batchId,
+              'batchName': 'Your Batch',
+            }).toString()),
+            color: _navy,
+          ),
+        ],
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton(
+            onPressed: () => context.go('/dashboard'),
+            style: OutlinedButton.styleFrom(foregroundColor: _navy, side: const BorderSide(color: _navy)),
+            child: const Text('Go to Dashboard'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, size: 18, color: _green),
+            SizedBox(width: 6),
+            Text('Enrolled', style: TextStyle(color: Color(0xFF1D8F3D), fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _FaqSection extends StatelessWidget {

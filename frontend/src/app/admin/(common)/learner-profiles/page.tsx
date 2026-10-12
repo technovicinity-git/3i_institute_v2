@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Filter, Search, UsersRound, Eye, ArchiveRestore, Archive } from "lucide-react";
 import { useAdminLearnerProfiles, useArchiveLearnerProfileMutation, useRestoreLearnerProfileMutation } from "@/hooks/use-admin";
+import { Pagination } from "@/components/ui/pagination";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -66,7 +67,7 @@ export default function AdminLearnerProfilesPage() {
         })}</div>
       </div>}
 
-      {data && data.total > 20 && <div className="flex items-center justify-center gap-3 mt-6"><button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="px-3 py-2 rounded-md border border-[#E3E8EF] text-sm text-gray-600 disabled:opacity-40">Previous</button><span className="text-sm text-[#64748B]">Page {page}</span><button onClick={() => setPage(page + 1)} disabled={data.profiles.length < 20} className="px-3 py-2 rounded-md border border-[#E3E8EF] text-sm text-gray-600 disabled:opacity-40">Next</button></div>}
+      <Pagination page={page} pageSize={20} total={data?.total ?? 0} onPageChange={setPage} itemLabel="profiles" />
     </div>
   );
 }

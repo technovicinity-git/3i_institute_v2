@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CreditCard, Search, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
+import { Pagination } from "@/components/ui/pagination";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -146,26 +147,13 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
 
-      {/* Pagination */}
-      {data && data.total > 20 && (
-        <div className="flex justify-center gap-2 mt-6">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="w-9 h-9 rounded-md border border-[#E3E8EF] disabled:opacity-40"
-          >
-            ←
-          </button>
-          <span className="text-sm py-2">Page {page}</span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={data.subscriptions.length < 20}
-            className="w-9 h-9 rounded-md border border-[#E3E8EF] disabled:opacity-40"
-          >
-            →
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        pageSize={20}
+        total={data?.total ?? 0}
+        onPageChange={setPage}
+        itemLabel="subscriptions"
+      />
     </div>
   );
 }

@@ -8,8 +8,6 @@ import {
   Star,
   Heart,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   SlidersHorizontal,
   X,
   BookOpen,
@@ -22,6 +20,7 @@ import {
   useWishlistToggle,
 } from "@/hooks/use-wishlist";
 import type { Course, CourseFilters, SortOption } from "@/types/course";
+import { Pagination } from "@/components/ui/pagination";
 
 const AGE_BANDS = ["5-8", "9-12", "13-15", "16-17", "18+", "All ages"];
 
@@ -442,46 +441,13 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
               </div>
             )}
 
-            {/* Pagination */}
-            {data && data.totalPages > 1 && (
-              <div className="flex justify-center">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="w-10 h-10 flex items-center justify-center rounded-md bg-white border border-[#E3E8EF] hover:bg-gray-50 disabled:opacity-40"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-[#0C1F33]" />
-                  </button>
-
-                  {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-md text-[15px] font-medium transition-colors ${
-                          currentPage === page
-                            ? "bg-[#0C1F33] text-white"
-                            : "bg-white border border-[#E3E8EF] text-[#0C1F33] hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ),
-                  )}
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage(Math.min(data.totalPages, currentPage + 1))
-                    }
-                    disabled={currentPage === data.totalPages}
-                    className="w-10 h-10 flex items-center justify-center rounded-md bg-white border border-[#E3E8EF] hover:bg-gray-50 disabled:opacity-40"
-                  >
-                    <ChevronRight className="w-4 h-4 text-[#0C1F33]" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <Pagination
+              page={currentPage}
+              pageSize={12}
+              total={data?.total ?? 0}
+              onPageChange={setCurrentPage}
+              itemLabel="courses"
+            />
           </div>
         </div>
       </div>

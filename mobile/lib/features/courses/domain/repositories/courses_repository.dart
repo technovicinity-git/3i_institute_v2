@@ -8,4 +8,5 @@ abstract interface class CoursesRepository {
   Future<Set<String>> getWishlistedCourseIds(String learnerProfileId);
   Future<void> toggleWishlist({required String learnerProfileId, required String courseId, required bool add});
   Future<bool> enrol({required String learnerProfileId, required String courseId, String? batchId});
+  Future<void> rateCourse({required String courseId, required String learnerProfileId, required int rating, String? review});
 }
