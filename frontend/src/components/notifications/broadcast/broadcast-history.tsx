@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, History, Smartphone } from "lucide-react";
 import { useBroadcasts } from "@/hooks/use-broadcasts";
 import type { Broadcast, BroadcastScope } from "@/services/broadcast.service";
+import { Pagination } from "@/components/ui/pagination";
 
 const AUDIENCE_LABEL: Record<Broadcast["audience"], string> = {
   INSTRUCTORS: "All instructors",
@@ -121,27 +122,14 @@ export function BroadcastHistory({
         </div>
       )}
 
-      {data && (data.hasMore || page > 1) && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="h-9 w-9 rounded-md border border-[#E3E8EF] text-gray-500 hover:bg-gray-50 disabled:opacity-40"
-            aria-label="Previous page"
-          >
-            ←
-          </button>
-          <span className="text-sm text-[#64748B]">Page {page}</span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={!data.hasMore}
-            className="h-9 w-9 rounded-md border border-[#E3E8EF] text-gray-500 hover:bg-gray-50 disabled:opacity-40"
-            aria-label="Next page"
-          >
-            →
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        pageSize={data?.limit ?? 10}
+        total={data?.total ?? 0}
+        onPageChange={setPage}
+        itemLabel="notifications"
+        className="mt-4"
+      />
     </section>
   );
 }

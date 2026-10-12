@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, CheckCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import {
   useMarkAllNotificationsRead,
   useNotifications,
@@ -9,6 +9,7 @@ import {
 } from "@/hooks/use-notifications";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { useOpenNotification } from "@/components/notifications/use-open-notification";
+import { Pagination } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 20;
 
@@ -36,7 +37,6 @@ export function NotificationListPage({
   const remove = useRemoveNotification();
   const openNotification = useOpenNotification();
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   if (emptyScopeMessage) {
     return (
@@ -140,29 +140,14 @@ export function NotificationListPage({
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-[#0C1F33] border border-[#E3E8EF] bg-white rounded-lg disabled:opacity-40"
-              >
-                <ChevronLeft className="w-4 h-4" /> Previous
-              </button>
-              <span className="text-sm text-[#64748B]">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={!data.hasMore}
-                className="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-[#0C1F33] border border-[#E3E8EF] bg-white rounded-lg disabled:opacity-40"
-              >
-                Next <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            onPageChange={setPage}
+            itemLabel="notifications"
+            className="mt-4"
+          />
         </>
       )}
     </div>
