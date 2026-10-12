@@ -18,6 +18,8 @@ import {
   useSuspendInstructorMutation,
   useReinstateInstructorMutation,
 } from "@/hooks/use-admin";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ReasonDialog } from "@/components/ui/reason-dialog";
 
 export default function AdminInstructorDetailsPage() {
   const params = useParams();
@@ -31,8 +33,8 @@ export default function AdminInstructorDetailsPage() {
   const reject = useRejectInstructorMutation();
   const suspend = useSuspendInstructorMutation();
   const reinstate = useReinstateInstructorMutation();
-  const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
+  const confirm = useConfirm();
   const [cvPreviewUrl, setCvPreviewUrl] = useState<string | null>(null);
   const [cvPreviewError, setCvPreviewError] = useState(false);
   const [showCv, setShowCv] = useState(false);
@@ -95,6 +97,48 @@ export default function AdminInstructorDetailsPage() {
 
   const application = instructor.application;
   const isSuspended = instructor.status === "SUSPENDED";
+  const fullName = `${instructor.firstName} ${instructor.lastName}`;
+
+  const handleSuspend = () =>
+    confirm({
+      tone: "warning",
+      title: "Suspend this instructor?",
+      description: (
+        <>
+          <strong>{fullName}</strong> will lose instructor access and won&apos;t
+          be able to manage their courses until you unsuspend them.
+        </>
+      ),
+      confirmLabel: "Suspend",
+      onConfirm: () => suspend.mutateAsync(instructorId),
+    });
+
+  const handleReinstate = () =>
+    confirm({
+      tone: "success",
+      title: "Unsuspend this instructor?",
+      description: (
+        <>
+          <strong>{fullName}</strong> will get instructor access back.
+        </>
+      ),
+      confirmLabel: "Unsuspend",
+      onConfirm: () => reinstate.mutateAsync(instructorId),
+    });
+
+  const handleApprove = () =>
+    confirm({
+      tone: "success",
+      title: "Approve this instructor?",
+      description: (
+        <>
+          <strong>{fullName}</strong> will become an instructor and be able to
+          create and publish courses.
+        </>
+      ),
+      confirmLabel: "Approve",
+      onConfirm: () => approve.mutateAsync(instructorId),
+    });
 
   return (
     <div className="p-6 md:p-10">
@@ -145,27 +189,24 @@ export default function AdminInstructorDetailsPage() {
           <div className="flex flex-wrap gap-2">
             {!isSuspended && (
               <button
-                onClick={() => suspend.mutate(instructorId)}
-                disabled={suspend.isPending}
-                className="px-4 py-2 rounded-lg border border-red-300 text-sm font-semibold text-red-600 disabled:opacity-50"
+                onClick={handleSuspend}
+                className="px-4 py-2 rounded-lg border border-red-300 text-sm font-semibold text-red-600 hover:bg-red-50"
               >
-                {suspend.isPending ? "Suspending…" : "Suspend"}
+                Suspend
               </button>
             )}
             {isSuspended && (
               <button
-                onClick={() => reinstate.mutate(instructorId)}
-                disabled={reinstate.isPending}
-                className="px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold disabled:opacity-50"
+                onClick={handleReinstate}
+                className="px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold hover:bg-[#1E9040]"
               >
-                {reinstate.isPending ? "Reinstating…" : "Unsuspend"}
+                Unsuspend
               </button>
             )}
             {instructor.status === "PENDING" && (
               <button
-                onClick={() => approve.mutate(instructorId)}
-                disabled={approve.isPending}
-                className="px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold disabled:opacity-50"
+                onClick={handleApprove}
+                className="px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold hover:bg-[#1E9040]"
               >
                 Approve
               </button>
@@ -173,7 +214,7 @@ export default function AdminInstructorDetailsPage() {
             {instructor.status === "PENDING" && (
               <button
                 onClick={() => setShowReject(true)}
-                className="px-4 py-2 rounded-lg border border-red-300 text-sm font-semibold text-red-600"
+                className="px-4 py-2 rounded-lg border border-red-300 text-sm font-semibold text-red-600 hover:bg-red-50"
               >
                 Reject
               </button>
@@ -325,55 +366,22 @@ export default function AdminInstructorDetailsPage() {
         )}
       </section>
 
-      {showReject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <button
-            aria-label="Close reject dialog"
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowReject(false)}
-          />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-[#0C1F33]">
-              Reject instructor application
-            </h2>
-            <p className="text-sm text-[#64748B] mt-1 mb-4">
-              Provide a reason for the rejection.
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(event) => setRejectReason(event.target.value)}
-              rows={4}
-              className="w-full rounded-lg border border-[#E3E8EF] p-3 text-sm"
-              placeholder="Reason…"
-            />
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setShowReject(false)}
-                className="flex-1 py-2 border border-[#E3E8EF] rounded-lg text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!rejectReason.trim() || reject.isPending}
-                onClick={() =>
-                  reject.mutate(
-                    { userId: instructorId, reason: rejectReason },
-                    {
-                      onSuccess: () => {
-                        setShowReject(false);
-                        setRejectReason("");
-                      },
-                    },
-                  )
-                }
-                className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold disabled:opacity-50"
-              >
-                Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReasonDialog
+        open={showReject}
+        onOpenChange={setShowReject}
+        title="Reject this application?"
+        description={
+          <>
+            <strong>{fullName}</strong> will be told their instructor
+            application was not approved, with your reason.
+          </>
+        }
+        label="Reason for rejection"
+        confirmLabel="Reject application"
+        onConfirm={(reason) =>
+          reject.mutateAsync({ userId: instructorId, reason })
+        }
+      />
     </div>
   );
 }

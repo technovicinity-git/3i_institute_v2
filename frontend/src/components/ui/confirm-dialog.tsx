@@ -71,6 +71,8 @@ interface ConfirmDialogProps extends ConfirmOptions {
   onOpenChange: (open: boolean) => void;
   /** Shows the spinner; use when the pending state is tracked by the caller. */
   loading?: boolean;
+  /** Disables the confirm button, e.g. until a required field is filled. */
+  confirmDisabled?: boolean;
   children?: ReactNode;
 }
 
@@ -85,6 +87,7 @@ export function ConfirmDialog({
   icon,
   onConfirm,
   loading = false,
+  confirmDisabled = false,
   children,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
@@ -95,7 +98,7 @@ export function ConfirmDialog({
   const handleConfirm = async (event: React.MouseEvent) => {
     // Keep the dialog open until the action settles.
     event.preventDefault();
-    if (busy) return;
+    if (busy || confirmDisabled) return;
     if (!onConfirm) {
       onOpenChange(false);
       return;
@@ -159,9 +162,9 @@ export function ConfirmDialog({
             </AlertDialogPrimitive.Cancel>
             <AlertDialogPrimitive.Action
               onClick={handleConfirm}
-              disabled={busy}
+              disabled={busy || confirmDisabled}
               className={cn(
-                "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors outline-none focus-visible:ring-4 disabled:opacity-70",
+                "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors outline-none focus-visible:ring-4 disabled:opacity-50",
                 style.confirm,
               )}
             >

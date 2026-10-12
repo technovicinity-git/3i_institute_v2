@@ -17,6 +17,8 @@ import {
   useApproveInstructorMutation,
   useRejectInstructorMutation,
 } from "@/hooks/use-admin";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 function formatDate(dateStr: string): string {
@@ -30,9 +32,12 @@ function formatDate(dateStr: string): string {
 export default function AdminInstructorsPage() {
   const [tab, setTab] = useState<"instructors" | "pending">("pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [rejectTarget, setRejectTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
 
   const { data: instructors, isLoading: instructorsLoading } =
     useAdminInstructors();
@@ -49,33 +54,27 @@ export default function AdminInstructorsPage() {
       instructor.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleApprove = (userId: string) => {
-    approveMutation.mutate(userId, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
-        queryClient.invalidateQueries({
-          queryKey: ["admin-pending-applications"],
-        });
-      },
-    });
+  const refreshInstructors = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-pending-applications"] });
   };
 
-  const handleReject = (userId: string) => {
-    if (!rejectReason.trim()) return;
-    rejectMutation.mutate(
-      { userId, reason: rejectReason },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["admin-pending-applications"],
-          });
-          queryClient.invalidateQueries({ queryKey: ["admin-instructors"] });
-          setRejectTarget(null);
-          setRejectReason("");
-        },
-      },
-    );
-  };
+  const handleApprove = (applicant: { id: string; name: string }) =>
+    confirm({
+      tone: "success",
+      title: "Approve this instructor?",
+      description: (
+        <>
+          <strong>{applicant.name}</strong> will become an instructor and be
+          able to create and publish courses.
+        </>
+      ),
+      confirmLabel: "Approve",
+      onConfirm: () =>
+        approveMutation.mutateAsync(applicant.id, {
+          onSuccess: refreshInstructors,
+        }),
+    });
 
   return (
     <div className="p-6 md:p-10">
@@ -183,15 +182,24 @@ export default function AdminInstructorsPage() {
                           Details
                         </Link>
                         <button
-                          onClick={() => handleApprove(application?.user?.id)}
-                          disabled={approveMutation.isPending}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
+                          onClick={() =>
+                            handleApprove({
+                              id: application.user?.id,
+                              name: `${application.user?.firstName ?? ""} ${application.user?.lastName ?? ""}`.trim(),
+                            })
+                          }
+                          className="flex items-center gap-1.5 px-4 py-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
                         >
                           <CheckCircle className="w-4 h-4" />
                           Approve
                         </button>
                         <button
-                          onClick={() => setRejectTarget(application?.user?.id)}
+                          onClick={() =>
+                            setRejectTarget({
+                              id: application.user?.id,
+                              name: `${application.user?.firstName ?? ""} ${application.user?.lastName ?? ""}`.trim(),
+                            })
+                          }
                           className="flex items-center gap-1.5 px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50"
                         >
                           <XCircle className="w-4 h-4" />
@@ -299,45 +307,25 @@ export default function AdminInstructorsPage() {
         </>
       )}
 
-      {/* Reject Modal */}
-      {rejectTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setRejectTarget(null)}
-          />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-[400px] z-10">
-            <h3 className="text-lg font-semibold text-[#0C1F33] mb-2">
-              Reject Application
-            </h3>
-            <p className="text-sm text-[#64748B] mb-4">
-              Provide a reason for rejection.
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              rows={3}
-              placeholder="Reason..."
-              className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm mb-4"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setRejectTarget(null)}
-                className="flex-1 py-2.5 border border-[#E3E8EF] rounded-lg text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleReject(rejectTarget)}
-                disabled={!rejectReason.trim() || rejectMutation.isPending}
-                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
-              >
-                Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReasonDialog
+        open={!!rejectTarget}
+        onOpenChange={(open) => !open && setRejectTarget(null)}
+        title="Reject this application?"
+        description={
+          <>
+            <strong>{rejectTarget?.name}</strong> will be told their instructor
+            application was not approved, with your reason.
+          </>
+        }
+        label="Reason for rejection"
+        confirmLabel="Reject application"
+        onConfirm={(reason) =>
+          rejectMutation.mutateAsync(
+            { userId: rejectTarget!.id, reason },
+            { onSuccess: refreshInstructors },
+          )
+        }
+      />
     </div>
   );
 }

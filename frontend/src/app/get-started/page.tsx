@@ -1,32 +1,20 @@
 import Link from "next/link";
+import { LandingLogo } from "@/components/landing/logo";
 
 export default function GetStartedPage() {
   return (
     <div className="min-h-screen flex flex-col bg-surface">
       {/* Header */}
       <header className="w-full flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
-        <Link href="/" className="flex items-center gap-2 text-primary">
-          <span className="w-8 h-8 md:w-9 md:h-9 bg-primary text-white rounded flex items-center justify-center font-serif text-lg md:text-xl leading-none">
-            3i
-          </span>
-          <span className="font-serif text-xl md:text-2xl leading-none">
-            3i
-          </span>
-        </Link>
+        <LandingLogo href="/" size="md" />
 
         <nav className="hidden md:flex items-center gap-7">
-          <a
-            href="#"
-            className="text-sm font-semibold text-muted hover:text-green"
-          >
-            English
-          </a>
-          <a
-            href="#"
+          <Link
+            href="/help"
             className="text-sm font-semibold text-muted hover:text-green"
           >
             Help &amp; Support
-          </a>
+          </Link>
         </nav>
       </header>
 
