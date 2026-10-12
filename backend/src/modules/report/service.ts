@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { SEAT_MONTHLY_PRICE } from "#/shared/pricing";
 
 interface DateRange {
   startDate?: Date;
@@ -276,8 +277,6 @@ export class ReportService {
       orderBy: { createdAt: "desc" },
     });
 
-    // GST-inclusive — FR-BILL-07
-    const MONTHLY_PRICE = 9.99;
 
     const totalSeats = subscriptions.reduce((sum, s) => sum + s.seats, 0);
     const activeSubscriptions = subscriptions.filter(
@@ -291,7 +290,7 @@ export class ReportService {
         totalSeats,
         estimatedMonthlyRevenue: subscriptions
           .filter((s) => s.status === "ACTIVE")
-          .reduce((sum, s) => sum + s.seats * MONTHLY_PRICE, 0),
+          .reduce((sum, s) => sum + s.seats * SEAT_MONTHLY_PRICE, 0),
         gstIncluded: true,
       },
       subscriptions,
