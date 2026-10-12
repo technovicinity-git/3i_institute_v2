@@ -548,7 +548,12 @@ export class AdminService {
     return { subscriptions: formattedSubscriptions, total };
   }
 
-  async getCertificates(page: number, limit: number, search?: string) {
+  async getCertificates(
+    page: number,
+    limit: number,
+    filters: { search?: string; type?: string; status?: string } = {},
+  ) {
+    const { search, type, status } = filters;
     const where: any = {
       ...(search
         ? {
@@ -563,6 +568,14 @@ export class AdminService {
             ],
           }
         : {}),
+      ...(type && ["ATTENDANCE", "COMPLETION", "EXAM"].includes(type)
+        ? { type }
+        : {}),
+      ...(status === "ACTIVE"
+        ? { revokedAt: null }
+        : status === "REVOKED"
+          ? { revokedAt: { not: null } }
+          : {}),
     };
 
     const [total, certificates] = await Promise.all([
@@ -575,7 +588,32 @@ export class AdminService {
       }),
     ]);
 
-    return { certificates, total };
+    return {
+      certificates: certificates.map((cert) => {
+        const details = (cert.details ?? {}) as {
+          examTitle?: string;
+          score?: number;
+          totalMarks?: number;
+        };
+        return {
+          id: cert.id,
+          type: cert.type,
+          verificationCode: cert.verificationCode,
+          learnerName: cert.learnerNameSnapshot,
+          courseId: cert.courseId,
+          courseTitle: cert.courseTitleSnapshot,
+          examTitle: details.examTitle ?? null,
+          score: typeof details.score === "number" ? details.score : null,
+          totalMarks:
+            typeof details.totalMarks === "number" ? details.totalMarks : null,
+          issuerName: cert.issuerName,
+          issuedAt: cert.issuedAt,
+          revokedAt: cert.revokedAt,
+          revokeReason: cert.revokeReason,
+        };
+      }),
+      total,
+    };
   }
 
   async getExams(page: number, limit: number, type?: string) {

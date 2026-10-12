@@ -250,12 +250,24 @@ export interface AdminSubscription {
 
 export interface AdminCertificate {
   id: string;
-  learnerName: string;
-  courseTitle: string;
-  type: string;
+  type: "ATTENDANCE" | "COMPLETION" | "EXAM";
   verificationCode: string;
+  learnerName: string;
+  courseId: string | null;
+  courseTitle: string;
+  examTitle: string | null;
+  score: number | null;
+  totalMarks: number | null;
+  issuerName: string | null;
   issuedAt: string;
   revokedAt: string | null;
+  revokeReason: string | null;
+}
+
+export interface AdminCertificateFilters {
+  search?: string;
+  type?: string;
+  status?: "ACTIVE" | "REVOKED" | "";
 }
 
 export const adminService = {
@@ -435,10 +447,12 @@ export const adminService = {
 
   getCertificates: async (
     page = 1,
-    search?: string,
+    filters: AdminCertificateFilters = {},
   ): Promise<{ certificates: AdminCertificate[]; total: number }> => {
     const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (search) params.set("search", search);
+    if (filters.search) params.set("search", filters.search);
+    if (filters.type) params.set("type", filters.type);
+    if (filters.status) params.set("status", filters.status);
     const response = await apiClient.get(
       `/admin/certificates?${params.toString()}`,
     );

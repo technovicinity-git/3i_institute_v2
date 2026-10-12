@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/certificate.dart';
 import '../certificates_providers.dart';
@@ -670,6 +671,11 @@ Future<void> printCertificatePdf(
                 'Verification code: ${certificate.verificationCode}',
                 style: const pw.TextStyle(fontSize: 9),
               ),
+              if (AppConfig.webBaseUrl.isNotEmpty)
+                pw.Text(
+                  'Verify online: ${Uri.parse(AppConfig.webBaseUrl).resolve('verify/${certificate.verificationCode}')}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
             ],
           ),
         ),

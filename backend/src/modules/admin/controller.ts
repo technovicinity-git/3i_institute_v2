@@ -221,8 +221,11 @@ export class AdminController {
     try {
       const page = Number(req.query["page"] ?? 1);
       const limit = Number(req.query["limit"] ?? 20);
-      const search = req.query["search"] as string | undefined;
-      const result = await adminService.getCertificates(page, limit, search);
+      const result = await adminService.getCertificates(page, limit, {
+        search: req.query["search"] as string | undefined,
+        type: req.query["type"] as string | undefined,
+        status: req.query["status"] as string | undefined,
+      });
       sendSuccess(res, result, 200);
     } catch (error) {
       next(error);

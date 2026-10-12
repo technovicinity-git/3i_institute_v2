@@ -1,80 +1,294 @@
 # 3i Mobile
 
-Cross-platform Flutter application for Android and iOS.
+Flutter app for **3i International Islamic Institute**, for Android and iOS. It talks to the same backend API as the web app (`backend/`) and covers both learners (account holders and their learner profiles) and instructors.
 
-## Requirements and platform setup
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Running against a local backend](#running-against-a-local-backend)
+- [Firebase and push notifications](#firebase-and-push-notifications)
+- [Google and Apple sign-in](#google-and-apple-sign-in)
+- [Email links (verify email, reset password)](#email-links-verify-email-reset-password)
+- [App icon](#app-icon)
+- [Building for release](#building-for-release)
+- [Tests and code quality](#tests-and-code-quality)
+- [Features](#features)
+- [Project structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Before publishing to the stores](#before-publishing-to-the-stores)
 
-- Flutter 3.44+ and Dart 3.12+
-- Android Studio/SDK for Android builds; Xcode on macOS for iOS builds
+---
 
-The current development environment does not have Flutter installed, so generated `android/` and `ios/` runner projects are not included yet. From this directory, run:
+## Requirements
+
+| Tool | Version |
+|---|---|
+| Flutter | 3.44+ (stable channel) |
+| Dart | 3.12+ (bundled with Flutter) |
+| Android | Android Studio + Android SDK, JDK 17 |
+| iOS | macOS with Xcode and CocoaPods (iOS builds only work on a Mac) |
+
+Check your setup:
 
 ```sh
-flutter create --platforms=android,ios .
-flutter pub get
+flutter --version
+flutter doctor
 ```
 
-## Run locally
+## Quick start
 
-The API URL includes `/api/v1`. Android Emulator uses `10.0.2.2` to access a host machine service; iOS Simulator can use `localhost`.
+```sh
+cd mobile
+flutter pub get
+flutter run
+```
+
+With no extra options, the app uses the **hosted** backend and website (see [Configuration](#configuration)), so it works out of the box on an emulator or a real device.
+
+To pick a device: `flutter devices`, then `flutter run -d <device-id>`.
+
+## Configuration
+
+Settings are passed at build time with `--dart-define` and read in [`lib/core/config/app_config.dart`](lib/core/config/app_config.dart).
+
+| Setting | Default | Used for |
+|---|---|---|
+| `API_BASE_URL` | `https://threei-institute-v2.onrender.com/api/v1` | All API calls. Must end with `/api/v1`. |
+| `WEB_BASE_URL` | `https://threei-institute-v2-1.onrender.com` | Course share links and the "Verify online" link printed on certificate PDFs. |
+| `SOCKET_BASE_URL` | Derived from `API_BASE_URL` (same host, no path) | Real-time notifications and chat (Socket.IO). Only set it if sockets run on a different host. |
+| `GOOGLE_SERVER_CLIENT_ID` | *(empty)* | Google sign-in. Must be the backend's **web** OAuth client ID (`GOOGLE_CLIENT_ID`). Google sign-in won't work without it. |
+
+Example with every setting:
 
 ```sh
 flutter run \
-  --dart-define=API_BASE_URL=http://10.0.2.2:4000/api/v1 \
-  --dart-define=GOOGLE_SERVER_CLIENT_ID=your-web-oauth-client-id
+  --dart-define=API_BASE_URL=https://api.example.com/api/v1 \
+  --dart-define=WEB_BASE_URL=https://www.example.com \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
 ```
 
-Configure an Android OAuth client and `google-services.json`, plus the iOS URL scheme from `GoogleService-Info.plist`, before using Google sign-in. Enable the Sign in with Apple capability for the iOS bundle identifier. The Google server/web client ID must match the backend's `GOOGLE_CLIENT_ID`.
+**Tip:** to avoid retyping these, put them in a JSON file (keep it out of git if it holds anything private) and use `--dart-define-from-file`:
 
-The backend sends verification and password-reset links to its configured frontend URL. Configure Android App Links and iOS Universal Links for that domain, including the domain association files, so links open the app. The `/verify-email?token=...` and `/reset-password?token=...` routes accept those links.
+```json
+// dart_defines.local.json
+{
+  "API_BASE_URL": "http://10.0.2.2:4000/api/v1",
+  "GOOGLE_SERVER_CLIENT_ID": "1234567890-abc.apps.googleusercontent.com"
+}
+```
 
-## Authentication delivered
+```sh
+flutter run --dart-define-from-file=dart_defines.local.json
+```
 
-- Email and password login. As in the frontend login mutation, the app admits the `Account Holder` role.
-- Registration with adult date-of-birth validation, supported locales, and email verification.
-- Verification status and resend cooldown, forgot password, and reset password flows.
-- Google and (on iOS) Apple sign-in. First-time social accounts are prompted for date of birth.
-- Access-token refresh and session restore. The refresh token is read from the API's `Set-Cookie` response and stored using platform secure storage; rotated tokens are persisted on refresh.
-- Logout clears the local secure session even if the logout request fails.
-- Profile selection shows each learner's age band and seat status, verifies a PIN when set, and keeps the selected profile available to learner features. The add-learner tile creates a profile with a name, birth date, and four-digit PIN.
-- Course catalog includes search, category/type/language/age filters, sorting, pagination, rating/enrolment badges, and wishlist actions.
-- Course details show outcomes, requirements, schedule, curriculum, instructor, reviews, FAQs, related courses, and membership details. Regular courses enrol directly; live classes prompt the learner to choose a batch.
-- Learner dashboard loads profile-specific course stats, continue-learning progress, upcoming classes, deadlines, weekly study hours, notes, and recommendations. It uses a responsive sidebar on larger screens and a navigation drawer on phones.
+> Settings are compiled into the app. After changing one, stop the app and run it again; hot reload/restart doesn't pick up new values.
 
-The standard frontend `/register` route creates an Account Holder and asks them to verify email. After verification, the account holder can create and select learner profiles in the app.
+## Running against a local backend
 
-## Structure
+1. Start the backend (see `backend/`) — by default it listens on port `4000`.
+2. Point the app at it. The host address depends on where the app runs:
+
+| Running on | `API_BASE_URL` |
+|---|---|
+| Android emulator | `http://10.0.2.2:4000/api/v1` (`10.0.2.2` is your computer, seen from the emulator) |
+| iOS simulator | `http://localhost:4000/api/v1` |
+| Real phone (same Wi-Fi) | `http://<your-computer-LAN-IP>:4000/api/v1`, e.g. `http://192.168.1.20:4000/api/v1` |
+
+```sh
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000/api/v1
+```
+
+If you also run the web frontend locally and want share/verify links to point at it, add `--dart-define=WEB_BASE_URL=http://localhost:3000`.
+
+## Firebase and push notifications
+
+Push notifications use **Firebase Cloud Messaging** (FCM) plus `flutter_local_notifications` to show them while the app is open.
+
+Already in the repo (Firebase project `iinstitute-43580`):
+
+- `android/app/google-services.json` — Android config
+- `lib/firebase_options.dart` and `firebase.json` — generated by `flutterfire configure`
+
+The app still starts if Firebase setup fails; push is simply turned off for that run (see [`lib/core/push/push_notifications.dart`](lib/core/push/push_notifications.dart)).
+
+**iOS push needs extra setup** (not done yet):
+
+1. Download `GoogleService-Info.plist` from the Firebase console and add it to `ios/Runner/` through Xcode.
+2. In Xcode, enable **Push Notifications** and **Background Modes → Remote notifications** for the Runner target (the background mode is already in `Info.plist`).
+3. Upload an **APNs authentication key** (Apple Developer account) in Firebase → Project settings → Cloud Messaging.
+
+To regenerate the Firebase config (e.g. after changing the app ID):
+
+```sh
+dart pub global activate flutterfire_cli
+flutterfire configure --project=iinstitute-43580
+```
+
+The backend also needs its Firebase service account configured to *send* push notifications; until then, the "Push" option in Send Notification shows "Not configured on the server yet".
+
+## Google and Apple sign-in
+
+**Google**
+
+1. In Google Cloud Console, create OAuth clients for **Android** (package name + SHA-1 of your signing key) and **iOS** (bundle ID).
+2. Pass the **web** client ID — the same one the backend uses as `GOOGLE_CLIENT_ID` — as `GOOGLE_SERVER_CLIENT_ID`.
+3. iOS: add the reversed client ID from `GoogleService-Info.plist` as a URL scheme in `ios/Runner/Info.plist` (`CFBundleURLTypes`).
+
+Get your debug SHA-1 with:
+
+```sh
+cd android && ./gradlew signingReport
+```
+
+**Apple** (iOS only): enable the **Sign in with Apple** capability for the app's bundle ID in Xcode and in the Apple Developer portal.
+
+New social accounts are asked for a date of birth on first sign-in.
+
+## Email links (verify email, reset password)
+
+The backend emails links to its configured **frontend** URL, e.g. `https://<site>/verify-email?token=…` and `https://<site>/reset-password?token=…`. The app has routes for both, but to open these links *in the app* instead of the browser you need:
+
+- **Android App Links:** an `intent-filter` with `android:autoVerify="true"` for the site's domain in `AndroidManifest.xml`, plus `/.well-known/assetlinks.json` on the website.
+- **iOS Universal Links:** the **Associated Domains** capability (`applinks:<domain>`) plus `/.well-known/apple-app-site-association` on the website.
+
+These aren't configured yet, so the links currently open the website, which handles them too.
+
+## App icon
+
+The launcher icon is generated from two images with [`flutter_launcher_icons`](https://pub.dev/packages/flutter_launcher_icons) (settings at the bottom of `pubspec.yaml`):
+
+| File | Used for |
+|---|---|
+| `assets/icon/app-icon.png` | iOS and older Android (logo on the navy background, square, opaque) |
+| `assets/images/logo-icon.png` | Android 8+ adaptive icon (transparent logo on navy `#12304E`) — also the logo shown inside the app |
+
+After replacing either image:
+
+```sh
+dart run flutter_launcher_icons
+```
+
+Then check `git status`. The tool has two known quirks to undo:
+
+- It may create `android/app/src/main/res/values/colors.xml`, which duplicates `ic_launcher_background` from `ic_launcher_background.xml` and breaks the Android build. Delete `colors.xml`.
+- It may change `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS` in `ios/Runner.xcodeproj/project.pbxproj`. Revert that file: `git checkout -- ios/Runner.xcodeproj/project.pbxproj`.
+
+Phones cache launcher icons: uninstall the app and install again to see a new icon.
+
+## Building for release
+
+Set the version in `pubspec.yaml` first: `version: 1.2.0+5` means version name `1.2.0`, build number `5` (the build number must go up for every store upload).
+
+**Android**
+
+```sh
+# App bundle for Google Play
+flutter build appbundle --release --dart-define-from-file=dart_defines.prod.json
+
+# APK for direct installs / testing
+flutter build apk --release --dart-define-from-file=dart_defines.prod.json
+```
+
+Output: `build/app/outputs/bundle/release/app-release.aab` and `build/app/outputs/flutter-apk/app-release.apk`.
+
+> Release builds are currently signed with the **debug key** (see `android/app/build.gradle.kts`). Google Play won't accept that — see [Before publishing](#before-publishing-to-the-stores).
+
+**iOS** (on a Mac)
+
+```sh
+cd ios && pod install && cd ..
+flutter build ipa --release --dart-define-from-file=dart_defines.prod.json
+```
+
+Then upload `build/ios/ipa/*.ipa` with Xcode's Organizer or the Transporter app. Signing uses the team set in Xcode (Runner → Signing & Capabilities).
+
+## Tests and code quality
+
+```sh
+flutter test          # unit and widget tests in test/
+flutter analyze       # static analysis (rules in analysis_options.yaml)
+dart format lib test  # format code
+```
+
+Tests live in `test/`. They cover self-contained pieces (e.g. the Markdown renderer for help/policy pages and the grading helpers). The full app widget (`ThreeIApp`) isn't pumped in tests because it starts Firebase, secure storage and network calls.
+
+## Features
+
+**Everyone (no login needed)**
+- Course catalogue with search, filters (category, type, language, age), sorting and pagination
+- Course details: outcomes, curriculum, batches, instructor, reviews, FAQs, related courses
+- Help & support (FAQ, contact details) and policy pages (privacy, terms, …), managed from the admin **Content** section
+
+**Account holders and learners**
+- Email/password, Google and Apple sign-in; registration with email verification; forgot/reset password
+- Learner profiles: choose a profile (optional 4-digit PIN), add profiles, seat status
+- Dashboard: greeting, live-class banner, stats and streak, continue learning, upcoming classes, deadlines, recent results, weekly activity, notes, recommendations
+- Enrolment (regular courses directly, online classes by batch), wishlist
+- Learning: lessons (video, PDF, documents), progress tracking, lesson notes
+- Online classes: class schedule per batch with Join links, batch chat
+- Exams (take exams, view results), assignments, certificates (preview and save as PDF)
+- Rate & review enrolled courses
+- In-app notifications with live unread counts, plus push notifications
+
+**Instructors**
+- Dashboard with "needs grading" list and overdue highlighting
+- Manage courses, materials, batches and sessions, exams and questions, assignments
+- Grading queue, grade attempts with "Grade next"
+- Live classes, students, certificates
+- Send notifications to a course or a single batch (in-app and/or push), with sent history
+
+## Project structure
 
 ```text
-lib/
-  app/                    App widget, theme, routing, startup page
-  core/                   Shared configuration, network, error handling
-  features/
-    auth/
-      data/                API data source, models, repository implementation
-      domain/              Auth entity and repository contract
-      presentation/        Riverpod controller, pages, reusable widgets
-    profiles/
-      data/                Learner profile API and repository
-      domain/              Profile entity and repository contract
-      presentation/        Selector, PIN prompt, add profile, shared header
-    courses/
-      data/                Course, category, wishlist, and enrolment APIs
-      domain/              Course entities and repository contract
-      presentation/        Catalog, details, landing shell, reusable cards
-    dashboard/
-      data/                Profile-specific dashboard API and models
-      domain/              Dashboard data entities and repository contract
-      presentation/        Learner dashboard, responsive navigation shell
-  main.dart                Application entry point
+mobile/
+  assets/
+    icon/app-icon.png        Launcher icon source (iOS, older Android)
+    images/                  In-app images, incl. logo-icon.png
+  lib/
+    main.dart                Entry point: Firebase/push setup, ProviderScope, app widget
+    firebase_options.dart    Generated by flutterfire configure
+    app/
+      app.dart               ThreeIApp (MaterialApp.router)
+      router/app_router.dart All routes and role-based redirects
+      theme/                 Colours and theme
+      pages/                 Startup page and shared pages
+    core/
+      config/app_config.dart Build-time settings (--dart-define)
+      network/               Dio API client, auth/refresh handling, error messages
+      push/                  Firebase Cloud Messaging + local notifications
+      share/                 Share links for courses
+    features/                One folder per feature, each split into:
+      <feature>/data/          API calls and JSON models
+      <feature>/domain/        Entities (plain Dart classes)
+      <feature>/presentation/  Riverpod providers, pages, widgets
+  test/                      Unit and widget tests
+  android/  ios/             Native projects
 ```
 
-## Phases
+Feature folders: `auth`, `profiles`, `home`, `courses`, `wishlist`, `dashboard`, `learning`, `exams`, `assignments`, `certificates`, `chat`, `notifications`, `content` (help and policy pages), `instructor_dashboard`, `instructor_courses`.
 
-1. Project, platform, and authentication setup (implemented)
-2. Learner profile selection (implemented)
-3. Course discovery and details (implemented)
-4. Learner dashboard (implemented)
-5. Course learning experience and remaining product areas
+State management is **Riverpod**, routing is **go_router**, HTTP is **Dio**. The refresh token is stored with `flutter_secure_storage` and the session is restored on launch.
 
-Auth API payloads and routes are documented in `frontend/src/services/auth.service.ts`, `password.service.ts`, and `email.service.ts`. The visual references are under `frontend/src/app/(auth)`.
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Connection refused" against a local backend | On the Android emulator use `10.0.2.2`, not `localhost`. On a real phone use your computer's LAN IP and make sure the backend listens on `0.0.0.0`. |
+| A new `--dart-define` value has no effect | Stop the app and run again; hot reload doesn't reload build settings. |
+| Launcher icon didn't change | Uninstall the app, then install again (launchers cache icons). Run `flutter clean` if needed. |
+| Android build fails with "Duplicate resources … ic_launcher_background" | Delete `android/app/src/main/res/values/colors.xml` (created by the icon generator). |
+| Google sign-in fails | Check `GOOGLE_SERVER_CLIENT_ID` is the backend's web client ID, and that your signing key's SHA-1 is registered for the Android OAuth client. |
+| Push "Not configured on the server yet" | The backend has no Firebase service account set; configure it on the server. |
+| No push notifications on iOS | Add `GoogleService-Info.plist` and the APNs key (see [Firebase](#firebase-and-push-notifications)). |
+| Strange build errors after switching branches | `flutter clean && flutter pub get` (and `cd ios && pod install` on macOS). |
+
+## Before publishing to the stores
+
+These are still open:
+
+1. **Android release signing.** Create an upload keystore, add `android/key.properties` (keep it and the keystore out of git), and use it in the `release` build type in `android/app/build.gradle.kts`. See [Flutter's Android deployment guide](https://docs.flutter.dev/deployment/android#sign-the-app).
+2. **App identifiers.** iOS still uses the template bundle ID `com.example.threeIMobile`, and the Android `namespace` is `com.example.three_i_mobile` (the Android `applicationId` is already `com.technovicinity.three_i_mobile`). Set a final iOS bundle ID before the first App Store upload, and update the Firebase and OAuth configs to match.
+3. **iOS Firebase file and APNs key** for push notifications.
+4. **App Links / Universal Links** if email links should open the app.
+5. **Production settings:** check `API_BASE_URL` and `WEB_BASE_URL` point at the production backend and website (create `dart_defines.prod.json`).
+6. **Store listing:** link the privacy policy published from the admin Content section (`<website>/pages/privacy`).
