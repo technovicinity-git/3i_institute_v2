@@ -19,6 +19,7 @@ import {
   Tags,
   UsersRound,
   Megaphone,
+  Newspaper,
 } from "lucide-react";
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { label: "Send Notification", icon: Megaphone, href: "/admin/send-notification" },
   { label: "Reports", icon: BarChart3, href: "/admin/reports" },
   { label: "Categories", icon: Tags, href: "/admin/categories" },
+  { label: "Content", icon: Newspaper, href: "/admin/content" },
   { label: "Settings", icon: Settings, href: "/admin/settings" },
 ];
 

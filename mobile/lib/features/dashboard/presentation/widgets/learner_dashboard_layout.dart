@@ -94,6 +94,8 @@ class LearnerDashboardLayout extends ConsumerWidget {
               context.go('/courses');
             } else if (value == 'online-classes') {
               context.go('/online-classes');
+            } else if (value == 'help') {
+              context.push('/help');
             }
           },
           itemBuilder: (context) => [
@@ -122,6 +124,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
               value: 'online-classes',
               child: Text('Online Classes'),
             ),
+            const PopupMenuItem(value: 'help', child: Text('Help & support')),
           ],
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),

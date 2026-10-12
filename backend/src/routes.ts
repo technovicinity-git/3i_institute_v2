@@ -29,6 +29,11 @@ import { adminRoutes } from "#/modules/admin/routes";
 import { learnerAssignmentRoutes } from "#/modules/assignment/learner-routes";
 import { noteRoutes } from "#/modules/note/routes";
 import { categoryRoutes } from "#/modules/category/routes";
+import { siteRoutes } from "#/modules/site/routes";
+import {
+  adminContentRoutes,
+  publicContentRoutes,
+} from "#/modules/content/routes";
 
 const router: Router = Router();
 
@@ -57,10 +62,14 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/instructors/assignments", instructorAssignmentRoutes);
+// Mounted before the broader /admin router.
+router.use("/admin/content", adminContentRoutes);
 router.use("/admin", adminRoutes);
 router.use("/assignments", learnerAssignmentRoutes);
 router.use("/notes", noteRoutes);
 router.use("/categories", categoryRoutes);
+router.use("/site", siteRoutes);
+router.use("/site", publicContentRoutes);
 
 function mountRoutes(app: Express): void {
   app.use("/api/v1", router);
