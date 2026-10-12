@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import { siteUrl } from "@/lib/share";
 
 export interface ExamCertificateDetails {
   /** Course progress percentage at the time the certificate was generated. */
@@ -129,7 +130,11 @@ export function downloadExamCertificatePdf(certificate: ExamCertificate) {
   addText(`Issued: ${date}`, 74, 104, 11);
   addText(`Certificate ID: ${certificate.id}`, 74, 84, 9);
   addText(`Verification code: ${certificate.verificationCode}`, 74, 66, 9);
-  centerText("Verify this certificate using its verification code.", 49, 9);
+  centerText(
+    `Verify online: ${siteUrl()}/verify/${certificate.verificationCode}`,
+    49,
+    9,
+  );
 
   const content = lines.join("\n");
   const objects = [

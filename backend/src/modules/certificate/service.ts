@@ -441,7 +441,7 @@ export class CertificateService {
         issuerName: true,
         issuedAt: true,
         revokedAt: true,
-        revokeReason: true,
+        // Revocation reasons are internal admin notes and stay private.
       },
     });
 

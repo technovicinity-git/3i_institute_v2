@@ -105,6 +105,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/verify" className="hover:text-white">
+                  Verify a certificate
+                </Link>
+              </li>
+              <li>
                 <Link href="/get-started" className="hover:text-white">
                   Create an account
                 </Link>

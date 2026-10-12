@@ -2,6 +2,7 @@ import { Router } from "express";
 import { certificateController } from "#/modules/certificate/controller";
 import { authenticate } from "#/middleware/authenticate";
 import { authorize } from "#/middleware/authorize";
+import { rateLimit } from "#/middleware/rate-limit";
 
 const router: Router = Router();
 
@@ -169,7 +170,13 @@ router.get(
  *       404:
  *         description: Certificate not found
  */
-router.get("/verify/:code", certificateController.verify);
+// Public: anyone holding a code can check it. Codes are 128-bit random, so
+// the limit only guards against abuse, not guessing.
+router.get(
+  "/verify/:code",
+  rateLimit({ windowMs: 60 * 1000, max: 30 }),
+  certificateController.verify,
+);
 
 /**
  * @swagger
