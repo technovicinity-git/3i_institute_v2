@@ -19,9 +19,13 @@ export class DashboardController {
         return;
       }
 
+      // Learner's UTC offset (JS getTimezoneOffset convention) so streaks
+      // and weekly activity follow their local calendar days.
+      const tzOffset = Number(req.query["tzOffset"]);
       const data = await dashboardService.getDashboardData(
         accountId,
         learnerProfileId,
+        Number.isFinite(tzOffset) && Math.abs(tzOffset) <= 14 * 60 ? tzOffset : 0,
       );
       sendSuccess(res, data, 200);
     } catch (error) {
