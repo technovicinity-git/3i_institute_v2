@@ -104,4 +104,21 @@ class CoursesRemoteDataSource {
     );
     return boolValue(asJsonMap(response.data?['data'])['waitlisted']);
   }
+
+  Future<void> rateCourse({
+    required String courseId,
+    required String learnerProfileId,
+    required int rating,
+    String? review,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/ratings',
+      data: {
+        'courseId': courseId,
+        'learnerProfileId': learnerProfileId,
+        'rating': rating,
+        if (review != null && review.isNotEmpty) 'review': review,
+      },
+    );
+  }
 }
