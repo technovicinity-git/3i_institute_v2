@@ -1,8 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
 import { adminService } from "#/modules/admin/service";
+import { adminDashboardService } from "#/modules/admin/dashboard-service";
 import { sendSuccess } from "#/shared/response";
 
 export class AdminController {
+  getDashboard = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await adminDashboardService.getDashboard();
+      sendSuccess(res, data, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getLearnerProfiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const page = Number(req.query["page"] ?? 1);

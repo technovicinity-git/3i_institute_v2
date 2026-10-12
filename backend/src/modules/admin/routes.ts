@@ -5,6 +5,7 @@ import { authorize } from "#/middleware/authorize";
 
 const router: Router = Router();
 
+router.get("/dashboard", authenticate, authorize("admin.access"), adminController.getDashboard);
 router.get("/learner-profiles", authenticate, authorize("admin.access"), adminController.getLearnerProfiles);
 router.get("/learner-profiles/:id", authenticate, authorize("admin.access"), adminController.getLearnerProfileDetails);
 router.post("/learner-profiles/:id/archive", authenticate, authorize("admin.access"), adminController.archiveLearnerProfile);

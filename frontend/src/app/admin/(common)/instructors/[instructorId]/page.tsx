@@ -2,7 +2,9 @@
 import Image from "next/image";
 import {
   BookOpen,
+  ChevronDown,
   ChevronLeft,
+  ChevronUp,
   ExternalLink,
   FileText,
   GraduationCap,
@@ -33,12 +35,15 @@ export default function AdminInstructorDetailsPage() {
   const [showReject, setShowReject] = useState(false);
   const [cvPreviewUrl, setCvPreviewUrl] = useState<string | null>(null);
   const [cvPreviewError, setCvPreviewError] = useState(false);
+  const [showCv, setShowCv] = useState(false);
+  // Download the PDF only once the CV is first opened; hiding keeps it loaded.
+  const [cvRequested, setCvRequested] = useState(false);
 
   const router = useRouter();
 
   useEffect(() => {
     const cvUrl = instructor?.application?.cvUrl;
-    if (!cvUrl) return;
+    if (!cvUrl || !cvRequested) return;
 
     setCvPreviewUrl(null);
     setCvPreviewError(false);
@@ -66,7 +71,7 @@ export default function AdminInstructorDetailsPage() {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [instructor?.application?.cvUrl]);
+  }, [instructor?.application?.cvUrl, cvRequested]);
 
   if (isLoading)
     return (
@@ -210,20 +215,43 @@ export default function AdminInstructorDetailsPage() {
             </h2>
             {application?.cvUrl ? (
               <div className="overflow-hidden rounded-lg border border-[#E3E8EF] bg-[#F8FAFC]">
-                <div className="flex items-center justify-between gap-3 border-b border-[#E3E8EF] px-4 py-3">
+                <div
+                  className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${showCv ? "border-b border-[#E3E8EF]" : ""}`}
+                >
                   <span className="inline-flex items-center gap-2 text-sm font-medium text-[#334155]">
                     <FileText className="w-4 h-4" /> Instructor CV (PDF)
                   </span>
-                  <a
-                    href={cvPreviewUrl ?? application.cvUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-700 hover:underline"
-                  >
-                    Open PDF <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  <div className="flex items-center gap-4">
+                    <a
+                      href={cvPreviewUrl ?? application.cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-700 hover:underline"
+                    >
+                      Open PDF <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCv((shown) => !shown);
+                        setCvRequested(true);
+                      }}
+                      aria-expanded={showCv}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#12304E] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a4268]"
+                    >
+                      {showCv ? (
+                        <>
+                          Hide CV <ChevronUp className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          View CV <ChevronDown className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                {cvPreviewUrl ? (
+                {!showCv ? null : cvPreviewUrl ? (
                   <iframe
                     src={`${cvPreviewUrl}#toolbar=1&navpanes=0&scrollbar=1`}
                     title={`${instructor.firstName} ${instructor.lastName} CV`}
@@ -236,10 +264,6 @@ export default function AdminInstructorDetailsPage() {
                       : "Loading CV preview…"}
                   </div>
                 )}
-                <p className="border-t border-[#E3E8EF] px-4 py-2 text-xs text-[#64748B]">
-                  The PDF preview opens in this page. Use Open PDF to open it
-                  separately.
-                </p>
               </div>
             ) : (
               <p className="text-sm text-[#64748B]">No CV provided</p>
