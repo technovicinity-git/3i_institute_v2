@@ -501,18 +501,18 @@ export default function CourseDetailsPage() {
                           onClick={() =>
                             setOpenModule(openModule === idx ? -1 : idx)
                           }
-                          className="w-full flex items-center justify-between px-5 py-2 bg-white hover:bg-[#F5F0E8] transition-colors"
+                          className="w-full flex items-start justify-between gap-4 px-5 py-3 text-left bg-white hover:bg-[#F5F0E8] transition-colors"
                         >
-                          <div className="flex items-center gap-5">
-                            <span className="font-serif text-[#B8912F]">
+                          <div className="flex items-start gap-5 min-w-0 flex-1">
+                            <span className="font-serif text-[#B8912F] leading-6 shrink-0 min-w-[1.75rem]">
                               {mod.moduleNum}
                             </span>
-                            <span className="font-serif text-[#0C1F33]">
+                            <span className="font-serif text-[#0C1F33] leading-6 min-w-0 break-words">
                               {mod.title}
                             </span>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="inline-flex items-center gap-1.5 text-sm text-[#64748B]">
+                          <div className="flex items-center gap-4 shrink-0">
+                            <span className="inline-flex items-center gap-1.5 text-sm leading-6 text-[#64748B] whitespace-nowrap">
                               {videoLesson ? (
                                 <>
                                   <Clock className="h-4 w-4" />
