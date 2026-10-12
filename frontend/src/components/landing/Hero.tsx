@@ -1,10 +1,6 @@
 import Image from "next/image";
-
-const stats = [
-  { value: "12,000+", label: "Active Students" },
-  { value: "140+", label: "Rigorous Courses" },
-  { value: "38", label: "Expert Instructors" },
-];
+import Link from "next/link";
+import HeroStats from "@/components/landing/HeroStats";
 
 export default function Hero() {
   return (
@@ -31,33 +27,22 @@ export default function Hero() {
 
           {/* Buttons */}
           <div className="flex items-center gap-4 mb-12">
-            <a
-              href="#"
+            <Link
+              href="/#pathways"
               className="inline-flex items-center justify-center px-7 py-3 bg-[#22A146] text-white font-semibold text-[15px] rounded-full hover:bg-[#1d8c3b] transition-colors"
             >
               Explore Programs
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/courses"
               className="inline-flex items-center justify-center px-7 py-3 border-2 border-[#12304E] text-[#12304E] font-semibold text-[15px] rounded-full hover:bg-[#12304E] hover:text-white transition-colors"
             >
               View Curriculum
-            </a>
+            </Link>
           </div>
 
           {/* Stats */}
-          <div className="flex gap-12 border-t border-gray-200 pt-6 max-w-[624px]">
-            {stats.map((stat) => (
-              <div key={stat.label} className="min-w-[120px]">
-                <p className="font-serif text-[28px] text-[#B8912F] leading-tight">
-                  {stat.value}
-                </p>
-                <p className="text-[13px] font-medium text-[#64748B] mt-1">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
+          <HeroStats />
         </div>
 
         {/* Right Section - Navy diagonal with student card */}

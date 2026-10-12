@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   Star,
@@ -188,11 +188,35 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 export default function CoursesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <CoursesFromUrl />
+    </Suspense>
+  );
+}
+
+// Remount when `?category=` changes (e.g. a footer link clicked while already
+// on this page) so the filters pick up the new category.
+function CoursesFromUrl() {
+  const category = useSearchParams().get("category") ?? "";
+  return <CoursesContent key={category} initialCategory={category} />;
+}
+
+function CoursesContent({ initialCategory }: { initialCategory: string }) {
   const { activeProfile } = useProfileStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // `?category=id1,id2` preselects categories (links from the home page).
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    () => initialCategory.split(",").filter(Boolean),
+  );
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedAgeBands, setSelectedAgeBands] = useState<string[]>([]);

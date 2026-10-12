@@ -71,6 +71,7 @@ class InstructorDashboardLayout extends ConsumerWidget {
             if (value == 'dashboard') context.go('/instructor/dashboard');
             if (value == 'courses') context.go('/instructor/courses');
             if (value == 'settings') context.go('/instructor/settings');
+            if (value == 'help') context.push('/help');
             if (value == 'logout') {
               await ref.read(authControllerProvider.notifier).logout();
               if (context.mounted) context.go('/instructor/login');
@@ -109,6 +110,7 @@ class InstructorDashboardLayout extends ConsumerWidget {
             const PopupMenuItem(value: 'dashboard', child: Text('Dashboard')),
             const PopupMenuItem(value: 'courses', child: Text('My Courses')),
             const PopupMenuItem(value: 'settings', child: Text('Settings')),
+            const PopupMenuItem(value: 'help', child: Text('Help & support')),
             const PopupMenuItem(value: 'logout', child: Text('Log out')),
           ],
           child: Padding(

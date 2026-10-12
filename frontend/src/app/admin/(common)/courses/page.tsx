@@ -20,6 +20,8 @@ import {
   useSuspendCourseMutation,
   useActivateCourseMutation,
 } from "@/hooks/use-admin";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ReasonDialog } from "@/components/ui/reason-dialog";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -70,79 +72,60 @@ export default function AdminCoursesPage() {
   const suspendMutation = useSuspendCourseMutation();
   const activateMutation = useActivateCourseMutation();
 
-  // State for confirm actions and reject modal
-  const [confirmAction, setConfirmAction] = useState<{
-    id: string;
-    action: string;
-  } | null>(null);
-  const [rejectModal, setRejectModal] = useState<{
+  const confirm = useConfirm();
+  const [rejectCourse, setRejectCourse] = useState<{
     id: string;
     title: string;
   } | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
 
-  const handleAction = (courseId: string, action: string) => {
-    if (action === "reject") {
-      // Open reject modal instead of confirm
-      const course = data?.courses.find((c) => c.id === courseId);
-      if (course) {
-        setRejectModal({ id: courseId, title: course.title });
-      }
-      return;
-    }
+  const refreshCourses = () =>
+    queryClient.invalidateQueries({ queryKey: ["admin-all-courses"] });
 
-    if (confirmAction?.id === courseId && confirmAction.action === action) {
-      switch (action) {
-        case "approve":
-          approveMutation.mutate(courseId, {
-            onSuccess: () => {
-              queryClient.invalidateQueries({
-                queryKey: ["admin-all-courses"],
-              });
-              setConfirmAction(null);
-            },
-          });
-          break;
-        case "suspend":
-          suspendMutation.mutate(courseId, {
-            onSuccess: () => {
-              queryClient.invalidateQueries({
-                queryKey: ["admin-all-courses"],
-              });
-              setConfirmAction(null);
-            },
-          });
-          break;
-        case "activate":
-          activateMutation.mutate(courseId, {
-            onSuccess: () => {
-              queryClient.invalidateQueries({
-                queryKey: ["admin-all-courses"],
-              });
-              setConfirmAction(null);
-            },
-          });
-          break;
-      }
-    } else {
-      setConfirmAction({ id: courseId, action });
-    }
-  };
+  const handleApprove = (course: { id: string; title: string }) =>
+    confirm({
+      tone: "success",
+      title: "Approve this course?",
+      description: (
+        <>
+          <strong>{course.title}</strong> will be published and visible to
+          learners in the course catalogue.
+        </>
+      ),
+      confirmLabel: "Approve",
+      onConfirm: () =>
+        approveMutation.mutateAsync(course.id, { onSuccess: refreshCourses }),
+    });
 
-  const handleConfirmReject = () => {
-    if (!rejectModal || !rejectReason.trim()) return;
+  const handleSuspend = (course: { id: string; title: string }) =>
+    confirm({
+      tone: "warning",
+      title: "Suspend this course?",
+      description: (
+        <>
+          <strong>{course.title}</strong> will be hidden from the catalogue
+          and new learners won&apos;t be able to enrol until you activate it
+          again.
+        </>
+      ),
+      confirmLabel: "Suspend",
+      onConfirm: () =>
+        suspendMutation.mutateAsync(course.id, { onSuccess: refreshCourses }),
+    });
 
-    rejectMutation.mutate(
-      { courseId: rejectModal.id, reason: rejectReason },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["admin-all-courses"] });
-          setRejectModal(null);
-          setRejectReason("");
-        },
-      },
-    );
-  };
+  const handleActivate = (course: { id: string; title: string }) =>
+    confirm({
+      tone: "success",
+      title: "Activate this course?",
+      description: (
+        <>
+          <strong>{course.title}</strong> will be published again and visible
+          to learners.
+        </>
+      ),
+      confirmLabel: "Activate",
+      onConfirm: () =>
+        activateMutation.mutateAsync(course.id, { onSuccess: refreshCourses }),
+    });
 
   return (
     <div className="p-6 md:p-10">
@@ -272,29 +255,16 @@ export default function AdminCoursesPage() {
                     {course.status === "PENDING_REVIEW" && (
                       <>
                         <button
-                          onClick={() => handleAction(course.id, "approve")}
-                          className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold ${
-                            confirmAction?.id === course.id &&
-                            confirmAction.action === "approve"
-                              ? "bg-[#22A146] text-white"
-                              : "border border-[#22A146] text-[#22A146] hover:bg-green-50"
-                          }`}
+                          onClick={() => handleApprove(course)}
+                          className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-[#22A146] text-[#22A146] hover:bg-green-50"
                         >
-                          {confirmAction?.id === course.id &&
-                          approveMutation.isPending ? (
-                            "Approving..."
-                          ) : (
-                            <>
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              {confirmAction?.id === course.id &&
-                              confirmAction.action === "approve"
-                                ? "Confirm?"
-                                : "Approve"}
-                            </>
-                          )}
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          Approve
                         </button>
                         <button
-                          onClick={() => handleAction(course.id, "reject")}
+                          onClick={() =>
+                            setRejectCourse({ id: course.id, title: course.title })
+                          }
                           className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-red-300 text-red-600 hover:bg-red-50"
                         >
                           <XCircle className="w-3.5 h-3.5" />
@@ -305,25 +275,17 @@ export default function AdminCoursesPage() {
 
                     {course.status === "PUBLISHED" && (
                       <button
-                        onClick={() => handleAction(course.id, "suspend")}
-                        className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold ${
-                          confirmAction?.id === course.id &&
-                          confirmAction.action === "suspend"
-                            ? "bg-red-600 text-white"
-                            : "border border-red-300 text-red-600 hover:bg-red-50"
-                        }`}
+                        onClick={() => handleSuspend(course)}
+                        className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-red-300 text-red-600 hover:bg-red-50"
                       >
                         <Ban className="w-3.5 h-3.5" />
-                        {confirmAction?.id === course.id &&
-                        confirmAction.action === "suspend"
-                          ? "Confirm?"
-                          : "Suspend"}
+                        Suspend
                       </button>
                     )}
 
                     {course.status === "SUSPENDED" && (
                       <button
-                        onClick={() => handleAction(course.id, "activate")}
+                        onClick={() => handleActivate(course)}
                         className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-[#22A146] text-[#22A146] hover:bg-green-50"
                       >
                         <PlayCircle className="w-3.5 h-3.5" />
@@ -359,48 +321,26 @@ export default function AdminCoursesPage() {
         </div>
       )}
 
-      {/* Reject Modal */}
-      {rejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setRejectModal(null)}
-          />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-[420px] z-10">
-            <h3 className="text-lg font-semibold text-[#0C1F33] mb-2">
-              Reject Course
-            </h3>
-            <p className="text-sm text-[#64748B] mb-4">
-              Rejecting: <strong>{rejectModal.title}</strong>
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              rows={3}
-              placeholder="Reason for rejection..."
-              className="w-full px-3 py-2 border border-[#E3E8EF] rounded-lg text-sm mb-4 outline-none focus:border-red-400"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setRejectModal(null);
-                  setRejectReason("");
-                }}
-                className="flex-1 py-2.5 border border-[#E3E8EF] rounded-lg text-sm font-semibold text-[#0C1F33]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmReject}
-                disabled={!rejectReason.trim() || rejectMutation.isPending}
-                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
-              >
-                {rejectMutation.isPending ? "Rejecting..." : "Confirm Reject"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReasonDialog
+        open={!!rejectCourse}
+        onOpenChange={(open) => !open && setRejectCourse(null)}
+        title="Reject this course?"
+        description={
+          <>
+            <strong>{rejectCourse?.title}</strong> will be sent back to the
+            instructor with your reason.
+          </>
+        }
+        label="Reason for rejection"
+        placeholder="What needs to change before it can be approved?"
+        confirmLabel="Reject course"
+        onConfirm={(reason) =>
+          rejectMutation.mutateAsync(
+            { courseId: rejectCourse!.id, reason },
+            { onSuccess: refreshCourses },
+          )
+        }
+      />
     </div>
   );
 }

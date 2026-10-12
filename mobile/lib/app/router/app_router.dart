@@ -46,6 +46,8 @@ import '../../features/instructor_courses/presentation/pages/instructor_assignme
 import '../../features/instructor_courses/presentation/pages/instructor_batches_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_exams_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_grading_page.dart';
+import '../../features/content/presentation/pages/help_page.dart';
+import '../../features/content/presentation/pages/site_page_view.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_live_classes_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
@@ -396,9 +398,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/online-classes/:batchId',
-            builder: (context, state) => OnlineClassBatchPage(
-              batchId: state.pathParameters['batchId']!,
-            ),
+            builder: (context, state) =>
+                OnlineClassBatchPage(batchId: state.pathParameters['batchId']!),
           ),
           GoRoute(
             path: '/chat',
@@ -410,6 +411,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+      // Public help and policy pages, reachable before signing in.
+      GoRoute(path: '/help', builder: (context, state) => const HelpPage()),
+      GoRoute(
+        path: '/pages/:slug',
+        builder: (context, state) =>
+            SitePageView(slug: state.pathParameters['slug']!),
       ),
       ShellRoute(
         builder: (context, state, child) => LandingLayout(child: child),
@@ -441,7 +449,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/verify-email',
       };
 
+      final isPublicContent = path == '/help' || path.startsWith('/pages/');
+
       if (auth.isLoading) return path == '/startup' ? null : '/startup';
+      if (isPublicContent) return null;
       if (path == '/startup') {
         if (account == null) return '/login';
         return account.role == 'Instructor'

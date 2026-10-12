@@ -777,3 +777,41 @@ model NotificationPreference {
 
   @@unique([userId, learnerProfileId, category, channel])
 }
+
+// ─── Site content (CMS) ───
+
+// Editable info and legal pages (terms, privacy, ...). Body is Markdown.
+model SitePage {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  body        String    @default("")
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  updatedById String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FaqItem {
+  id        String   @id @default(uuid())
+  category  String
+  question  String
+  answer    String
+  order     Int      @default(0)
+  published Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, order])
+}
+
+// Key/value site configuration, e.g. key "site" = contact details and links.
+model SiteSetting {
+  key         String   @id
+  value       Json
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}

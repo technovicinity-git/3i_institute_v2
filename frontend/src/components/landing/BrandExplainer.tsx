@@ -18,7 +18,10 @@ const columns = [
 
 export default function BrandExplainer() {
   return (
-    <section className="w-full bg-white py-[120px] px-[130px]">
+    <section
+      id="about"
+      className="w-full bg-white py-16 md:py-[120px] px-6 md:px-[130px] scroll-mt-20"
+    >
       <div className="max-w-[1180px] mx-auto flex flex-col items-center gap-12">
         {/* Label */}
         <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#B8912F]">
@@ -26,7 +29,7 @@ export default function BrandExplainer() {
         </p>
 
         {/* Title */}
-        <h2 className="font-serif text-[40px] text-[#12304E] text-center">
+        <h2 className="font-serif text-3xl md:text-[40px] text-[#12304E] text-center">
           Three commitments in one mark
         </h2>
 

@@ -107,19 +107,19 @@ export function Navbar() {
           Courses
         </Link>
         <Link
-          href="#pathways"
+          href="/#pathways"
           className="text-brand-navy hover:text-green transition-colors"
         >
           Programs
         </Link>
         <Link
-          href="#faculty"
+          href="/#faculty"
           className="text-brand-navy hover:text-green transition-colors"
         >
           Instructors
         </Link>
         <Link
-          href="#about"
+          href="/#about"
           className="text-brand-navy hover:text-green transition-colors"
         >
           About
