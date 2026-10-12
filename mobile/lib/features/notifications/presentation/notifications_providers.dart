@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../profiles/presentation/providers/learner_profiles_providers.dart';
+import '../data/broadcast_repository.dart';
 import '../data/notifications_repository.dart';
 import '../domain/app_notification.dart';
 
@@ -249,3 +250,24 @@ String? mobileRouteFor(AppNotification notification) {
       ? path
       : null;
 }
+
+// ─── Instructor broadcasts ───
+
+final broadcastRepositoryProvider = Provider(
+  (ref) => BroadcastRepository(ref.watch(apiClientProvider)),
+);
+
+/// Recipient count for `courseId` or `courseId|batchId`.
+final broadcastPreviewProvider = FutureProvider.autoDispose
+    .family<BroadcastPreview, String>((ref, key) {
+      final parts = key.split('|');
+      return ref
+          .watch(broadcastRepositoryProvider)
+          .preview(parts[0], batchId: parts.length > 1 ? parts[1] : null);
+    });
+
+/// One page of the instructor's sent notifications.
+final sentBroadcastsProvider = FutureProvider.autoDispose
+    .family<SentBroadcastPage, int>(
+      (ref, page) => ref.watch(broadcastRepositoryProvider).list(page: page),
+    );

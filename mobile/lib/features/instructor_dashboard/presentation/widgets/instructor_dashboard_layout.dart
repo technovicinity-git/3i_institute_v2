@@ -154,6 +154,11 @@ class InstructorSidebar extends ConsumerWidget {
     ),
     ('Students', Icons.people_outline, '/instructor/students'),
     ('Notifications', Icons.notifications_none, '/instructor/notifications'),
+    (
+      'Send Notification',
+      Icons.campaign_outlined,
+      '/instructor/send-notification',
+    ),
     ('Settings', Icons.settings_outlined, '/instructor/settings'),
   ];
 
