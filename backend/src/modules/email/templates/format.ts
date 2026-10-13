@@ -17,3 +17,20 @@ export function formatDateTime(date: Date, timeZone = "UTC"): string {
     return timeZone === "UTC" ? date.toUTCString() : formatDateTime(date);
   }
 }
+
+// "Aisha", "Aisha and Yusuf", "Aisha, Yusuf and Musa"
+export function formatNameList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
+// "45 minutes", "1 hour", "1 hour 30 minutes"
+export function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  const parts = [
+    hours ? `${hours} ${hours === 1 ? "hour" : "hours"}` : "",
+    rest ? `${rest} ${rest === 1 ? "minute" : "minutes"}` : "",
+  ].filter(Boolean);
+  return parts.join(" ") || "0 minutes";
+}

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Logo } from "@/components/layout/logo";
 import { useVerifyEmailMutation } from "@/hooks/use-email-verification";
 import { postVerifyRoute } from "@/services/email.service";
+import { ExpiredVerificationLink } from "@/components/auth/expired-verification-link";
+import { apiErrorCode } from "@/lib/api-error";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -35,13 +37,18 @@ function VerifyEmailContent() {
           router.push(postVerifyRoute(result));
         }, 2000);
       },
-      onError: () => {
+      onError: (error) => {
+        // An expired link offers a new one instead of leaving the page.
+        if (apiErrorCode(error) === "VERIFICATION_LINK_EXPIRED") return;
         setTimeout(() => {
           router.push("/login");
         }, 2000);
       },
     });
   }, [token, verifyMutation, router]);
+
+  const linkExpired =
+    apiErrorCode(verifyMutation.error) === "VERIFICATION_LINK_EXPIRED";
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -83,6 +90,17 @@ function VerifyEmailContent() {
                 Your email has been verified. Redirecting to login...
               </p>
             </>
+          ) : linkExpired && token ? (
+            <>
+              <h1 className="font-serif text-2xl text-primary mb-2">
+                This link has expired
+              </h1>
+              <p className="text-muted text-sm mb-6">
+                Verification links are valid for 24 hours. We can send a new
+                one to the same email address.
+              </p>
+              <ExpiredVerificationLink token={token} loginHref="/login" />
+            </>
           ) : verifyMutation.isError ? (
             <>
               <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
@@ -104,8 +122,8 @@ function VerifyEmailContent() {
                 Verification Failed
               </h1>
               <p className="text-muted text-sm mb-4">
-                The verification link is invalid or expired. Redirecting to
-                login...
+                This verification link is invalid or has already been used.
+                Redirecting to login...
               </p>
             </>
           ) : null}

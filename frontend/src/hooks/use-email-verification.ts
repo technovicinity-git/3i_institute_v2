@@ -16,6 +16,18 @@ export function useResendVerificationMutation() {
   });
 }
 
+// For an expired verification link: sends a new one using its token.
+export function useResendVerificationForTokenMutation() {
+  return useMutation({
+    mutationFn: (token: string) =>
+      emailService.resendVerificationForToken(token),
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? "Failed to send a new link");
+    },
+  });
+}
+
 export function useVerifyEmailMutation() {
   return useMutation({
     mutationFn: (token: string) => emailService.verifyEmail(token),

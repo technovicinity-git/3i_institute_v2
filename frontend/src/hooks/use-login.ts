@@ -25,6 +25,8 @@ export function useLoginMutation() {
       router.push("/profiles");
     },
     onError: (error: any) => {
+      // The login page shows a resend option for this one instead.
+      if (error.response?.data?.error?.code === "EMAIL_NOT_VERIFIED") return;
       const message = error.response?.data?.error?.message;
       const details = error.response?.data?.error?.details;
 

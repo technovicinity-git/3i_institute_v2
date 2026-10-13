@@ -150,4 +150,8 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> resendVerification(String email) =>
       _remoteDataSource.resendVerification(email);
+
+  @override
+  Future<void> resendVerificationForToken(String token) =>
+      _remoteDataSource.resendVerificationForToken(token);
 }

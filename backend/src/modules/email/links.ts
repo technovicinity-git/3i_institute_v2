@@ -21,7 +21,11 @@ export const emailLinks = {
   forgotPassword: () => url("/forgot-password"),
   login: () => url("/login"),
   courses: () => url("/courses"),
+  course: (courseId: string) => url(`/courses/${courseId}`),
+  instructorCourse: (courseId: string) =>
+    url(`/instructor/courses/${courseId}/edit`),
   contact: () => url("/contact"),
+  onlineClass: (batchId: string) => url(`/online-classes/${batchId}`),
   instructorLogin: () => url("/instructor/login"),
   instructorDashboard: () => url("/instructor/dashboard"),
 };

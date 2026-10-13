@@ -227,6 +227,14 @@ class AuthRemoteDataSource {
     );
   }
 
+  /// New link for an expired verification link, identified by its token.
+  Future<void> resendVerificationForToken(String token) async {
+    await _dio.post<void>(
+      '/auth/resend-verification',
+      data: {'token': token},
+    );
+  }
+
   Map<String, dynamic> _data(Map<String, dynamic>? response) {
     final data = response?['data'];
     if (data is Map<String, dynamic>) return data;

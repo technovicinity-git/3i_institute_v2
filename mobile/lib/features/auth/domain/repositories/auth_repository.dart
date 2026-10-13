@@ -46,4 +46,5 @@ abstract interface class AuthRepository {
   Future<void> resetPassword({required String token, required String password});
   Future<void> verifyEmail(String token);
   Future<void> resendVerification(String email);
+  Future<void> resendVerificationForToken(String token);
 }

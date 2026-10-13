@@ -11,6 +11,16 @@ import { canManageCourse } from "#/shared/course-access";
 import { emailLinks } from "#/modules/email/links";
 import { emailService } from "#/modules/email/service";
 
+// Course ids stored on an INSTRUCTOR_SUSPENDED audit entry, or null for
+// entries written before they were recorded.
+function readSuspendedCourseIds(details: unknown): string[] | null {
+  if (typeof details !== "object" || details === null) return null;
+  const ids = (details as { suspendedCourseIds?: unknown }).suspendedCourseIds;
+  return Array.isArray(ids) && ids.every((id) => typeof id === "string")
+    ? ids
+    : null;
+}
+
 export class InstructorService {
   async apply(userId: string, input: InstructorApplicationInput) {
     // Check user exists and isn't already an instructor
@@ -236,26 +246,44 @@ export class InstructorService {
       throw new Error("Account Holder role not found — run seed");
     }
 
-    // Revert to account holder role
-    await prisma.user.update({
-      where: { id: instructorId },
-      data: { roleId: accountHolderRole.id },
+    // Only live courses are suspended, and their ids are recorded so that
+    // reinstating restores exactly those. Drafts, courses awaiting review
+    // and rejected courses keep their status, so they can't go live
+    // without review when the instructor is reinstated. (FR-INST-07)
+    const liveCourses = await prisma.course.findMany({
+      where: { instructorId, status: "PUBLISHED" },
+      select: { id: true },
     });
+    const suspendedCourseIds = liveCourses.map((course) => course.id);
 
-    // Suspend their courses (FR-INST-07)
-    await prisma.course.updateMany({
-      where: { instructorId },
-      data: { status: "SUSPENDED" },
-    });
+    await prisma.$transaction([
+      // Revert to account holder role
+      prisma.user.update({
+        where: { id: instructorId },
+        data: { roleId: accountHolderRole.id },
+      }),
+      prisma.course.updateMany({
+        where: { id: { in: suspendedCourseIds } },
+        data: { status: "SUSPENDED" },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: adminId,
+          action: "INSTRUCTOR_SUSPENDED",
+          resource: "instructor",
+          resourceId: instructorId,
+          details: { suspendedBy: adminId, suspendedCourseIds },
+        },
+      }),
+    ]);
 
-    // Log suspension
-    await prisma.auditLog.create({
+    emailService.sendInBackground({
+      to: instructor.email,
+      template: "instructor.suspended",
       data: {
-        userId: adminId,
-        action: "INSTRUCTOR_SUSPENDED",
-        resource: "instructor",
-        resourceId: instructorId,
-        details: { suspendedBy: adminId },
+        firstName: instructor.firstName,
+        suspendedCourseCount: suspendedCourseIds.length,
+        contactUrl: emailLinks.contact(),
       },
     });
 
@@ -263,16 +291,80 @@ export class InstructorService {
   }
 
   async reinstate(adminId: string, instructorId: string) {
-    const user = await prisma.user.findUnique({ where: { id: instructorId }, include: { role: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: instructorId },
+      include: { role: true },
+    });
     if (!user) throw new NotFoundError("Instructor not found");
-    if (user.role.name === "Instructor") throw new ConflictError("Instructor is already active");
-    const instructorRole = await prisma.role.findUnique({ where: { name: "Instructor" } });
-    if (!instructorRole) throw new Error("Instructor role not found — run seed");
-    const latestStatus = await prisma.auditLog.findFirst({ where: { resource: "instructor", resourceId: instructorId, action: { in: ["INSTRUCTOR_SUSPENDED", "INSTRUCTOR_REINSTATED"] } }, orderBy: { createdAt: "desc" } });
-    if (latestStatus?.action !== "INSTRUCTOR_SUSPENDED") throw new ValidationError("User is not a suspended instructor");
-    await prisma.user.update({ where: { id: instructorId }, data: { roleId: instructorRole.id } });
-    await prisma.course.updateMany({ where: { instructorId, status: "SUSPENDED" }, data: { status: "PUBLISHED" } });
-    await prisma.auditLog.create({ data: { userId: adminId, action: "INSTRUCTOR_REINSTATED", resource: "instructor", resourceId: instructorId, details: { reinstatedBy: adminId } } });
+    if (user.role.name === "Instructor") {
+      throw new ConflictError("Instructor is already active");
+    }
+
+    const instructorRole = await prisma.role.findUnique({
+      where: { name: "Instructor" },
+    });
+    if (!instructorRole)
+      throw new Error("Instructor role not found — run seed");
+
+    const latestStatus = await prisma.auditLog.findFirst({
+      where: {
+        resource: "instructor",
+        resourceId: instructorId,
+        action: { in: ["INSTRUCTOR_SUSPENDED", "INSTRUCTOR_REINSTATED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (latestStatus?.action !== "INSTRUCTOR_SUSPENDED") {
+      throw new ValidationError("User is not a suspended instructor");
+    }
+
+    // Restore only the courses this suspension took offline and that are
+    // still suspended (an admin may have suspended one separately since).
+    const suspendedCourseIds = readSuspendedCourseIds(latestStatus.details);
+    const coursesToRestore = suspendedCourseIds
+      ? {
+          id: { in: suspendedCourseIds },
+          instructorId,
+          status: "SUSPENDED" as const,
+        }
+      : // Suspensions recorded before course ids were stored: restore only
+        // courses that had passed review, never drafts or rejected ones.
+        {
+          instructorId,
+          status: "SUSPENDED" as const,
+          approvedAt: { not: null },
+        };
+
+    const [, restored] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: instructorId },
+        data: { roleId: instructorRole.id },
+      }),
+      prisma.course.updateMany({
+        where: coursesToRestore,
+        data: { status: "PUBLISHED" },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: adminId,
+          action: "INSTRUCTOR_REINSTATED",
+          resource: "instructor",
+          resourceId: instructorId,
+          details: { reinstatedBy: adminId },
+        },
+      }),
+    ]);
+
+    emailService.sendInBackground({
+      to: user.email,
+      template: "instructor.reinstated",
+      data: {
+        firstName: user.firstName,
+        restoredCourseCount: restored.count,
+        dashboardUrl: emailLinks.instructorDashboard(),
+      },
+    });
+
     return { message: "Instructor reinstated" };
   }
   async getApplicationStatus(userId: string) {

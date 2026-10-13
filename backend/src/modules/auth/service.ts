@@ -6,7 +6,10 @@ import {
   ConflictError,
   UnauthorizedError,
   AccountInactiveError,
+  EmailNotVerifiedError,
+  RateLimitError,
   ValidationError,
+  VerificationLinkExpiredError,
 } from "#/shared/errors";
 import type {
   RegisterInput,
@@ -14,6 +17,7 @@ import type {
   ResetPasswordInput,
   ChangePasswordInput,
 } from "#/modules/auth/schema";
+import type { ResendVerificationInput } from "#/modules/auth/resend-verification-schema";
 import {
   getAccountPortal,
   type AccountPortal,
@@ -81,6 +85,39 @@ function sendPasswordChangedEmail(user: {
       forgotPasswordUrl: emailLinks.forgotPassword(),
     },
   });
+}
+
+// Per-account limits on verification resends, on top of the per-IP route
+// limit, so nobody can flood one inbox by switching networks. Counted from
+// the audit log, so the limits hold across restarts and server instances.
+const VERIFICATION_RESENT_ACTION = "VERIFICATION_EMAIL_RESENT";
+const RESEND_COOLDOWN_MS = 60 * 1000;
+const RESEND_DAILY_LIMIT = 5;
+
+async function assertCanResendVerification(userId: string): Promise<void> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recent = await prisma.auditLog.findMany({
+    where: {
+      userId,
+      action: VERIFICATION_RESENT_ACTION,
+      createdAt: { gt: since },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+    take: RESEND_DAILY_LIMIT,
+  });
+
+  const latest = recent[0]?.createdAt;
+  if (latest && Date.now() - latest.getTime() < RESEND_COOLDOWN_MS) {
+    throw new RateLimitError(
+      "We just sent you a verification email. Please wait a minute before requesting another.",
+    );
+  }
+  if (recent.length >= RESEND_DAILY_LIMIT) {
+    throw new RateLimitError(
+      "Too many verification emails today. Please check your inbox and spam folder, or try again tomorrow.",
+    );
+  }
 }
 
 // ──────────────────────────────────────
@@ -235,6 +272,12 @@ export class AuthService {
       },
     });
 
+    // Checked after the password (like the active check above) so a
+    // stranger can't learn whether an address is registered or verified.
+    if (!user.emailVerified) {
+      throw new EmailNotVerifiedError();
+    }
+
     const permissions = user.role.permissions.map(
       (rp: { permission: { key: string } }) => rp.permission.key,
     );
@@ -382,12 +425,13 @@ export class AuthService {
       where: { emailVerifyToken: hashOneTimeToken(token) },
     });
 
-    if (
-      !user ||
-      !user.emailVerifyExpires ||
-      user.emailVerifyExpires <= new Date()
-    ) {
+    if (!user) {
       throw new ValidationError("Invalid or expired verification token");
+    }
+    // The token still identifies the account, so the client can offer a
+    // new link (resend with this token) instead of a dead end.
+    if (!user.emailVerifyExpires || user.emailVerifyExpires <= new Date()) {
+      throw new VerificationLinkExpiredError();
     }
 
     await prisma.user.update({
@@ -462,6 +506,11 @@ export class AuthService {
         passwordResetExpires: null,
         failedLoginAttempts: 0,
         lockedUntil: null,
+        // The reset link was opened from this inbox, which proves the
+        // address belongs to the user.
+        emailVerified: true,
+        emailVerifyToken: null,
+        emailVerifyExpires: null,
       },
     });
 
@@ -500,12 +549,25 @@ export class AuthService {
     sendPasswordChangedEmail(user);
   }
 
-  async resendVerification(email: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+  // Sends a fresh verification link. Accepts either the email address
+  // (from the "check your email" screen or a blocked login) or the token
+  // from an expired link, which identifies the account without the user
+  // typing anything.
+  async resendVerification(input: ResendVerificationInput) {
+    const user =
+      "token" in input
+        ? await prisma.user.findUnique({
+            where: { emailVerifyToken: hashOneTimeToken(input.token) },
+          })
+        : await prisma.user.findUnique({ where: { email: input.email } });
 
     if (!user) {
+      if ("token" in input) {
+        // Already used, or replaced by a newer link.
+        throw new ValidationError(
+          "This link is no longer valid. Sign in to request a new verification email.",
+        );
+      }
       // Return success to prevent email enumeration
       return {
         message:
@@ -517,16 +579,28 @@ export class AuthService {
       return { message: "Email is already verified. You can log in." };
     }
 
+    await assertCanResendVerification(user.id);
+
     // A new link replaces any earlier one.
     const verification = createEmailVerifyToken();
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerifyToken: verification.hash,
-        emailVerifyExpires: verification.expiresAt,
-      },
-    });
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerifyToken: verification.hash,
+          emailVerifyExpires: verification.expiresAt,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: VERIFICATION_RESENT_ACTION,
+          resource: "user",
+          resourceId: user.id,
+        },
+      }),
+    ]);
 
     const { portal } = await getAccountPortal(user.id);
     sendVerificationEmail(user, verification.token, portal);

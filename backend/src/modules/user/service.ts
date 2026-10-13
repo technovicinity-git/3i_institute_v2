@@ -127,6 +127,10 @@ export class UserService {
         emailVerified: false,
         emailVerifyToken: verification.hash,
         emailVerifyExpires: verification.expiresAt,
+        // A reset link sent to the old address must not be able to verify
+        // the new one (a successful reset marks the email verified).
+        passwordResetToken: null,
+        passwordResetExpires: null,
       },
     });
 

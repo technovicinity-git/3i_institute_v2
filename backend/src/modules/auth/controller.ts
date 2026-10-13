@@ -161,7 +161,7 @@ export class AuthController {
   ) => {
     try {
       const input = resendVerificationSchema.parse(req.body);
-      const result = await authService.resendVerification(input.email);
+      const result = await authService.resendVerification(input);
       sendSuccess(res, result, 200, result.message);
     } catch (error) {
       next(error);

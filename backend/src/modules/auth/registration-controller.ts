@@ -12,22 +12,14 @@ export class RegistrationController {
       const input = learnerRegistrationSchema.parse(req.body);
       const result = await registrationService.registerLearner(input);
 
-      res.cookie("refreshToken", result.tokens.refreshToken, {
-        httpOnly: true,
-        secure: process.env["NODE_ENV"] === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
-
+      // No tokens: the user must verify their email before signing in.
       sendSuccess(
         res,
         {
           user: result.user,
-          accessToken: result.tokens.accessToken,
         },
         201,
-        "Account and learner profile created",
+        "Account created. Please check your email to verify.",
       );
     } catch (error) {
       next(error);
@@ -43,23 +35,15 @@ export class RegistrationController {
       const input = instructorRegistrationSchema.parse(req.body);
       const result = await registrationService.registerInstructor(input);
 
-      res.cookie("refreshToken", result.tokens.refreshToken, {
-        httpOnly: true,
-        secure: process.env["NODE_ENV"] === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
-
+      // No tokens: the user must verify their email before signing in.
       sendSuccess(
         res,
         {
           user: result.user,
           instructorApplication: result.instructorApplication,
-          accessToken: result.tokens.accessToken,
         },
         201,
-        "Account created and instructor application submitted",
+        "Application submitted. Please check your email to verify.",
       );
     } catch (error) {
       next(error);

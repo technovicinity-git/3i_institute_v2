@@ -7,11 +7,22 @@ import {
   useDeleteSessionMutation,
 } from "@/hooks/use-batches";
 import type { Session } from "@/types/batch";
+import {
+  describeSessionNotice,
+  plainDeleteConfirmation,
+  type SessionNotice,
+} from "@/lib/session-notice";
+import { SessionNoticeDialog } from "@/components/instructor/session-notice-dialog";
 
 interface EditSessionModalProps {
   session: Session;
+  // Enrolled (non-waitlisted) learners, who are notified of changes.
+  learnerCount: number;
   onClose: () => void;
 }
+
+// The change waiting for the instructor to confirm in the dialog.
+type PendingConfirmation = { notice: SessionNotice; action: "save" | "delete" };
 
 // Convert ISO date to datetime-local format
 function toDateTimeLocal(dateStr: string): string {
@@ -21,7 +32,11 @@ function toDateTimeLocal(dateStr: string): string {
   return local.toISOString().slice(0, 16);
 }
 
-export function EditSessionModal({ session, onClose }: EditSessionModalProps) {
+export function EditSessionModal({
+  session,
+  learnerCount,
+  onClose,
+}: EditSessionModalProps) {
   const updateMutation = useUpdateSessionMutation();
   const deleteMutation = useDeleteSessionMutation();
 
@@ -34,36 +49,58 @@ export function EditSessionModal({ session, onClose }: EditSessionModalProps) {
   );
   const [meetingLink, setMeetingLink] = useState(session.meetingLink ?? "");
   const [notes, setNotes] = useState(session.notes ?? "");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmation, setConfirmation] = useState<PendingConfirmation | null>(
+    null,
+  );
 
+  const buildInput = () => ({
+    title: title.trim(),
+    scheduledAt: new Date(scheduledAt).toISOString(),
+    durationMinutes: Number(durationMinutes),
+    meetingLink: meetingLink.trim(),
+    notes: notes.trim(),
+  });
+
+  // Asks for confirmation first when learners will be notified.
   const handleSave = () => {
     if (!title.trim() || !scheduledAt) return;
 
+    const notice = describeSessionNotice(
+      { action: "edit", before: session, after: buildInput() },
+      learnerCount,
+    );
+    if (notice) {
+      setConfirmation({ notice, action: "save" });
+      return;
+    }
+    save();
+  };
+
+  const save = () => {
     updateMutation.mutate(
-      {
-        sessionId: session.id,
-        input: {
-          title: title.trim(),
-          scheduledAt: new Date(scheduledAt).toISOString(),
-          durationMinutes: Number(durationMinutes),
-          meetingLink: meetingLink.trim(),
-          notes: notes.trim(),
-        },
-      },
+      { sessionId: session.id, input: buildInput() },
       {
         onSuccess: () => onClose(),
+        onError: () => setConfirmation(null),
       },
     );
   };
 
+  // Deleting always asks first; the message says whether learners hear
+  // about it.
   const handleDelete = () => {
-    if (!showDeleteConfirm) {
-      setShowDeleteConfirm(true);
-      return;
-    }
+    const notice =
+      describeSessionNotice(
+        { action: "delete", before: session },
+        learnerCount,
+      ) ?? plainDeleteConfirmation;
+    setConfirmation({ notice, action: "delete" });
+  };
 
+  const remove = () => {
     deleteMutation.mutate(session.id, {
       onSuccess: () => onClose(),
+      onError: () => setConfirmation(null),
     });
   };
 
@@ -162,14 +199,10 @@ export function EditSessionModal({ session, onClose }: EditSessionModalProps) {
             type="button"
             onClick={handleDelete}
             disabled={deleteMutation.isPending || updateMutation.isPending}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-              showDeleteConfirm
-                ? "bg-red-600 text-white"
-                : "border border-red-300 text-red-600 hover:bg-red-50"
-            } disabled:opacity-50`}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
           >
             <Trash2 className="w-4 h-4" />
-            {showDeleteConfirm ? "Confirm Delete?" : "Delete"}
+            Delete
           </button>
 
           <div className="flex gap-3">
@@ -195,6 +228,15 @@ export function EditSessionModal({ session, onClose }: EditSessionModalProps) {
           </div>
         </div>
       </div>
+
+      {confirmation && (
+        <SessionNoticeDialog
+          notice={confirmation.notice}
+          pending={updateMutation.isPending || deleteMutation.isPending}
+          onConfirm={confirmation.action === "save" ? save : remove}
+          onCancel={() => setConfirmation(null)}
+        />
+      )}
     </div>
   );
 }

@@ -120,3 +120,27 @@ export function note(...parts: Inline[]): EmailBlock {
 export function signOff(): EmailBlock {
   return paragraph("Best regards,\nThe 3i Institute team");
 }
+
+// Label/value rows, e.g. class title, date and duration.
+export function details(rows: [label: string, value: string][]): EmailBlock {
+  const htmlRows = rows
+    .map(
+      ([label, value]) => `    <tr>
+      <td style="padding:6px 16px 6px 0;font-size:13px;line-height:20px;color:${colors.muted};vertical-align:top;white-space:nowrap;">${escapeHtml(label)}</td>
+      <td style="padding:6px 0;font-size:15px;line-height:20px;font-weight:600;color:${colors.text};">${escapeHtml(value)}</td>
+    </tr>`,
+    )
+    .join("\n");
+  return {
+    html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">
+  <tr>
+    <td style="padding:12px 16px;background:${colors.cream};border:1px solid ${colors.border};border-radius:8px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+${htmlRows}
+      </table>
+    </td>
+  </tr>
+</table>`,
+    text: rows.map(([label, value]) => `${label}: ${value}`).join("\n"),
+  };
+}
