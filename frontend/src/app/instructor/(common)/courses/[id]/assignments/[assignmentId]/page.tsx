@@ -13,9 +13,8 @@ import {
   useSubmissions,
   useGradeSubmissionMutation,
 } from "@/hooks/use-assignments";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import type { AssignmentSubmission } from "@/types/assignment";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -40,8 +39,6 @@ export default function AssignmentDetailsPage() {
   const courseId = params.id as string;
   const assignmentId = params.assignmentId as string;
 
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
 
   const { data: submissions, isLoading } = useSubmissions(assignmentId);
   const gradeMutation = useGradeSubmissionMutation();
@@ -84,7 +81,7 @@ export default function AssignmentDetailsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -96,10 +93,6 @@ export default function AssignmentDetailsPage() {
           <ChevronLeft className="w-4 h-4" />
           Back to assignments
         </button>
-
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
 
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"

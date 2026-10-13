@@ -15,7 +15,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-type CourseType = "REGULAR" | "ONLINE_CLASS";
+type CourseType = "REGULAR" | "ONLINE_CLASS" | "MIXED";
 
 interface CourseActionsProps {
   courseId: string | number;
@@ -28,7 +28,12 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
   const { basePath: coursesPath } = useCourseWorkspace();
   const basePath = `${coursesPath}/${courseId}`;
 
-  const isActive = (path: string) => pathname === path;
+  // Deeper pages (e.g. an exam's edit page) keep their section highlighted.
+  const isActive = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
+  // Mixed courses have both recorded materials and live batches.
+  const hasMaterials = courseType !== "ONLINE_CLASS";
+  const hasBatches = courseType !== "REGULAR";
 
   const editPath = `${basePath}/edit`;
   const materialsPath = `${basePath}/materials`;
@@ -53,7 +58,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       icon: Video,
       color: "text-blue-600",
       activeColor: "text-blue-700",
-      show: courseType === "REGULAR",
+      show: hasMaterials,
     },
     {
       label: "Batches",
@@ -61,7 +66,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       icon: Calendar,
       color: "text-red-600",
       activeColor: "text-yellow-700",
-      show: courseType === "ONLINE_CLASS",
+      show: hasBatches,
     },
     {
       label: "Questions",
@@ -93,7 +98,7 @@ export function CourseActions({ courseId, courseType }: CourseActionsProps) {
       icon: ClipboardList,
       color: "text-pink-600",
       activeColor: "text-pink-700",
-      show: courseType === "ONLINE_CLASS",
+      show: hasBatches,
     },
   ];
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/layout/logo";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -12,6 +11,7 @@ import {
 } from "@/hooks/use-seats";
 import { useLearnerProfiles } from "@/hooks/use-learner-profiles";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function SeatsPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function SeatsPage() {
   const assignSeatMutation = useAssignSeatMutation();
   const cancelSeatMutation = useCancelSeatMutation();
 
-  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const isLoading = seatsLoading || profilesLoading;
 
@@ -51,19 +51,24 @@ export default function SeatsPage() {
     });
   };
 
-  const handleCancelSeat = (profileId: string, profileName: string) => {
-    if (confirmCancel === profileId) {
-      cancelSeatMutation.mutate(profileId, {
-        onSuccess: () => {
-          setConfirmCancel(null);
-          toast.success(`Seat cancelled for ${profileName}`);
-        },
-      });
-    } else {
-      setConfirmCancel(profileId);
-      toast.info(`Click again to confirm cancelling seat for ${profileName}`);
-    }
-  };
+  const handleCancelSeat = (profileId: string, profileName: string) =>
+    confirm({
+      tone: "warning",
+      title: "Cancel seat?",
+      description: (
+        <>
+          <span className="font-semibold text-[#0C1F33]">{profileName}</span>{" "}
+          won&apos;t be able to learn until a seat is assigned again. Their
+          progress and results are kept.
+        </>
+      ),
+      confirmLabel: "Cancel seat",
+      cancelLabel: "Keep seat",
+      onConfirm: async () => {
+        await cancelSeatMutation.mutateAsync(profileId);
+        toast.success(`Seat cancelled for ${profileName}`);
+      },
+    });
 
   return (
     <div className="min-h-screen bg-surface text-primary">
@@ -182,15 +187,9 @@ export default function SeatsPage() {
                       handleCancelSeat(profile.id, profile.displayName)
                     }
                     variant="outline"
-                    className={`text-sm px-4 py-2 rounded-lg ${
-                      confirmCancel === profile.id
-                        ? "bg-red-50 border-red-300 text-red-600"
-                        : "border-gray-300 text-muted"
-                    }`}
+                    className="text-sm px-4 py-2 rounded-lg border-gray-300 text-muted"
                   >
-                    {confirmCancel === profile.id
-                      ? "Confirm cancel?"
-                      : "Cancel seat"}
+                    Cancel seat
                   </Button>
                 </div>
               ))}

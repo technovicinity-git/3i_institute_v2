@@ -7,8 +7,7 @@ import { z } from "zod";
 import { ChevronLeft } from "lucide-react";
 import { useCreateAssignmentMutation } from "@/hooks/use-assignments";
 import { useCourseBatches } from "@/hooks/use-batches";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 const createAssignmentSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -26,8 +25,6 @@ export default function CreateAssignmentPage() {
   const router = useRouter();
   const courseId = params.id as string;
 
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
 
   // Get batches belonging to this course
   const { data: batches, isLoading: isBatchesLoading } =
@@ -66,7 +63,7 @@ export default function CreateAssignmentPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -78,10 +75,6 @@ export default function CreateAssignmentPage() {
           <ChevronLeft className="w-4 h-4" />
           Back to assignments
         </button>
-
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
 
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ExternalLink } from "lucide-react";
+import { ChevronLeft, ExternalLink, EyeOff } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Markdown } from "@/components/content/markdown";
 import { RichTextEditor } from "@/components/content/rich-text-editor";
 import {
@@ -52,6 +53,7 @@ function Editor({
   const router = useRouter();
   const save = useSavePageMutation(page.slug);
   const remove = useDeletePageMutation();
+  const confirm = useConfirm();
   const [title, setTitle] = useState(page.title);
   const [body, setBody] = useState(page.body);
   // The editor may tidy the stored Markdown when it loads; compare against
@@ -105,17 +107,38 @@ function Editor({
         <div className="flex flex-wrap gap-2">
           {page.id && (
             <button
-              onClick={() => {
-                const message = isStandard
-                  ? "Unpublish this page? It will be hidden from the site."
-                  : "Delete this page permanently?";
-                if (!confirm(message)) return;
-                remove.mutate(page.slug, {
-                  onSuccess: () => {
-                    if (!isStandard) router.push("/admin/content");
-                  },
-                });
-              }}
+              onClick={() =>
+                confirm(
+                  isStandard
+                    ? {
+                        tone: "warning",
+                        icon: EyeOff,
+                        title: "Unpublish page?",
+                        description: (
+                          <>
+                            &ldquo;{page.title}&rdquo; will be hidden from the
+                            site. You can publish it again at any time.
+                          </>
+                        ),
+                        confirmLabel: "Unpublish",
+                        onConfirm: () => remove.mutateAsync(page.slug),
+                      }
+                    : {
+                        title: "Delete page?",
+                        description: (
+                          <>
+                            &ldquo;{page.title}&rdquo; will be deleted
+                            permanently. This can&apos;t be undone.
+                          </>
+                        ),
+                        confirmLabel: "Delete page",
+                        onConfirm: async () => {
+                          await remove.mutateAsync(page.slug);
+                          router.push("/admin/content");
+                        },
+                      },
+                )
+              }
               disabled={remove.isPending || (isStandard && !page.published)}
               className="px-4 py-2 rounded-lg border border-red-300 text-sm font-semibold text-red-600 disabled:opacity-40"
             >

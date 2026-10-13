@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import {
-  ChevronLeft,
   Users,
   Search,
   BookOpen,
@@ -12,8 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useCourseStudents } from "@/hooks/use-instructor-students";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useWorkspaceCourses } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -45,9 +43,7 @@ function getInitials(name: string): string {
 }
 
 export default function CourseStudentsPage() {
-  const { basePath } = useCourseWorkspace();
   const params = useParams();
-  const router = useRouter();
   const courseId = params.id as string;
 
   const { data: courses } = useWorkspaceCourses();
@@ -61,21 +57,9 @@ export default function CourseStudentsPage() {
   );
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
-
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1

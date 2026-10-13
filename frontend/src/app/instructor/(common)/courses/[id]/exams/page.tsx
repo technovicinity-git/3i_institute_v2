@@ -1,11 +1,10 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { FileText, Clock, Plus, CheckCircle, ChevronLeft } from "lucide-react";
+import { FileText, Clock, Plus, CheckCircle } from "lucide-react";
 import { useCourseExams, usePendingAttempts } from "@/hooks/use-exams";
 import Link from "next/link";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function getTypeBadge(type: string) {
   return type === "final"
@@ -22,21 +21,9 @@ export default function ExamsPage() {
   const { data: exams, isLoading, isError } = useCourseExams(courseId);
   const { data: pendingAttempts } = usePendingAttempts({ courseId });
 
-  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1

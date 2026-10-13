@@ -8,7 +8,6 @@ import {
   useExamAttempts,
   useIssueOnlineFinalExamCertificatesMutation,
 } from "@/hooks/use-exams";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
 function formatDate(dateStr: string | null): string {
@@ -38,7 +37,7 @@ export default function ExamAttemptsPage() {
   const pendingCount = attempts?.filter((attempt) => !attempt.graded).length ?? 0;
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
         <button
           onClick={() => router.push(`${basePath}/${courseId}/exams`)}
@@ -46,7 +45,6 @@ export default function ExamAttemptsPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
-        {course && <CourseActions courseId={courseId} courseType={course.type} />}
         <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "'Marcellus', serif" }}>
           Exam Attempts
         </h1>

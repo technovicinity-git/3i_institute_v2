@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useUploadDocumentMutation } from "@/hooks/use-materials";
 import { DocumentViewerModal } from "@/components/instructor/document-viewer-modal";
 import {
@@ -19,8 +19,7 @@ import {
   Edit3,
   FileUp,
   Eye,
-  ChevronLeft,
-} from "lucide-react";
+  } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,9 +31,9 @@ import {
   useSignedUrlMutation,
 } from "@/hooks/use-materials";
 import { MaterialPreviewModal } from "@/components/instructor/material-preview-modal";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import { EditMaterialModal } from "@/components/instructor/edit-material-modal";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -97,14 +96,13 @@ function readVideoDuration(file: File): Promise<number> {
 }
 
 export default function CourseMaterialsPage() {
-  const { basePath } = useCourseWorkspace();
   const params = useParams();
-  const router = useRouter();
   const courseId = params.id as string;
 
   const { data: materials, isLoading, isError } = useCourseMaterials(courseId);
   const uploadVideoMutation = useUploadVideoMutation();
   const deleteMaterialMutation = useDeleteMaterialMutation();
+  const confirm = useConfirm();
   const signedUrlMutation = useSignedUrlMutation();
 
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -130,8 +128,6 @@ export default function CourseMaterialsPage() {
   // Upload progress simulation
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const captionInputRef = useRef<HTMLInputElement>(null);
 
@@ -267,11 +263,18 @@ export default function CourseMaterialsPage() {
     });
   };
 
-  const handleDeleteMaterial = (materialId: string, title: string) => {
-    if (window.confirm(`Delete "${title}"? This cannot be undone.`)) {
-      deleteMaterialMutation.mutate(materialId);
-    }
-  };
+  const handleDeleteMaterial = (materialId: string, title: string) =>
+    confirm({
+      title: "Delete material?",
+      description: (
+        <>
+          <span className="font-semibold text-[#0C1F33]">{title}</span> will be
+          removed from this course for all students. This can&apos;t be undone.
+        </>
+      ),
+      confirmLabel: "Delete material",
+      onConfirm: () => deleteMaterialMutation.mutateAsync(materialId),
+    });
 
   const filteredMaterials = materials?.filter((material) => {
     const matchesSearch = material.title
@@ -285,18 +288,8 @@ export default function CourseMaterialsPage() {
   const docCount = materials?.filter((m) => m.type === "document").length ?? 0;
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1

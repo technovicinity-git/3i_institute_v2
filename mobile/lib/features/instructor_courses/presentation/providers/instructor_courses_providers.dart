@@ -75,6 +75,7 @@ final instructorExamAttemptsProvider =
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getExamAttempts(id),
     );
+
 /// Every attempt waiting for grading. Shared by the grading queue, sidebar
 /// badge, exam list badges and "grade next".
 final instructorPendingAttemptsProvider =
@@ -86,6 +87,12 @@ final instructorAttemptDetailsProvider = FutureProvider.autoDispose
     .family<InstructorExamAttempt, String>(
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getAttemptDetails(id),
+    );
+
+/// Students across all of the instructor's courses (Students tab).
+final instructorAllStudentsProvider =
+    FutureProvider<List<InstructorEnrolledStudent>>(
+      (ref) => ref.watch(instructorCoursesRepositoryProvider).getAllStudents(),
     );
 final instructorCourseStudentsProvider =
     FutureProvider.family<InstructorCourseStudents, String>(

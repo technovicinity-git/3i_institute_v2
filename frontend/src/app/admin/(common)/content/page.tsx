@@ -22,6 +22,7 @@ import {
   useUpdateFaqMutation,
 } from "@/hooks/use-content";
 import type { FaqItem, SiteSettings } from "@/services/content.service";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { SOCIAL_LABELS, type SocialNetwork } from "@/components/landing/social-icon";
 
 type Tab = "pages" | "faq" | "settings";
@@ -182,6 +183,7 @@ function FaqTab() {
   const createFaq = useCreateFaqMutation();
   const updateFaq = useUpdateFaqMutation();
   const deleteFaq = useDeleteFaqMutation();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<(typeof emptyFaq & { id?: string }) | null>(
     null,
   );
@@ -262,9 +264,19 @@ function FaqTab() {
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm("Delete this question?")) deleteFaq.mutate(item.id);
-                  }}
+                  onClick={() =>
+                    confirm({
+                      title: "Delete FAQ question?",
+                      description: (
+                        <>
+                          &ldquo;{item.question}&rdquo; will be removed from the
+                          help page. This can&apos;t be undone.
+                        </>
+                      ),
+                      confirmLabel: "Delete question",
+                      onConfirm: () => deleteFaq.mutateAsync(item.id),
+                    })
+                  }
                   className="text-[#64748B] hover:text-red-600"
                   aria-label="Delete question"
                 >

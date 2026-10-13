@@ -13,7 +13,7 @@ export interface InstructorCourse {
     name: string;
     slug: string;
   } | null;
-  type: "REGULAR" | "ONLINE_CLASS";
+  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
   level: string;
   language: string;
   minimumAge: number;
@@ -42,7 +42,7 @@ export interface CreateCourseInput {
   thumbnailUrl?: string;
   coverImageUrl?: string;
   categoryId: string;
-  type: "REGULAR" | "ONLINE_CLASS";
+  type: "REGULAR" | "ONLINE_CLASS" | "MIXED";
   level: string;
   language: string;
   minimumAge: number;

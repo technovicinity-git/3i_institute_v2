@@ -5,13 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, ChevronLeft } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   useUpdateCourseMutation,
 } from "@/hooks/use-instructor-courses";
 import { useCategories } from "@/hooks/use-categories";
 import { ThumbnailUpload } from "@/components/instructor/thumbnail-upload";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
@@ -32,7 +31,7 @@ const editCourseSchema = z.object({
     .optional()
     .or(z.literal("")),
   categoryId: z.string().uuid("Please select a category"),
-  type: z.enum(["REGULAR", "ONLINE_CLASS"]),
+  type: z.enum(["REGULAR", "ONLINE_CLASS", "MIXED"]),
   level: z.string().min(1, "Level is required"),
   language: z.string().min(1, "Language is required"),
   minimumAge: z
@@ -204,18 +203,8 @@ export default function EditCoursePage() {
   }
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}

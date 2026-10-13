@@ -59,7 +59,7 @@ export default function BatchDetailsPage() {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
         <button

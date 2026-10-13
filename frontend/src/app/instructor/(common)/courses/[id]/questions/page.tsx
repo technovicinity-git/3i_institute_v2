@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Trash2, Eye, Search, ChevronLeft, Upload } from "lucide-react";
+import { Plus, Trash2, Eye, Search, Upload } from "lucide-react";
 import { BulkQuestionImportModal } from "@/components/instructor/bulk-question-import-modal";
 import {
   useMyQuestions,
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
 import Link from "next/link";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function getTypeBadge(type: string) {
   const typeMap: Record<string, { label: string; className: string }> = {
@@ -51,14 +51,12 @@ export default function QuestionsPage() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
   const { data: questions, isLoading, isError } = useMyQuestions(courseId);
   const deleteMutation = useDeleteQuestionMutation();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
 
   const filteredQuestions = questions?.filter((q) => {
@@ -69,31 +67,28 @@ export default function QuestionsPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleDelete = (questionId: string) => {
-    if (confirmDelete === questionId) {
-      deleteMutation.mutate(questionId, {
-        onSuccess: () => setConfirmDelete(null),
-      });
-    } else {
-      setConfirmDelete(questionId);
-    }
-  };
+  const handleDelete = (question: { id: string; question: string }) =>
+    confirm({
+      title: "Delete question?",
+      description: (
+        <>
+          <span className="line-clamp-3 font-medium text-[#0C1F33]">
+            &ldquo;{question.question}&rdquo;
+          </span>
+          <span className="mt-1 block">
+            It will be deleted from the question bank. This can&apos;t be
+            undone.
+          </span>
+        </>
+      ),
+      confirmLabel: "Delete question",
+      onConfirm: () => deleteMutation.mutateAsync(question.id),
+    });
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
-
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1
@@ -208,22 +203,14 @@ export default function QuestionsPage() {
                       <Eye className="w-4 h-4" />
                     </Link>
                     <button
-                      onClick={() => handleDelete(question.id)}
+                      onClick={() => handleDelete(question)}
                       disabled={deleteMutation.isPending}
-                      className={`p-2 rounded-lg transition-colors shrink-0 ${
-                        confirmDelete === question.id
-                          ? "bg-red-50 text-red-700"
-                          : "hover:bg-red-50 text-red-500"
-                      }`}
+                      aria-label="Delete question"
+                      className="p-2 rounded-lg transition-colors shrink-0 hover:bg-red-50 text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  {confirmDelete === question.id && (
-                    <p className="text-xs text-red-600 mt-2">
-                      Click again to confirm delete
-                    </p>
-                  )}
                 </div>
               );
             })}
