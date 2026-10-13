@@ -538,7 +538,7 @@ class InstructorCoursesRepository {
           : const [],
       suggestedAnswer: _nullable(item['suggestedAnswer']),
       marks: _int(item['marks'], 1),
-      negativeMarks: _int(item['negativeMarks']),
+      negativeMarks: _double(item['negativeMarks']),
       difficulty: '${item['difficulty'] ?? 'medium'}',
       explanation: _nullable(item['explanation']),
     );
@@ -608,5 +608,7 @@ String? _nullable(Object? value) =>
     value is String && value.isNotEmpty ? value : null;
 int _int(Object? value, [int fallback = 0]) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+double _double(Object? value, [double fallback = 0]) =>
+    value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 List<String> _strings(Object? value) =>
     value is List ? value.whereType<String>().toList() : const [];

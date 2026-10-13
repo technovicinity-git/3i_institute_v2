@@ -17,7 +17,10 @@ class InstructorQuestion {
   /// A single answer for mcq/true_false, several for multi_select.
   final List<String> correctAnswers;
   final String? suggestedAnswer, explanation;
-  final int marks, negativeMarks;
+  final int marks;
+
+  /// Deducted for a wrong answer; may be a fraction (e.g. 0.25).
+  final double negativeMarks;
 }
 
 class QuestionImportResult {

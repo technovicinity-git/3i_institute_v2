@@ -423,7 +423,7 @@ class _InstructorQuestionFormPageState
     _question.text = q.question;
     _suggested.text = q.suggestedAnswer ?? '';
     _marks.text = '${q.marks}';
-    _negative.text = '${q.negativeMarks}';
+    _negative.text = _formatMarks(q.negativeMarks);
     _explanation.text = q.explanation ?? '';
     if (_hasOptions) {
       for (final c in _options) {
@@ -572,9 +572,16 @@ class _InstructorQuestionFormPageState
             child: TextField(
               controller: _negative,
               enabled: !_saving,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                // Digits with up to 2 decimal places, e.g. 0.25.
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Negative Marks',
+                hintText: 'e.g. 0.25',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -755,14 +762,17 @@ class _InstructorQuestionFormPageState
     final text = _question.text.trim();
     final marks = int.tryParse(_marks.text.trim());
     final negative = _negative.text.trim().isEmpty
-        ? 0
-        : int.tryParse(_negative.text.trim());
+        ? 0.0
+        : double.tryParse(_negative.text.trim());
     if (text.isEmpty) return _notify('Question is required');
     if (marks == null || marks < 1 || marks > 100) {
       return _notify('Marks must be a whole number from 1 to 100');
     }
     if (negative == null || negative < 0) {
-      return _notify('Negative marks must be a whole number of 0 or more');
+      return _notify('Negative marks must be 0 or more, e.g. 0.25');
+    }
+    if (negative > marks) {
+      return _notify("Negative marks can't be more than the question's marks");
     }
 
     List<String>? options;
@@ -1345,3 +1355,8 @@ const _csvTemplate =
     'true_false,The Quran was revealed over 23 years.,True,False,,,,True,,1,0,easy,It was revealed gradually over 23 years.\n'
     'short_answer,Explain Ihsan briefly.,,,,,,,Worshipping Allah as if you see Him and knowing He sees you.,5,0,hard,The highest level of faith.\n'
     'essay,Compare the two migrations.,,,,,,,Discuss the migration to Habasha and Hijra with reasons challenges and outcomes.,10,0,hard,Analytical question on early Islamic history.';
+
+/// 0.0 -> "0", 0.25 -> "0.25", 1.5 -> "1.5"
+String _formatMarks(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toString();

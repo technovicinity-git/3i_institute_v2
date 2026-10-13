@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+const hasAtMostTwoDecimals = (value: number) =>
+  Math.abs(value * 100 - Math.round(value * 100)) < 1e-9;
+
 export const gradeWrittenAnswersSchema = z.object({
   grades: z.array(z.object({
     questionId: z.string().uuid(),
@@ -15,7 +18,14 @@ export const createQuestionSchema = z.object({
   correctAnswer: z.union([z.string(), z.array(z.string())]).optional(),
   suggestedAnswer: z.string().optional(),
   marks: z.number().int().min(1).max(100).default(1),
-  negativeMarks: z.number().int().min(0).default(0),
+  // Fractions allowed (e.g. 0.25, 0.33), up to 2 decimal places. Must not
+  // exceed the question's marks; checked in the service, which also covers
+  // partial updates.
+  negativeMarks: z
+    .number()
+    .min(0, "Negative marks can't be below 0")
+    .refine(hasAtMostTwoDecimals, "Use at most 2 decimal places (e.g. 0.25)")
+    .default(0),
   partialCredit: z.boolean().default(false),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
   explanation: z.string().optional(),

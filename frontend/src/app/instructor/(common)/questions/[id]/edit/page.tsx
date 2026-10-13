@@ -6,6 +6,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  negativeMarksField,
+  negativeMarksWithinMarks,
+  optionalNumber,
+} from "@/lib/question-marks";
 import { Plus, X, Check } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -16,10 +21,10 @@ const editQuestionSchema = z.object({
   type: z.enum(["mcq", "multi_select", "true_false", "short_answer", "essay"]),
   question: z.string().min(1, "Question is required"),
   marks: z.number().int().min(1).max(100),
-  negativeMarks: z.number().int().min(0).optional(),
+  negativeMarks: negativeMarksField,
   difficulty: z.enum(["easy", "medium", "hard"]),
   explanation: z.string().optional(),
-});
+}).refine(...negativeMarksWithinMarks);
 
 type EditQuestionFormData = z.infer<typeof editQuestionSchema>;
 
@@ -320,9 +325,22 @@ export default function EditQuestionPage() {
             </label>
             <input
               type="number"
-              {...register("negativeMarks", { valueAsNumber: true })}
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              placeholder="e.g. 0.25"
+              {...register("negativeMarks", { setValueAs: optionalNumber })}
               className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
             />
+            {errors.negativeMarks ? (
+              <p className="mt-1 text-xs text-red-600">
+                {errors.negativeMarks.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-[#64748B]">
+                Deducted for a wrong answer. Fractions allowed.
+              </p>
+            )}
           </div>
         </div>
 
