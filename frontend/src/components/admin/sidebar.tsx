@@ -20,6 +20,7 @@ import {
   UsersRound,
   Megaphone,
   Newspaper,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
   { label: "Waivers", icon: AlertTriangle, href: "/admin/waivers" },
   { label: "Moderation", icon: MessageSquare, href: "/admin/moderation" },
   { label: "Send Notification", icon: Megaphone, href: "/admin/send-notification" },
+  { label: "Send Email", icon: Mail, href: "/admin/send-email" },
   { label: "Reports", icon: BarChart3, href: "/admin/reports" },
   { label: "Categories", icon: Tags, href: "/admin/categories" },
   { label: "Content", icon: Newspaper, href: "/admin/content" },

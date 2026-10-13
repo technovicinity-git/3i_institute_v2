@@ -15,6 +15,14 @@ export interface MailMessage {
   tags?: Record<string, string>;
   // Same key on a retry = the provider sends the email at most once.
   idempotencyKey?: string;
+  // Not supported by `sendBatch` (a Resend limit); send these one by one.
+  attachments?: MailAttachment[];
+}
+
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
 }
 
 export interface MailResult {
@@ -119,6 +127,15 @@ class ResendMailer implements Mailer {
         name: toTagValue(name),
         value: toTagValue(value),
       })),
+      ...(message.attachments?.length
+        ? {
+            attachments: message.attachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              contentType: a.contentType,
+            })),
+          }
+        : {}),
     };
   }
 
@@ -162,6 +179,9 @@ class ConsoleMailer implements Mailer {
         "──────── 📧 Email (not sent: RESEND_API_KEY is not set) ────────",
         `To:      ${[message.to].flat().join(", ")}`,
         `Subject: ${message.subject}`,
+        ...(message.attachments?.length
+          ? [`Files:   ${message.attachments.map((a) => a.filename).join(", ")}`]
+          : []),
         ...(this.includeBody ? ["", message.text] : []),
         "────────────────────────────────────────────────────────────────",
       ].join("\n"),

@@ -146,6 +146,7 @@ model User {
   notifications           Notification[]
   pushTokens              PushToken[]
   notificationBroadcasts  NotificationBroadcast[]
+  adminEmails             AdminEmail[]
   notificationPreferences NotificationPreference[]
 
   stripeCustomerId   String?
@@ -766,6 +767,29 @@ model NotificationBroadcast {
   createdAt       DateTime              @default(now())
 
   @@index([senderId, createdAt])
+  @@index([createdAt])
+}
+
+// Custom emails sent by an admin, kept as sent history. Sending runs in the
+// background, so status and counts update while it is in progress.
+// Attachments are not stored; only their names and sizes are kept.
+model AdminEmail {
+  id             String      @id @default(uuid())
+  senderId       String
+  sender         User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  audience       String      // INSTRUCTORS | LEARNERS | ALL | USERS
+  subject        String
+  body           String      // Markdown
+  attachments    Json        @default("[]") // [{ name, size, type }]
+  // Snapshot of the chosen people when audience is USERS: [{ id, name, email }]
+  recipients     Json?
+  recipientCount Int         @default(0)
+  sentCount      Int         @default(0)
+  failedCount    Int         @default(0)
+  status         String      @default("SENDING") // SENDING | SENT | PARTIAL | FAILED
+  completedAt    DateTime?
+  createdAt      DateTime    @default(now())
+
   @@index([createdAt])
 }
 
