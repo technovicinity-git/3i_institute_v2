@@ -24,6 +24,7 @@ export interface Course {
   level: string;
   language: string;
   minimumAge: number;
+  maximumAge: number | null;
   instructor: {
     id: string;
     name: string;

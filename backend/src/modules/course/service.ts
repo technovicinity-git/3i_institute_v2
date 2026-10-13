@@ -362,6 +362,7 @@ export class CourseService {
         level: course.level,
         language: course.language,
         minimumAge: course.minimumAge,
+        maximumAge: course.maximumAge,
         instructor: {
           id: course.instructor.id,
           name: `${course.instructor.firstName} ${course.instructor.lastName}`,
