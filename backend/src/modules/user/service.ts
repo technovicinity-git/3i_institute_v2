@@ -1,12 +1,13 @@
-import crypto from "node:crypto";
 import { verify } from "argon2";
 import { prisma } from "#/lib/prisma";
 import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type { UpdateProfileInput } from "#/modules/user/schema";
-
-function generateToken(): string {
-  return crypto.randomBytes(32).toString("hex");
-}
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
+import {
+  createEmailVerifyToken,
+  EMAIL_VERIFY_TTL_HOURS,
+} from "#/shared/one-time-token";
 
 export class UserService {
   async getProfile(userId: string) {
@@ -116,21 +117,40 @@ export class UserService {
       throw new ConflictError("This email is already in use");
     }
 
-    // Generate verification token
-    const emailVerifyToken = generateToken();
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const verification = createEmailVerifyToken();
 
     await prisma.user.update({
       where: { id: userId },
       data: {
         email: newEmail,
         emailVerified: false,
-        emailVerifyToken,
-        emailVerifyExpires,
+        emailVerifyToken: verification.hash,
+        emailVerifyExpires: verification.expiresAt,
       },
     });
 
-    // TODO: Send verification email to new email
+    emailService.sendInBackground({
+      to: newEmail,
+      template: "account.verify-new-email",
+      data: {
+        firstName: user.firstName,
+        verifyUrl: emailLinks.verifyEmail(verification.token),
+        expiresInHours: EMAIL_VERIFY_TTL_HOURS,
+      },
+    });
+
+    // Security alert to the old address, in case the change wasn't them.
+    if (newEmail !== user.email) {
+      emailService.sendInBackground({
+        to: user.email,
+        template: "account.email-changed",
+        data: {
+          firstName: user.firstName,
+          newEmail,
+          contactUrl: emailLinks.contact(),
+        },
+      });
+    }
 
     return {
       message: "Email updated. Please verify your new email.",

@@ -8,6 +8,8 @@ import {
 import type { InstructorApplicationInput } from "#/modules/instructor/schema";
 import { notificationEvents } from "#/modules/notification/events";
 import { canManageCourse } from "#/shared/course-access";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
 
 export class InstructorService {
   async apply(userId: string, input: InstructorApplicationInput) {
@@ -56,6 +58,11 @@ export class InstructorService {
     });
 
     notificationEvents.instructorApplicationSubmitted(userId);
+    emailService.sendInBackground({
+      to: user.email,
+      template: "instructor.application-received",
+      data: { firstName: user.firstName },
+    });
 
     return { message: "Application submitted successfully" };
   }
@@ -101,6 +108,14 @@ export class InstructorService {
     });
 
     notificationEvents.instructorApplicationReviewed(userId, true);
+    emailService.sendInBackground({
+      to: user.email,
+      template: "instructor.application-approved",
+      data: {
+        firstName: user.firstName,
+        dashboardUrl: emailLinks.instructorDashboard(),
+      },
+    });
 
     return { message: "Instructor approved" };
   }
@@ -131,6 +146,15 @@ export class InstructorService {
     });
 
     notificationEvents.instructorApplicationReviewed(userId, false, reason);
+    emailService.sendInBackground({
+      to: user.email,
+      template: "instructor.application-rejected",
+      data: {
+        firstName: user.firstName,
+        reason: reason ?? null,
+        contactUrl: emailLinks.contact(),
+      },
+    });
 
     return { message: "Application rejected" };
   }

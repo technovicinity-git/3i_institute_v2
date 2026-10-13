@@ -5,6 +5,8 @@ import {
   terminateUserSessions,
 } from "#/modules/user/account-status";
 import { notificationEvents } from "#/modules/notification/events";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
 
 export class AdminService {
   async getLearnerProfiles(
@@ -183,6 +185,11 @@ export class AdminService {
         where: { id: userId },
         data: { isActive: false, deactivatedAt: new Date() },
       });
+      emailService.sendInBackground({
+        to: user.email,
+        template: "account.deactivated",
+        data: { firstName: user.firstName, contactUrl: emailLinks.contact() },
+      });
     }
 
     await terminateUserSessions(userId, "deactivated");
@@ -191,7 +198,10 @@ export class AdminService {
   }
 
   async activateUser(userId: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: { select: { name: true } } },
+    });
 
     if (!user) {
       throw new NotFoundError("User not found");
@@ -207,6 +217,20 @@ export class AdminService {
       },
     });
     setCachedStatus(userId, true);
+
+    if (!user.isActive) {
+      emailService.sendInBackground({
+        to: user.email,
+        template: "account.reactivated",
+        data: {
+          firstName: user.firstName,
+          loginUrl:
+            user.role.name === "Instructor"
+              ? emailLinks.instructorLogin()
+              : emailLinks.login(),
+        },
+      });
+    }
 
     return { id: userId, isActive: true };
   }

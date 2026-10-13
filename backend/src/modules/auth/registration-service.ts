@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { hash } from "argon2";
 import { prisma } from "#/lib/prisma";
 import { generateTokenPair } from "#/lib/jwt";
@@ -8,6 +7,10 @@ import type {
   InstructorRegistrationInput,
 } from "#/modules/auth/registration-schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { sendVerificationEmail } from "#/modules/auth/service";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
+import { createEmailVerifyToken } from "#/shared/one-time-token";
 
 function calculateAge(dateOfBirth: Date): number {
   const today = new Date();
@@ -22,8 +25,33 @@ function calculateAge(dateOfBirth: Date): number {
   return age;
 }
 
-function generateToken(): string {
-  return crypto.randomBytes(32).toString("hex");
+// Lets the guardian of a 13–17 year old know the account exists, and records
+// when they were told.
+function sendGuardianNotice(user: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  guardianName: string;
+  guardianEmail: string;
+}): void {
+  emailService.sendInBackground(
+    {
+      to: user.guardianEmail,
+      template: "account.guardian-notice",
+      data: {
+        guardianName: user.guardianName,
+        studentName: `${user.firstName} ${user.lastName}`.trim(),
+        studentEmail: user.email,
+        contactUrl: emailLinks.contact(),
+      },
+    },
+    () =>
+      prisma.user.update({
+        where: { id: user.id },
+        data: { guardianNotifiedAt: new Date() },
+      }),
+  );
 }
 
 export class RegistrationService {
@@ -70,6 +98,8 @@ export class RegistrationService {
       throw new Error("Default role not found — run seed");
     }
 
+    const verification = createEmailVerifyToken();
+
     // Create user + learner profile in a transaction
     const user = await prisma.$transaction(async (tx) => {
       // Create user account
@@ -83,8 +113,8 @@ export class RegistrationService {
           locale: input.locale,
           accountType,
           emailVerified: false,
-          emailVerifyToken: generateToken(),
-          emailVerifyExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          emailVerifyToken: verification.hash,
+          emailVerifyExpires: verification.expiresAt,
           roleId: role.id,
           ...(accountType === "STANDALONE_MINOR"
             ? {
@@ -113,6 +143,11 @@ export class RegistrationService {
 
       return newUser;
     });
+
+    sendVerificationEmail(user, verification.token);
+    if (user.guardianEmail && user.guardianName) {
+      sendGuardianNotice({ ...user, guardianName: user.guardianName, guardianEmail: user.guardianEmail });
+    }
 
     // Get user with role and permissions for JWT
     const userWithRole = await prisma.user.findUnique({
@@ -193,7 +228,7 @@ export class RegistrationService {
     }
 
     const passwordHash = await hash(input.password);
-    const emailVerifyToken = generateToken();
+    const verification = createEmailVerifyToken();
 
     // Get Account Holder role initially
     // They get "Instructor" role only after approval
@@ -218,8 +253,8 @@ export class RegistrationService {
           locale: input.locale,
           accountType: "ADULT",
           emailVerified: false,
-          emailVerifyToken,
-          emailVerifyExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          emailVerifyToken: verification.hash,
+          emailVerifyExpires: verification.expiresAt,
           roleId: accountHolderRole.id,
         },
       });
@@ -248,6 +283,12 @@ export class RegistrationService {
     });
 
     notificationEvents.instructorApplicationSubmitted(user.id);
+    sendVerificationEmail(user, verification.token);
+    emailService.sendInBackground({
+      to: user.email,
+      template: "instructor.application-received",
+      data: { firstName: user.firstName },
+    });
 
     // Get user with role for response
     const userWithRole = await prisma.user.findUnique({

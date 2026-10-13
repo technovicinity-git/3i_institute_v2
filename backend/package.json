@@ -40,6 +40,7 @@
     "multer": "^2.2.0",
     "papaparse": "^5.7.0",
     "pg": "^8.23.0",
+    "resend": "^6.32.1",
     "socket.io": "^4.8.3",
     "stripe": "^22.5.0",
     "swagger-jsdoc": "^6.3.0",
