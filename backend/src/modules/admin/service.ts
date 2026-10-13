@@ -473,7 +473,10 @@ export class AdminService {
   }
 
   async suspendCourse(courseId: string) {
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      include: { instructor: { select: { email: true, firstName: true } } },
+    });
 
     if (!course) {
       throw new NotFoundError("Course not found");
@@ -485,6 +488,17 @@ export class AdminService {
     });
 
     notificationEvents.courseSuspended(courseId);
+    if (course.status !== "SUSPENDED") {
+      emailService.sendInBackground({
+        to: course.instructor.email,
+        template: "instructor.course-suspended",
+        data: {
+          firstName: course.instructor.firstName,
+          courseTitle: course.title,
+          contactUrl: emailLinks.contact(),
+        },
+      });
+    }
 
     return updated;
   }

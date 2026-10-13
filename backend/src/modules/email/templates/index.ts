@@ -11,6 +11,11 @@ import { verifyNewEmail } from "#/modules/email/templates/account/verify-new-ema
 import { applicationApproved } from "#/modules/email/templates/instructor/application-approved";
 import { applicationReceived } from "#/modules/email/templates/instructor/application-received";
 import { applicationRejected } from "#/modules/email/templates/instructor/application-rejected";
+import { courseApproved } from "#/modules/email/templates/instructor/course-approved";
+import { courseRejected } from "#/modules/email/templates/instructor/course-rejected";
+import { courseSuspended } from "#/modules/email/templates/instructor/course-suspended";
+import { instructorReinstated } from "#/modules/email/templates/instructor/instructor-reinstated";
+import { instructorSuspended } from "#/modules/email/templates/instructor/instructor-suspended";
 import type { EmailTemplate } from "#/modules/email/templates/types";
 
 // Every email the platform sends. To add one: create the template file,
@@ -35,6 +40,11 @@ export const emailTemplates = {
   "instructor.application-received": applicationReceived,
   "instructor.application-approved": applicationApproved,
   "instructor.application-rejected": applicationRejected,
+  "instructor.course-approved": courseApproved,
+  "instructor.course-rejected": courseRejected,
+  "instructor.course-suspended": courseSuspended,
+  "instructor.suspended": instructorSuspended,
+  "instructor.reinstated": instructorReinstated,
 } as const satisfies Record<string, EmailTemplate<never>>;
 
 export type EmailTemplateName = keyof typeof emailTemplates;

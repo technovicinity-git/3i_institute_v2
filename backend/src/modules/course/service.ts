@@ -10,6 +10,8 @@ import type {
   ListCoursesQuery,
 } from "#/modules/course/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
 import { canManageCourse } from "#/shared/course-access";
 
 export class CourseService {
@@ -414,6 +416,7 @@ export class CourseService {
   async approve(adminId: string, courseId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
+      include: { instructor: { select: { email: true, firstName: true } } },
     });
 
     if (!course) {
@@ -434,6 +437,16 @@ export class CourseService {
     });
 
     notificationEvents.courseReviewed(courseId, true);
+    emailService.sendInBackground({
+      to: course.instructor.email,
+      template: "instructor.course-approved",
+      data: {
+        firstName: course.instructor.firstName,
+        courseTitle: course.title,
+        courseUrl: emailLinks.course(course.id),
+        manageUrl: emailLinks.instructorCourse(course.id),
+      },
+    });
 
     return updated;
   }
@@ -441,6 +454,7 @@ export class CourseService {
   async reject(adminId: string, courseId: string, reason?: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
+      include: { instructor: { select: { email: true, firstName: true } } },
     });
 
     if (!course) {
@@ -467,6 +481,16 @@ export class CourseService {
     });
 
     notificationEvents.courseReviewed(courseId, false, reason);
+    emailService.sendInBackground({
+      to: course.instructor.email,
+      template: "instructor.course-rejected",
+      data: {
+        firstName: course.instructor.firstName,
+        courseTitle: course.title,
+        reason: reason ?? null,
+        manageUrl: emailLinks.instructorCourse(course.id),
+      },
+    });
 
     return updated;
   }
