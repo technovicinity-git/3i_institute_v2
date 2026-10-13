@@ -9,6 +9,7 @@ import {
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
 import Link from "next/link";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 
@@ -55,10 +56,10 @@ export default function QuestionsPage() {
   const course = courses?.find((c) => c.id === courseId);
   const { data: questions, isLoading, isError } = useMyQuestions(courseId);
   const deleteMutation = useDeleteQuestionMutation();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
 
   const filteredQuestions = questions?.filter((q) => {
@@ -69,15 +70,23 @@ export default function QuestionsPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleDelete = (questionId: string) => {
-    if (confirmDelete === questionId) {
-      deleteMutation.mutate(questionId, {
-        onSuccess: () => setConfirmDelete(null),
-      });
-    } else {
-      setConfirmDelete(questionId);
-    }
-  };
+  const handleDelete = (question: { id: string; question: string }) =>
+    confirm({
+      title: "Delete question?",
+      description: (
+        <>
+          <span className="line-clamp-3 font-medium text-[#0C1F33]">
+            &ldquo;{question.question}&rdquo;
+          </span>
+          <span className="mt-1 block">
+            It will be deleted from the question bank. This can&apos;t be
+            undone.
+          </span>
+        </>
+      ),
+      confirmLabel: "Delete question",
+      onConfirm: () => deleteMutation.mutateAsync(question.id),
+    });
 
   return (
     <div className="p-6 md:p-10">
@@ -208,22 +217,14 @@ export default function QuestionsPage() {
                       <Eye className="w-4 h-4" />
                     </Link>
                     <button
-                      onClick={() => handleDelete(question.id)}
+                      onClick={() => handleDelete(question)}
                       disabled={deleteMutation.isPending}
-                      className={`p-2 rounded-lg transition-colors shrink-0 ${
-                        confirmDelete === question.id
-                          ? "bg-red-50 text-red-700"
-                          : "hover:bg-red-50 text-red-500"
-                      }`}
+                      aria-label="Delete question"
+                      className="p-2 rounded-lg transition-colors shrink-0 hover:bg-red-50 text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  {confirmDelete === question.id && (
-                    <p className="text-xs text-red-600 mt-2">
-                      Click again to confirm delete
-                    </p>
-                  )}
                 </div>
               );
             })}

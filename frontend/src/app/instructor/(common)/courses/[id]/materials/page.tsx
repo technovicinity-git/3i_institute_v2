@@ -35,6 +35,7 @@ import { MaterialPreviewModal } from "@/components/instructor/material-preview-m
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { EditMaterialModal } from "@/components/instructor/edit-material-modal";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const addMaterialSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -105,6 +106,7 @@ export default function CourseMaterialsPage() {
   const { data: materials, isLoading, isError } = useCourseMaterials(courseId);
   const uploadVideoMutation = useUploadVideoMutation();
   const deleteMaterialMutation = useDeleteMaterialMutation();
+  const confirm = useConfirm();
   const signedUrlMutation = useSignedUrlMutation();
 
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -267,11 +269,18 @@ export default function CourseMaterialsPage() {
     });
   };
 
-  const handleDeleteMaterial = (materialId: string, title: string) => {
-    if (window.confirm(`Delete "${title}"? This cannot be undone.`)) {
-      deleteMaterialMutation.mutate(materialId);
-    }
-  };
+  const handleDeleteMaterial = (materialId: string, title: string) =>
+    confirm({
+      title: "Delete material?",
+      description: (
+        <>
+          <span className="font-semibold text-[#0C1F33]">{title}</span> will be
+          removed from this course for all students. This can&apos;t be undone.
+        </>
+      ),
+      confirmLabel: "Delete material",
+      onConfirm: () => deleteMaterialMutation.mutateAsync(materialId),
+    });
 
   const filteredMaterials = materials?.filter((material) => {
     const matchesSearch = material.title

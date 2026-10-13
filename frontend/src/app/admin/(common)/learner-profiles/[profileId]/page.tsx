@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Archive, ArchiveRestore, BookOpen, ClipboardList, UserRound } from "lucide-react";
 import { useAdminLearnerProfile, useArchiveLearnerProfileMutation, useRestoreLearnerProfileMutation } from "@/hooks/use-admin";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -15,6 +16,7 @@ export default function AdminLearnerProfileDetailsPage() {
   const { data: profile, isLoading, isError } = useAdminLearnerProfile(profileId);
   const archiveMutation = useArchiveLearnerProfileMutation();
   const restoreMutation = useRestoreLearnerProfileMutation();
+  const confirm = useConfirm();
 
   if (isLoading) return <div className="p-10 text-center text-[#64748B]">Loading learner profile…</div>;
   if (isError || !profile) return <div className="p-10"><Link href="/admin/learner-profiles" className="text-sm text-blue-700">← Back to learner profiles</Link><p className="mt-6 text-[#64748B]">Could not load this learner profile.</p></div>;
@@ -28,7 +30,7 @@ export default function AdminLearnerProfileDetailsPage() {
     <section className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full bg-[#F9F6F0] flex items-center justify-center"><UserRound className="w-7 h-7 text-[#B8912F]" /></div><div><h1 className="text-2xl text-[#0C1F33]">{profile.displayName}</h1><p className="text-sm text-[#64748B]">Learner profile</p><span className={`inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold ${archived ? "bg-gray-100 text-gray-600" : "bg-green-50 text-green-700"}`}>{archived ? "Archived" : "Current"}</span></div></div>
-        {archived ? <button onClick={() => restoreMutation.mutate(profile.id)} disabled={restoreMutation.isPending} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold disabled:opacity-50"><ArchiveRestore className="w-4 h-4" />{restoreMutation.isPending ? "Restoring…" : "Restore profile"}</button> : <button onClick={() => { if (window.confirm(`Archive ${profile.displayName}'s profile?`)) archiveMutation.mutate(profile.id); }} disabled={archiveMutation.isPending} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold disabled:opacity-50"><Archive className="w-4 h-4" />{archiveMutation.isPending ? "Archiving…" : "Archive profile"}</button>}
+        {archived ? <button onClick={() => restoreMutation.mutate(profile.id)} disabled={restoreMutation.isPending} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#22A146] text-white text-sm font-semibold disabled:opacity-50"><ArchiveRestore className="w-4 h-4" />{restoreMutation.isPending ? "Restoring…" : "Restore profile"}</button> : <button onClick={() => confirm({ tone: "warning", icon: Archive, title: "Archive learner profile?", description: <><span className="font-semibold text-[#0C1F33]">{profile.displayName}</span>&apos;s profile will be hidden from its account. Their courses, progress and results are kept, and you can restore the profile at any time.</>, confirmLabel: "Archive profile", onConfirm: () => archiveMutation.mutateAsync(profile.id) })} disabled={archiveMutation.isPending} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm font-semibold disabled:opacity-50"><Archive className="w-4 h-4" />{archiveMutation.isPending ? "Archiving…" : "Archive profile"}</button>}
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 border-t border-gray-100 mt-6 pt-5">
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Date of birth</p><p className="text-sm text-[#0C1F33]">{formatDate(profile.dateOfBirth)}</p></div>

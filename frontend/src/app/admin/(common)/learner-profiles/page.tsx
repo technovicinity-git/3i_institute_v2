@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Filter, Search, UsersRound, Eye, ArchiveRestore, Archive } from "lucide-react";
 import { useAdminLearnerProfiles, useArchiveLearnerProfileMutation, useRestoreLearnerProfileMutation } from "@/hooks/use-admin";
 import { Pagination } from "@/components/ui/pagination";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -19,6 +20,16 @@ export default function AdminLearnerProfilesPage() {
   const { data, isLoading, isError } = useAdminLearnerProfiles(page, { search: debouncedSearch || undefined, status: status || undefined, seatStatus: seatStatus || undefined });
   const archiveMutation = useArchiveLearnerProfileMutation();
   const restoreMutation = useRestoreLearnerProfileMutation();
+  const confirm = useConfirm();
+
+  const confirmArchive = (profile: { id: string; displayName: string }) => confirm({
+    tone: "warning",
+    icon: Archive,
+    title: "Archive learner profile?",
+    description: <><span className="font-semibold text-[#0C1F33]">{profile.displayName}</span>&apos;s profile will be hidden from its account. Their courses, progress and results are kept, and you can restore the profile at any time.</>,
+    confirmLabel: "Archive profile",
+    onConfirm: () => archiveMutation.mutateAsync(profile.id),
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 350);
@@ -61,7 +72,7 @@ export default function AdminLearnerProfilesPage() {
             <span className="text-sm text-[#64748B]">{profile._count.examAttempts} attempts</span>
             <div className="flex items-center gap-2 lg:justify-end">
               <Link href={`/admin/learner-profiles/${profile.id}`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E3E8EF] text-sm font-semibold text-[#0C1F33] hover:bg-gray-50"><Eye className="w-4 h-4" /> Details</Link>
-              {archived ? <button onClick={() => restoreMutation.mutate(profile.id)} disabled={restoreMutation.isPending} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#22A146] hover:bg-green-50 disabled:opacity-50"><ArchiveRestore className="w-4 h-4" /> Restore</button> : <button onClick={() => { if (window.confirm(`Archive ${profile.displayName}'s profile?`)) archiveMutation.mutate(profile.id); }} disabled={archiveMutation.isPending} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-50"><Archive className="w-4 h-4" /> Archive</button>}
+              {archived ? <button onClick={() => restoreMutation.mutate(profile.id)} disabled={restoreMutation.isPending} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#22A146] hover:bg-green-50 disabled:opacity-50"><ArchiveRestore className="w-4 h-4" /> Restore</button> : <button onClick={() => confirmArchive(profile)} disabled={archiveMutation.isPending} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-50"><Archive className="w-4 h-4" /> Archive</button>}
             </div>
           </div>;
         })}</div>

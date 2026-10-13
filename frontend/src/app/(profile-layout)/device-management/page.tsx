@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
 import { useDevices, useRemoveDeviceMutation } from "@/hooks/use-devices";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 // ---- Icons ----
 
@@ -113,17 +112,22 @@ function getDeviceIcon(platform: string) {
 export default function YourDevicesPage() {
   const { data, isLoading, isError } = useDevices();
   const removeDeviceMutation = useRemoveDeviceMutation();
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
-  function handleDeauthorise(deviceId: string) {
-    if (confirmId === deviceId) {
-      removeDeviceMutation.mutate(deviceId, {
-        onSuccess: () => setConfirmId(null),
-      });
-    } else {
-      setConfirmId(deviceId);
-      toast.info("Click again to confirm de-authorisation");
-    }
+  function handleDeauthorise(device: { id: string; name: string }) {
+    confirm({
+      tone: "warning",
+      title: "De-authorise device?",
+      description: (
+        <>
+          <span className="font-semibold text-[#0C1F33]">{device.name}</span>{" "}
+          will be signed out and must be added again to use 3i Institute.
+          This counts as one of your device swaps.
+        </>
+      ),
+      confirmLabel: "De-authorise",
+      onConfirm: () => removeDeviceMutation.mutateAsync(device.id),
+    });
   }
 
   return (
@@ -202,15 +206,11 @@ export default function YourDevicesPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleDeauthorise(device.id)}
+                      onClick={() => handleDeauthorise(device)}
                       disabled={removeDeviceMutation.isPending}
-                      className={`text-sm font-semibold transition-colors shrink-0 ml-4 disabled:opacity-50 ${
-                        confirmId === device.id
-                          ? "text-red-700 bg-red-50 px-3 py-1.5 rounded-md"
-                          : "text-red-600 hover:text-red-700"
-                      }`}
+                      className="text-sm font-semibold transition-colors shrink-0 ml-4 disabled:opacity-50 text-red-600 hover:text-red-700"
                     >
-                      {confirmId === device.id ? "Confirm?" : "De-authorise"}
+                      De-authorise
                     </button>
                   </div>
                 ))}
