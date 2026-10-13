@@ -1,5 +1,5 @@
 import { prisma } from "#/lib/prisma";
-import { ForbiddenError, NotFoundError } from "#/shared/errors";
+import {  NotFoundError } from "#/shared/errors";
 import { notificationEvents } from "#/modules/notification/events";
 
 interface SendMessageInput {
