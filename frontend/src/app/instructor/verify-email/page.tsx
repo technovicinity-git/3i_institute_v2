@@ -1,13 +1,88 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { Mail } from "lucide-react";
-import { useResendVerificationMutation } from "@/hooks/use-email-verification";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, X } from "lucide-react";
+import {
+  useResendVerificationMutation,
+  useVerifyEmailMutation,
+} from "@/hooks/use-email-verification";
+import { postVerifyRoute } from "@/services/email.service";
+
+// Opened from the verification email (`?token=`): verifies, then continues
+// to the "email verified" screen (applicants) or instructor login.
+function VerifyTokenContent({ token }: { token: string }) {
+  const router = useRouter();
+  const verifyMutation = useVerifyEmailMutation();
+  // The token is single-use: submit it once, even when React runs effects
+  // twice in development.
+  const submitted = useRef(false);
+
+  useEffect(() => {
+    if (submitted.current) return;
+    submitted.current = true;
+
+    verifyMutation.mutate(token, {
+      onSuccess: (result) => router.replace(postVerifyRoute(result)),
+    });
+  }, [token, verifyMutation, router]);
+
+  const failed = verifyMutation.isError;
+
+  return (
+    <div className="min-h-screen bg-[#FBF9F4] flex items-center justify-center px-4">
+      <div className="w-full max-w-[480px] bg-white rounded-lg px-9 py-9 flex flex-col items-center text-center">
+        {failed ? (
+          <>
+            <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mt-1">
+              <X className="w-10 h-10 text-red-600" strokeWidth={2} />
+            </div>
+            <h2
+              className="mt-7 text-[32px] leading-[40px] text-[#0C1F33]"
+              style={{ fontFamily: "'Marcellus', serif" }}
+            >
+              Link expired
+            </h2>
+            <p className="mt-3 text-base text-[#475569] leading-6 max-w-[408px]">
+              This verification link is invalid or has already been used. Sign
+              in to request a new one.
+            </p>
+            <a
+              href="/instructor/login"
+              className="mt-7 w-full max-w-[408px] h-12 flex items-center justify-center bg-[#22A146] hover:bg-[#1B8A3A] text-[#0C1F33] font-semibold text-[15px] rounded-lg transition-colors"
+            >
+              Go to instructor login
+            </a>
+          </>
+        ) : (
+          <>
+            <div className="w-16 h-16 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin mt-1" />
+            <h2
+              className="mt-7 text-[32px] leading-[40px] text-[#0C1F33]"
+              style={{ fontFamily: "'Marcellus', serif" }}
+            >
+              Verifying your email…
+            </h2>
+            <p className="mt-3 text-base text-[#475569] leading-6">
+              Please wait a moment.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") ?? "sarah@example.com";
+  const token = searchParams.get("token");
+
+  if (token) return <VerifyTokenContent token={token} />;
+  return <CheckEmailContent email={searchParams.get("email") ?? ""} />;
+}
+
+// Shown right after registration: "check your inbox" with a resend button.
+function CheckEmailContent({ email }: { email: string }) {
 
   const resendMutation = useResendVerificationMutation();
   const [countdown, setCountdown] = useState(60);
@@ -23,7 +98,7 @@ function VerifyEmailContent() {
   }, [countdown]);
 
   const handleResend = () => {
-    if (!canResend) return;
+    if (!canResend || !email) return;
 
     resendMutation.mutate(email, {
       onSuccess: () => {
@@ -55,7 +130,7 @@ function VerifyEmailContent() {
           </h2>
           <p className="mt-3 text-base text-[#475569] leading-6">
             We&apos;ve sent a verification link to{" "}
-            <span className="font-semibold text-[#0C1F33]">{email}</span>. Click
+            <span className="font-semibold text-[#0C1F33]">{email || "your email address"}</span>. Click
             the link to continue.
           </p>
         </div>
@@ -64,7 +139,7 @@ function VerifyEmailContent() {
         <div className="mt-7 w-full max-w-[408px]">
           <button
             onClick={handleResend}
-            disabled={!canResend || resendMutation.isPending}
+            disabled={!canResend || !email || resendMutation.isPending}
             className={`w-full h-12 rounded-lg border text-[15px] font-semibold transition-colors ${
               canResend
                 ? "border-[#E3E8EF] bg-white text-[#0C1F33] hover:bg-gray-50 cursor-pointer"

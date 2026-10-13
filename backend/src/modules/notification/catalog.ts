@@ -3,6 +3,12 @@
 //
 // `push` and `email` are the channel defaults used by the delivery worker
 // (phases 2–3). Phase 1 delivers in-app only; every notification is in-app.
+//
+// `email: true` means "the delivery worker emails this notification". Leave
+// it false for events whose email is sent directly by `emailService`
+// (modules/email): auth, account security and instructor application
+// decisions. Those are transactional and must not wait on the worker, and
+// flagging them here too would send the user two emails.
 
 export type NotificationCategory =
   | "schedule" // sessions, reminders, batches
@@ -75,8 +81,9 @@ export const NOTIFICATION_EVENTS = {
   "waiver.revoked": event("billing", { push: true, email: true }),
 
   // ── Instructor ───────────────────────────────
-  "instructor.application_approved": event("account", { email: true }),
-  "instructor.application_rejected": event("account", { email: true }),
+  // Emailed directly by instructor/service.ts (see note at the top).
+  "instructor.application_approved": event("account"),
+  "instructor.application_rejected": event("account"),
   "course.approved": event("course", { push: true }),
   "course.rejected": event("course", { push: true, priority: "high" }),
   "course.suspended": event("course", { push: true, priority: "high" }),

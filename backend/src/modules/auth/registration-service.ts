@@ -144,9 +144,13 @@ export class RegistrationService {
       return newUser;
     });
 
-    sendVerificationEmail(user, verification.token);
+    sendVerificationEmail(user, verification.token, "learner");
     if (user.guardianEmail && user.guardianName) {
-      sendGuardianNotice({ ...user, guardianName: user.guardianName, guardianEmail: user.guardianEmail });
+      sendGuardianNotice({
+        ...user,
+        guardianName: user.guardianName,
+        guardianEmail: user.guardianEmail,
+      });
     }
 
     // Get user with role and permissions for JWT
@@ -283,7 +287,7 @@ export class RegistrationService {
     });
 
     notificationEvents.instructorApplicationSubmitted(user.id);
-    sendVerificationEmail(user, verification.token);
+    sendVerificationEmail(user, verification.token, "instructor");
     emailService.sendInBackground({
       to: user.email,
       template: "instructor.application-received",

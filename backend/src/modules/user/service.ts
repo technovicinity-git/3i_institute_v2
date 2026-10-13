@@ -2,6 +2,7 @@ import { verify } from "argon2";
 import { prisma } from "#/lib/prisma";
 import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type { UpdateProfileInput } from "#/modules/user/schema";
+import { getAccountPortal } from "#/modules/auth/portal";
 import { emailLinks } from "#/modules/email/links";
 import { emailService } from "#/modules/email/service";
 import {
@@ -129,12 +130,13 @@ export class UserService {
       },
     });
 
+    const { portal } = await getAccountPortal(userId);
     emailService.sendInBackground({
       to: newEmail,
       template: "account.verify-new-email",
       data: {
         firstName: user.firstName,
-        verifyUrl: emailLinks.verifyEmail(verification.token),
+        verifyUrl: emailLinks.verifyEmail(verification.token, portal),
         expiresInHours: EMAIL_VERIFY_TTL_HOURS,
       },
     });

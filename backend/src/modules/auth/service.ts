@@ -14,6 +14,11 @@ import type {
   ResetPasswordInput,
   ChangePasswordInput,
 } from "#/modules/auth/schema";
+import {
+  getAccountPortal,
+  type AccountPortal,
+  type AccountPortalInfo,
+} from "#/modules/auth/portal";
 import { emailLinks } from "#/modules/email/links";
 import { emailService } from "#/modules/email/service";
 import {
@@ -48,13 +53,14 @@ function calculateAge(dateOfBirth: Date): number {
 export function sendVerificationEmail(
   user: { email: string; firstName: string },
   token: string,
+  portal: AccountPortal,
 ): void {
   emailService.sendInBackground({
     to: user.email,
     template: "auth.verify-email",
     data: {
       firstName: user.firstName,
-      verifyUrl: emailLinks.verifyEmail(token),
+      verifyUrl: emailLinks.verifyEmail(token, portal),
       expiresInHours: EMAIL_VERIFY_TTL_HOURS,
     },
   });
@@ -133,7 +139,7 @@ export class AuthService {
       },
     });
 
-    sendVerificationEmail(user, verification.token);
+    sendVerificationEmail(user, verification.token, "learner");
 
     return {
       user: {
@@ -369,7 +375,9 @@ export class AuthService {
   // ──────────────────────────────────
   // Verify email
   // ──────────────────────────────────
-  async verifyEmail(token: string) {
+  // Returns the account's portal so the client can redirect to the right
+  // sign-in (learner or instructor) after verifying.
+  async verifyEmail(token: string): Promise<AccountPortalInfo> {
     const user = await prisma.user.findUnique({
       where: { emailVerifyToken: hashOneTimeToken(token) },
     });
@@ -390,6 +398,8 @@ export class AuthService {
         emailVerifyExpires: null,
       },
     });
+
+    return getAccountPortal(user.id);
   }
 
   // ──────────────────────────────────
@@ -518,7 +528,8 @@ export class AuthService {
       },
     });
 
-    sendVerificationEmail(user, verification.token);
+    const { portal } = await getAccountPortal(user.id);
+    sendVerificationEmail(user, verification.token, portal);
 
     return { message: "Verification email sent." };
   }
