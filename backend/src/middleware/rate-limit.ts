@@ -12,22 +12,29 @@ interface StoreEntry {
   resetAt: number;
 }
 
-const store = new Map<string, StoreEntry>();
+// One store per limiter: each route counts its own requests, so e.g. a
+// login attempt doesn't use up the same IP's verification-email resend.
+const stores = new Set<Map<string, StoreEntry>>();
 
 // Clean up expired entries every 5 minutes
 setInterval(
   () => {
     const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (now > entry.resetAt) {
-        store.delete(key);
+    for (const store of stores) {
+      for (const [key, entry] of store.entries()) {
+        if (now > entry.resetAt) {
+          store.delete(key);
+        }
       }
     }
   },
   5 * 60 * 1000,
-);
+).unref();
 
 function rateLimit(options: RateLimitOptions) {
+  const store = new Map<string, StoreEntry>();
+  stores.add(store);
+
   return (req: Request, _res: Response, next: NextFunction) => {
     const key = req.ip ?? req.socket.remoteAddress ?? "unknown";
     const now = Date.now();

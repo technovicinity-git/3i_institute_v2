@@ -6,6 +6,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
+import '../widgets/unverified_email_notice.dart';
 
 class InstructorLoginPage extends ConsumerStatefulWidget {
   const InstructorLoginPage({super.key});
@@ -22,6 +23,8 @@ class _InstructorLoginPageState extends ConsumerState<InstructorLoginPage> {
   bool _showPassword = false;
   bool _submitting = false;
   String? _error;
+  // Set when login fails because the email isn't verified yet.
+  String? _unverifiedEmail;
 
   @override
   void dispose() {
@@ -35,6 +38,7 @@ class _InstructorLoginPageState extends ConsumerState<InstructorLoginPage> {
     setState(() {
       _submitting = true;
       _error = null;
+      _unverifiedEmail = null;
     });
     try {
       final existingAccount = ref.read(authControllerProvider).asData?.value;
@@ -52,10 +56,14 @@ class _InstructorLoginPageState extends ConsumerState<InstructorLoginPage> {
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error = apiErrorMessage(
-            error,
-            fallback: 'Login failed. Please try again.',
-          );
+          if (apiErrorCode(error) == 'EMAIL_NOT_VERIFIED') {
+            _unverifiedEmail = _email.text.trim().toLowerCase();
+          } else {
+            _error = apiErrorMessage(
+              error,
+              fallback: 'Login failed. Please try again.',
+            );
+          }
         });
       }
     } finally {
@@ -83,6 +91,8 @@ class _InstructorLoginPageState extends ConsumerState<InstructorLoginPage> {
           ),
           const SizedBox(height: 18),
           AuthInlineError(_error),
+          if (_unverifiedEmail != null)
+            UnverifiedEmailNotice(email: _unverifiedEmail!, instructor: true),
           TextFormField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,

@@ -166,4 +166,7 @@ class AuthController extends AsyncNotifier<Account?> {
 
   Future<void> resendVerification(String email) =>
       _repository.resendVerification(email);
+
+  Future<void> resendVerificationForToken(String token) =>
+      _repository.resendVerificationForToken(token);
 }

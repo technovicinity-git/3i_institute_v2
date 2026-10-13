@@ -65,6 +65,15 @@ export class EmailNotVerifiedError extends AppError {
   }
 }
 
+// The verification link was real but has expired. The client can offer to
+// send a new one using the same token.
+export class VerificationLinkExpiredError extends AppError {
+  constructor(message = "This verification link has expired.") {
+    super(422, "VERIFICATION_LINK_EXPIRED", message);
+    Object.setPrototypeOf(this, VerificationLinkExpiredError.prototype);
+  }
+}
+
 export class AccountInactiveError extends AppError {
   constructor(
     message = "Your account has been deactivated. Please contact support.",

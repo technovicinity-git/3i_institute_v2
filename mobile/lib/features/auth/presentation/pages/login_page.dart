@@ -6,6 +6,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/social_auth_buttons.dart';
+import '../widgets/unverified_email_notice.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +22,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _obscurePassword = true;
   bool _submitting = false;
   String? _error;
+  // Set when login fails because the email isn't verified yet.
+  String? _unverifiedEmail;
 
   @override
   void dispose() {
@@ -34,6 +37,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() {
       _submitting = true;
       _error = null;
+      _unverifiedEmail = null;
     });
     try {
       await ref.read(authControllerProvider.notifier).login(
@@ -42,7 +46,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           );
       if (mounted) context.go('/profiles');
     } catch (error) {
-      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Login failed. Please try again.'));
+      if (!mounted) return;
+      setState(() {
+        if (apiErrorCode(error) == 'EMAIL_NOT_VERIFIED') {
+          _unverifiedEmail = _emailController.text.trim().toLowerCase();
+        } else {
+          _error = apiErrorMessage(error, fallback: 'Login failed. Please try again.');
+        }
+      });
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -58,6 +69,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AuthInlineError(_error),
+              if (_unverifiedEmail != null) UnverifiedEmailNotice(email: _unverifiedEmail!),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,

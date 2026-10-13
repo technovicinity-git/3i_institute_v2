@@ -30,3 +30,14 @@ String apiErrorMessage(Object error, {required String fallback}) {
   }
   return fallback;
 }
+
+/// The backend's machine-readable error code (e.g. `EMAIL_NOT_VERIFIED`).
+String? apiErrorCode(Object error) {
+  if (error is! DioException) return null;
+  final body = error.response?.data;
+  if (body is! Map<String, dynamic>) return null;
+  final errorBody = body['error'];
+  if (errorBody is! Map<String, dynamic>) return null;
+  final code = errorBody['code'];
+  return code is String ? code : null;
+}

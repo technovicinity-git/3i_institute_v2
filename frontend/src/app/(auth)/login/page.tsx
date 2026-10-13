@@ -13,6 +13,8 @@ import { AppleButton } from "@/components/social/apple-button";
 import { LandingLogo } from "@/components/landing/logo";
 import Link from "next/link";
 import { Eye, EyeClosed } from "lucide-react";
+import { UnverifiedEmailNotice } from "@/components/auth/unverified-email-notice";
+import { apiErrorCode, apiErrorMessage } from "@/lib/api-error";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -37,18 +39,11 @@ export default function LoginPage() {
     loginMutation.mutate(data);
   };
 
-  const loginError = loginMutation.error as
-    | {
-        response?: {
-          data?: {
-            error?: {
-              message?: string;
-            };
-          };
-        };
-      }
-    | null;
-  const loginErrorMessage = loginError?.response?.data?.error?.message;
+  const loginErrorMessage = apiErrorMessage(loginMutation.error);
+  const unverifiedEmail =
+    apiErrorCode(loginMutation.error) === "EMAIL_NOT_VERIFIED"
+      ? loginMutation.variables?.email
+      : undefined;
 
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
@@ -83,7 +78,12 @@ export default function LoginPage() {
             noValidate
           >
             {/* Server error */}
-            {loginErrorMessage && (
+            {unverifiedEmail ? (
+              <UnverifiedEmailNotice
+                email={unverifiedEmail}
+                checkEmailPath="/check-email"
+              />
+            ) : loginErrorMessage && (
               <div
                 role="alert"
                 className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"

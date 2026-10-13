@@ -243,7 +243,9 @@ router.post("/refresh", authController.refresh);
  *                     instructorApplicationPending:
  *                       type: boolean
  *       422:
- *         description: Invalid or expired token
+ *         description: >
+ *           `VERIFICATION_LINK_EXPIRED`: the link expired (resend with the
+ *           same token). `VALIDATION_ERROR`: invalid or already used.
  *         content:
  *           application/json:
  *             schema:
@@ -547,23 +549,38 @@ router.post(
  *   post:
  *     tags: [Auth]
  *     summary: Resend verification email
+ *     description: >
+ *       Send either the account's `email` (check-email screen, or after a
+ *       login blocked with `EMAIL_NOT_VERIFIED`) or the `token` from an
+ *       expired verification link (`VERIFICATION_LINK_EXPIRED`). Limited to
+ *       one email a minute and five a day per account.
  *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [email]
- *             properties:
- *               email: { type: string, format: email }
+ *             oneOf:
+ *               - type: object
+ *                 required: [email]
+ *                 properties:
+ *                   email: { type: string, format: email }
+ *               - type: object
+ *                 required: [token]
+ *                 properties:
+ *                   token: { type: string }
  *     responses:
  *       200:
  *         description: Verification email sent
+ *       422:
+ *         description: The token is no longer valid (used or replaced)
+ *       429:
+ *         description: Too many verification emails for this account or IP
  */
 router.post(
   "/resend-verification",
-  rateLimit({ windowMs: 60 * 1000, max: 1 }),
+  // Per-IP guard; the per-account limits live in the service.
+  rateLimit({ windowMs: 60 * 1000, max: 5 }),
   validate(resendVerificationSchema),
   authController.resendVerification,
 );

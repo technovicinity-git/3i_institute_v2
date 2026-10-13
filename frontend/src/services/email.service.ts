@@ -29,6 +29,16 @@ export const emailService = {
     return response.data.data;
   },
 
+  /** New link for an expired verification link, using its token. */
+  resendVerificationForToken: async (
+    token: string,
+  ): Promise<ResendEmailResponse> => {
+    const response = await apiClient.post("/auth/resend-verification", {
+      token,
+    });
+    return response.data.data;
+  },
+
   verifyEmail: async (token: string): Promise<VerifyEmailResult> => {
     const response = await apiClient.post("/auth/verify-email", { token });
     return response.data.data;

@@ -8,6 +8,8 @@ import {
   useVerifyEmailMutation,
 } from "@/hooks/use-email-verification";
 import { postVerifyRoute } from "@/services/email.service";
+import { ExpiredVerificationLink } from "@/components/auth/expired-verification-link";
+import { apiErrorCode } from "@/lib/api-error";
 
 // Opened from the verification email (`?token=`): verifies, then continues
 // to the "email verified" screen (applicants) or instructor login.
@@ -28,6 +30,8 @@ function VerifyTokenContent({ token }: { token: string }) {
   }, [token, verifyMutation, router]);
 
   const failed = verifyMutation.isError;
+  const linkExpired =
+    apiErrorCode(verifyMutation.error) === "VERIFICATION_LINK_EXPIRED";
 
   return (
     <div className="min-h-screen bg-[#FBF9F4] flex items-center justify-center px-4">
@@ -41,18 +45,33 @@ function VerifyTokenContent({ token }: { token: string }) {
               className="mt-7 text-[32px] leading-[40px] text-[#0C1F33]"
               style={{ fontFamily: "'Marcellus', serif" }}
             >
-              Link expired
+              {linkExpired ? "Link expired" : "Invalid link"}
             </h2>
-            <p className="mt-3 text-base text-[#475569] leading-6 max-w-[408px]">
-              This verification link is invalid or has already been used. Sign
-              in to request a new one.
-            </p>
-            <a
-              href="/instructor/login"
-              className="mt-7 w-full max-w-[408px] h-12 flex items-center justify-center bg-[#22A146] hover:bg-[#1B8A3A] text-[#0C1F33] font-semibold text-[15px] rounded-lg transition-colors"
-            >
-              Go to instructor login
-            </a>
+            {linkExpired ? (
+              <>
+                <p className="mt-3 mb-7 text-base text-[#475569] leading-6 max-w-[408px]">
+                  Verification links are valid for 24 hours. We can send a new
+                  one to the same email address.
+                </p>
+                <ExpiredVerificationLink
+                  token={token}
+                  loginHref="/instructor/login"
+                />
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-base text-[#475569] leading-6 max-w-[408px]">
+                  This verification link is invalid or has already been used.
+                  Sign in to request a new one.
+                </p>
+                <a
+                  href="/instructor/login"
+                  className="mt-7 w-full max-w-[408px] h-12 flex items-center justify-center bg-[#22A146] hover:bg-[#1B8A3A] text-[#0C1F33] font-semibold text-[15px] rounded-lg transition-colors"
+                >
+                  Go to instructor login
+                </a>
+              </>
+            )}
           </>
         ) : (
           <>

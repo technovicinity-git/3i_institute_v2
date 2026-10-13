@@ -15,6 +15,8 @@ import { Eye, EyeClosed } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { UnverifiedEmailNotice } from "@/components/auth/unverified-email-notice";
+import { apiErrorCode } from "@/lib/api-error";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
@@ -30,6 +32,8 @@ export default function InstructorLoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set when login fails because the email isn't verified yet.
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
   const {
     register,
@@ -41,6 +45,7 @@ export default function InstructorLoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
+    setUnverifiedEmail(null);
 
     try {
       const response = await apiClient.post("/auth/login", data);
@@ -68,6 +73,10 @@ export default function InstructorLoginPage() {
       toast.success(`Welcome back, ${userData.firstName}!`);
       router.push("/instructor/dashboard");
     } catch (error: any) {
+      if (apiErrorCode(error) === "EMAIL_NOT_VERIFIED") {
+        setUnverifiedEmail(data.email);
+        return;
+      }
       const message = error.response?.data?.error?.message;
       toast.error(message ?? "Login failed");
     } finally {
@@ -103,6 +112,13 @@ export default function InstructorLoginPage() {
             className="space-y-6"
             noValidate
           >
+            {unverifiedEmail && (
+              <UnverifiedEmailNotice
+                email={unverifiedEmail}
+                checkEmailPath="/instructor/verify-email"
+              />
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
                 Email address
