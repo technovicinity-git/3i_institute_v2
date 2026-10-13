@@ -31,13 +31,13 @@ export class ChatService {
       }
     }
 
-    const isGuardianOnly = course.minimumAge < 13;
+    // const isGuardianOnly = course.minimumAge < 13;
 
-    if (isGuardianOnly && input.senderType !== "GUARDIAN") {
-      throw new ForbiddenError(
-        "This chat is guardian-only due to age restrictions",
-      );
-    }
+    // if (isGuardianOnly && input.senderType !== "GUARDIAN") {
+    //   throw new ForbiddenError(
+    //     "This chat is guardian-only due to age restrictions",
+    //   );
+    // }
 
     const message = await prisma.chatMessage.create({
       data: {
