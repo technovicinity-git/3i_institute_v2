@@ -11,6 +11,7 @@ class CourseDetails extends Course {
     required super.level,
     required super.language,
     required super.minimumAge,
+    super.maximumAge,
     required super.instructorName,
     required super.averageRating,
     required super.ratingCount,

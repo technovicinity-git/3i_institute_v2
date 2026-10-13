@@ -9,6 +9,7 @@ class Course {
     required this.level,
     required this.language,
     required this.minimumAge,
+    this.maximumAge,
     required this.instructorName,
     required this.averageRating,
     required this.ratingCount,
@@ -25,6 +26,7 @@ class Course {
   final String level;
   final String language;
   final int minimumAge;
+  final int? maximumAge;
   final String instructorName;
   final double? averageRating;
   final int ratingCount;
@@ -48,12 +50,9 @@ class Course {
   }
 
   String get ageLabel {
-    if (minimumAge >= 18) return 'Ages 18+';
-    if (minimumAge >= 16) return 'Ages 16–17';
-    if (minimumAge >= 13) return 'Ages 13–15';
-    if (minimumAge >= 9) return 'Ages 9–12';
-    if (minimumAge >= 5) return 'Ages 5–8';
-    return 'All ages';
+    final max = maximumAge;
+    if (max == null || max >= 99) return 'Ages $minimumAge+';
+    return 'Ages $minimumAge–$max';
   }
 }
 

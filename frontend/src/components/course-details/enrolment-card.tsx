@@ -21,7 +21,7 @@ import { useEnrolMutation } from "@/hooks/use-enrolment";
 import { useWishlistToggle } from "@/hooks/use-wishlist";
 import { ShareDialog } from "@/components/share/share-dialog";
 import { siteUrl } from "@/lib/share";
-import { levelLabel } from "./utils";
+import { languageLabel, levelLabel } from "./utils";
 
 /** Sticky right-rail card: enrol / continue actions, inclusions and sharing. */
 export function EnrolmentCard({ course }: { course: CourseDetails }) {
@@ -101,15 +101,15 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
 
             {/* Meta */}
             <div className="flex items-center justify-between text-[13px] text-[#64748B]">
-              <span className="flex items-center gap-1.5">
+              {/* <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" /> {course.durationWeeks}{" "}
                 weeks
-              </span>
+              </span> */}
               <span className="flex items-center gap-1.5">
                 <Award className="w-3.5 h-3.5" /> {levelLabel(course.level)}
               </span>
               <span className="flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5" /> {course.language}
+                <Globe className="w-3.5 h-3.5" /> {languageLabel(course.language)}
               </span>
             </div>
 

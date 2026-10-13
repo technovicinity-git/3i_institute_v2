@@ -73,7 +73,7 @@ export function RateReviewModal({
         {/* Attribution */}
         <div className="mt-5 bg-[#F9F6F0] rounded-lg px-5 py-3">
           <p className="text-sm sm:text-base font-medium text-[#0C1F33]">
-            Submitting as {accountName} on behalf of {learnerName}
+            Submitting as {learnerName}
           </p>
         </div>
 
