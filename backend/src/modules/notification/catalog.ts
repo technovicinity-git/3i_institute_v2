@@ -7,9 +7,10 @@
 // `email: true` means "the delivery worker emails this notification". Leave
 // it false for events whose email is sent directly by `emailService`
 // (modules/email): auth, account security, instructor application
-// decisions and course decisions (approved, rejected, suspended by an
-// admin). Those are transactional and must not wait on the worker, and
-// flagging them here too would send the user two emails.
+// decisions, course decisions (approved, rejected, suspended by an
+// admin) and new, rescheduled or cancelled class sessions (to account
+// holders, via account-emails.ts). Flagging them here too would send the
+// user two emails.
 
 export type NotificationCategory =
   | "schedule" // sessions, reminders, batches
@@ -47,6 +48,8 @@ const event = (
 
 export const NOTIFICATION_EVENTS = {
   // ── Learner profile ──────────────────────────
+  // session.scheduled/rescheduled/cancelled are emailed directly (see note
+  // at the top).
   "session.scheduled": event("schedule", { push: true }),
   "session.rescheduled": event("schedule", { push: true, priority: "high" }),
   "session.link_updated": event("schedule", { push: true }),

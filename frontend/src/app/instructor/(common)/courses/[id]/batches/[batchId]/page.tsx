@@ -206,6 +206,7 @@ export default function BatchDetailsPage() {
       {showCreateSession && (
         <CreateSessionModal
           batchId={batchId}
+          learnerCount={batch?.enrolmentCount ?? 0}
           onClose={() => setShowCreateSession(false)}
         />
       )}
@@ -214,6 +215,7 @@ export default function BatchDetailsPage() {
       {editingSession && (
         <EditSessionModal
           session={editingSession}
+          learnerCount={batch?.enrolmentCount ?? 0}
           onClose={() => setEditingSession(null)}
         />
       )}

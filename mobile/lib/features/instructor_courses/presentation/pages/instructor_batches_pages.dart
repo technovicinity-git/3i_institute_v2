@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../../domain/entities/instructor_batch.dart';
 import '../providers/instructor_courses_providers.dart';
+import '../session_notice.dart';
 import '../widgets/course_action_strip.dart';
 
 class InstructorBatchesPage extends ConsumerWidget {
@@ -690,7 +691,7 @@ class _InstructorBatchDetailPageState
     final form = GlobalKey<FormState>();
     // `saving`/`deleting` block every action while a request is in flight so
     // repeated taps can't create duplicate sessions.
-    var saving = false, deleting = false, confirmDelete = false;
+    var saving = false, deleting = false;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -732,10 +733,24 @@ class _InstructorBatchDetailPageState
               if (meeting.isNotEmpty || session != null) 'meetingLink': meeting,
               if (notes.isNotEmpty || session != null) 'notes': notes,
             };
-            setDialogState(() {
-              saving = true;
-              confirmDelete = false;
-            });
+            // Say who will be notified, and how, before saving.
+            final notice = describeSessionNotice(
+              before: session == null ? null : _sessionFields(session),
+              after: SessionFields(
+                title: draft.title.text.trim(),
+                scheduledAt: draft.scheduledAt!,
+                durationMinutes: duration,
+                meetingLink: meeting,
+                notes: notes,
+              ),
+              learnerCount: batch.enrolmentCount,
+            );
+            if (notice != null &&
+                !await confirmSessionNotice(dialogContext, notice)) {
+              return;
+            }
+            if (!dialogContext.mounted) return;
+            setDialogState(() => saving = true);
             final repository = ref.read(instructorCoursesRepositoryProvider);
             try {
               if (session == null) {
@@ -762,10 +777,14 @@ class _InstructorBatchDetailPageState
 
           Future<void> delete() async {
             if (busy || session == null) return;
-            if (!confirmDelete) {
-              setDialogState(() => confirmDelete = true);
-              return;
-            }
+            final notice =
+                describeSessionNotice(
+                  before: _sessionFields(session),
+                  learnerCount: batch.enrolmentCount,
+                ) ??
+                SessionNotice.plainDelete;
+            if (!await confirmSessionNotice(dialogContext, notice)) return;
+            if (!dialogContext.mounted) return;
             setDialogState(() => deleting = true);
             try {
               await ref
@@ -776,10 +795,7 @@ class _InstructorBatchDetailPageState
               _notify('Session deleted');
             } catch (error) {
               if (dialogContext.mounted) {
-                setDialogState(() {
-                  deleting = false;
-                  confirmDelete = false;
-                });
+                setDialogState(() => deleting = false);
                 _showDialogError(
                   dialogContext,
                   apiErrorMessage(
@@ -849,14 +865,10 @@ class _InstructorBatchDetailPageState
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                     child: deleting
                         ? const _ButtonSpinner(color: Colors.red)
-                        : Text(confirmDelete ? 'Confirm Delete?' : 'Delete'),
+                        : const Text('Delete'),
                   ),
                 TextButton(
-                  onPressed: busy
-                      ? null
-                      : confirmDelete
-                      ? () => setDialogState(() => confirmDelete = false)
-                      : () => Navigator.pop(dialogContext),
+                  onPressed: busy ? null : () => Navigator.pop(dialogContext),
                   child: const Text('Cancel'),
                 ),
                 FilledButton(
@@ -873,6 +885,14 @@ class _InstructorBatchDetailPageState
     );
     draft.dispose();
   }
+
+  SessionFields _sessionFields(InstructorBatchSession session) => SessionFields(
+    title: session.title,
+    scheduledAt: DateTime.parse(session.scheduledAt),
+    durationMinutes: session.durationMinutes,
+    meetingLink: session.meetingLink ?? '',
+    notes: session.notes ?? '',
+  );
 
   void _notify(String message) {
     if (!mounted) return;

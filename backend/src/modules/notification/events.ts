@@ -19,6 +19,11 @@ import {
   enrolledLearners,
   learnerRecipient,
 } from "#/modules/notification/recipients";
+import {
+  emailAccountHolders,
+  type AccountHolder,
+} from "#/modules/notification/account-emails";
+import { emailLinks } from "#/modules/email/links";
 
 // ──────────────────────────────────
 // Helpers
@@ -123,14 +128,32 @@ function sessionData(session: {
   };
 }
 
+type LoadedSession = NonNullable<Awaited<ReturnType<typeof loadSession>>>;
+
+// Template data shared by the session emails, in the account's timezone.
+function sessionEmailData(session: LoadedSession, account: AccountHolder) {
+  return {
+    firstName: account.firstName,
+    learnerNames: account.learnerNames,
+    sessionTitle: session.title,
+    courseTitle: session.batch.course.title,
+    batchName: session.batch.name,
+    startsAt: session.scheduledAt,
+    durationMinutes: session.durationMinutes,
+    timeZone: account.timezone,
+    scheduleUrl: emailLinks.onlineClass(session.batch.id),
+  };
+}
+
 function sessionScheduled(sessionId: string) {
   background("sessionScheduled", async () => {
     const session = await loadSession(sessionId);
     if (!session || session.scheduledAt <= new Date()) return;
+    const recipients = await batchLearners(session.batch.id);
     await notifyLocalized(
       {
         type: "session.scheduled",
-        recipients: await batchLearners(session.batch.id),
+        recipients,
         dedupeKey: `session.scheduled:${session.id}`,
       },
       (zone) => ({
@@ -139,6 +162,12 @@ function sessionScheduled(sessionId: string) {
         data: sessionData(session),
       }),
     );
+    await emailAccountHolders({
+      recipients,
+      category: "schedule",
+      template: "learner.session-scheduled",
+      data: (account) => sessionEmailData(session, account),
+    });
   });
 }
 
@@ -176,6 +205,15 @@ function sessionUpdated(before: SessionSnapshot) {
           data,
         }),
       );
+      await emailAccountHolders({
+        recipients,
+        category: "schedule",
+        template: "learner.session-rescheduled",
+        data: (account) => ({
+          ...sessionEmailData(session, account),
+          previousStartsAt: before.scheduledAt,
+        }),
+      });
     } else if (linkChanged) {
       await notificationService.notify({
         type: "session.link_updated",
@@ -201,15 +239,20 @@ function sessionCancelled(snapshot: {
   title: string;
   scheduledAt: Date;
   batchId: string;
+  batchName: string;
   courseId: string;
   courseTitle: string;
 }) {
   background("sessionCancelled", async () => {
     if (snapshot.scheduledAt <= new Date()) return;
+    const recipients = await enrolledLearners(
+      snapshot.courseId,
+      snapshot.batchId,
+    );
     await notifyLocalized(
       {
         type: "session.cancelled",
-        recipients: await enrolledLearners(snapshot.courseId, snapshot.batchId),
+        recipients,
       },
       (zone) => ({
         title: "Class cancelled",
@@ -221,6 +264,21 @@ function sessionCancelled(snapshot: {
         },
       }),
     );
+    await emailAccountHolders({
+      recipients,
+      category: "schedule",
+      template: "learner.session-cancelled",
+      data: (account) => ({
+        firstName: account.firstName,
+        learnerNames: account.learnerNames,
+        sessionTitle: snapshot.title,
+        courseTitle: snapshot.courseTitle,
+        batchName: snapshot.batchName,
+        scheduledAt: snapshot.scheduledAt,
+        timeZone: account.timezone,
+        scheduleUrl: emailLinks.onlineClass(snapshot.batchId),
+      }),
+    });
   });
 }
 

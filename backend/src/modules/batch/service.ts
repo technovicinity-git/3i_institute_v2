@@ -666,6 +666,7 @@ export class BatchService {
       title: session.title,
       scheduledAt: session.scheduledAt,
       batchId: session.batchId,
+      batchName: session.batch.name,
       courseId: session.batch.courseId,
       courseTitle: session.batch.course.title,
     });

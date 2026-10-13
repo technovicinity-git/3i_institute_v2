@@ -4,14 +4,22 @@ import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { useAddSessionMutation } from "@/hooks/use-batches";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  describeSessionNotice,
+  type SessionNotice,
+} from "@/lib/session-notice";
+import { SessionNoticeDialog } from "@/components/instructor/session-notice-dialog";
 
 interface CreateSessionModalProps {
   batchId: string;
+  // Enrolled (non-waitlisted) learners, who are notified of the new class.
+  learnerCount: number;
   onClose: () => void;
 }
 
 export function CreateSessionModal({
   batchId,
+  learnerCount,
   onClose,
 }: CreateSessionModalProps) {
   const queryClient = useQueryClient();
@@ -22,26 +30,51 @@ export function CreateSessionModal({
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [meetingLink, setMeetingLink] = useState("");
   const [notes, setNotes] = useState("");
+  const [notice, setNotice] = useState<SessionNotice | null>(null);
 
+  const buildInput = () => ({
+    title: title.trim(),
+    scheduledAt: new Date(scheduledAt).toISOString(),
+    durationMinutes: Number(durationMinutes),
+    meetingLink: meetingLink.trim() || undefined,
+    notes: notes.trim() || undefined,
+  });
+
+  // Asks for confirmation first when learners will be notified.
   const handleSave = () => {
     if (!title.trim() || !scheduledAt) return;
 
+    const input = buildInput();
+    const pendingNotice = describeSessionNotice(
+      {
+        action: "add",
+        after: {
+          ...input,
+          meetingLink: input.meetingLink ?? null,
+          notes: input.notes ?? null,
+        },
+      },
+      learnerCount,
+    );
+    if (pendingNotice) {
+      setNotice(pendingNotice);
+      return;
+    }
+    submit();
+  };
+
+  const submit = () => {
     addSessionMutation.mutate(
       {
         batchId,
-        input: {
-          title: title.trim(),
-          scheduledAt: new Date(scheduledAt).toISOString(),
-          durationMinutes: Number(durationMinutes),
-          meetingLink: meetingLink.trim() || undefined,
-          notes: notes.trim() || undefined,
-        },
+        input: buildInput(),
       },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["batch", batchId] });
           onClose();
         },
+        onError: () => setNotice(null),
       },
     );
   };
@@ -161,6 +194,15 @@ export function CreateSessionModal({
           </button>
         </div>
       </div>
+
+      {notice && (
+        <SessionNoticeDialog
+          notice={notice}
+          pending={addSessionMutation.isPending}
+          onConfirm={submit}
+          onCancel={() => setNotice(null)}
+        />
+      )}
     </div>
   );
 }

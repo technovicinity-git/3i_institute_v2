@@ -16,6 +16,9 @@ import { courseRejected } from "#/modules/email/templates/instructor/course-reje
 import { courseSuspended } from "#/modules/email/templates/instructor/course-suspended";
 import { instructorReinstated } from "#/modules/email/templates/instructor/instructor-reinstated";
 import { instructorSuspended } from "#/modules/email/templates/instructor/instructor-suspended";
+import { sessionCancelled } from "#/modules/email/templates/learner/session-cancelled";
+import { sessionRescheduled } from "#/modules/email/templates/learner/session-rescheduled";
+import { sessionScheduled } from "#/modules/email/templates/learner/session-scheduled";
 import type { EmailTemplate } from "#/modules/email/templates/types";
 
 // Every email the platform sends. To add one: create the template file,
@@ -45,6 +48,11 @@ export const emailTemplates = {
   "instructor.course-suspended": courseSuspended,
   "instructor.suspended": instructorSuspended,
   "instructor.reinstated": instructorReinstated,
+
+  // Learner (sent to the account holder)
+  "learner.session-scheduled": sessionScheduled,
+  "learner.session-rescheduled": sessionRescheduled,
+  "learner.session-cancelled": sessionCancelled,
 } as const satisfies Record<string, EmailTemplate<never>>;
 
 export type EmailTemplateName = keyof typeof emailTemplates;
