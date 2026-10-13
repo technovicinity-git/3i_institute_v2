@@ -8,9 +8,10 @@
 // it false for events whose email is sent directly by `emailService`
 // (modules/email): auth, account security, instructor application
 // decisions, course decisions (approved, rejected, suspended by an
-// admin) and new, rescheduled or cancelled class sessions (to account
-// holders, via account-emails.ts). Flagging them here too would send the
-// user two emails.
+// admin), new, rescheduled or cancelled class sessions and new or
+// rescheduled exams in courses with live classes (to account holders, via
+// account-emails.ts).
+// Flagging them here too would send the user two emails.
 
 export type NotificationCategory =
   | "schedule" // sessions, reminders, batches
@@ -56,6 +57,8 @@ export const NOTIFICATION_EVENTS = {
   "session.updated": event("schedule"),
   "session.cancelled": event("schedule", { push: true, priority: "high" }),
   "batch.closed": event("schedule", { push: true }),
+  // exam.published/rescheduled are emailed directly for ONLINE_CLASS/MIXED
+  // courses (see note at the top).
   "exam.published": event("learning", { push: true }),
   "exam.rescheduled": event("learning", { push: true, priority: "high" }),
   "exam.graded": event("learning", { push: true }),

@@ -341,6 +341,28 @@ function examPublished(examId: string) {
         data,
       });
     }
+
+    // Courses with live classes also email the exam to account holders;
+    // self-paced (regular) courses keep it to the in-app notification.
+    if (exam.course.type !== "REGULAR") {
+      await emailAccountHolders({
+        recipients,
+        category: "learning",
+        template: "learner.exam-published",
+        data: (account) => ({
+          firstName: account.firstName,
+          learnerNames: account.learnerNames,
+          examTitle: exam.title,
+          courseTitle: exam.course.title,
+          opensAt: exam.openDate,
+          closesAt: exam.closeDate,
+          durationMinutes: exam.duration,
+          maxAttempts: exam.maxAttempts,
+          timeZone: account.timezone,
+          examsUrl: emailLinks.courseExams(exam.course.id),
+        }),
+      });
+    }
   });
 }
 
@@ -349,19 +371,21 @@ function examUpdated(examId: string, previousOpenDate: Date | null) {
   background("examUpdated", async () => {
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
-      include: { course: { select: { id: true, title: true } } },
+      include: { course: { select: { id: true, title: true, type: true } } },
     });
     if (!exam?.openDate || exam.openDate <= new Date()) return;
     if (previousOpenDate?.getTime() === exam.openDate.getTime()) return;
+    const opensAt = exam.openDate;
 
+    const recipients = await enrolledLearners(exam.course.id);
     await notifyLocalized(
       {
         type: "exam.rescheduled",
-        recipients: await enrolledLearners(exam.course.id),
+        recipients,
       },
       (zone) => ({
         title: "Exam time changed",
-        body: `"${exam.title}" now starts ${formatDateTime(exam.openDate!, zone)}`,
+        body: `"${exam.title}" now starts ${formatDateTime(opensAt, zone)}`,
         data: {
           examId: exam.id,
           courseId: exam.course.id,
@@ -369,6 +393,27 @@ function examUpdated(examId: string, previousOpenDate: Date | null) {
         },
       }),
     );
+
+    // Same rule as new exams: email only for courses with live classes.
+    if (exam.course.type !== "REGULAR") {
+      await emailAccountHolders({
+        recipients,
+        category: "learning",
+        template: "learner.exam-rescheduled",
+        data: (account) => ({
+          firstName: account.firstName,
+          learnerNames: account.learnerNames,
+          examTitle: exam.title,
+          courseTitle: exam.course.title,
+          opensAt,
+          previousOpensAt: previousOpenDate,
+          closesAt: exam.closeDate,
+          durationMinutes: exam.duration,
+          timeZone: account.timezone,
+          examsUrl: emailLinks.courseExams(exam.course.id),
+        }),
+      });
+    }
   });
 }
 
