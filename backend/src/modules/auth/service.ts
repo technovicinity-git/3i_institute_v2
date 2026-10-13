@@ -1,5 +1,4 @@
 import { hash, verify } from "argon2";
-import crypto from "node:crypto";
 
 import { prisma } from "#/lib/prisma";
 import { generateTokenPair, verifyRefreshToken } from "#/lib/jwt";
@@ -15,6 +14,23 @@ import type {
   ResetPasswordInput,
   ChangePasswordInput,
 } from "#/modules/auth/schema";
+import {
+  getAccountPortal,
+  type AccountPortal,
+  type AccountPortalInfo,
+} from "#/modules/auth/portal";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
+import {
+  createEmailVerifyToken,
+  createPasswordResetToken,
+  EMAIL_VERIFY_TTL_HOURS,
+  hashOneTimeToken,
+  PASSWORD_RESET_TTL_MINUTES,
+} from "#/shared/one-time-token";
+
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_MINUTES = 15;
 
 // ──────────────────────────────────────
 // Helpers
@@ -33,8 +49,38 @@ function calculateAge(dateOfBirth: Date): number {
   return age;
 }
 
-function generateToken(): string {
-  return crypto.randomBytes(32).toString("hex");
+// Shared with registration.
+export function sendVerificationEmail(
+  user: { email: string; firstName: string },
+  token: string,
+  portal: AccountPortal,
+): void {
+  emailService.sendInBackground({
+    to: user.email,
+    template: "auth.verify-email",
+    data: {
+      firstName: user.firstName,
+      verifyUrl: emailLinks.verifyEmail(token, portal),
+      expiresInHours: EMAIL_VERIFY_TTL_HOURS,
+    },
+  });
+}
+
+function sendPasswordChangedEmail(user: {
+  email: string;
+  firstName: string;
+  timezone: string;
+}): void {
+  emailService.sendInBackground({
+    to: user.email,
+    template: "auth.password-changed",
+    data: {
+      firstName: user.firstName,
+      changedAt: new Date(),
+      timeZone: user.timezone,
+      forgotPasswordUrl: emailLinks.forgotPassword(),
+    },
+  });
 }
 
 // ──────────────────────────────────────
@@ -66,8 +112,7 @@ export class AuthService {
     }
 
     const passwordHash = await hash(input.password);
-    const emailVerifyToken = generateToken();
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const verification = createEmailVerifyToken();
 
     // Get Account Holder role
     const role = await prisma.role.findUnique({
@@ -88,13 +133,13 @@ export class AuthService {
         locale: input.locale,
         accountType: "ADULT",
         emailVerified: false,
-        emailVerifyToken,
-        emailVerifyExpires,
+        emailVerifyToken: verification.hash,
+        emailVerifyExpires: verification.expiresAt,
         roleId: role.id,
       },
     });
 
-    // TODO: Send verification email with emailVerifyToken
+    sendVerificationEmail(user, verification.token, "learner");
 
     return {
       user: {
@@ -148,13 +193,21 @@ export class AuthService {
     if (!isValid) {
       const failedAttempts = user.failedLoginAttempts + 1;
 
-      // Lock after 5 failed attempts
-      if (failedAttempts >= 5) {
+      if (failedAttempts >= MAX_FAILED_LOGINS) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
             failedLoginAttempts: failedAttempts,
-            lockedUntil: new Date(Date.now() + 15 * 60 * 1000),
+            lockedUntil: new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000),
+          },
+        });
+        emailService.sendInBackground({
+          to: user.email,
+          template: "account.locked",
+          data: {
+            firstName: user.firstName,
+            lockedMinutes: LOCKOUT_MINUTES,
+            forgotPasswordUrl: emailLinks.forgotPassword(),
           },
         });
       } else {
@@ -322,15 +375,18 @@ export class AuthService {
   // ──────────────────────────────────
   // Verify email
   // ──────────────────────────────────
-  async verifyEmail(token: string) {
-    const user = await prisma.user.findFirst({
-      where: {
-        emailVerifyToken: token,
-        emailVerifyExpires: { gt: new Date() },
-      },
+  // Returns the account's portal so the client can redirect to the right
+  // sign-in (learner or instructor) after verifying.
+  async verifyEmail(token: string): Promise<AccountPortalInfo> {
+    const user = await prisma.user.findUnique({
+      where: { emailVerifyToken: hashOneTimeToken(token) },
     });
 
-    if (!user) {
+    if (
+      !user ||
+      !user.emailVerifyExpires ||
+      user.emailVerifyExpires <= new Date()
+    ) {
       throw new ValidationError("Invalid or expired verification token");
     }
 
@@ -342,6 +398,8 @@ export class AuthService {
         emailVerifyExpires: null,
       },
     });
+
+    return getAccountPortal(user.id);
   }
 
   // ──────────────────────────────────
@@ -350,38 +408,47 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await prisma.user.findUnique({ where: { email } });
 
-    // Always return success to prevent email enumeration
-    if (!user) {
+    // Always return success to prevent email enumeration. Deactivated
+    // accounts can't sign in, so a reset link would be of no use.
+    if (!user || !user.isActive) {
       return;
     }
 
-    const resetToken = generateToken();
-    const resetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    // A new request replaces any earlier link.
+    const reset = createPasswordResetToken();
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        emailVerifyToken: resetToken, // Reusing emailVerifyToken field for password reset
-        emailVerifyExpires: resetExpires,
+        passwordResetToken: reset.hash,
+        passwordResetExpires: reset.expiresAt,
       },
     });
 
-    // TODO: Send email with reset link
-    // await sendPasswordResetEmail(user.email, resetToken);
+    emailService.sendInBackground({
+      to: user.email,
+      template: "auth.password-reset",
+      data: {
+        firstName: user.firstName,
+        resetUrl: emailLinks.resetPassword(reset.token),
+        expiresInMinutes: PASSWORD_RESET_TTL_MINUTES,
+      },
+    });
   }
 
   // ──────────────────────────────────
   // Reset password
   // ──────────────────────────────────
   async resetPassword(input: ResetPasswordInput) {
-    const user = await prisma.user.findFirst({
-      where: {
-        emailVerifyToken: input.token,
-        emailVerifyExpires: { gt: new Date() },
-      },
+    const user = await prisma.user.findUnique({
+      where: { passwordResetToken: hashOneTimeToken(input.token) },
     });
 
-    if (!user) {
+    if (
+      !user ||
+      !user.passwordResetExpires ||
+      user.passwordResetExpires <= new Date()
+    ) {
       throw new ValidationError("Invalid or expired reset token");
     }
 
@@ -391,12 +458,14 @@ export class AuthService {
       where: { id: user.id },
       data: {
         passwordHash,
-        emailVerifyToken: null,
-        emailVerifyExpires: null,
+        passwordResetToken: null,
+        passwordResetExpires: null,
         failedLoginAttempts: 0,
         lockedUntil: null,
       },
     });
+
+    sendPasswordChangedEmail(user);
 
     // Revoke all existing refresh tokens (force re-login everywhere)
     await prisma.refreshToken.updateMany({
@@ -427,7 +496,10 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash },
     });
+
+    sendPasswordChangedEmail(user);
   }
+
   async resendVerification(email: string) {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -445,19 +517,19 @@ export class AuthService {
       return { message: "Email is already verified. You can log in." };
     }
 
-    // Generate new token
-    const emailVerifyToken = generateToken();
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // A new link replaces any earlier one.
+    const verification = createEmailVerifyToken();
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        emailVerifyToken,
-        emailVerifyExpires,
+        emailVerifyToken: verification.hash,
+        emailVerifyExpires: verification.expiresAt,
       },
     });
 
-    // TODO: Send verification email with new token
+    const { portal } = await getAccountPortal(user.id);
+    sendVerificationEmail(user, verification.token, portal);
 
     return { message: "Verification email sent." };
   }

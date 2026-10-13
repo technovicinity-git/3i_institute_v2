@@ -31,13 +31,9 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "title", label: "Title A-Z" },
 ];
 
-function getAgeBadge(minimumAge: number): string {
-  if (minimumAge >= 18) return "Ages 18+";
-  if (minimumAge >= 16) return "Ages 16–17";
-  if (minimumAge >= 13) return "Ages 13–15";
-  if (minimumAge >= 9) return "Ages 9–12";
-  if (minimumAge >= 5) return "Ages 5–8";
-  return "All ages";
+function getAgeBadge(minimumAge: number, maximumAge: number | null): string {
+  if (maximumAge == null || maximumAge >= 99) return `Ages ${minimumAge}+`;
+  return `Ages ${minimumAge}–${maximumAge}`;
 }
 
 function getLevelBadge(level: string): string {
@@ -179,7 +175,7 @@ function CourseCard({ course }: { course: Course }) {
           className="self-start inline-flex items-center gap-1 text-[11px] font-semibold text-[#9A7624] bg-[#F9F6F0] px-2 py-0.5 rounded-full"
         >
           <Users className="w-3 h-3" />
-          {getAgeBadge(course.minimumAge)}
+          {getAgeBadge(course.minimumAge, course.maximumAge)}
         </span>
       </div>
     </div>

@@ -12,6 +12,18 @@ import type {
   GoogleLoginInput,
   AppleLoginInput,
 } from "#/modules/auth/social-schema";
+import { emailLinks } from "#/modules/email/links";
+import { emailService } from "#/modules/email/service";
+
+// New social sign-ups skip email verification (the provider already
+// verified the address), so they get the welcome email straight away.
+function sendWelcomeEmail(user: { email: string; firstName: string }): void {
+  emailService.sendInBackground({
+    to: user.email,
+    template: "auth.welcome",
+    data: { firstName: user.firstName, coursesUrl: emailLinks.courses() },
+  });
+}
 
 function calculateAge(dateOfBirth: Date): number {
   const today = new Date();
@@ -97,6 +109,7 @@ export class SocialAuthService {
           },
         },
       });
+      sendWelcomeEmail(user);
     } else {
       if (!user.emailVerified) {
         await prisma.user.update({
@@ -179,6 +192,7 @@ export class SocialAuthService {
           },
         },
       });
+      sendWelcomeEmail(user);
     } else {
       if (!user.emailVerified) {
         await prisma.user.update({

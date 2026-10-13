@@ -44,14 +44,14 @@ export function CourseHero({ course }: { course: CourseDetails }) {
                 {course.ratingSummary.total} reviews)
               </span>
             </span>
-            <span className="flex items-center gap-1.5 text-white text-sm">
+            {/* <span className="flex items-center gap-1.5 text-white text-sm">
               <BookOpen className="w-3.5 h-3.5" strokeWidth={2} />
               {course.totalLessons} Lessons
             </span>
             <span className="flex items-center gap-1.5 text-white text-sm">
               <Clock className="w-3.5 h-3.5" strokeWidth={2} />
               {course.durationWeeks} Weeks
-            </span>
+            </span> */}
           </div>
 
           {/* Instructor */}

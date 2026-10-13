@@ -31,14 +31,17 @@ export function CourseOverview({ course }: { course: CourseDetails }) {
           <h2 className="font-serif text-[22px] text-[#0C1F33] mb-4">
             Requirements
           </h2>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {course.requirements.map((req, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 text-[15px] text-[#0C1F33]"
+                className="flex items-start gap-3 text-[15px] leading-6 text-[#0C1F33]"
               >
-                <span className="text-[#0C1F33] mt-1.5 shrink-0">•</span>
-                {req}
+                <span
+                  aria-hidden
+                  className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#B8912F]"
+                />
+                <span>{req}</span>
               </li>
             ))}
           </ul>

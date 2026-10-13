@@ -218,7 +218,20 @@ router.post("/refresh", authController.refresh);
  *                 type: string
  *     responses:
  *       200:
- *         description: Email verified successfully
+ *         description: Email verified. `data` says where the user signs in.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     portal:
+ *                       type: string
+ *                       enum: [learner, instructor]
+ *                     instructorApplicationPending:
+ *                       type: boolean
  *       422:
  *         description: Invalid or expired token
  *         content:

@@ -161,8 +161,8 @@ class _CourseHero extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _HeroMeta(icon: Icons.star, label: '${course.averageRating?.toStringAsFixed(1) ?? '0.0'} · ${course.ratingCount} reviews', gold: true),
-                        _HeroMeta(icon: Icons.menu_book_outlined, label: '${course.totalLessons} lessons'),
-                        _HeroMeta(icon: Icons.access_time, label: '${course.durationWeeks} weeks'),
+                        // _HeroMeta(icon: Icons.menu_book_outlined, label: '${course.totalLessons} lessons'),
+                        // _HeroMeta(icon: Icons.access_time, label: '${course.durationWeeks} weeks'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -286,7 +286,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
             spacing: 16,
             runSpacing: 10,
             children: [
-              _SmallMeta(icon: Icons.calendar_month_outlined, label: '${course.durationWeeks} weeks'),
+              // _SmallMeta(icon: Icons.calendar_month_outlined, label: '${course.durationWeeks} weeks'),
               _SmallMeta(icon: Icons.workspace_premium_outlined, label: _levelName(course.level)),
               _SmallMeta(icon: Icons.language, label: _languageName(course.language)),
             ],
@@ -624,7 +624,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(10)),
-                child: Text('Submitting as ${widget.accountName} on behalf of ${widget.learnerName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF0C1F33))),
+                child: Text('Submitting as ${widget.learnerName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF0C1F33))),
               ),
               const SizedBox(height: 12),
               Text(widget.courseTitle, style: const TextStyle(color: Color(0xFF475569))),

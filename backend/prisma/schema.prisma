@@ -121,8 +121,12 @@ model User {
   timezone      String      @default("UTC")
   accountType   AccountType
   emailVerified Boolean     @default(false)
-  emailVerifyToken String?
+  // One-time token columns hold the SHA-256 hash, never the raw token
+  // (see shared/one-time-token.ts).
+  emailVerifyToken String?  @unique
   emailVerifyExpires DateTime?
+  passwordResetToken String? @unique
+  passwordResetExpires DateTime?
    bio         String?
 
   roleId        String

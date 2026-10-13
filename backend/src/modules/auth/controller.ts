@@ -106,8 +106,8 @@ export class AuthController {
   verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = verifyEmailSchema.parse(req.body);
-      await authService.verifyEmail(input.token);
-      sendSuccess(res, null, 200, "Email verified successfully");
+      const result = await authService.verifyEmail(input.token);
+      sendSuccess(res, result, 200, "Email verified successfully");
     } catch (error) {
       next(error);
     }

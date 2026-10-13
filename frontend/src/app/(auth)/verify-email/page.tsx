@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/layout/logo";
 import { useVerifyEmailMutation } from "@/hooks/use-email-verification";
+import { postVerifyRoute } from "@/services/email.service";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -12,8 +13,14 @@ function VerifyEmailContent() {
   const verifyMutation = useVerifyEmailMutation();
 
   const token = searchParams.get("token");
+  // The token is single-use: make sure it is submitted only once, even when
+  // React runs effects twice in development.
+  const submitted = useRef(false);
 
   useEffect(() => {
+    if (submitted.current) return;
+    submitted.current = true;
+
     if (!token) {
       toast.error("Invalid verification link");
       router.push("/login");
@@ -21,9 +28,11 @@ function VerifyEmailContent() {
     }
 
     verifyMutation.mutate(token, {
-      onSuccess: () => {
+      onSuccess: (result) => {
+        // Instructor accounts verified from an older learner link still
+        // land in the instructor portal.
         setTimeout(() => {
-          router.push("/login");
+          router.push(postVerifyRoute(result));
         }, 2000);
       },
       onError: () => {
@@ -32,7 +41,7 @@ function VerifyEmailContent() {
         }, 2000);
       },
     });
-  }, [token]);
+  }, [token, verifyMutation, router]);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">

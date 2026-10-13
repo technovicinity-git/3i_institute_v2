@@ -1,6 +1,10 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 
+// Treats `KEY=` (empty) in .env as unset.
+const emptyAsUndefined = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema);
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -28,11 +32,15 @@ const envSchema = z.object({
   BUNNY_LIBRARY_ID: z.string(),
   BUNNY_CDN_HOSTNAME: z.string(),
 
-  // AWS SES
-  AWS_ACCESS_KEY_ID: z.string(),
-  AWS_SECRET_ACCESS_KEY: z.string(),
-  AWS_SES_REGION: z.string().default("ap-southeast-2"),
+  // Email (Resend). Without an API key, emails are logged instead of sent.
+  RESEND_API_KEY: emptyAsUndefined(z.string().optional()),
   MAIL_FROM: z.string().email(),
+  MAIL_FROM_NAME: z.string().default("3i Institute"),
+  MAIL_REPLY_TO: emptyAsUndefined(z.string().email().optional()),
+  EMAIL_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 
   // DigitalOcean Spaces
   SPACES_ENDPOINT: z.string(),
