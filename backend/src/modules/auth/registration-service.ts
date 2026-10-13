@@ -1,6 +1,5 @@
 import { hash } from "argon2";
 import { prisma } from "#/lib/prisma";
-import { generateTokenPair } from "#/lib/jwt";
 import { ConflictError, ValidationError } from "#/shared/errors";
 import type {
   LearnerRegistrationInput,
@@ -153,58 +152,22 @@ export class RegistrationService {
       });
     }
 
-    // Get user with role and permissions for JWT
-    const userWithRole = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true },
-            },
-          },
-        },
-        learnerProfiles: {
-          where: { deletedAt: null },
-        },
-      },
+    const learnerProfiles = await prisma.learnerProfile.findMany({
+      where: { accountId: user.id, deletedAt: null },
     });
 
-    if (!userWithRole) {
-      throw new Error("User creation failed");
-    }
-
-    const permissions = userWithRole.role.permissions.map(
-      (rp) => rp.permission.key,
-    );
-
-    const tokens = generateTokenPair({
-      sub: userWithRole.id,
-      email: userWithRole.email,
-      role: userWithRole.role.name,
-      permissions,
-    });
-
-    await prisma.refreshToken.create({
-      data: {
-        userId: userWithRole.id,
-        tokenHash: await hash(tokens.refreshToken),
-        deviceInfo: null,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
+    // No login tokens until the email is verified: the client shows a
+    // "check your email" screen and the user signs in after verifying.
     return {
       user: {
-        id: userWithRole.id,
-        firstName: userWithRole.firstName,
-        lastName: userWithRole.lastName,
-        email: userWithRole.email,
-        locale: userWithRole.locale,
-        emailVerified: userWithRole.emailVerified,
-        learnerProfiles: userWithRole.learnerProfiles,
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        locale: user.locale,
+        emailVerified: user.emailVerified,
+        learnerProfiles,
       },
-      tokens,
     };
   }
 
@@ -294,58 +257,21 @@ export class RegistrationService {
       data: { firstName: user.firstName },
     });
 
-    // Get user with role for response
-    const userWithRole = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true },
-            },
-          },
-        },
-      },
-    });
-
-    if (!userWithRole) {
-      throw new Error("User creation failed");
-    }
-
-    const permissions = userWithRole.role.permissions.map(
-      (rp) => rp.permission.key,
-    );
-
-    const tokens = generateTokenPair({
-      sub: userWithRole.id,
-      email: userWithRole.email,
-      role: userWithRole.role.name,
-      permissions,
-    });
-
-    await prisma.refreshToken.create({
-      data: {
-        userId: userWithRole.id,
-        tokenHash: await hash(tokens.refreshToken),
-        deviceInfo: null,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
+    // No login tokens until the email is verified: the client shows a
+    // "check your email" screen and the user signs in after verifying.
     return {
       user: {
-        id: userWithRole.id,
-        firstName: userWithRole.firstName,
-        lastName: userWithRole.lastName,
-        email: userWithRole.email,
-        locale: userWithRole.locale,
-        emailVerified: userWithRole.emailVerified,
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        locale: user.locale,
+        emailVerified: user.emailVerified,
       },
       instructorApplication: {
         status: "PENDING",
         message: "Instructor application submitted. Awaiting approval.",
       },
-      tokens,
     };
   }
 }

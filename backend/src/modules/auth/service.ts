@@ -6,6 +6,7 @@ import {
   ConflictError,
   UnauthorizedError,
   AccountInactiveError,
+  EmailNotVerifiedError,
   ValidationError,
 } from "#/shared/errors";
 import type {
@@ -234,6 +235,12 @@ export class AuthService {
         lockedUntil: null,
       },
     });
+
+    // Checked after the password (like the active check above) so a
+    // stranger can't learn whether an address is registered or verified.
+    if (!user.emailVerified) {
+      throw new EmailNotVerifiedError();
+    }
 
     const permissions = user.role.permissions.map(
       (rp: { permission: { key: string } }) => rp.permission.key,

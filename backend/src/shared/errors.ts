@@ -55,6 +55,16 @@ export class RateLimitError extends AppError {
   }
 }
 
+// The client can offer to resend the verification email on this code.
+export class EmailNotVerifiedError extends AppError {
+  constructor(
+    message = "Please verify your email address before signing in. Check your inbox for the verification link.",
+  ) {
+    super(403, "EMAIL_NOT_VERIFIED", message);
+    Object.setPrototypeOf(this, EmailNotVerifiedError.prototype);
+  }
+}
+
 export class AccountInactiveError extends AppError {
   constructor(
     message = "Your account has been deactivated. Please contact support.",

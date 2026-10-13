@@ -150,6 +150,16 @@ router.post(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: >
+ *           Correct credentials, but the account can't sign in yet.
+ *           `EMAIL_NOT_VERIFIED`: the email address isn't verified (offer
+ *           to resend the verification email). `ACCOUNT_INACTIVE`: the
+ *           account was deactivated by an admin.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/login",
@@ -480,7 +490,9 @@ router.post(
  *               learnerPin: { type: string, pattern: '^\d{4}$' }
  *     responses:
  *       201:
- *         description: Account and learner profile created
+ *         description: >
+ *           Account and learner profile created. No login tokens are
+ *           returned: the user must verify their email before signing in.
  */
 router.post(
   "/register/learner",
@@ -518,7 +530,9 @@ router.post(
  *               wwccExpiry: { type: string, format: date }
  *     responses:
  *       201:
- *         description: Account created and application submitted
+ *         description: >
+ *           Account created and application submitted. No login tokens are
+ *           returned: the user must verify their email before signing in.
  */
 router.post(
   "/register/instructor",
