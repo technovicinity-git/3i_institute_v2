@@ -2,24 +2,23 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { Logo } from "@/components/layout/logo";
 import { useResendVerificationMutation } from "@/hooks/use-email-verification";
 
 function CheckEmailContent() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") ?? "your email";
+  const emailParam = searchParams.get("email") ?? "";
+  const email = emailParam || "your email";
 
   const resendMutation = useResendVerificationMutation();
 
   const [countdown, setCountdown] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  // Derived, not stored: resending opens up when the countdown hits zero.
+  // Without an address in the URL there is nothing to resend to.
+  const canResend = countdown <= 0 && !!emailParam;
 
   useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
+    if (countdown <= 0) return;
 
     const timer = setTimeout(() => {
       setCountdown((prev) => prev - 1);
@@ -31,16 +30,9 @@ function CheckEmailContent() {
   const handleResend = () => {
     if (!canResend) return;
 
-    resendMutation.mutate(email, {
-      onSuccess: () => {
-        setCountdown(60);
-        setCanResend(false);
-      },
-      onError: () => {
-        // Still reset countdown to prevent spam
-        setCountdown(60);
-        setCanResend(false);
-      },
+    // Restart the countdown either way, so the button can't be spammed.
+    resendMutation.mutate(emailParam, {
+      onSettled: () => setCountdown(60),
     });
   };
 
@@ -100,6 +92,8 @@ function CheckEmailContent() {
           <p className="text-sm text-outline mt-4" aria-live="polite">
             {canResend ? (
               "You can resend now"
+            ) : countdown <= 0 ? (
+              "Sign in to request a new verification email"
             ) : (
               <>
                 You can resend in <span>{countdown}</span> seconds
