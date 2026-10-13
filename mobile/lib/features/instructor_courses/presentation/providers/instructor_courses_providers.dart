@@ -56,6 +56,11 @@ final instructorQuestionsProvider =
       (ref, id) =>
           ref.watch(instructorCoursesRepositoryProvider).getQuestions(id),
     );
+
+/// Questions across all of the instructor's courses (question bank).
+final instructorAllQuestionsProvider = FutureProvider<List<InstructorQuestion>>(
+  (ref) => ref.watch(instructorCoursesRepositoryProvider).getQuestions(),
+);
 final instructorQuestionProvider = FutureProvider.autoDispose
     .family<InstructorQuestion, String>(
       (ref, id) =>

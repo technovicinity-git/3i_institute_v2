@@ -316,10 +316,12 @@ class InstructorCoursesRepository {
     contentType: DioMediaType.parse(file.mimeType),
   );
 
-  Future<List<InstructorQuestion>> getQuestions(String courseId) async {
+  /// Questions for one course, or across all the instructor's courses when
+  /// [courseId] is null.
+  Future<List<InstructorQuestion>> getQuestions([String? courseId]) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/exams/questions',
-      queryParameters: {'courseId': courseId},
+      queryParameters: {'courseId': ?courseId},
     );
     final data = response.data?['data'];
     return (data is List ? data : const [])
@@ -538,9 +540,11 @@ class InstructorCoursesRepository {
           : const [],
       suggestedAnswer: _nullable(item['suggestedAnswer']),
       marks: _int(item['marks'], 1),
-      negativeMarks: _int(item['negativeMarks']),
+      negativeMarks: _double(item['negativeMarks']),
       difficulty: '${item['difficulty'] ?? 'medium'}',
       explanation: _nullable(item['explanation']),
+      courseId: _nullable(item['courseId']),
+      courseTitle: _nullable(_map(item['course'])['title']),
     );
   }
 
@@ -608,5 +612,7 @@ String? _nullable(Object? value) =>
     value is String && value.isNotEmpty ? value : null;
 int _int(Object? value, [int fallback = 0]) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+double _double(Object? value, [double fallback = 0]) =>
+    value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
 List<String> _strings(Object? value) =>
     value is List ? value.whereType<String>().toList() : const [];

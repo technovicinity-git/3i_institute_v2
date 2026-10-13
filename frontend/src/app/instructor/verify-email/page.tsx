@@ -102,16 +102,13 @@ function VerifyEmailContent() {
 
 // Shown right after registration: "check your inbox" with a resend button.
 function CheckEmailContent({ email }: { email: string }) {
-
   const resendMutation = useResendVerificationMutation();
   const [countdown, setCountdown] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  // Derived, not stored: resending opens up when the countdown hits zero.
+  const canResend = countdown <= 0;
 
   useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
+    if (countdown <= 0) return;
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
@@ -119,15 +116,9 @@ function CheckEmailContent({ email }: { email: string }) {
   const handleResend = () => {
     if (!canResend || !email) return;
 
+    // Restart the countdown either way, so the button can't be spammed.
     resendMutation.mutate(email, {
-      onSuccess: () => {
-        setCountdown(60);
-        setCanResend(false);
-      },
-      onError: () => {
-        setCountdown(60);
-        setCanResend(false);
-      },
+      onSettled: () => setCountdown(60),
     });
   };
 

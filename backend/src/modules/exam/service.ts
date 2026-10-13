@@ -12,12 +12,42 @@ import type {
 import { notificationEvents } from "#/modules/notification/events";
 import { canManageCourse, isAdmin } from "#/shared/course-access";
 
+// Scores can be fractional because of negative marking (e.g. -0.25).
+// Rounding to 2 dp keeps float noise (2.9000000000000004) out of the DB.
+const roundScore = (score: number) => Math.round(score * 100) / 100;
+
+// Negative marks apply only to answered-but-wrong questions: skipping a
+// question is how a learner avoids the penalty, so a blank costs nothing.
+function isAnswered(answer: unknown): boolean {
+  if (answer === undefined || answer === null) return false;
+  if (typeof answer === "string") return answer.trim() !== "";
+  if (Array.isArray(answer)) return answer.length > 0;
+  return true;
+}
+
+function assertNegativeMarksWithinMarks(
+  negativeMarks: number | undefined,
+  marks: number | undefined,
+): void {
+  if (
+    negativeMarks !== undefined &&
+    marks !== undefined &&
+    negativeMarks > marks
+  ) {
+    throw new ValidationError(
+      `Negative marks (${negativeMarks}) can't be more than the question's marks (${marks})`,
+    );
+  }
+}
+
 export class ExamService {
   // ──────────────────────────────────
   // Question Bank
   // ──────────────────────────────────
 
   async createQuestion(ownerId: string, input: CreateQuestionInput) {
+    assertNegativeMarksWithinMarks(input.negativeMarks, input.marks);
+
     // Verify course belongs to instructor
     const course = await prisma.course.findUnique({
       where: { id: input.courseId },
@@ -58,7 +88,19 @@ export class ExamService {
     return question;
   }
 
-  async getMyQuestions(ownerId: string, courseId: string) {
+  async getMyQuestions(ownerId: string, courseId?: string) {
+    // No course given: return questions across all of the instructor's courses
+    if (!courseId) {
+      return prisma.question.findMany({
+        where: {
+          scope: "INSTRUCTOR",
+          course: { instructorId: ownerId },
+        },
+        include: { course: { select: { id: true, title: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
     // Verify course ownership
     const course = await prisma.course.findUnique({
       where: { id: courseId },
@@ -130,6 +172,11 @@ export class ExamService {
     if (!(await canManageCourse(ownerId, question.course.instructorId))) {
       throw new NotFoundError("Question not found");
     }
+
+    assertNegativeMarksWithinMarks(
+      input.negativeMarks ?? question.negativeMarks,
+      input.marks ?? question.marks,
+    );
 
     const updated = await prisma.question.update({
       where: { id: questionId },
@@ -602,7 +649,7 @@ export class ExamService {
         const correct = question.correctAnswer as string;
         if (userAnswer === correct) {
           score += marks;
-        } else if (question.negativeMarks > 0) {
+        } else if (question.negativeMarks > 0 && isAnswered(userAnswer)) {
           score -= question.negativeMarks;
         }
       } else if (question.type === "multi_select") {
@@ -616,7 +663,7 @@ export class ExamService {
           correct.every((c) => userAnswers.includes(c));
         if (isCorrect) {
           score += marks;
-        } else if (question.negativeMarks > 0) {
+        } else if (question.negativeMarks > 0 && isAnswered(userAnswer)) {
           score -= question.negativeMarks;
         }
       } else {
@@ -625,6 +672,7 @@ export class ExamService {
       }
     }
 
+    score = roundScore(score);
     const passed = !needsManualGrading
       ? score >= this.getPassThreshold(attemptTotalMarks, exam.passMark)
       : null;
@@ -768,7 +816,7 @@ export class ExamService {
         const correct = question.correctAnswer as string;
         if (userAnswer === correct) {
           score += marks;
-        } else if (question.negativeMarks > 0) {
+        } else if (question.negativeMarks > 0 && isAnswered(userAnswer)) {
           score -= question.negativeMarks;
         }
       } else if (question.type === "multi_select") {
@@ -781,7 +829,7 @@ export class ExamService {
           correct.every((c) => userAnswers.includes(c));
         if (isCorrect) {
           score += marks;
-        } else if (question.negativeMarks > 0) {
+        } else if (question.negativeMarks > 0 && isAnswered(userAnswer)) {
           score -= question.negativeMarks;
         }
       } else {
@@ -795,6 +843,7 @@ export class ExamService {
       }
     }
 
+    score = roundScore(score);
     const allGraded = !manualPending;
     const passThreshold = this.getPassThreshold(
       attempt.totalMarks,

@@ -51,6 +51,19 @@ function parseMarks(value: string | undefined, fallback: number): number {
   return parsed;
 }
 
+// Negative marks may be fractional (e.g. 0.25), up to 2 decimal places.
+function parseNegativeMarks(value: string | undefined): number {
+  if (!value || value.trim() === "") return 0;
+  const parsed = Number(value.trim());
+  if (!Number.isFinite(parsed)) {
+    throw new Error("Negative marks must be a number");
+  }
+  if (Math.abs(parsed * 100 - Math.round(parsed * 100)) > 1e-9) {
+    throw new Error("Negative marks can have at most 2 decimal places");
+  }
+  return parsed;
+}
+
 function lettersToOptions(
   correctAnswer: string,
   options: (string | undefined)[],
@@ -144,9 +157,12 @@ export class BulkImportService {
           throw new Error("Marks must be between 1 and 100");
         }
 
-        const negativeMarks = parseMarks(row.negative_marks, 0);
+        const negativeMarks = parseNegativeMarks(row.negative_marks);
         if (negativeMarks < 0) {
           throw new Error("Negative marks cannot be negative");
+        }
+        if (negativeMarks > marks) {
+          throw new Error("Negative marks cannot be more than the marks");
         }
 
         const difficulty = (row.difficulty ?? "medium").trim().toLowerCase();

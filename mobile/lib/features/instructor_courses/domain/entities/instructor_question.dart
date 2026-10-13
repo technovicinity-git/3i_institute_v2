@@ -10,14 +10,22 @@ class InstructorQuestion {
     required this.negativeMarks,
     required this.difficulty,
     required this.explanation,
+    this.courseId,
+    this.courseTitle,
   });
   final String id, type, question, difficulty;
+
+  /// [courseTitle] is only sent when listing questions across all courses.
+  final String? courseId, courseTitle;
   final List<String> options;
 
   /// A single answer for mcq/true_false, several for multi_select.
   final List<String> correctAnswers;
   final String? suggestedAnswer, explanation;
-  final int marks, negativeMarks;
+  final int marks;
+
+  /// Deducted for a wrong answer; may be a fraction (e.g. 0.25).
+  final double negativeMarks;
 }
 
 class QuestionImportResult {

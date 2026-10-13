@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Eye, Search } from "lucide-react";
 import {
-  useMyQuestions,
+  useAllMyQuestions,
   useDeleteQuestionMutation,
 } from "@/hooks/use-questions";
 import Link from "next/link";
@@ -45,23 +45,31 @@ function getDifficultyBadge(difficulty: string) {
 
 export default function QuestionsPage() {
   const router = useRouter();
-  const {
-    data: questions,
-    isLoading,
-    isError,
-  } = useMyQuestions("ae69e369-b0ec-4e27-9efd-1c8bbec1cb92");
+  const { data: questions, isLoading, isError } = useAllMyQuestions();
   const deleteMutation = useDeleteQuestionMutation();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterCourse, setFilterCourse] = useState<string>("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Unique courses present in the question list, for the course filter
+  const courses = Array.from(
+    new Map(
+      (questions ?? [])
+        .filter((q) => q.course)
+        .map((q) => [q.course!.id, q.course!.title]),
+    ),
+  ).sort((a, b) => a[1].localeCompare(b[1]));
 
   const filteredQuestions = questions?.filter((q) => {
     const matchesSearch = q.question
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesType = filterType === "all" || q.type === filterType;
-    return matchesSearch && matchesType;
+    const matchesCourse =
+      filterCourse === "all" || q.courseId === filterCourse;
+    return matchesSearch && matchesType && matchesCourse;
   });
 
   const handleDelete = (questionId: string) => {
@@ -110,6 +118,18 @@ export default function QuestionsPage() {
             className="bg-transparent text-sm outline-none w-full"
           />
         </div>
+        <select
+          value={filterCourse}
+          onChange={(e) => setFilterCourse(e.target.value)}
+          className="px-4 py-2.5 bg-white border border-[#E3E8EF] rounded-lg text-sm max-w-[240px]"
+        >
+          <option value="all">All Courses</option>
+          {courses.map(([id, title]) => (
+            <option key={id} value={id}>
+              {title}
+            </option>
+          ))}
+        </select>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -167,6 +187,11 @@ export default function QuestionsPage() {
                         <span className="text-[11px] text-[#64748B]">
                           {question.marks} marks
                         </span>
+                        {question.course && (
+                          <span className="text-[11px] text-[#64748B]">
+                            · {question.course.title}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-[#0C1F33] leading-6">
                         {question.question}

@@ -14,12 +14,17 @@ import type { Question } from "@/types/question";
 import { useMyQuestions } from "@/hooks/use-questions";
 import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { capAt } from "@/lib/number-input";
 
 const editExamSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   type: z.enum(["practice", "final"]),
   duration: z.number().int().min(5).max(480),
-  passMark: z.number().int().min(1).max(100),
+  passMark: z
+    .number({ error: "Enter a pass mark between 1 and 100" })
+    .int("Pass mark must be a whole number")
+    .min(1, "Pass mark must be at least 1%")
+    .max(100, "Pass mark can't be more than 100%"),
   maxAttempts: z.number().int().min(1).max(10),
   cooldownHours: z.number().int().min(0).max(168),
   randomizeQuestions: z.boolean(),
@@ -90,6 +95,7 @@ export default function EditExamPage() {
       marks: 20,
     },
   });
+  const passMarkRegistration = register("passMark", { valueAsNumber: true });
 
   useEffect(() => {
     if (!exam) return;
@@ -206,7 +212,16 @@ export default function EditExamPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold mb-2">Pass Mark (%) *</label>
-              <input type="number" {...register("passMark", { valueAsNumber: true })} className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg" />
+              <input
+                type="number"
+                min={1}
+                max={100}
+                step={1}
+                inputMode="numeric"
+                {...passMarkRegistration}
+                onChange={capAt(100, passMarkRegistration.onChange)}
+                className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg"
+              />
               {errors.passMark && <p className="mt-1 text-xs text-red-600">{errors.passMark.message}</p>}
             </div>
             {course.type === "ONLINE_CLASS" ? (

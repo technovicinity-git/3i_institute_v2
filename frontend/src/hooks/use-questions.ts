@@ -13,6 +13,14 @@ export function useMyQuestions(courseId: string) {
   });
 }
 
+export function useAllMyQuestions() {
+  return useQuery({
+    queryKey: ["my-questions", "all"],
+    queryFn: () => questionService.getMyQuestions(),
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useCreateQuestionMutation() {
   const queryClient = useQueryClient();
 

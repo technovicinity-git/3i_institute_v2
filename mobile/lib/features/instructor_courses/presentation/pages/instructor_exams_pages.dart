@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -424,6 +425,7 @@ class _InstructorExamFormPageState
                     controller: _passMark,
                     label: 'Pass Mark (%) *',
                     enabled: !_saving,
+                    max: 100,
                   ),
                 ),
               ],
@@ -1644,17 +1646,29 @@ class _NumberField extends StatelessWidget {
     required this.label,
     required this.enabled,
     this.helper,
+    this.max,
   });
   final TextEditingController controller;
   final String label;
   final bool enabled;
   final String? helper;
 
+  /// When set, keystrokes that would go above it are ignored.
+  final int? max;
+
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
     enabled: enabled,
     keyboardType: TextInputType.number,
+    inputFormatters: [
+      FilteringTextInputFormatter.digitsOnly,
+      if (max != null)
+        TextInputFormatter.withFunction(
+          (oldValue, newValue) =>
+              (int.tryParse(newValue.text) ?? 0) > max! ? oldValue : newValue,
+        ),
+    ],
     decoration: InputDecoration(
       labelText: label,
       helperText: helper,

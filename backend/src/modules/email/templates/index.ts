@@ -16,6 +16,8 @@ import { courseRejected } from "#/modules/email/templates/instructor/course-reje
 import { courseSuspended } from "#/modules/email/templates/instructor/course-suspended";
 import { instructorReinstated } from "#/modules/email/templates/instructor/instructor-reinstated";
 import { instructorSuspended } from "#/modules/email/templates/instructor/instructor-suspended";
+import { examRescheduled } from "#/modules/email/templates/learner/exam-rescheduled";
+import { examPublished } from "#/modules/email/templates/learner/exam-published";
 import { sessionCancelled } from "#/modules/email/templates/learner/session-cancelled";
 import { sessionRescheduled } from "#/modules/email/templates/learner/session-rescheduled";
 import { sessionScheduled } from "#/modules/email/templates/learner/session-scheduled";
@@ -53,6 +55,8 @@ export const emailTemplates = {
   "learner.session-scheduled": sessionScheduled,
   "learner.session-rescheduled": sessionRescheduled,
   "learner.session-cancelled": sessionCancelled,
+  "learner.exam-published": examPublished,
+  "learner.exam-rescheduled": examRescheduled,
 } as const satisfies Record<string, EmailTemplate<never>>;
 
 export type EmailTemplateName = keyof typeof emailTemplates;

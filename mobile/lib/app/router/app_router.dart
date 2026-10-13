@@ -238,8 +238,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/questions',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Questions'),
+            builder: (context, state) => const InstructorQuestionsPage(),
           ),
           GoRoute(
             path: '/instructor/certificates',

@@ -30,6 +30,12 @@ const uploadCsv = multer({
  *   get:
  *     tags: [Questions]
  *     summary: Get my questions (instructor)
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: false
+ *         schema: { type: string, format: uuid }
+ *         description: Limit to one course. Omit to get questions from all of the instructor's courses.
  *     responses:
  *       200:
  *         description: List of questions
