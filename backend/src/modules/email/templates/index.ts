@@ -1,3 +1,4 @@
+import { customEmail } from "#/modules/email/templates/admin/custom-email";
 import { passwordChanged } from "#/modules/email/templates/auth/password-changed";
 import { passwordReset } from "#/modules/email/templates/auth/password-reset";
 import { verifyEmail } from "#/modules/email/templates/auth/verify-email";
@@ -57,6 +58,9 @@ export const emailTemplates = {
   "learner.session-cancelled": sessionCancelled,
   "learner.exam-published": examPublished,
   "learner.exam-rescheduled": examRescheduled,
+
+  // Admin (written by an admin on the Send Email page)
+  "admin.custom-email": customEmail,
 } as const satisfies Record<string, EmailTemplate<never>>;
 
 export type EmailTemplateName = keyof typeof emailTemplates;

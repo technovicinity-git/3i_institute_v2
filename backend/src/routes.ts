@@ -26,6 +26,7 @@ import { uploadRoutes } from "#/modules/upload/routes";
 import { wishlistRoutes } from "#/modules/wishlist/routes";
 import { instructorAssignmentRoutes } from "#/modules/assignment/routes";
 import { adminRoutes } from "#/modules/admin/routes";
+import { adminEmailRoutes } from "#/modules/admin-email/routes";
 import { learnerAssignmentRoutes } from "#/modules/assignment/learner-routes";
 import { noteRoutes } from "#/modules/note/routes";
 import { categoryRoutes } from "#/modules/category/routes";
@@ -64,6 +65,7 @@ router.use("/wishlist", wishlistRoutes);
 router.use("/instructors/assignments", instructorAssignmentRoutes);
 // Mounted before the broader /admin router.
 router.use("/admin/content", adminContentRoutes);
+router.use("/admin/emails", adminEmailRoutes);
 router.use("/admin", adminRoutes);
 router.use("/assignments", learnerAssignmentRoutes);
 router.use("/notes", noteRoutes);
