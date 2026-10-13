@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Search, Users, BookOpen, Filter } from "lucide-react";
 import { useInstructorStudents } from "@/hooks/use-instructor-students";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
@@ -123,10 +124,20 @@ export default function InstructorStudentsPage() {
                 >
                   {/* Student name + avatar */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#F9F6F0] flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-[#B8912F]">
-                        {student.displayName.slice(0, 2).toUpperCase()}
-                      </span>
+                    <div className="w-9 h-9 rounded-full bg-[#F9F6F0] flex items-center justify-center shrink-0 overflow-hidden">
+                      {student.avatarUrl ? (
+                        <Image
+                          src={student.avatarUrl}
+                          alt={student.displayName}
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-[#B8912F]">
+                          {student.displayName.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <span className="text-sm font-semibold text-[#0C1F33]">
                       {student.displayName}
@@ -149,23 +160,41 @@ export default function InstructorStudentsPage() {
                     {calculateAge(student.dateOfBirth)}
                   </span>
 
-                  {/* Progress */}
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#22A146] rounded-full"
-                        style={{ width: `${student.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-[#0C1F33]">
-                      {student.progress}%
+                  {/* Progress (online class courses have no materials to track) */}
+                  {student.courseType === "ONLINE_CLASS" ? (
+                    <span
+                      className="text-sm text-[#94A3B8] text-center"
+                      title="Progress isn't tracked for online class courses"
+                    >
+                      —
                     </span>
-                  </div>
+                  ) : (
+                    <div className="flex items-center gap-2 justify-center">
+                      <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#22A146] rounded-full"
+                          style={{ width: `${student.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-[#0C1F33]">
+                        {student.progress}%
+                      </span>
+                    </div>
+                  )}
 
-                  {/* Attendance */}
-                  <span className="text-sm text-[#64748B] text-center">
-                    {student.attendanceRate}%
-                  </span>
+                  {/* Attendance (regular courses have no live classes) */}
+                  {student.courseType === "REGULAR" ? (
+                    <span
+                      className="text-sm text-[#94A3B8] text-center"
+                      title="Attendance isn't tracked for regular courses"
+                    >
+                      —
+                    </span>
+                  ) : (
+                    <span className="text-sm text-[#64748B] text-center">
+                      {student.attendanceRate}%
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

@@ -440,12 +440,14 @@ export class InstructorService {
             id: true,
             displayName: true,
             dateOfBirth: true,
+            avatarUrl: true,
           },
         },
         course: {
           select: {
             id: true,
             title: true,
+            type: true,
           },
         },
       },
@@ -457,8 +459,10 @@ export class InstructorService {
       learnerProfileId: enrolment.learnerProfileId,
       displayName: enrolment.learnerProfile?.displayName ?? "Unknown",
       dateOfBirth: enrolment.learnerProfile?.dateOfBirth ?? null,
+      avatarUrl: enrolment.learnerProfile?.avatarUrl ?? null,
       courseId: enrolment.courseId,
       courseTitle: enrolment.course.title,
+      courseType: enrolment.course.type,
       enrolledAt: enrolment.enrolledAt,
       progress: 0, // TODO: Calculate from material progress
       attendanceRate: 0, // TODO: Calculate from attendance

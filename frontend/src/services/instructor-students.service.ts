@@ -5,8 +5,10 @@ export interface StudentInfo {
   learnerProfileId: string;
   displayName: string;
   dateOfBirth: string;
+  avatarUrl: string | null;
   courseId: string;
   courseTitle: string;
+  courseType: "REGULAR" | "ONLINE_CLASS" | "MIXED";
   enrolledAt: string;
   progress: number;
   attendanceRate: number;
