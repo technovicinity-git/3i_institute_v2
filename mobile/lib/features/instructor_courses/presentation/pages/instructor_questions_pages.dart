@@ -387,10 +387,7 @@ class _QuestionCard extends StatelessWidget {
                         if (showCourse && question.courseTitle != null)
                           Text(
                             '· ${question.courseTitle}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: _muted,
-                            ),
+                            style: const TextStyle(fontSize: 11, color: _muted),
                           ),
                       ],
                     ),

@@ -76,7 +76,7 @@ export default function EditBatchPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[600px] mx-auto">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2 max-w-[600px] mx-auto">
       <div className="mb-8">
         <button
           onClick={() => router.push(`${basePath}/${courseId}/batches`)}

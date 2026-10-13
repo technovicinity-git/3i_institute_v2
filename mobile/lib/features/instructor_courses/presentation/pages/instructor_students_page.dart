@@ -51,7 +51,8 @@ class _InstructorStudentsPageState
         .where((s) => s.displayName.toLowerCase().contains(query))
         .toList();
     final isOnline = course?.type == 'ONLINE_CLASS';
-    final isRegular = course?.type == 'REGULAR';
+    // Online class courses have no materials, so there is no progress.
+    final showProgress = course != null && !isOnline;
 
     return RefreshIndicator(
       onRefresh: () =>
@@ -102,7 +103,11 @@ class _InstructorStudentsPageState
                   text: 'No students enrolled yet.',
                 )
               else ...[
-                _Summary(total: data.total, students: students),
+                _Summary(
+                  total: data.total,
+                  students: students,
+                  showProgress: showProgress,
+                ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _search,
@@ -150,7 +155,7 @@ class _InstructorStudentsPageState
                           _StudentRow(
                             student: filtered[i],
                             showBatch: isOnline,
-                            showProgress: isRegular,
+                            showProgress: showProgress,
                           ),
                         ],
                       ],
@@ -166,9 +171,14 @@ class _InstructorStudentsPageState
 }
 
 class _Summary extends StatelessWidget {
-  const _Summary({required this.total, required this.students});
+  const _Summary({
+    required this.total,
+    required this.students,
+    required this.showProgress,
+  });
   final int total;
   final List<InstructorStudent> students;
+  final bool showProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -176,13 +186,15 @@ class _Summary extends StatelessWidget {
         students.fold<int>(0, (sum, s) => sum + s.progress) / students.length;
     final tiles = [
       (Icons.people_outline, _blue, '$total', 'Total Students'),
-      (Icons.trending_up, _green, '${avg.round()}%', 'Avg Progress'),
-      (
-        Icons.workspace_premium_outlined,
-        _gold,
-        '${students.where((s) => s.progress == 100).length}',
-        'Completed',
-      ),
+      if (showProgress) ...[
+        (Icons.trending_up, _green, '${avg.round()}%', 'Avg Progress'),
+        (
+          Icons.workspace_premium_outlined,
+          _gold,
+          '${students.where((s) => s.progress == 100).length}',
+          'Completed',
+        ),
+      ],
       (
         Icons.menu_book_outlined,
         _purple,

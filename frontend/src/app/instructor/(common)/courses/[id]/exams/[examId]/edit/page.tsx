@@ -12,7 +12,6 @@ import { examService } from "@/services/exam.service";
 import type { CreateExamInput } from "@/types/exam";
 import type { Question } from "@/types/question";
 import { useMyQuestions } from "@/hooks/use-questions";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 import { capAt } from "@/lib/number-input";
 
@@ -175,7 +174,7 @@ export default function EditExamPage() {
   }
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
         <button
           onClick={() => router.push(`${basePath}/${courseId}/exams`)}
@@ -183,7 +182,6 @@ export default function EditExamPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
-        <CourseActions courseId={courseId} courseType={course.type} />
         <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "'Marcellus', serif" }}>
           Edit Exam
         </h1>

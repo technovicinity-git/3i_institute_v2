@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Trash2, Eye, Search, ChevronLeft, Upload } from "lucide-react";
+import { Plus, Trash2, Eye, Search, Upload } from "lucide-react";
 import { BulkQuestionImportModal } from "@/components/instructor/bulk-question-import-modal";
 import {
   useMyQuestions,
@@ -10,8 +10,7 @@ import {
 } from "@/hooks/use-questions";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function getTypeBadge(type: string) {
   const typeMap: Record<string, { label: string; className: string }> = {
@@ -52,8 +51,6 @@ export default function QuestionsPage() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.id as string;
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
   const { data: questions, isLoading, isError } = useMyQuestions(courseId);
   const deleteMutation = useDeleteQuestionMutation();
   const confirm = useConfirm();
@@ -89,20 +86,9 @@ export default function QuestionsPage() {
     });
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
-
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1

@@ -493,6 +493,34 @@ class InstructorCoursesRepository {
     );
   }
 
+  /// Every enrolment across the instructor's courses.
+  Future<List<InstructorEnrolledStudent>> getAllStudents() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/instructors/students',
+    );
+    final students = _map(response.data?['data'])['students'];
+    return (students is List ? students : const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => InstructorEnrolledStudent(
+            id: '${item['id'] ?? ''}',
+            learnerProfileId: '${item['learnerProfileId'] ?? ''}',
+            displayName: '${item['displayName'] ?? 'Learner'}',
+            avatarUrl: _nullable(item['avatarUrl']),
+            dateOfBirth: DateTime.tryParse('${item['dateOfBirth'] ?? ''}'),
+            courseId: '${item['courseId'] ?? ''}',
+            courseTitle: '${item['courseTitle'] ?? 'Course'}',
+            courseType: '${item['courseType'] ?? 'REGULAR'}',
+            enrolledAt: DateTime.tryParse(
+              '${item['enrolledAt'] ?? ''}',
+            )?.toLocal(),
+            progress: _int(item['progress']).clamp(0, 100),
+            attendanceRate: _int(item['attendanceRate']).clamp(0, 100),
+          ),
+        )
+        .toList();
+  }
+
   Future<InstructorCourseStudents> getCourseStudents(String courseId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/instructors/courses/$courseId/students',

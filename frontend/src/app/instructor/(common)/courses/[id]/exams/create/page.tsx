@@ -10,7 +10,6 @@ import { Search, Check, X, ChevronLeft } from "lucide-react";
 import { useCreateExamMutation } from "@/hooks/use-exams";
 import { useMyQuestions } from "@/hooks/use-questions";
 import type { Question } from "@/types/question";
-import { CourseActions } from "@/components/instructor/CourseActions";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
 import { capAt } from "@/lib/number-input";
 
@@ -47,7 +46,7 @@ export default function CreateExamPage() {
   const { data: allQuestions, isLoading: questionsLoading } =
     useMyQuestions(courseId);
 
-  const { data: courses, isLoading: coursesLoading } = useWorkspaceCourses();
+  const { data: courses } = useWorkspaceCourses();
   const course = courses?.find((c) => c.id === courseId);
 
   const [selectedQuestions, setSelectedQuestions] = useState<
@@ -203,7 +202,7 @@ export default function CreateExamPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       <div className="mb-8">
         <button
           onClick={() => router.push(`${basePath}/${courseId}/exams`)}
@@ -211,9 +210,6 @@ export default function CreateExamPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
           style={{ fontFamily: "'Marcellus', serif" }}

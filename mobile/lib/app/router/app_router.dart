@@ -51,6 +51,7 @@ import '../../features/notifications/presentation/pages/instructor_send_notifica
 import '../../features/content/presentation/pages/site_page_view.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_live_classes_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_materials_page.dart';
+import '../../features/instructor_courses/presentation/pages/instructor_all_students_page.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_questions_pages.dart';
 import '../../features/instructor_courses/presentation/pages/instructor_students_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -247,8 +248,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/instructor/students',
-            builder: (context, state) =>
-                const InstructorSectionPlaceholderPage(title: 'Students'),
+            builder: (context, state) => const InstructorAllStudentsPage(),
           ),
           GoRoute(
             path: '/instructor/notifications',

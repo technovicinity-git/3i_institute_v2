@@ -10,13 +10,11 @@ import {
   Plus,
   Eye,
   XCircle,
-  ChevronLeft,
   MessageSquare,
   Pencil,
 } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
-import { CourseActions } from "@/components/instructor/CourseActions";
-import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
+import { useCourseWorkspace } from "@/lib/course-workspace";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -61,8 +59,6 @@ export default function BatchesPage() {
   const courseId = params.id as string;
 
   const { data: batches, isLoading, isError } = useCourseBatches(courseId);
-  const { data: courses } = useWorkspaceCourses();
-  const course = courses?.find((c) => c.id === courseId);
   const closeBatchMutation = useCloseBatchMutation();
 
   const [confirmClose, setConfirmClose] = useState<string | null>(null);
@@ -78,19 +74,9 @@ export default function BatchesPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-6 pb-6 pt-2 md:px-10 md:pb-10 md:pt-2">
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push(basePath)}
-          className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to courses
-        </button>
-        {course && (
-          <CourseActions courseId={courseId} courseType={course.type} />
-        )}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1
