@@ -88,7 +88,19 @@ export class ExamService {
     return question;
   }
 
-  async getMyQuestions(ownerId: string, courseId: string) {
+  async getMyQuestions(ownerId: string, courseId?: string) {
+    // No course given: return questions across all of the instructor's courses
+    if (!courseId) {
+      return prisma.question.findMany({
+        where: {
+          scope: "INSTRUCTOR",
+          course: { instructorId: ownerId },
+        },
+        include: { course: { select: { id: true, title: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
     // Verify course ownership
     const course = await prisma.course.findUnique({
       where: { id: courseId },

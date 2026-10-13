@@ -10,8 +10,13 @@ class InstructorQuestion {
     required this.negativeMarks,
     required this.difficulty,
     required this.explanation,
+    this.courseId,
+    this.courseTitle,
   });
   final String id, type, question, difficulty;
+
+  /// [courseTitle] is only sent when listing questions across all courses.
+  final String? courseId, courseTitle;
   final List<String> options;
 
   /// A single answer for mcq/true_false, several for multi_select.

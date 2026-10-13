@@ -26,18 +26,7 @@ export class ExamController {
   getMyQuestions = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const ownerId = req.user?.sub!;
-      const courseId = req.query["courseId"] as string;
-
-      if (!courseId) {
-        res.status(422).json({
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "courseId is required",
-          },
-        });
-        return;
-      }
+      const courseId = req.query["courseId"] as string | undefined;
 
       const questions = await examService.getMyQuestions(ownerId, courseId);
       sendSuccess(res, questions, 200);

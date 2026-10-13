@@ -316,10 +316,12 @@ class InstructorCoursesRepository {
     contentType: DioMediaType.parse(file.mimeType),
   );
 
-  Future<List<InstructorQuestion>> getQuestions(String courseId) async {
+  /// Questions for one course, or across all the instructor's courses when
+  /// [courseId] is null.
+  Future<List<InstructorQuestion>> getQuestions([String? courseId]) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/exams/questions',
-      queryParameters: {'courseId': courseId},
+      queryParameters: {'courseId': ?courseId},
     );
     final data = response.data?['data'];
     return (data is List ? data : const [])
@@ -541,6 +543,8 @@ class InstructorCoursesRepository {
       negativeMarks: _double(item['negativeMarks']),
       difficulty: '${item['difficulty'] ?? 'medium'}',
       explanation: _nullable(item['explanation']),
+      courseId: _nullable(item['courseId']),
+      courseTitle: _nullable(_map(item['course'])['title']),
     );
   }
 

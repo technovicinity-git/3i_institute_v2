@@ -9,10 +9,10 @@ export interface BulkImportResult {
 }
 
 export const questionService = {
-  getMyQuestions: async (courseId: string): Promise<Question[]> => {
-    const response = await apiClient.get(
-      `/exams/questions?courseId=${courseId}`,
-    );
+  getMyQuestions: async (courseId?: string): Promise<Question[]> => {
+    const response = await apiClient.get("/exams/questions", {
+      params: courseId ? { courseId } : undefined,
+    });
     return response.data.data;
   },
 

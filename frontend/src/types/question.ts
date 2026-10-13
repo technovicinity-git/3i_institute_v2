@@ -20,6 +20,7 @@ export interface Question {
   difficulty: Difficulty;
   explanation: string | null;
   courseId: string | null;
+  course?: { id: string; title: string } | null;
   createdAt: string;
 }
 

@@ -26,9 +26,11 @@ const _questionTypes = [
 const _difficulties = ['easy', 'medium', 'hard'];
 const _maxCsvBytes = 5 * 1024 * 1024;
 
+/// Questions of one course, or the question bank across all the instructor's
+/// courses when [courseId] is null.
 class InstructorQuestionsPage extends ConsumerStatefulWidget {
-  const InstructorQuestionsPage({required this.courseId, super.key});
-  final String courseId;
+  const InstructorQuestionsPage({this.courseId, super.key});
+  final String? courseId;
   @override
   ConsumerState<InstructorQuestionsPage> createState() =>
       _InstructorQuestionsPageState();
@@ -38,7 +40,13 @@ class _InstructorQuestionsPageState
     extends ConsumerState<InstructorQuestionsPage> {
   final _search = TextEditingController();
   String _filter = 'all';
+  String _courseFilter = 'all';
   String? _deletingId;
+
+  FutureProvider<List<InstructorQuestion>> get _provider =>
+      widget.courseId == null
+      ? instructorAllQuestionsProvider
+      : instructorQuestionsProvider(widget.courseId!);
 
   @override
   void dispose() {
@@ -48,35 +56,44 @@ class _InstructorQuestionsPageState
 
   @override
   Widget build(BuildContext context) {
-    final questions = ref.watch(instructorQuestionsProvider(widget.courseId));
-    final course = ref
-        .watch(instructorCoursesProvider)
-        .asData
-        ?.value
-        .where((c) => c.id == widget.courseId)
-        .firstOrNull;
+    final courseId = widget.courseId;
+    final questions = ref.watch(_provider);
+    final course = courseId == null
+        ? null
+        : ref
+              .watch(instructorCoursesProvider)
+              .asData
+              ?.value
+              .where((c) => c.id == courseId)
+              .firstOrNull;
     final items = questions.asData?.value ?? const <InstructorQuestion>[];
+    // Courses present in the list, for the course filter (question bank only)
+    final courses = {
+      for (final q in items)
+        if (q.courseId != null) q.courseId!: q.courseTitle ?? 'Untitled course',
+    }.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
     final query = _search.text.trim().toLowerCase();
     final filtered = items
         .where(
           (q) =>
               q.question.toLowerCase().contains(query) &&
-              (_filter == 'all' || q.type == _filter),
+              (_filter == 'all' || q.type == _filter) &&
+              (_courseFilter == 'all' || q.courseId == _courseFilter),
         )
         .toList();
 
     return RefreshIndicator(
-      onRefresh: () =>
-          ref.refresh(instructorQuestionsProvider(widget.courseId).future),
+      onRefresh: () => ref.refresh(_provider.future),
       child: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          TextButton.icon(
-            onPressed: () => context.go('/instructor/courses'),
-            icon: const Icon(Icons.chevron_left),
-            label: const Text('Back to courses'),
-            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-          ),
+          if (courseId != null)
+            TextButton.icon(
+              onPressed: () => context.go('/instructor/courses'),
+              icon: const Icon(Icons.chevron_left),
+              label: const Text('Back to courses'),
+              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
+            ),
           if (course != null) CourseActionStrip(course: course),
           const Text(
             'Question Bank',
@@ -86,33 +103,35 @@ class _InstructorQuestionsPageState
             '${items.length} questions',
             style: const TextStyle(color: _muted),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _bulkImport,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _deepNavy,
-                    side: const BorderSide(color: _deepNavy),
+          if (courseId != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _bulkImport(courseId),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _deepNavy,
+                      side: const BorderSide(color: _deepNavy),
+                    ),
+                    icon: const Icon(Icons.upload, size: 18),
+                    label: const Text('Bulk Import'),
                   ),
-                  icon: const Icon(Icons.upload, size: 18),
-                  label: const Text('Bulk Import'),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => context.push(
-                    '/instructor/courses/${widget.courseId}/questions/create',
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => context.push(
+                      '/instructor/courses/$courseId/questions/create',
+                    ),
+                    style: FilledButton.styleFrom(backgroundColor: _green),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Create'),
                   ),
-                  style: FilledButton.styleFrom(backgroundColor: _green),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Create'),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             controller: _search,
@@ -140,6 +159,39 @@ class _InstructorQuestionsPageState
               ),
             ),
           ),
+          if (courseId == null) ...[
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: _courseFilter,
+              isExpanded: true,
+              onChanged: (value) =>
+                  setState(() => _courseFilter = value ?? 'all'),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: _border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: _border),
+                ),
+              ),
+              items: [
+                const DropdownMenuItem(
+                  value: 'all',
+                  child: Text('All Courses'),
+                ),
+                for (final c in courses)
+                  DropdownMenuItem(
+                    value: c.key,
+                    child: Text(c.value, overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 10),
           SizedBox(
             height: 40,
@@ -173,9 +225,7 @@ class _InstructorQuestionsPageState
               _Message(
                 text: 'Failed to load questions',
                 action: TextButton(
-                  onPressed: () => ref.invalidate(
-                    instructorQuestionsProvider(widget.courseId),
-                  ),
+                  onPressed: () => ref.invalidate(_provider),
                   child: const Text('Tap to retry'),
                 ),
               ),
@@ -189,9 +239,10 @@ class _InstructorQuestionsPageState
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _QuestionCard(
                       question: question,
+                      showCourse: courseId == null,
                       deleting: _deletingId == question.id,
                       onOpen: () => context.push(
-                        '/instructor/courses/${widget.courseId}/questions/${question.id}/edit',
+                        '/instructor/courses/${courseId ?? question.courseId}/questions/${question.id}/edit',
                       ),
                       onDelete: _deletingId == null
                           ? () => _delete(question)
@@ -234,7 +285,7 @@ class _InstructorQuestionsPageState
       await ref
           .read(instructorCoursesRepositoryProvider)
           .deleteQuestion(question.id);
-      ref.invalidate(instructorQuestionsProvider(widget.courseId));
+      _invalidateQuestionLists(ref, question.courseId ?? widget.courseId);
       _notify('Question deleted');
     } catch (error) {
       _notify(apiErrorMessage(error, fallback: 'Failed to delete question'));
@@ -243,12 +294,12 @@ class _InstructorQuestionsPageState
     }
   }
 
-  Future<void> _bulkImport() async {
+  Future<void> _bulkImport(String courseId) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _BulkImportSheet(courseId: widget.courseId),
+      builder: (_) => _BulkImportSheet(courseId: courseId),
     );
   }
 
@@ -258,15 +309,22 @@ class _InstructorQuestionsPageState
   }
 }
 
+/// Refreshes the course's question list and the all-courses question bank.
+void _invalidateQuestionLists(WidgetRef ref, String? courseId) {
+  if (courseId != null) ref.invalidate(instructorQuestionsProvider(courseId));
+  ref.invalidate(instructorAllQuestionsProvider);
+}
+
 class _QuestionCard extends StatelessWidget {
   const _QuestionCard({
     required this.question,
+    required this.showCourse,
     required this.deleting,
     required this.onOpen,
     required this.onDelete,
   });
   final InstructorQuestion question;
-  final bool deleting;
+  final bool showCourse, deleting;
   final VoidCallback onOpen;
   final VoidCallback? onDelete;
 
@@ -326,6 +384,14 @@ class _QuestionCard extends StatelessWidget {
                           '${question.marks} marks',
                           style: const TextStyle(fontSize: 11, color: _muted),
                         ),
+                        if (showCourse && question.courseTitle != null)
+                          Text(
+                            '· ${question.courseTitle}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _muted,
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -840,10 +906,11 @@ class _InstructorQuestionFormPageState
           if (explanation.isNotEmpty) 'explanation': explanation,
         });
       }
-      ref.invalidate(instructorQuestionsProvider(widget.courseId));
+      _invalidateQuestionLists(ref, widget.courseId);
       if (!mounted) return;
       _notify(_isEdit ? 'Question updated' : 'Question created');
-      context.go('/instructor/courses/${widget.courseId}/questions');
+      // Return to wherever the form was opened from (course list or bank)
+      _back();
     } catch (error) {
       _notify(
         apiErrorMessage(
@@ -1196,7 +1263,7 @@ class _BulkImportSheetState extends ConsumerState<_BulkImportSheet> {
       final result = await ref
           .read(instructorCoursesRepositoryProvider)
           .importQuestions(widget.courseId, bytes, file.name);
-      ref.invalidate(instructorQuestionsProvider(widget.courseId));
+      _invalidateQuestionLists(ref, widget.courseId);
       if (!mounted) return;
       setState(() {
         _result = result;
