@@ -6,10 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/network/api_error_message.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../certificates/domain/certificate.dart';
+import '../../../certificates/presentation/certificates_providers.dart';
+import '../../../certificates/presentation/pages/certificates_page.dart';
+import '../../../exams/presentation/exams_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
@@ -421,6 +427,10 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   unlocked: courseUnlocked,
                   onTakeExam: () =>
                       context.push('/my-courses/${widget.courseId}/exams'),
+                  footer: _CourseCertificateSection(
+                    profileId: profileId,
+                    courseId: widget.courseId,
+                  ),
                 ),
               ],
             ),
@@ -1239,10 +1249,14 @@ class _ExamEligibilityCard extends StatelessWidget {
     required this.progress,
     required this.unlocked,
     required this.onTakeExam,
+    this.footer,
   });
   final int progress;
   final bool unlocked;
   final VoidCallback onTakeExam;
+
+  /// Shown below a divider at the bottom of the card (the certificate).
+  final Widget? footer;
 
   static const _amber = Color(0xFFF59E0B);
   static const _ink = Color(0xFF0C1F33);
@@ -1358,11 +1372,269 @@ class _ExamEligibilityCard extends StatelessWidget {
                     ),
                   ),
           ),
+          if (footer != null) ...[
+            const SizedBox(height: 20),
+            const Divider(height: 1, color: Color(0xFFE3E8EF)),
+            const SizedBox(height: 20),
+            footer!,
+          ],
         ],
       ),
     );
   }
 }
+
+/// One-time course certificate (progress + last exam score), available
+/// after the learner has attempted the course exam at least once.
+class _CourseCertificateSection extends ConsumerStatefulWidget {
+  const _CourseCertificateSection({
+    required this.profileId,
+    required this.courseId,
+  });
+  final String profileId, courseId;
+
+  @override
+  ConsumerState<_CourseCertificateSection> createState() =>
+      _CourseCertificateSectionState();
+}
+
+class _CourseCertificateSectionState
+    extends ConsumerState<_CourseCertificateSection> {
+  static const _ink = Color(0xFF0C1F33);
+  static const _muted = Color(0xFF64748B);
+
+  bool _issuing = false;
+  // Shown immediately after generating, before the refetch lands.
+  LearnerCertificate? _issued;
+
+  String get _key => '${widget.profileId}|${widget.courseId}';
+
+  Future<void> _generate() async {
+    if (_issuing) return;
+    setState(() => _issuing = true);
+    try {
+      final certificate = await ref
+          .read(certificatesRepositoryProvider)
+          .issueExamCertificate(widget.profileId, widget.courseId);
+      if (!mounted) return;
+      setState(() => _issued = certificate);
+      ref
+        ..invalidate(examCertificateProvider(_key))
+        ..invalidate(learnerCertificatesProvider(widget.profileId));
+      await printCertificatePdf(context, certificate);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            apiErrorMessage(
+              error,
+              fallback:
+                  'We could not generate your certificate. Please try again.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _issuing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final certificateAsync = ref.watch(examCertificateProvider(_key));
+    final exams = ref
+        .watch(courseExamsProvider('${widget.courseId}|${widget.profileId}'))
+        .asData
+        ?.value;
+    final hasExamAttempt = exams?.any((e) => e.attemptCount > 0) ?? false;
+    final certificate = _issued ?? certificateAsync.asData?.value;
+
+    if (certificate == null && certificateAsync.isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: SizedBox.square(
+            dimension: 22,
+            child: CircularProgressIndicator(strokeWidth: 2, color: _navy),
+          ),
+        ),
+      );
+    }
+
+    if (certificate != null) return _buildIssued(context, certificate);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Course Certificate',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: _ink,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          hasExamAttempt
+              ? 'Generate a certificate showing your course progress and last exam score. This can only be done once.'
+              : 'Take the exam at least once to unlock your certificate.',
+          style: const TextStyle(color: _muted, fontSize: 12, height: 1.4),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: hasExamAttempt && !_issuing ? _generate : null,
+            icon: _issuing
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    hasExamAttempt
+                        ? Icons.workspace_premium_outlined
+                        : Icons.lock_outline,
+                    size: 18,
+                  ),
+            label: Text(_issuing ? 'Generating…' : 'Generate Certificate'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _navy,
+              side: BorderSide(
+                color: hasExamAttempt ? _navy : const Color(0xFFE3E8EF),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIssued(BuildContext context, LearnerCertificate certificate) {
+    final details = certificate.details;
+    final score = details?.score;
+    final scoreText = details == null
+        ? '—'
+        : score == null
+        ? 'Pending'
+        : '${_formatScore(score)}/${details.totalMarks}';
+
+    Widget stat(String label, String value) => Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 11,
+              letterSpacing: .4,
+              color: _muted,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _ink,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final attempt = details?.attemptNumber;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBF9F4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _green.withValues(alpha: .3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium, size: 34, color: _green),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Certificate Generated',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _ink,
+                      ),
+                    ),
+                    if (certificate.issuedAt != null)
+                      Text(
+                        'Issued on ${DateFormat('MMM d, y').format(certificate.issuedAt!.toLocal())}',
+                        style: const TextStyle(fontSize: 12, color: _muted),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              stat('Course progress', '${details?.progress ?? 0}%'),
+              const SizedBox(width: 12),
+              stat('Last exam score', scoreText),
+            ],
+          ),
+          if (details?.examTitle?.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Latest attempt: ${details!.examTitle}'
+              '${attempt != null ? ' · Attempt #$attempt' : ''}',
+              style: const TextStyle(fontSize: 12, color: _muted),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text.rich(
+            TextSpan(
+              text: 'Verification code: ',
+              children: [
+                TextSpan(
+                  text: certificate.verificationCode,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w700,
+                    color: _ink,
+                  ),
+                ),
+              ],
+            ),
+            style: const TextStyle(fontSize: 12, color: _muted),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton.icon(
+              onPressed: () => printCertificatePdf(context, certificate),
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+              label: const Text('Download PDF'),
+              style: FilledButton.styleFrom(backgroundColor: _navy),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatScore(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(1);
 
 String _formatDuration(int seconds) {
   final duration = Duration(seconds: seconds);

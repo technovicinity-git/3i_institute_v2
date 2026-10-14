@@ -13,3 +13,12 @@ final learnerCertificatesProvider =
       (ref, profileId) =>
           ref.watch(certificatesRepositoryProvider).getForLearner(profileId),
     );
+
+/// Key: `profileId|courseId`.
+final examCertificateProvider = FutureProvider.autoDispose
+    .family<LearnerCertificate?, String>((ref, key) {
+      final parts = key.split('|');
+      return ref
+          .watch(certificatesRepositoryProvider)
+          .getExamCertificate(parts[0], parts[1]);
+    });
