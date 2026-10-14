@@ -103,7 +103,7 @@ export default function InstructorSettingsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-[700px] mx-auto">
+    <div className="p-6 md:p-10 ">
       <h1
         className="text-3xl md:text-[36px] text-[#0C1F33] mb-8"
         style={{ fontFamily: "'Marcellus', serif" }}
