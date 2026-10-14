@@ -180,7 +180,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ],
                 ),
               ),
-              const SocialAuthButtons(),
+              const SocialAuthButtons(isSignUp: true),
               const SizedBox(height: 18),
               Center(
                 child: Wrap(

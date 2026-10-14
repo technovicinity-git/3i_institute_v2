@@ -1,0 +1,13 @@
+// Google sign-in for iOS. Fill these in from the iOS OAuth client created in
+// the SAME Google Cloud project as the backend's web client ID
+// (Google Cloud Console > APIs & Services > Credentials > Create credentials
+// > OAuth client ID > iOS, bundle ID = PRODUCT_BUNDLE_IDENTIFIER).
+//
+//   GOOGLE_IOS_CLIENT_ID          = <number>-<hash>.apps.googleusercontent.com
+//   GOOGLE_IOS_REVERSED_CLIENT_ID = com.googleusercontent.apps.<number>-<hash>
+//
+// Also add GOOGLE_IOS_CLIENT_ID to the backend's GOOGLE_MOBILE_CLIENT_IDS,
+// because iOS ID tokens are issued to this client ID.
+// Used by Info.plist (GIDClientID and the sign-in callback URL scheme).
+GOOGLE_IOS_CLIENT_ID =
+GOOGLE_IOS_REVERSED_CLIENT_ID =

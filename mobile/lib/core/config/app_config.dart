@@ -18,9 +18,13 @@ abstract final class AppConfig {
     return Uri.parse(apiBaseUrl).replace(path: '/', query: '').toString();
   }
 
-  // On mobile, configure native client IDs in the platform projects and pass
-  // the Google server/web client ID here for an ID token accepted by the API.
+  /// The backend's **web** OAuth client ID (`GOOGLE_CLIENT_ID`). Android asks
+  /// Google for an ID token issued to this ID so the API accepts it. Client
+  /// IDs are public, so a default is safe to ship. The iOS client ID lives in
+  /// `ios/Flutter/GoogleSignIn.xcconfig`.
   static const googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '922079022580-ogulm9oa60ve83chpiqq61nnkot34hn7.apps.googleusercontent.com',
   );
 }

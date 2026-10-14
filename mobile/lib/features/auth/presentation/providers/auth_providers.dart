@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/auth/google_auth.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/push/push_notifications.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
@@ -151,6 +152,8 @@ class AuthController extends AsyncNotifier<Account?> {
       await _repository.logout();
     } finally {
       state = const AsyncData(null);
+      // Forget the Google account so the next sign-in offers the picker.
+      unawaited(GoogleAuth.signOut());
     }
   }
 
