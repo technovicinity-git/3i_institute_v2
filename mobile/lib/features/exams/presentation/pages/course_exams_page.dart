@@ -1,16 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
+import '../../domain/exam_access.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
+const _amber = Color(0xFFB45309);
+const _yellow = Color(0xFFA16207);
+const _red = Color(0xFFDC2626);
 
-class CourseExamsPage extends ConsumerWidget {
+// Below this many seconds left, countdowns turn red.
+const _urgentSec = 5 * 60;
+
+class CourseExamsPage extends ConsumerStatefulWidget {
   const CourseExamsPage({
     required this.courseId,
     this.onlineClass = false,
@@ -20,13 +29,52 @@ class CourseExamsPage extends ConsumerWidget {
   final bool onlineClass;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CourseExamsPage> createState() => _CourseExamsPageState();
+}
+
+class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
+    with WidgetsBindingObserver {
+  // Ticks every second so the start / start-window countdowns stay live.
+  Timer? _ticker;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _tick();
+  }
+
+  void _tick() {
+    if (mounted) setState(() => _now = DateTime.now());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final courseId = widget.courseId;
+    final onlineClass = widget.onlineClass;
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
       return const Center(child: Text('Select a learner profile first.'));
     }
     final key = '$courseId|${profile.id}';
     final asyncExams = ref.watch(courseExamsProvider(key));
+    // Attempts started on this device but not submitted yet.
+    final sessionDeadlines =
+        ref.watch(activeExamSessionsProvider(profile.id)).asData?.value ??
+        const <String, DateTime>{};
     return asyncExams.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(color: _navy)),
@@ -41,7 +89,10 @@ class CourseExamsPage extends ConsumerWidget {
       ),
       data: (exams) => RefreshIndicator(
         color: _navy,
-        onRefresh: () => ref.refresh(courseExamsProvider(key).future),
+        onRefresh: () {
+          ref.invalidate(activeExamSessionsProvider(profile.id));
+          return ref.refresh(courseExamsProvider(key).future);
+        },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
@@ -85,6 +136,8 @@ class CourseExamsPage extends ConsumerWidget {
                   exam: exam,
                   courseId: courseId,
                   onlineClass: onlineClass,
+                  now: _now,
+                  sessionDeadline: sessionDeadlines[exam.id],
                 ),
               ),
           ],
@@ -99,18 +152,29 @@ class _ExamCard extends StatelessWidget {
     required this.exam,
     required this.courseId,
     required this.onlineClass,
+    required this.now,
+    required this.sessionDeadline,
   });
   final LearnerExam exam;
   final String courseId;
   final bool onlineClass;
+  final DateTime now;
+
+  /// Deadline of an attempt in progress on this device, if any.
+  final DateTime? sessionDeadline;
 
   String get _onlineQuery => onlineClass ? '?online=true' : '';
 
   @override
   Widget build(BuildContext context) {
-    final access = _access(exam.openDate, exam.duration);
+    final access = ExamAccess.of(exam.openDate, exam.duration, now: now);
     final maxReached =
         exam.maxAttempts != null && exam.attemptCount >= exam.maxAttempts!;
+    final deadline = sessionDeadline;
+    final inProgress = deadline != null;
+    final attemptLeftSec = secondsUntil(deadline, now);
+    final windowLeftSec = secondsUntil(access.windowEnd, now);
+    final takePath = '/my-courses/$courseId/exams/${exam.id}/take$_onlineQuery';
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 14),
@@ -135,6 +199,8 @@ class _ExamCard extends StatelessWidget {
                 ),
                 if (exam.passed == true)
                   const _Badge(text: 'PASSED', color: _green),
+                if (inProgress)
+                  const _Badge(text: 'IN PROGRESS', color: _amber),
               ],
             ),
             const SizedBox(height: 10),
@@ -180,6 +246,36 @@ class _ExamCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (inProgress)
+              _CountdownBanner(
+                color: attemptLeftSec <= _urgentSec ? _red : _amber,
+                icon: Icons.hourglass_bottom,
+                label: attemptLeftSec > 0
+                    ? 'Time left in your attempt'
+                    : "Time's up",
+                countdown: formatCountdown(attemptLeftSec),
+                detail: attemptLeftSec > 0
+                    ? 'The timer keeps running — resume to continue.'
+                    : 'Open the exam to submit your saved answers.',
+              )
+            else if (!maxReached && access.status == ExamAccessStatus.upcoming)
+              _CountdownBanner(
+                color: _yellow,
+                icon: Icons.event_outlined,
+                label: 'Starts in',
+                countdown: formatCountdown(secondsUntil(access.start, now)),
+                detail: 'Opens ${_formatDate(access.start!)}',
+              )
+            else if (!maxReached &&
+                access.status == ExamAccessStatus.open &&
+                access.windowEnd != null)
+              _CountdownBanner(
+                color: windowLeftSec <= _urgentSec ? _red : _green,
+                icon: Icons.hourglass_bottom,
+                label: 'Start window closes in',
+                countdown: formatCountdown(windowLeftSec),
+                detail: 'Start before ${_formatDate(access.windowEnd!)}',
+              ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 9,
@@ -193,26 +289,33 @@ class _ExamCard extends StatelessWidget {
                     icon: const Icon(Icons.bar_chart, size: 18),
                     label: const Text('View result'),
                   ),
-                if (maxReached)
+                if (inProgress)
+                  FilledButton.icon(
+                    onPressed: () => context.push(takePath),
+                    icon: const Icon(Icons.play_circle_outline, size: 18),
+                    label: Text(
+                      attemptLeftSec > 0 ? 'Resume exam' : 'Submit answers',
+                    ),
+                    style: FilledButton.styleFrom(backgroundColor: _navy),
+                  )
+                else if (maxReached)
                   const Chip(
                     avatar: Icon(Icons.block, size: 17),
                     label: Text('Max attempts reached'),
                   )
-                else if (access.status == _AccessStatus.upcoming)
-                  Chip(
-                    avatar: const Icon(Icons.schedule, size: 17),
-                    label: Text('Starts ${_formatDate(access.start!)}'),
+                else if (access.status == ExamAccessStatus.upcoming)
+                  const Chip(
+                    avatar: Icon(Icons.schedule, size: 17),
+                    label: Text('Not started yet'),
                   )
-                else if (access.status == _AccessStatus.closed)
+                else if (access.status == ExamAccessStatus.closed)
                   const Chip(
                     avatar: Icon(Icons.lock_outline, size: 17),
                     label: Text('Start window closed'),
                   )
                 else
                   FilledButton.icon(
-                    onPressed: () => context.push(
-                      '/my-courses/$courseId/exams/${exam.id}/take$_onlineQuery',
-                    ),
+                    onPressed: () => context.push(takePath),
                     icon: const Icon(Icons.arrow_forward, size: 18),
                     label: const Text('Take exam'),
                     style: FilledButton.styleFrom(backgroundColor: _green),
@@ -224,6 +327,72 @@ class _ExamCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CountdownBanner extends StatelessWidget {
+  const _CountdownBanner({
+    required this.color,
+    required this.icon,
+    required this.label,
+    required this.countdown,
+    required this.detail,
+  });
+  final Color color;
+  final IconData icon;
+  final String label, countdown, detail;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .07),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color.withValues(alpha: .25)),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text.rich(
+                TextSpan(
+                  text: '$label ',
+                  children: [
+                    TextSpan(
+                      text: countdown,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                detail,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color.withValues(alpha: .85),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Meta extends StatelessWidget {
@@ -299,29 +468,6 @@ class _StateCard extends StatelessWidget {
       ],
     ),
   );
-}
-
-enum _AccessStatus { open, upcoming, closed }
-
-class _Access {
-  const _Access(this.status, this.start);
-  final _AccessStatus status;
-  final DateTime? start;
-}
-
-_Access _access(String? value, int duration) {
-  final start = value == null ? null : DateTime.tryParse(value)?.toLocal();
-  if (start == null) {
-    return const _Access(_AccessStatus.open, null);
-  }
-  final now = DateTime.now();
-  if (now.isBefore(start)) {
-    return _Access(_AccessStatus.upcoming, start);
-  }
-  if (now.isAfter(start.add(Duration(seconds: duration * 30)))) {
-    return _Access(_AccessStatus.closed, start);
-  }
-  return _Access(_AccessStatus.open, start);
 }
 
 String _formatDate(DateTime value) =>
