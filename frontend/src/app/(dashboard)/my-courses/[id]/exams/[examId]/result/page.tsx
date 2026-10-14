@@ -10,6 +10,7 @@ import {
   Target,
   Clock,
   FileText,
+  MinusCircle,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useExamResult } from "@/hooks/use-learner-exams";
@@ -266,6 +267,20 @@ export default function ExamResultPage() {
                 const isWritten =
                   item.type === "short_answer" || item.type === "essay";
                 const isWrittenGraded = isWritten && item.marksAwarded !== null;
+                // Written answers have no correct answer to compare against;
+                // judge them by the marks the instructor awarded.
+                const status: "pending" | "correct" | "partial" | "incorrect" =
+                  isWritten
+                    ? !isWrittenGraded
+                      ? "pending"
+                      : item.marksAwarded! >= item.marks
+                        ? "correct"
+                        : item.marksAwarded! > 0
+                          ? "partial"
+                          : "incorrect"
+                    : isCorrect
+                      ? "correct"
+                      : "incorrect";
 
                 return (
                   <div
@@ -288,17 +303,31 @@ export default function ExamResultPage() {
                             {item.marks}{" "}
                             {item.marks === 1 ? "mark" : "marks"}
                             {isWritten && item.marksAwarded !== null
-                              ? ` • ${item.marksAwarded} awarded`
+                              ? ` • ${item.marksAwarded} of ${item.marks} awarded`
                               : ""}
                           </p>
                         </div>
 
-                        {isWritten && !isWrittenGraded ? (
-                          <AlertCircle className="w-5 h-5 text-orange-500" />
-                        ) : isCorrect ? (
-                          <CheckCircle className="w-5 h-5 text-[#22A146]" />
+                        {status === "pending" ? (
+                          <AlertCircle
+                            className="w-5 h-5 shrink-0 text-orange-500"
+                            aria-label="Awaiting grading"
+                          />
+                        ) : status === "correct" ? (
+                          <CheckCircle
+                            className="w-5 h-5 shrink-0 text-[#22A146]"
+                            aria-label="Correct"
+                          />
+                        ) : status === "partial" ? (
+                          <MinusCircle
+                            className="w-5 h-5 shrink-0 text-amber-500"
+                            aria-label="Partially correct"
+                          />
                         ) : (
-                          <XCircle className="w-5 h-5 text-red-500" />
+                          <XCircle
+                            className="w-5 h-5 shrink-0 text-red-500"
+                            aria-label="Incorrect"
+                          />
                         )}
                       </div>
                     </div>
@@ -313,11 +342,13 @@ export default function ExamResultPage() {
 
                           <div
                             className={`mt-1 rounded-lg p-3 text-sm whitespace-pre-wrap break-words ${
-                              isWritten && !isWrittenGraded
+                              status === "pending"
                                 ? "bg-[#FFF7ED] text-[#9A3412]"
-                                : isCorrect
+                                : status === "correct"
                                   ? "bg-green-50 text-green-800"
-                                  : "bg-red-50 text-red-800"
+                                  : status === "partial"
+                                    ? "bg-amber-50 text-amber-800"
+                                    : "bg-red-50 text-red-800"
                             }`}
                           >
                             {formatAnswer(item.myAnswer)}

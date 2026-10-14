@@ -1243,54 +1243,125 @@ class _ExamEligibilityCard extends StatelessWidget {
   final int progress;
   final bool unlocked;
   final VoidCallback onTakeExam;
+
+  static const _amber = Color(0xFFF59E0B);
+  static const _ink = Color(0xFF0C1F33);
+  static const _muted = Color(0xFF64748B);
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: const Color(0xFFE3E8EF)),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      children: [
-        Icon(
-          unlocked ? Icons.workspace_premium_outlined : Icons.lock_outline,
-          color: unlocked ? _green : const Color(0xFF94A3B8),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final percent = progress.clamp(0, 100);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              const Text(
-                'Course exam',
-                style: TextStyle(color: _navy, fontWeight: FontWeight.w700),
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: (unlocked ? _green : _amber).withValues(alpha: .1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  unlocked
+                      ? Icons.workspace_premium_outlined
+                      : Icons.lock_outline,
+                  size: 20,
+                  color: unlocked ? _green : const Color(0xFFB45309),
+                ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                unlocked
-                    ? 'Exam eligibility unlocked'
-                    : 'Complete 90% of the course to unlock (${progress.clamp(0, 100)}%)',
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Course Exam',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontFamily: 'serif',
+                    color: _ink,
+                    fontSize: 20,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-        if (unlocked) const SizedBox(width: 8),
-        if (unlocked)
-          FilledButton(
-            onPressed: onTakeExam,
-            style: FilledButton.styleFrom(backgroundColor: _green),
-            child: const Text('Take exam'),
-          )
-        else
-          const Text(
-            '90%',
-            style: TextStyle(color: _navy, fontWeight: FontWeight.w700),
+          const SizedBox(height: 10),
+          Text(
+            unlocked
+                ? 'You have completed 90% of the course — you can now sit the exam.'
+                : 'Complete 90% of the course to unlock the exam. You are at $percent%.',
+            style: const TextStyle(color: Color(0xFF475569), height: 1.4),
           ),
-      ],
-    ),
-  );
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Course progress',
+                  style: TextStyle(color: _muted, fontSize: 12),
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: const TextStyle(
+                  color: _ink,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: percent / 100,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFF1F5F9),
+              color: unlocked ? _green : _amber,
+              semanticsLabel: 'Course progress',
+              semanticsValue: '$percent%',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            unlocked
+                ? 'Exam unlocked — good luck!'
+                : 'The exam unlocks automatically once you reach 90% course completion.',
+            style: const TextStyle(color: _muted, fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 48,
+            child: unlocked
+                ? FilledButton.icon(
+                    onPressed: onTakeExam,
+                    icon: const Icon(Icons.description_outlined, size: 18),
+                    label: const Text('Take Exam'),
+                    style: FilledButton.styleFrom(backgroundColor: _green),
+                  )
+                : FilledButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.lock_outline, size: 18),
+                    label: const Text('Locked'),
+                    style: FilledButton.styleFrom(
+                      disabledBackgroundColor: const Color(0xFFF3F4F6),
+                      disabledForegroundColor: const Color(0xFF94A3B8),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 String _formatDuration(int seconds) {
