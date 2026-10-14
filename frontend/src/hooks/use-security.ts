@@ -6,16 +6,27 @@ import {
   type ChangeEmailInput,
 } from "@/services/security.service";
 
-export function useChangeEmailMutation() {
+interface SecurityMutationOptions {
+  /**
+   * Show success / error toasts (default). Forms that render errors inline
+   * under their inputs turn this off.
+   */
+  toasts?: boolean;
+}
+
+export function useChangeEmailMutation({
+  toasts = true,
+}: SecurityMutationOptions = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: ChangeEmailInput) => securityService.changeEmail(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
-      toast.success("Email updated. Please verify your new email.");
+      if (toasts) toast.success("Email updated. Please verify your new email.");
     },
     onError: (error: any) => {
+      if (!toasts) return;
       const message = error.response?.data?.error?.message;
       const details = error.response?.data?.error?.details;
 
@@ -30,7 +41,9 @@ export function useChangeEmailMutation() {
   });
 }
 
-export function useChangePasswordMutation() {
+export function useChangePasswordMutation({
+  toasts = true,
+}: SecurityMutationOptions = {}) {
   return useMutation({
     mutationFn: ({
       currentPassword,
@@ -40,9 +53,10 @@ export function useChangePasswordMutation() {
       newPassword: string;
     }) => securityService.changePassword(currentPassword, newPassword),
     onSuccess: () => {
-      toast.success("Password updated successfully");
+      if (toasts) toast.success("Password updated successfully");
     },
     onError: (error: any) => {
+      if (!toasts) return;
       const message = error.response?.data?.error?.message;
       toast.error(message ?? "Failed to update password");
     },
