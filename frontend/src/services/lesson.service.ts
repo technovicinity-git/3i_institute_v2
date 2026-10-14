@@ -108,6 +108,8 @@ export const lessonService = {
     expiresIn: number;
     contentType: string;
     mimeType?: string;
+    /** True when `url` is an API path that streams the document. */
+    streamed?: boolean;
   }> => {
     const response = await apiClient.get(`/materials/${materialId}/signed-url`);
     return response.data.data;
