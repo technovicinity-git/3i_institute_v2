@@ -391,7 +391,11 @@ export class MaterialService {
     return material;
   }
 
-  async getSignedMaterialUrl(userId: string, materialId: string) {
+  /**
+   * Loads a material the user may open (instructor of the course, admin, or
+   * an enrolled learner). `canManage` is true for instructors and admins.
+   */
+  private async getAccessibleMaterial(userId: string, materialId: string) {
     const material = await prisma.material.findUnique({
       where: { id: materialId },
       include: { course: true },
@@ -434,6 +438,29 @@ export class MaterialService {
       throw new ForbiddenError("You are not enrolled in this course");
     }
 
+    return { material, canManage: isInstructor || isAdmin };
+  }
+
+  /** Short-lived Cloudinary link to the raw document file. */
+  private getDocumentDownloadUrl(publicId: string): string {
+    return cloudinary.utils.private_download_url(
+      publicId,
+      "pdf", // format — Cloudinary uses this for delivery
+      {
+        resource_type: "raw",
+        type: "upload",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        attachment: false, // ensures inline view, not download
+      },
+    );
+  }
+
+  async getSignedMaterialUrl(userId: string, materialId: string) {
+    const { material, canManage } = await this.getAccessibleMaterial(
+      userId,
+      materialId,
+    );
+
     // Video — Bunny Stream
     if (material.type === "video") {
       const signedUrl = await bunnyStream.getSignedUrl(material.url, 3600);
@@ -445,24 +472,16 @@ export class MaterialService {
       };
     }
 
-    // Document — Cloudinary authenticated URL
+    // Document. Learners never get the file link: they receive the API path
+    // that streams the PDF to an authenticated session (see streamDocument),
+    // so there is no URL to share or open in the browser's save-able viewer.
+    // Instructors and admins keep the direct link for their previews.
     if (material.type === "document") {
-      // Generate a signed URL that expires in 1 hour
-      const expiresAt = Math.floor(Date.now() / 1000) + 3600;
-
-      const signedUrl = cloudinary.utils.private_download_url(
-        material.url,
-        "pdf", // format — Cloudinary uses this for delivery
-        {
-          resource_type: "raw",
-          type: "upload",
-          expires_at: expiresAt,
-          attachment: false, // ensures inline view, not download
-        },
-      );
-
       return {
-        url: signedUrl,
+        url: canManage
+          ? this.getDocumentDownloadUrl(material.url)
+          : `/materials/${material.id}/document`,
+        streamed: !canManage,
         expiresIn: 3600,
         contentType: "document",
         mimeType: this.getMimeTypeFromPublicId(material.url),
@@ -482,6 +501,32 @@ export class MaterialService {
 
     // Link
     return { url: material.url, expiresIn: 3600, contentType: "link" };
+  }
+
+  /**
+   * Fetches a document from storage for a user who may view it, so the API
+   * can stream it without exposing the storage URL.
+   */
+  async streamDocument(userId: string, materialId: string) {
+    const { material } = await this.getAccessibleMaterial(userId, materialId);
+    if (material.type !== "document") {
+      throw new ValidationError("This material is not a document");
+    }
+
+    const upstream = await fetch(this.getDocumentDownloadUrl(material.url));
+    if (!upstream.ok || !upstream.body) {
+      throw new NotFoundError("Document file is unavailable");
+    }
+
+    return {
+      body: upstream.body,
+      mimeType: this.getMimeTypeFromPublicId(material.url),
+      // fetch() decompresses gzip bodies, so a compressed response's length
+      // header would not match the bytes we stream; only forward it if raw.
+      contentLength: upstream.headers.get("content-encoding")
+        ? null
+        : upstream.headers.get("content-length"),
+    };
   }
 
   private getMimeTypeFromPublicId(publicId: string): string {

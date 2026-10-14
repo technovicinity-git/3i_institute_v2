@@ -194,6 +194,27 @@ router.get("/:id/signed-url", authenticate, materialController.getSignedUrl);
 
 /**
  * @swagger
+ * /api/v1/materials/{id}/document:
+ *   get:
+ *     tags: [Materials]
+ *     summary: Stream a lesson document (PDF)
+ *     description: Returns the document bytes to an authorised user without exposing the storage URL.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: The document file
+ *         content:
+ *           application/pdf:
+ *             schema: { type: string, format: binary }
+ */
+router.get("/:id/document", authenticate, materialController.streamDocument);
+
+/**
+ * @swagger
  * /api/v1/materials/{id}:
  *   patch:
  *     tags: [Materials]

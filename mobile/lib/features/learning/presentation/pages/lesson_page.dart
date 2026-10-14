@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
@@ -666,7 +667,7 @@ class _MediaPanel extends StatelessWidget {
   );
 }
 
-class _InlinePdfViewer extends StatefulWidget {
+class _InlinePdfViewer extends ConsumerStatefulWidget {
   const _InlinePdfViewer({
     required this.url,
     required this.onOpened,
@@ -677,10 +678,10 @@ class _InlinePdfViewer extends StatefulWidget {
   final VoidCallback onRetry;
 
   @override
-  State<_InlinePdfViewer> createState() => _InlinePdfViewerState();
+  ConsumerState<_InlinePdfViewer> createState() => _InlinePdfViewerState();
 }
 
-class _InlinePdfViewerState extends State<_InlinePdfViewer> {
+class _InlinePdfViewerState extends ConsumerState<_InlinePdfViewer> {
   late PdfController _controller;
   bool _opened = false;
 
@@ -694,7 +695,12 @@ class _InlinePdfViewerState extends State<_InlinePdfViewer> {
       PdfController(document: PdfDocument.openData(_fetchPdf(url)));
 
   Future<Uint8List> _fetchPdf(String url) async {
-    final response = await Dio().get<List<int>>(
+    // Learners get an API path (e.g. /materials/<id>/document) that streams
+    // the PDF to the signed-in session; it needs the authenticated client.
+    // Absolute URLs (instructor previews) are fetched directly.
+    final isApiPath = !url.startsWith('http');
+    final dio = isApiPath ? ref.read(apiClientProvider).dio : Dio();
+    final response = await dio.get<List<int>>(
       url,
       options: Options(responseType: ResponseType.bytes),
     );

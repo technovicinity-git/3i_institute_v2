@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
+import { Readable } from "node:stream";
+import type { ReadableStream as WebReadableStream } from "node:stream/web";
 import { materialService } from "#/modules/material/service";
 import {
   createMaterialSchema,
@@ -90,6 +92,30 @@ export class MaterialController {
         req.params["id"] as string,
       );
       sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Streams a lesson document to the signed-in user so the storage URL is
+  // never exposed to the browser.
+  streamDocument = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.sub!;
+      const document = await materialService.streamDocument(
+        userId,
+        req.params["id"] as string,
+      );
+      res.setHeader("Content-Type", document.mimeType);
+      res.setHeader("Content-Disposition", "inline");
+      res.setHeader("Cache-Control", "private, no-store, max-age=0");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      if (document.contentLength) {
+        res.setHeader("Content-Length", document.contentLength);
+      }
+      Readable.fromWeb(document.body as WebReadableStream)
+        .on("error", next)
+        .pipe(res);
     } catch (error) {
       next(error);
     }

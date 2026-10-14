@@ -25,7 +25,7 @@ import {
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
 import { useQueryClient } from "@tanstack/react-query";
-import { DocumentViewer } from "@/components/lesson/document-viewer";
+import { ProtectedPdfViewer } from "@/components/lesson/protected-pdf-viewer";
 
 function formatVideoDuration(seconds: number): string {
   const totalSeconds = Math.floor(seconds);
@@ -224,17 +224,26 @@ export default function LessonPage() {
               <p className="text-white/60 text-sm">Content unavailable</p>
             </div>
           ) : materialUrlData.contentType === "document" ? (
-            /* Document — inline PDF viewer, no download */
-            <div className="w-full rounded-lg border border-[#E3E8EF] bg-white overflow-hidden">
-              <iframe
-                src={`${materialUrlData.url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                className="w-full h-[75vh]"
+            /* Document — protected viewer: no download, print or file URL */
+            materialUrlData.mimeType &&
+            materialUrlData.mimeType !== "application/pdf" ? (
+              <div className="relative w-full aspect-video bg-white flex flex-col items-center justify-center rounded-lg border border-[#E3E8EF] px-4 text-center">
+                <FileText className="w-14 h-14 text-gray-300 mb-3" />
+                <p className="text-[#0C1F33] font-semibold mb-1">
+                  Preview not available
+                </p>
+                <p className="text-sm text-[#64748B] max-w-md">
+                  This document format can&apos;t be shown here. Contact your
+                  instructor if you need access.
+                </p>
+              </div>
+            ) : (
+              <ProtectedPdfViewer
+                key={lessonId}
+                documentPath={`/materials/${lessonId}/document`}
                 title={currentLesson?.title ?? "Document"}
               />
-              <div className="px-4 py-3 bg-[#FBF9F4] border-t border-[#E3E8EF] text-xs text-[#64748B] text-center">
-                Read-only preview • Please read through the document
-              </div>
-            </div>
+            )
           ) : (
             /* Video */
             <VideoPlayer
