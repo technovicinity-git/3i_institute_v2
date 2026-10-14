@@ -94,7 +94,7 @@ export default function ExamResultPage() {
   const displayTotalMarks = bestAttempt?.totalMarks ?? data.exam.totalMarks;
 
   return (
-    <div className="p-6 md:p-10 max-w-[700px] mx-auto">
+    <div className="p-6 md:p-10 ">
       {/* Back button */}
       <button
         onClick={() => router.push(`/my-courses/${courseId}/exams`)}
