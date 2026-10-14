@@ -17,6 +17,12 @@ export function useExamQuestions(examId: string) {
     queryKey: ["exam-questions", examId],
     queryFn: () => learnerExamService.getExamQuestions(examId),
     enabled: !!examId,
+    // REGULAR exams return a fresh random question set on every fetch, so a
+    // background refetch must never swap the questions under the learner.
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Don't keep a used question set around: a retake must get a fresh one.
+    gcTime: 0,
   });
 }
 
@@ -44,9 +50,9 @@ export function useSubmitExamMutation() {
         startedAt,
         questionSet,
       ),
-    onSuccess: () => {
+    onSuccess: (_data, { examId }) => {
       queryClient.invalidateQueries({ queryKey: ["course-exams"] });
-      toast.success("Exam submitted");
+      queryClient.invalidateQueries({ queryKey: ["exam-result", examId] });
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

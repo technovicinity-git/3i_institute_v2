@@ -54,3 +54,25 @@ export function formatExamStartTime(date: Date | null | undefined): string {
     minute: "2-digit",
   });
 }
+
+/**
+ * Countdown label for a number of seconds:
+ * 93784 → "1d 02h 03m", 3754 → "01:02:34", 754 → "12:34".
+ */
+export function formatCountdown(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(s / 86400);
+  const hours = Math.floor((s % 86400) / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (days > 0) return `${days}d ${pad(hours)}h ${pad(mins)}m`;
+  if (hours > 0) return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  return `${pad(mins)}:${pad(secs)}`;
+}
+
+/** Seconds from `now` until `target` (never negative). */
+export function secondsUntil(target: Date | null, now: number): number {
+  if (!target) return 0;
+  return Math.max(0, Math.ceil((target.getTime() - now) / 1000));
+}

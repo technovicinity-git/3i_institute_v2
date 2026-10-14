@@ -64,6 +64,9 @@ const envSchema = z.object({
 
   APPLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
+  // Extra OAuth client IDs whose Google ID tokens are accepted, comma-separated.
+  // The iOS app's tokens are issued to its own iOS client ID, not the web one.
+  GOOGLE_MOBILE_CLIENT_IDS: z.string().default(""),
 
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),

@@ -116,6 +116,14 @@ class ExamQuestion {
     options: ((j['options'] as List?) ?? const []).map((e) => '$e').toList(),
     marks: _int(j['marks']),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'type': type,
+    'question': question,
+    'options': options,
+    'marks': marks,
+  };
 }
 
 class ExamResultData {

@@ -10,6 +10,15 @@ const googleClient = new OAuth2Client({
   clientId: env.GOOGLE_CLIENT_ID,
 });
 
+// Web and Android tokens are issued to the web client ID (Android passes it
+// as the server client ID); iOS tokens are issued to the iOS client ID.
+const googleAudiences = [
+  env.GOOGLE_CLIENT_ID,
+  ...env.GOOGLE_MOBILE_CLIENT_IDS.split(",")
+    .map((id) => id.trim())
+    .filter(Boolean),
+];
+
 interface GoogleUserInfo {
   email: string;
   firstName: string;
@@ -21,7 +30,7 @@ interface GoogleUserInfo {
 async function verifyGoogleToken(idToken: string): Promise<GoogleUserInfo> {
   const ticket = await googleClient.verifyIdToken({
     idToken,
-    audience: env.GOOGLE_CLIENT_ID,
+    audience: googleAudiences,
   });
 
   const payload = ticket.getPayload();

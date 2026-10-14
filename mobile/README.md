@@ -56,7 +56,7 @@ Settings are passed at build time with `--dart-define` and read in [`lib/core/co
 | `API_BASE_URL` | `https://threei-institute-v2.onrender.com/api/v1` | All API calls. Must end with `/api/v1`. |
 | `WEB_BASE_URL` | `https://threei-institute-v2-1.onrender.com` | Course share links and the "Verify online" link printed on certificate PDFs. |
 | `SOCKET_BASE_URL` | Derived from `API_BASE_URL` (same host, no path) | Real-time notifications and chat (Socket.IO). Only set it if sockets run on a different host. |
-| `GOOGLE_SERVER_CLIENT_ID` | *(empty)* | Google sign-in. Must be the backend's **web** OAuth client ID (`GOOGLE_CLIENT_ID`). Google sign-in won't work without it. |
+| `GOOGLE_SERVER_CLIENT_ID` | The production web OAuth client ID | Google sign-in. Must be the backend's **web** OAuth client ID (`GOOGLE_CLIENT_ID`). See [Google sign-in setup](#google-sign-in-setup). |
 
 Example with every setting:
 
@@ -82,6 +82,17 @@ flutter run --dart-define-from-file=dart_defines.local.json
 ```
 
 > Settings are compiled into the app. After changing one, stop the app and run it again; hot reload/restart doesn't pick up new values.
+
+## Google sign-in setup
+
+The learner login and register screens offer **Continue with Google** / **Sign up with Google**. An existing account is signed in; for a new Google email the app asks for the date of birth and creates the account. All OAuth clients below must be in the **same Google Cloud project** as the backend's web client ID (`GOOGLE_CLIENT_ID`).
+
+**Android.** Create an OAuth client of type *Android* (Google Cloud Console → APIs & Services → Credentials) with package name `com.technovicinity.three_i_mobile` and the SHA-1 of the signing key. Add one client per key: the debug key (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`), the release/upload key, and the Play App Signing key (Play Console → App integrity). Without a matching client, sign-in fails with a configuration error. No file changes are needed.
+
+**iOS.** Create an OAuth client of type *iOS* with the app's bundle ID, then:
+
+1. Put its client ID and reversed client ID in [`ios/Flutter/GoogleSignIn.xcconfig`](ios/Flutter/GoogleSignIn.xcconfig) (used by `Info.plist`).
+2. Add the iOS client ID to the backend's `GOOGLE_MOBILE_CLIENT_IDS`. iOS ID tokens are issued to the iOS client ID, so the backend must accept it.
 
 ## Running against a local backend
 
