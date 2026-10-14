@@ -16,151 +16,181 @@ class ProfileSelectionPage extends ConsumerWidget {
     final profiles = ref.watch(learnerProfilesProvider);
     return profiles.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Could not load learner profiles.'),
-            TextButton(
-              onPressed: () => ref.invalidate(learnerProfilesProvider),
-              child: const Text('Try again'),
+      error: (_, _) => RefreshIndicator(
+        onRefresh: () => _refresh(ref),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            // Scrollable even when short so pull-to-refresh works.
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Could not load learner profiles.'),
+                    TextButton(
+                      onPressed: () => ref.invalidate(learnerProfilesProvider),
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
       data: (items) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 36),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 780),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'International Islamic Institute',
-                    style: TextStyle(
-                      color: Color(0xFFB8912F),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Who’s learning today?',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontFamily: 'serif',
-                      color: const Color(0xFF12304E),
-                    ),
-                  ),
-                  const SizedBox(height: 26),
-                  if (items.isEmpty)
+        child: RefreshIndicator(
+          onRefresh: () => _refresh(ref),
+          child: SingleChildScrollView(
+            // Scrollable even when the cards fit, so pull-to-refresh works.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 36),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 780),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     const Text(
-                      'Add a learner profile to get started.',
-                      textAlign: TextAlign.center,
+                      'International Islamic Institute',
+                      style: TextStyle(
+                        color: Color(0xFFB8912F),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 14,
-                    runSpacing: 14,
-                    children: [
-                      for (final profile in items)
+                    const SizedBox(height: 8),
+                    Text(
+                      'Who’s learning today?',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontFamily: 'serif',
+                            color: const Color(0xFF12304E),
+                          ),
+                    ),
+                    const SizedBox(height: 26),
+                    if (items.isEmpty)
+                      const Text(
+                        'Add a learner profile to get started.',
+                        textAlign: TextAlign.center,
+                      ),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 14,
+                      runSpacing: 14,
+                      children: [
+                        for (final profile in items)
+                          SizedBox(
+                            width: 156,
+                            height: 180,
+                            child: Card(
+                              color: Colors.white,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () =>
+                                    _selectProfile(context, ref, profile),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    LearnerAvatar(
+                                      imageUrl: profile.avatarUrl,
+                                      initials: profile.initials,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      profile.displayName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      _ageLabel(profile.dateOfBirth),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    if (!profile.isActive)
+                                      const Text(
+                                        'No seat',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.deepOrange,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         SizedBox(
                           width: 156,
                           height: 180,
                           child: Card(
-                            color: Colors.white,
+                            color: Colors.transparent,
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () =>
-                                  _selectProfile(context, ref, profile),
-                              child: Column(
+                              onTap: () => context.push('/profiles/add'),
+                              child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  LearnerAvatar(
-                                    imageUrl: profile.avatarUrl,
-                                    initials: profile.initials,
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    size: 42,
+                                    color: Color(0xFF64748B),
                                   ),
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: 10),
                                   Text(
-                                    profile.displayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    'Add learner',
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    _ageLabel(profile.dateOfBirth),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                  if (!profile.isActive)
-                                    const Text(
-                                      'No seat',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.deepOrange,
-                                      ),
-                                    ),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                      SizedBox(
-                        width: 156,
-                        height: 180,
-                        child: Card(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => context.push('/profiles/add'),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_circle_outline,
-                                  size: 42,
-                                  color: Color(0xFF64748B),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Add learner',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton.icon(
-                    onPressed: () async {
-                      ref
-                          .read(activeLearnerProfileProvider.notifier)
-                          .select(null);
-                      try {
-                        await ref
-                            .read(authControllerProvider.notifier)
-                            .logout();
-                      } catch (_) {}
-                      if (context.mounted) context.go('/login');
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Log out'),
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    TextButton.icon(
+                      onPressed: () async {
+                        ref
+                            .read(activeLearnerProfileProvider.notifier)
+                            .select(null);
+                        try {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .logout();
+                        } catch (_) {}
+                        if (context.mounted) context.go('/login');
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Log out'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Pull-to-refresh: reload the account's learner profiles.
+  Future<void> _refresh(WidgetRef ref) async {
+    try {
+      ref.invalidate(learnerProfilesProvider);
+      await ref.read(learnerProfilesProvider.future);
+    } catch (_) {
+      // The error state is shown by the provider; nothing else to do.
+    }
   }
 
   Future<void> _selectProfile(

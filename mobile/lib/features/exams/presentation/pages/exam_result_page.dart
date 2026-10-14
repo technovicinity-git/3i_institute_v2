@@ -274,6 +274,10 @@ class ExamResultPage extends ConsumerWidget {
   }
 }
 
+enum _ReviewStatus { pending, correct, partial, incorrect }
+
+const _amber = Color(0xFFD97706);
+
 class _QuestionReview extends StatelessWidget {
   const _QuestionReview({required this.index, required this.item});
   final int index;
@@ -282,12 +286,26 @@ class _QuestionReview extends StatelessWidget {
   Widget build(BuildContext context) {
     final written = item.type == 'short_answer' || item.type == 'essay';
     final graded = written && item.marksAwarded != null;
-    final correct = _answersEqual(item.myAnswer, item.correctAnswer);
-    final color = written && !graded
-        ? Colors.orange
-        : correct
-        ? _green
-        : Colors.red;
+    // Written answers have no correct answer to compare against; judge them
+    // by the marks the instructor awarded.
+    final status = written
+        ? (!graded
+              ? _ReviewStatus.pending
+              : item.marksAwarded! >= item.marks
+              ? _ReviewStatus.correct
+              : item.marksAwarded! > 0
+              ? _ReviewStatus.partial
+              : _ReviewStatus.incorrect)
+        : (_answersEqual(item.myAnswer, item.correctAnswer)
+              ? _ReviewStatus.correct
+              : _ReviewStatus.incorrect);
+    final correct = status == _ReviewStatus.correct;
+    final color = switch (status) {
+      _ReviewStatus.pending => Colors.orange,
+      _ReviewStatus.correct => _green,
+      _ReviewStatus.partial => _amber,
+      _ReviewStatus.incorrect => Colors.red,
+    };
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
       clipBehavior: Clip.antiAlias,
@@ -335,7 +353,7 @@ class _QuestionReview extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.marks} ${item.marks == 1 ? 'mark' : 'marks'}${graded ? ' • ${_number(item.marksAwarded!)} awarded' : ''}',
+                        '${item.marks} ${item.marks == 1 ? 'mark' : 'marks'}${graded ? ' • ${_number(item.marksAwarded!)} of ${item.marks} awarded' : ''}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF94A3B8),
@@ -345,13 +363,20 @@ class _QuestionReview extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  written && !graded
-                      ? Icons.hourglass_top
-                      : correct
-                      ? Icons.check_circle_outline
-                      : Icons.cancel_outlined,
+                  switch (status) {
+                    _ReviewStatus.pending => Icons.hourglass_top,
+                    _ReviewStatus.correct => Icons.check_circle_outline,
+                    _ReviewStatus.partial => Icons.remove_circle_outline,
+                    _ReviewStatus.incorrect => Icons.cancel_outlined,
+                  },
                   color: color,
                   size: 20,
+                  semanticLabel: switch (status) {
+                    _ReviewStatus.pending => 'Awaiting grading',
+                    _ReviewStatus.correct => 'Correct',
+                    _ReviewStatus.partial => 'Partially correct',
+                    _ReviewStatus.incorrect => 'Incorrect',
+                  },
                 ),
               ],
             ),
@@ -367,11 +392,12 @@ class _QuestionReview extends StatelessWidget {
                   _AnswerBlock(
                     label: 'Your answer',
                     value: _answerText(item.myAnswer),
-                    tint: written && !graded
-                        ? const Color(0xFFFFF7ED)
-                        : correct
-                        ? const Color(0xFFF0FDF4)
-                        : const Color(0xFFFEF2F2),
+                    tint: switch (status) {
+                      _ReviewStatus.pending => const Color(0xFFFFF7ED),
+                      _ReviewStatus.correct => const Color(0xFFF0FDF4),
+                      _ReviewStatus.partial => const Color(0xFFFFFBEB),
+                      _ReviewStatus.incorrect => const Color(0xFFFEF2F2),
+                    },
                   ),
                   if (item.suggestedAnswer?.isNotEmpty == true) ...[
                     const SizedBox(height: 10),

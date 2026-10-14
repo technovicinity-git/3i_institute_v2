@@ -178,7 +178,8 @@ export default function InstructorCertificatesPage() {
                     </a>
 
                     {/* Revoke */}
-                    {!isRevoked && (
+
+                    {/* {!isRevoked && (
                       <button
                         onClick={() =>
                           setRevokeTarget({
@@ -191,7 +192,7 @@ export default function InstructorCertificatesPage() {
                       >
                         <XCircle className="w-4 h-4" />
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               );
