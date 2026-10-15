@@ -51,7 +51,7 @@ export default function AdminLearnerProfilesPage() {
         <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-[#334155]"><Filter className="w-4 h-4" /> Filters</div>
         <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
           <select aria-label="Filter by profile status" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]"><option value="">All profile statuses</option><option value="ACTIVE">Current profiles</option><option value="ARCHIVED">Archived profiles</option></select>
-          <select aria-label="Filter by seat status" value={seatStatus} onChange={(event) => { setSeatStatus(event.target.value); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]"><option value="">Any seat status</option><option value="ACTIVE">Has an active seat</option><option value="INACTIVE">No active seat</option></select>
+          <select aria-label="Filter by subscription" value={seatStatus} onChange={(event) => { setSeatStatus(event.target.value); setPage(1); }} className="rounded-lg border border-[#E3E8EF] bg-white px-3 py-2.5 text-sm text-[#334155]"><option value="">Any subscription</option><option value="ACTIVE">Subscribed</option><option value="INACTIVE">Not subscribed</option></select>
         </div>
       </section>
 
@@ -60,14 +60,14 @@ export default function AdminLearnerProfilesPage() {
       {!isLoading && !isError && data?.profiles.length === 0 && <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center"><UsersRound className="w-12 h-12 text-gray-300 mx-auto mb-4" /><p className="text-[#64748B]">No learner profiles found.</p></div>}
 
       {!isLoading && !isError && !!data?.profiles.length && <div className="bg-white rounded-xl border border-[#E3E8EF] overflow-hidden">
-        <div className="hidden lg:grid grid-cols-7 gap-4 px-6 py-3 bg-[#FBF9F4] border-b border-[#E3E8EF] text-xs font-bold text-[#64748B] uppercase"><span>Learner</span><span>Parent / account</span><span>Profile</span><span>Seat</span><span>Courses</span><span>Exams</span><span className="text-right">Actions</span></div>
+        <div className="hidden lg:grid grid-cols-7 gap-4 px-6 py-3 bg-[#FBF9F4] border-b border-[#E3E8EF] text-xs font-bold text-[#64748B] uppercase"><span>Learner</span><span>Parent / account</span><span>Profile</span><span>Subscription</span><span>Courses</span><span>Exams</span><span className="text-right">Actions</span></div>
         <div className="divide-y divide-[#E3E8EF]">{data.profiles.map((profile) => {
           const archived = Boolean(profile.deletedAt);
           return <div key={profile.id} className="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:gap-4 px-6 py-4 items-center hover:bg-gray-50">
             <div><p className="font-semibold text-sm text-[#0C1F33]">{profile.displayName}</p><p className="text-xs text-[#64748B]">Born {formatDate(profile.dateOfBirth)}</p></div>
             <div><p className="text-sm text-[#0C1F33]">{profile.account.firstName} {profile.account.lastName}</p><p className="text-xs text-[#64748B] truncate">{profile.account.email}</p></div>
             <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${archived ? "bg-gray-100 text-gray-600" : "bg-green-50 text-green-700"}`}>{archived ? "Archived" : "Current"}</span>
-            <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${profile.isActive ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>{profile.isActive ? "Active seat" : "No seat"}</span>
+            <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${profile.isActive ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>{profile.isActive ? "Subscribed" : "Not subscribed"}</span>
             <span className="text-sm text-[#64748B]">{profile._count.enrolments} enrolled</span>
             <span className="text-sm text-[#64748B]">{profile._count.examAttempts} attempts</span>
             <div className="flex items-center gap-2 lg:justify-end">
