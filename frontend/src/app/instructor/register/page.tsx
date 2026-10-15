@@ -140,7 +140,7 @@ export default function InstructorRegistrationPage() {
         <div className="text-center mb-8">
           <h1
             className="flex items-center justify-center gap-2 text-[40px] leading-[48px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             Apply to teach at <LandingLogo size="sm" textColor="dark" />
           </h1>
@@ -159,7 +159,7 @@ export default function InstructorRegistrationPage() {
           <div className="bg-white border border-[#E3E8EF] rounded-xl p-8">
             <h2
               className="text-[32px] leading-[38px] text-[#0C1F33] mb-6"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Your account
             </h2>
@@ -289,7 +289,7 @@ export default function InstructorRegistrationPage() {
           <div className="bg-white border border-[#E3E8EF] rounded-xl p-8">
             <h2
               className="text-[32px] leading-[38px] text-[#0C1F33] mb-6"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Teaching application
             </h2>

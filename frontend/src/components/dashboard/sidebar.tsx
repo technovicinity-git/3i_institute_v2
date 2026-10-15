@@ -13,17 +13,18 @@ import {
   X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Regular Courses", icon: BookOpen, href: "/my-courses" },
-  { label: "Online Classes", icon: Video, href: "/online-classes" },
-  { label: "Assignments", icon: ClipboardList, href: "/assignments" },
-  { label: "Exams", icon: FileText, href: "/exams" },
-  { label: "Certificates", icon: Award, href: "/certificates" },
-  // { label: "Notes", icon: StickyNote, href: "/notes" },
-  { label: "Wishlist", icon: Heart, href: "/wishlist" },
-];
+  { key: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { key: "regularCourses", icon: BookOpen, href: "/my-courses" },
+  { key: "onlineClasses", icon: Video, href: "/online-classes" },
+  { key: "assignments", icon: ClipboardList, href: "/assignments" },
+  { key: "exams", icon: FileText, href: "/exams" },
+  { key: "certificates", icon: Award, href: "/certificates" },
+  // { key: "notes", icon: StickyNote, href: "/notes" },
+  { key: "wishlist", icon: Heart, href: "/wishlist" },
+] as const;
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -31,6 +32,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const t = useTranslations("sidebar");
 
   return (
     <aside className="w-[260px] h-full bg-[#12304E] p-6 flex flex-col">
@@ -51,6 +53,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
         {onNavigate && (
           <button
             onClick={onNavigate}
+            aria-label={t("close")}
             className="lg:hidden text-white/70 hover:text-white"
           >
             <X className="w-5 h-5" />
@@ -67,7 +70,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
 
           return (
             <Link
-              key={item.label}
+              key={item.key}
               href={item.href}
               onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] transition-colors shrink-0 ${
@@ -77,7 +80,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
               }`}
             >
               <Icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
-              {item.label}
+              {t(item.key)}
             </Link>
           );
         })}

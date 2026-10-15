@@ -44,9 +44,12 @@ export function getExamAccess(exam: {
   return { status: "open", startTime, windowEnd };
 }
 
-export function formatExamStartTime(date: Date | null | undefined): string {
+export function formatExamStartTime(
+  date: Date | null | undefined,
+  locale = "en-US",
+): string {
   if (!date || Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("en-US", {
+  return date.toLocaleString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -59,14 +62,19 @@ export function formatExamStartTime(date: Date | null | undefined): string {
  * Countdown label for a number of seconds:
  * 93784 → "1d 02h 03m", 3754 → "01:02:34", 754 → "12:34".
  */
-export function formatCountdown(totalSeconds: number): string {
+export function formatCountdown(
+  totalSeconds: number,
+  /** Label for multi-day countdowns, e.g. "{d}d {h}h {m}m" translated */
+  formatDays: (d: number, h: string, m: string) => string = (d, h, m) =>
+    `${d}d ${h}h ${m}m`,
+): string {
   const s = Math.max(0, Math.floor(totalSeconds));
   const days = Math.floor(s / 86400);
   const hours = Math.floor((s % 86400) / 3600);
   const mins = Math.floor((s % 3600) / 60);
   const secs = s % 60;
   const pad = (n: number) => String(n).padStart(2, "0");
-  if (days > 0) return `${days}d ${pad(hours)}h ${pad(mins)}m`;
+  if (days > 0) return formatDays(days, pad(hours), pad(mins));
   if (hours > 0) return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
   return `${pad(mins)}:${pad(secs)}`;
 }

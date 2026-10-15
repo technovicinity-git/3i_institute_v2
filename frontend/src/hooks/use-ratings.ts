@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { apiClient } from "@/lib/api-client";
 
 export function useRatingMutation() {
+  const tToast = useTranslations("lesson.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -27,7 +29,7 @@ export function useRatingMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-details"] });
-      toast.success("Review submitted. Thank you!");
+      toast.success(tToast("reviewSubmitted"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

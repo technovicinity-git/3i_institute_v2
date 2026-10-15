@@ -212,7 +212,7 @@ export default function CreateExamPage() {
         </button>
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           Create Exam
         </h1>

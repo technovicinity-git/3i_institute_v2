@@ -12,22 +12,13 @@ import {
 } from "lucide-react";
 import { siteService } from "@/services/site.service";
 import { VerifyForm } from "@/components/certificate/verify-form";
-
-const TYPE_LABEL = {
-  COMPLETION: "Certificate of Completion",
-  EXAM: "Exam Certificate",
-  ATTENDANCE: "Certificate of Attendance",
-} as const;
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 export default function VerifyResultPage() {
+  const t = useTranslations("verify");
+  const format = useDateFormat();
+  const formatDate = (value: string) => format.longDate(value);
   const { code } = useParams<{ code: string }>();
   const decoded = decodeURIComponent(code);
 
@@ -41,7 +32,7 @@ export default function VerifyResultPage() {
     <div className="bg-[#FBF9F4] min-h-[70vh]">
       <div className="max-w-2xl mx-auto px-6 py-16 md:py-20">
         <p className="text-xs font-semibold text-[#B8912F] uppercase tracking-widest mb-2">
-          Certificate verification
+          {t("eyebrow")}
         </p>
 
         {isLoading && (
@@ -54,8 +45,8 @@ export default function VerifyResultPage() {
           <ResultCard
             tone="neutral"
             icon={<SearchX className="w-7 h-7 text-[#64748B]" />}
-            title="No certificate found"
-            message="We couldn't find a certificate with this code. Check that it was entered exactly as printed on the certificate."
+            title={t("notFound")}
+            message={t("notFoundBody")}
             code={decoded}
           />
         )}
@@ -71,33 +62,31 @@ export default function VerifyResultPage() {
               )
             }
             title={
-              data.status === "VALID"
-                ? "This certificate is valid"
-                : "This certificate has been revoked"
+              data.status === "VALID" ? t("validTitle") : t("revokedTitle")
             }
             message={
               data.status === "VALID"
-                ? "It was issued by 3i International Islamic Institute and has not been revoked."
-                : `It was revoked on ${formatDate(data.revokedAt!)} and is no longer valid.`
+                ? t("validBody")
+                : t("revokedBody", { date: formatDate(data.revokedAt!) })
             }
             code={data.verificationCode}
           >
             <dl className="mt-6 grid gap-4 border-t border-[#E3E8EF] pt-6 sm:grid-cols-2">
-              <Detail label="Awarded to" value={data.learnerNameSnapshot} wide />
+              <Detail label={t("awardedTo")} value={data.learnerNameSnapshot} wide />
               <Detail
-                label="Course"
+                label={t("course")}
                 value={data.courseTitleSnapshot}
                 icon={<Award className="w-4 h-4 text-[#B8912F]" />}
                 wide
               />
-              <Detail label="Certificate type" value={TYPE_LABEL[data.type]} />
+              <Detail label={t("type")} value={t(`typeLabel.${data.type}`)} />
               <Detail
-                label="Issued on"
+                label={t("issuedOn")}
                 value={formatDate(data.issuedAt)}
                 icon={<CalendarDays className="w-4 h-4 text-[#B8912F]" />}
               />
               <Detail
-                label="Issued by"
+                label={t("issuedBy")}
                 value={data.issuerName ?? "3i International Islamic Institute"}
                 icon={<Building2 className="w-4 h-4 text-[#B8912F]" />}
                 wide
@@ -109,7 +98,7 @@ export default function VerifyResultPage() {
         {!isLoading && (
           <div className="mt-10">
             <p className="text-sm font-semibold text-[#0C1F33] mb-3">
-              Check another certificate
+              {t("checkAnother")}
             </p>
             <VerifyForm />
           </div>
@@ -134,6 +123,7 @@ function ResultCard({
   code: string;
   children?: React.ReactNode;
 }) {
+  const t = useTranslations("verify");
   const styles = {
     valid: "border-[#22A146]/30",
     revoked: "border-red-200",
@@ -161,8 +151,10 @@ function ResultCard({
             {message}
           </p>
           <p className="mt-3 text-xs text-[#94A3B8]">
-            Code{" "}
-            <span className="font-mono text-[#475569] break-all">{code}</span>
+            {t("code")}{" "}
+            <span className="font-mono text-[#475569] break-all" dir="ltr">
+              {code}
+            </span>
           </p>
         </div>
       </div>

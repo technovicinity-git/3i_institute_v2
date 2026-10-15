@@ -8,20 +8,13 @@ import { BookOpen, FileText } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
 import { SearchInput } from "@/components/dashboard/search-input";
+import { levelKey } from "@/lib/course-level";
+import { useTranslations } from "next-intl";
 
-function getLevelBadge(level: string): string {
-  const levels: Record<string, string> = {
-    "1": "BEGINNER",
-    "2": "INTERMEDIATE",
-    "3": "ADVANCED",
-    Beginner: "BEGINNER",
-    Intermediate: "INTERMEDIATE",
-    Advanced: "ADVANCED",
-  };
-  return levels[level] ?? "ALL LEVELS";
-}
 
 export default function MyCoursesPage() {
+  const t = useTranslations("myCourses");
+  const tLevel = useTranslations("courseLevel");
   const router = useRouter();
   const { activeProfile } = useProfileStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,13 +47,12 @@ export default function MyCoursesPage() {
       <div className="mb-6">
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          My Courses
+          {t("title")}
         </h1>
         <p className="text-base text-[#64748B]">
-          {regularCourses.length} self-paced course
-          {regularCourses.length !== 1 ? "s" : ""}
+          {t("count", { count: regularCourses.length })}
         </p>
       </div>
 
@@ -70,7 +62,7 @@ export default function MyCoursesPage() {
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search by course or instructor..."
+            placeholder={t("search")}
           />
         </div>
       )}
@@ -85,7 +77,7 @@ export default function MyCoursesPage() {
       {/* Error */}
       {isError && (
         <div className="flex items-center justify-center py-20">
-          <p className="text-red-600 font-medium">Failed to load courses.</p>
+          <p className="text-red-600 font-medium">{t("loadFailed")}</p>
         </div>
       )}
 
@@ -93,14 +85,12 @@ export default function MyCoursesPage() {
       {!isLoading && !isError && regularCourses.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-[#64748B]">
-            You haven&apos;t enrolled in any self-paced courses yet.
-          </p>
+          <p className="text-[#64748B]">{t("empty")}</p>
           <Link
             href="/courses"
             className="inline-block mt-4 text-[#22A146] font-semibold hover:underline"
           >
-            Browse Courses
+            {t("browse")}
           </Link>
         </div>
       )}
@@ -112,7 +102,7 @@ export default function MyCoursesPage() {
         filteredCourses.length === 0 && (
           <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
             <p className="text-[#64748B]">
-              No courses match &ldquo;{searchQuery}&rdquo;
+              {t("noMatch", { query: searchQuery })}
             </p>
           </div>
         )}
@@ -122,9 +112,9 @@ export default function MyCoursesPage() {
         <div className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden">
           {/* Desktop header */}
           <div className="hidden lg:grid grid-cols-[minmax(300px,2fr)_200px_200px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-            <div>Course</div>
-            <div>Progress</div>
-            <div>Actions</div>
+            <div>{t("colCourse")}</div>
+            <div>{t("colProgress")}</div>
+            <div>{t("colActions")}</div>
           </div>
 
           {/* Rows */}
@@ -156,17 +146,17 @@ export default function MyCoursesPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
-                          {getLevelBadge(course.level)}
+                          {tLevel(levelKey(course.level))}
                         </span>
                         {course.isCompleted && (
                           <span className="text-[9px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
-                            COMPLETED
+                            {t("completed")}
                           </span>
                         )}
                       </div>
                       <h3
                         className="text-base text-[#0C1F33] leading-5 truncate"
-                        style={{ fontFamily: "'Marcellus', serif" }}
+                        style={{ fontFamily: "var(--font-display)" }}
                       >
                         {course.title}
                       </h3>
@@ -180,8 +170,10 @@ export default function MyCoursesPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-semibold text-[#22A146]">
-                        {course.completedMaterials}/{course.totalMaterials}{" "}
-                        lessons
+                        {t("lessons", {
+                          done: course.completedMaterials,
+                          total: course.totalMaterials,
+                        })}
                       </span>
                       <span className="text-xs font-semibold text-[#0C1F33]">
                         {course.progress}%
@@ -206,14 +198,14 @@ export default function MyCoursesPage() {
                         }
                         className="px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
                       >
-                        {course.progress > 0 ? "Resume" : "Start"}
+                        {course.progress > 0 ? t("resume") : t("start")}
                       </button>
                     ) : (
                       <button
                         disabled
                         className="px-4 py-2 bg-gray-200 text-gray-500 text-xs font-semibold rounded-lg cursor-not-allowed"
                       >
-                        Upcoming
+                        {t("upcoming")}
                       </button>
                     )}
 
@@ -222,7 +214,7 @@ export default function MyCoursesPage() {
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      Exams
+                      {t("exams")}
                     </Link>
                   </div>
                 </div>
@@ -244,8 +236,8 @@ export default function MyCoursesPage() {
                         </div>
                       )}
                       {course.isCompleted && (
-                        <span className="absolute top-2 left-2 text-[9px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
-                          DONE
+                        <span className="absolute top-2 start-2 text-[9px] font-bold text-white bg-[#22A146] px-2 py-0.5 rounded">
+                          {t("done")}
                         </span>
                       )}
                     </div>
@@ -253,12 +245,12 @@ export default function MyCoursesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
-                          {getLevelBadge(course.level)}
+                          {tLevel(levelKey(course.level))}
                         </span>
                       </div>
                       <h3
                         className="text-base text-[#0C1F33] leading-5 line-clamp-2"
-                        style={{ fontFamily: "'Marcellus', serif" }}
+                        style={{ fontFamily: "var(--font-display)" }}
                       >
                         {course.title}
                       </h3>
@@ -272,8 +264,10 @@ export default function MyCoursesPage() {
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-semibold text-[#22A146]">
-                        {course.completedMaterials}/{course.totalMaterials}{" "}
-                        lessons
+                        {t("lessons", {
+                          done: course.completedMaterials,
+                          total: course.totalMaterials,
+                        })}
                       </span>
                       <span className="text-xs font-semibold text-[#0C1F33]">
                         {course.progress}%
@@ -298,14 +292,14 @@ export default function MyCoursesPage() {
                         }
                         className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg"
                       >
-                        {course.progress > 0 ? "Resume" : "Start"}
+                        {course.progress > 0 ? t("resume") : t("start")}
                       </button>
                     ) : (
                       <button
                         disabled
                         className="flex-1 py-2.5 bg-gray-200 text-gray-500 text-sm font-semibold rounded-lg cursor-not-allowed"
                       >
-                        No Lessons
+                        {t("noLessons")}
                       </button>
                     )}
 
@@ -314,7 +308,7 @@ export default function MyCoursesPage() {
                       className="flex-1 py-2.5 border border-[#12304E] text-[#12304E] text-sm font-semibold rounded-lg text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                     >
                       <FileText className="w-4 h-4" />
-                      Exams
+                      {t("exams")}
                     </Link>
                   </div>
                 </div>

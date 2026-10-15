@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import type { CourseDetails } from "@/types/course-details";
+import { useTranslations } from "next-intl";
 
 export function CourseReviews({
   course,
@@ -9,11 +10,12 @@ export function CourseReviews({
   /** Opens the rate & review modal (shown to enrolled learners). */
   onRate: () => void;
 }) {
+  const t = useTranslations("courseDetails");
   return (
     <div>
-      <p className="text-sm font-bold text-[#0C1F33] mb-3">Student Voices</p>
+      <p className="text-sm font-bold text-[#0C1F33] mb-3">{t("studentVoices")}</p>
       <h2 className="font-serif text-[40px] leading-[48px] text-[#0C1F33] mb-8">
-        Course Reviews
+        {t("reviews")}
       </h2>
 
       <div className="flex flex-col sm:flex-row gap-8 mb-10">
@@ -35,7 +37,7 @@ export function CourseReviews({
             ))}
           </div>
           <p className="text-sm text-[#64748B]">
-            Based on {course.ratingSummary.total} reviews
+            {t("basedOn", { count: course.ratingSummary.total })}
           </p>
         </div>
 
@@ -43,8 +45,8 @@ export function CourseReviews({
         <div className="flex-1 flex flex-col justify-center gap-2">
           {course.ratingSummary.distribution.map((bar) => (
             <div key={bar.stars} className="flex items-center gap-3">
-              <span className="text-[13px] text-[#64748B] w-12">
-                {bar.stars} stars
+              <span className="text-[13px] text-[#64748B] w-14">
+                {t("stars", { count: bar.stars })}
               </span>
               <div className="flex-1 h-2 bg-[#E3E8EF] rounded-full overflow-hidden">
                 <div
@@ -67,10 +69,10 @@ export function CourseReviews({
             onClick={onRate}
             className="px-5 py-3 bg-white border border-[#0C1F33] rounded-lg text-[15px] font-semibold text-[#0C1F33] hover:bg-gray-50 transition-colors"
           >
-            Rate & review
+            {t("rateReview")}
           </button>
           <span className="text-[13px] text-[#475569]">
-            You&apos;re enrolled in this course
+            {t("youAreEnrolled")}
           </span>
         </div>
       )}
@@ -107,7 +109,7 @@ export function CourseReviews({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-[#64748B]">No reviews yet.</p>
+        <p className="text-sm text-[#64748B]">{t("noReviews")}</p>
       )}
     </div>
   );

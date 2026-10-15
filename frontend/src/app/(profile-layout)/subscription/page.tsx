@@ -24,9 +24,10 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useProfileStore } from "@/stores/profile-store";
 import { ApplySubscriptionDialog } from "@/components/subscription/apply-subscription-dialog";
 import { WaiverRequestDialog } from "@/components/subscription/waiver-request-dialog";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 import {
   formatMoney,
-  PAYMENT_ACCOUNT_TYPE_LABEL,
   type PaymentAccount,
   type PaymentSettings,
   type ProfileSubscriptionStatus,
@@ -34,33 +35,15 @@ import {
   type Waiver,
 } from "@/services/subscription.service";
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 const card = "bg-white border border-[#E3E8EF] rounded-xl shadow-sm";
 
 // ---- How to pay ----
 
-function copy(text: string) {
+function copy(text: string, messages: { done: string; failed: string }) {
   navigator.clipboard
     .writeText(text)
-    .then(() => toast.success("Copied"))
-    .catch(() => toast.error("Couldn't copy"));
+    .then(() => toast.success(messages.done))
+    .catch(() => toast.error(messages.failed));
 }
 
 function AccountIcon({ type }: { type: PaymentAccount["type"] }) {
@@ -78,30 +61,29 @@ function AccountIcon({ type }: { type: PaymentAccount["type"] }) {
 }
 
 function PaymentDetails({ payment }: { payment: PaymentSettings }) {
+  const t = useTranslations("subscription");
+  const tCommon = useTranslations("common");
   return (
     <div className={`${card} p-5 sm:p-6 flex flex-col gap-5`}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2
             className="text-xl text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            How to pay
+            {t("howToPay")}
           </h2>
-          <p className="text-sm text-[#475569] mt-1">
-            Send the payment to one of the accounts below, then apply for each
-            profile with your transaction details.
-          </p>
+          <p className="text-sm text-[#475569] mt-1">{t("howToPayBody")}</p>
         </div>
         <div className="text-right">
           <p
             className="text-[28px] leading-none text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             {formatMoney(payment.monthlyPrice, payment.currency)}
           </p>
           <p className="text-[13px] text-[#64748B] mt-1">
-            per profile · one month
+            {t("perProfileMonth")}
           </p>
         </div>
       </div>
@@ -116,9 +98,7 @@ function PaymentDetails({ payment }: { payment: PaymentSettings }) {
       )}
 
       {payment.accounts.length === 0 ? (
-        <p className="text-sm text-[#64748B]">
-          Payment details haven&apos;t been added yet. Please contact support.
-        </p>
+        <p className="text-sm text-[#64748B]">{t("noPaymentDetails")}</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {payment.accounts.map((account) => (
@@ -129,7 +109,7 @@ function PaymentDetails({ payment }: { payment: PaymentSettings }) {
               <AccountIcon type={account.type} />
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold text-[#B8912F] uppercase tracking-wide">
-                  {PAYMENT_ACCOUNT_TYPE_LABEL[account.type]}
+                  {t(`accountType.${account.type}`)}
                 </p>
                 <p className="font-semibold text-[#0C1F33]">{account.label}</p>
                 {account.accountName && (
@@ -138,12 +118,20 @@ function PaymentDetails({ payment }: { payment: PaymentSettings }) {
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm font-mono text-[#0C1F33] break-all">
+                  <p
+                    className="text-sm font-mono text-[#0C1F33] break-all"
+                    dir="ltr"
+                  >
                     {account.accountNumber}
                   </p>
                   <button
-                    onClick={() => copy(account.accountNumber)}
-                    aria-label={`Copy ${account.label} account number`}
+                    onClick={() =>
+                      copy(account.accountNumber, {
+                        done: tCommon("copied"),
+                        failed: tCommon("copyFailed"),
+                      })
+                    }
+                    aria-label={t("copyAccountNumber", { label: account.label })}
                     className="p-1 rounded hover:bg-gray-100 shrink-0"
                   >
                     <Copy className="w-3.5 h-3.5 text-[#64748B]" />
@@ -166,11 +154,12 @@ function PaymentDetails({ payment }: { payment: PaymentSettings }) {
 // ---- Profile row ----
 
 function StatusBadge({ profile }: { profile: ProfileSubscriptionStatus }) {
+  const t = useTranslations("subscription.badge");
   if (profile.isSubscribed) {
     return (
       <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-[#22A146] text-[11px] font-bold text-[#0C1F33]">
         <CheckCircle className="w-3 h-3" strokeWidth={2.5} />
-        SUBSCRIBED
+        {t("subscribed")}
       </span>
     );
   }
@@ -178,32 +167,36 @@ function StatusBadge({ profile }: { profile: ProfileSubscriptionStatus }) {
     return (
       <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-white border border-[#2D6CDF] text-[11px] font-bold text-[#2D6CDF]">
         <Clock className="w-3 h-3" strokeWidth={2.5} />
-        UNDER REVIEW
+        {t("underReview")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-white border border-[#B8912F] text-[11px] font-bold text-[#0C1F33]">
       <Clock className="w-3 h-3" strokeWidth={2.5} />
-      NOT SUBSCRIBED
+      {t("notSubscribed")}
     </span>
   );
 }
 
-function statusLine(profile: ProfileSubscriptionStatus): string {
-  const parts: string[] = [];
-  if (profile.isSubscribed && profile.subscribedUntil) {
-    parts.push(`Subscribed until ${formatDateTime(profile.subscribedUntil)}`);
-  }
-  if (profile.pendingRequestId) {
-    parts.push(
-      profile.isSubscribed
-        ? "Renewal payment under review"
-        : "Payment under review — usually within a day",
-    );
-  }
-  if (parts.length === 0) parts.push("Subscribe to enrol in courses");
-  return parts.join(" · ");
+function useStatusLine() {
+  const t = useTranslations("subscription");
+  const format = useDateFormat();
+  return (profile: ProfileSubscriptionStatus): string => {
+    const parts: string[] = [];
+    if (profile.isSubscribed && profile.subscribedUntil) {
+      parts.push(
+        t("subscribedUntil", { date: format.dateTime(profile.subscribedUntil) }),
+      );
+    }
+    if (profile.pendingRequestId) {
+      parts.push(
+        profile.isSubscribed ? t("renewalUnderReview") : t("paymentUnderReview"),
+      );
+    }
+    if (parts.length === 0) parts.push(t("subscribeToEnrol"));
+    return parts.join(" · ");
+  };
 }
 
 function WaiverLine({
@@ -213,14 +206,18 @@ function WaiverLine({
   profile: ProfileSubscriptionStatus;
   onRequestWaiver: () => void;
 }) {
+  const t = useTranslations("subscription");
+  const format = useDateFormat();
   const { usable, pending, lastRejectionReason, applicationsLeft } =
     profile.waiver;
   if (usable) {
     return (
       <p className="flex items-center gap-1.5 text-[13px] text-[#157A34] font-semibold">
         <BadgePercent className="w-4 h-4" />
-        {usable.percent}% fee waiver ready — use by{" "}
-        {formatDate(usable.expiresAt)}
+        {t("waiverReady", {
+          percent: usable.percent,
+          date: format.date(usable.expiresAt),
+        })}
       </p>
     );
   }
@@ -228,7 +225,7 @@ function WaiverLine({
     return (
       <p className="flex items-center gap-1.5 text-[13px] text-[#2D6CDF]">
         <BadgePercent className="w-4 h-4" />
-        Fee waiver request under review
+        {t("waiverUnderReview")}
       </p>
     );
   }
@@ -236,7 +233,7 @@ function WaiverLine({
     <p className="text-[13px] text-[#475569]">
       {lastRejectionReason && (
         <span className="text-red-600">
-          Waiver not approved: {lastRejectionReason}.{" "}
+          {t("waiverRejected", { reason: lastRejectionReason })}{" "}
         </span>
       )}
       {applicationsLeft > 0 ? (
@@ -244,14 +241,15 @@ function WaiverLine({
           onClick={onRequestWaiver}
           className="font-semibold text-[#12304E] underline hover:text-[#22A146]"
         >
-          Need help with the fee? Request a waiver
+          {t("requestWaiver")}
         </button>
       ) : (
         <span className="text-[#64748B]">
-          Waiver limit reached for this year
           {profile.waiver.nextApplicationAt
-            ? ` (next on ${formatDate(profile.waiver.nextApplicationAt)})`
-            : ""}
+            ? t("waiverLimitNext", {
+                date: format.date(profile.waiver.nextApplicationAt),
+              })
+            : t("waiverLimit")}
         </span>
       )}
     </p>
@@ -271,6 +269,9 @@ function ProfileRow({
   onCancel: () => void;
   onRequestWaiver: () => void;
 }) {
+  const t = useTranslations("subscription");
+  const tCommon = useTranslations("common");
+  const statusLine = useStatusLine();
   return (
     <div
       className={`${card} flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:px-8 gap-4`}
@@ -294,23 +295,24 @@ function ProfileRow({
         <div className="flex flex-col gap-2 min-w-0">
           <h3
             className="text-lg text-[#0C1F33] truncate"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             {profile.displayName}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge profile={profile} />
             <span className="inline-flex items-center justify-center px-2 h-5 rounded-full bg-white border border-[#E3E8EF] text-[11px] font-bold text-[#0C1F33]">
-              Age {profile.age}
+              {tCommon("age", { age: profile.age })}
             </span>
           </div>
           <p className="text-[13px] text-[#475569]">{statusLine(profile)}</p>
           {!profile.pendingRequestId && profile.lastRejection && (
             <p className="text-[13px] text-red-600">
-              Last payment wasn&apos;t approved
               {profile.lastRejection.reason
-                ? `: ${profile.lastRejection.reason}`
-                : "."}
+                ? t("lastPaymentRejectedReason", {
+                    reason: profile.lastRejection.reason,
+                  })
+                : t("lastPaymentRejected")}
             </p>
           )}
           <WaiverLine profile={profile} onRequestWaiver={onRequestWaiver} />
@@ -323,7 +325,7 @@ function ProfileRow({
             onClick={onCancel}
             className="text-[13px] font-semibold px-4 py-2 rounded-lg border border-[#E3E8EF] text-[#475569] hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
-            Cancel request
+            {t("cancelRequest")}
           </button>
         ) : (
           <button
@@ -335,7 +337,7 @@ function ProfileRow({
                 : "bg-[#22A146] text-[#0C1F33] hover:bg-[#1E9040]"
             }`}
           >
-            {profile.isSubscribed ? "Renew" : "Apply for subscription"}
+            {profile.isSubscribed ? t("renew") : t("apply")}
           </button>
         )}
       </div>
@@ -345,37 +347,36 @@ function ProfileRow({
 
 // ---- Request history ----
 
-const REQUEST_STATUS: Record<
-  SubscriptionRequest["status"],
-  { label: string; className: string }
-> = {
-  PENDING: { label: "Under review", className: "bg-blue-50 text-[#2D6CDF]" },
-  APPROVED: { label: "Approved", className: "bg-[#22A146]/10 text-[#157A34]" },
-  REJECTED: { label: "Rejected", className: "bg-red-50 text-red-600" },
-  CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-600" },
+const REQUEST_STATUS_CLASS: Record<SubscriptionRequest["status"], string> = {
+  PENDING: "bg-blue-50 text-[#2D6CDF]",
+  APPROVED: "bg-[#22A146]/10 text-[#157A34]",
+  REJECTED: "bg-red-50 text-red-600",
+  CANCELLED: "bg-gray-100 text-gray-600",
 };
 
 function RequestHistory({ requests }: { requests: SubscriptionRequest[] }) {
+  const t = useTranslations("subscription.history");
+  const format = useDateFormat();
   return (
     <div className={`${card} overflow-hidden`}>
       <div className="px-5 sm:px-6 py-4 border-b border-[#E3E8EF]">
         <h2
           className="text-xl text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Payment history
+          {t("payments")}
         </h2>
       </div>
       <div className="hidden md:grid grid-cols-6 gap-4 px-6 py-3 bg-[#FBF9F4] border-b border-[#E3E8EF] text-xs font-bold text-[#64748B] uppercase">
-        <span>Profile</span>
-        <span>Amount</span>
-        <span className="col-span-2">Payment</span>
-        <span>Submitted</span>
-        <span>Status</span>
+        <span>{t("profile")}</span>
+        <span>{t("amount")}</span>
+        <span className="col-span-2">{t("payment")}</span>
+        <span>{t("submitted")}</span>
+        <span>{t("status")}</span>
       </div>
       <div className="divide-y divide-[#E3E8EF]">
         {requests.map((request) => {
-          const status = REQUEST_STATUS[request.status];
+          const statusClass = REQUEST_STATUS_CLASS[request.status];
           return (
             <div
               key={request.id}
@@ -388,30 +389,33 @@ function RequestHistory({ requests }: { requests: SubscriptionRequest[] }) {
                 {formatMoney(request.amount, request.currency)}
                 {request.discountPercent > 0 && (
                   <span className="block text-xs text-[#157A34]">
-                    {request.discountPercent}% waiver
+                    {t("waiverPercent", { percent: request.discountPercent })}
                   </span>
                 )}
               </span>
               <span className="md:col-span-2 text-[#475569] min-w-0">
                 <span className="block truncate">{request.paymentMethod}</span>
                 {request.transactionId && (
-                  <span className="block text-xs text-[#64748B] font-mono truncate">
+                  <span
+                    className="block text-xs text-[#64748B] font-mono truncate"
+                    dir="ltr"
+                  >
                     {request.transactionId}
                   </span>
                 )}
               </span>
               <span className="text-[#64748B]">
-                {formatDate(request.createdAt)}
+                {format.date(request.createdAt)}
               </span>
               <span className="flex flex-col gap-1">
                 <span
-                  className={`inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full ${status.className}`}
+                  className={`inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusClass}`}
                 >
-                  {status.label}
+                  {t(`requestStatus.${request.status}`)}
                 </span>
                 {request.status === "APPROVED" && request.periodEnd && (
                   <span className="text-xs text-[#64748B]">
-                    Until {formatDate(request.periodEnd)}
+                    {t("until", { date: format.date(request.periodEnd) })}
                   </span>
                 )}
                 {request.status === "REJECTED" && request.rejectionReason && (
@@ -430,35 +434,31 @@ function RequestHistory({ requests }: { requests: SubscriptionRequest[] }) {
 
 // ---- Waiver history ----
 
-const WAIVER_STATUS: Record<
-  Waiver["status"],
-  { label: string; className: string }
-> = {
-  PENDING: { label: "Under review", className: "bg-blue-50 text-[#2D6CDF]" },
-  APPROVED: {
-    label: "Ready to use",
-    className: "bg-[#22A146]/10 text-[#157A34]",
-  },
-  USED: { label: "Used", className: "bg-gray-100 text-gray-600" },
-  REJECTED: { label: "Not approved", className: "bg-red-50 text-red-600" },
-  EXPIRED: { label: "Expired", className: "bg-gray-100 text-gray-600" },
-  REVOKED: { label: "Withdrawn", className: "bg-gray-100 text-gray-600" },
+const WAIVER_STATUS_CLASS: Record<Waiver["status"], string> = {
+  PENDING: "bg-blue-50 text-[#2D6CDF]",
+  APPROVED: "bg-[#22A146]/10 text-[#157A34]",
+  USED: "bg-gray-100 text-gray-600",
+  REJECTED: "bg-red-50 text-red-600",
+  EXPIRED: "bg-gray-100 text-gray-600",
+  REVOKED: "bg-gray-100 text-gray-600",
 };
 
 function WaiverHistory({ waivers }: { waivers: Waiver[] }) {
+  const t = useTranslations("subscription.history");
+  const format = useDateFormat();
   return (
     <div className={`${card} overflow-hidden`}>
       <div className="px-5 sm:px-6 py-4 border-b border-[#E3E8EF]">
         <h2
           className="text-xl text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Fee waivers
+          {t("waivers")}
         </h2>
       </div>
       <div className="divide-y divide-[#E3E8EF]">
         {waivers.map((waiver) => {
-          const status = WAIVER_STATUS[waiver.status];
+          const statusClass = WAIVER_STATUS_CLASS[waiver.status];
           const reason = waiver.rejectionReason ?? waiver.revokeReason;
           return (
             <div
@@ -467,30 +467,30 @@ function WaiverHistory({ waivers }: { waivers: Waiver[] }) {
             >
               <div className="min-w-0">
                 <p className="font-semibold text-[#0C1F33]">
-                  {waiver.learnerProfile?.displayName ?? "Learner"}
+                  {waiver.learnerProfile?.displayName ?? t("learner")}
                   {waiver.percent !== null && (
-                    <span className="ml-2 font-normal text-[#475569]">
-                      {waiver.percent}% off one month
+                    <span className="ms-2 font-normal text-[#475569]">
+                      {t("waiverOff", { percent: waiver.percent })}
                     </span>
                   )}
                 </p>
                 <p className="text-xs text-[#64748B]">
-                  Requested {formatDate(waiver.createdAt)}
+                  {t("requestedOn", { date: format.date(waiver.createdAt) })}
                   {waiver.status === "APPROVED" &&
                     waiver.expiresAt &&
-                    ` · use by ${formatDate(waiver.expiresAt)}`}
+                    ` · ${t("useBy", { date: format.date(waiver.expiresAt) })}`}
                   {waiver.status === "USED" &&
                     waiver.usedAt &&
-                    ` · used ${formatDate(waiver.usedAt)}`}
+                    ` · ${t("usedOn", { date: format.date(waiver.usedAt) })}`}
                 </p>
                 {reason && (
                   <p className="text-xs text-red-600 mt-0.5">{reason}</p>
                 )}
               </div>
               <span
-                className={`inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${status.className}`}
+                className={`inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}
               >
-                {status.label}
+                {t(`waiverStatus.${waiver.status}`)}
               </span>
             </div>
           );
@@ -503,6 +503,9 @@ function WaiverHistory({ waivers }: { waivers: Waiver[] }) {
 // ---- Page ----
 
 export default function SubscriptionPage() {
+  const t = useTranslations("subscription");
+  const tCommon = useTranslations("common");
+  const tFamily = useTranslations("family");
   const { data, isLoading, isError, refetch } = useSubscriptionOverview();
   const cancelMutation = useCancelSubscriptionRequestMutation();
   const confirm = useConfirm();
@@ -533,18 +536,15 @@ export default function SubscriptionPage() {
     if (!requestId) return;
     confirm({
       tone: "warning",
-      title: "Cancel this request?",
-      description: (
-        <>
-          The payment for{" "}
-          <span className="font-semibold text-[#0C1F33]">
-            {profile.displayName}
-          </span>{" "}
-          won&apos;t be reviewed. You can submit it again later.
-        </>
-      ),
-      confirmLabel: "Cancel request",
-      cancelLabel: "Keep it",
+      title: t("cancelTitle"),
+      description: t.rich("cancelBody", {
+        name: profile.displayName,
+        strong: (chunks) => (
+          <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+        ),
+      }),
+      confirmLabel: t("cancelRequest"),
+      cancelLabel: t("keepIt"),
       onConfirm: () => cancelMutation.mutateAsync(requestId),
     });
   };
@@ -557,20 +557,17 @@ export default function SubscriptionPage() {
   return (
     <section
       className="w-full min-h-full bg-[#FBF9F4] px-6 sm:px-10 lg:px-[120px] pt-10 sm:pt-14 pb-16 sm:pb-20"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1
             className="text-3xl sm:text-[40px] leading-tight text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            Subscription
+            {t("title")}
           </h1>
-          <p className="text-[15px] text-[#475569]">
-            Each learner profile needs its own subscription to enrol in courses.
-            A subscription lasts one month from approval.
-          </p>
+          <p className="text-[15px] text-[#475569]">{t("intro")}</p>
         </div>
 
         {isLoading && (
@@ -581,14 +578,12 @@ export default function SubscriptionPage() {
 
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p className="text-red-600 font-medium">
-              Failed to load your subscription
-            </p>
+            <p className="text-red-600 font-medium">{t("loadFailed")}</p>
             <button
               onClick={() => refetch()}
               className="text-[#22A146] font-semibold hover:underline"
             >
-              Try again
+              {tCommon("tryAgain")}
             </button>
           </div>
         )}
@@ -600,27 +595,29 @@ export default function SubscriptionPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap mt-2">
               <h2
                 className="text-xl text-[#0C1F33]"
-                style={{ fontFamily: "'Marcellus', serif" }}
+                style={{ fontFamily: "var(--font-display)" }}
               >
-                Learner profiles
+                {t("learnerProfiles")}
               </h2>
               <p className="text-sm text-[#475569]">
-                {subscribedCount} of {data.profiles.length} subscribed
-                {pendingCount > 0 && ` · ${pendingCount} under review`}
+                {t("subscribedCount", {
+                  count: subscribedCount,
+                  total: data.profiles.length,
+                })}
+                {pendingCount > 0 &&
+                  ` · ${t("underReviewCount", { count: pendingCount })}`}
               </p>
             </div>
 
             {data.profiles.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4 bg-white border border-dashed border-[#E3E8EF] rounded-xl">
-                <p className="text-[#64748B]">
-                  Add a learner profile to subscribe.
-                </p>
+                <p className="text-[#64748B]">{t("addProfileToSubscribe")}</p>
                 <Link
                   href="/profiles/add"
                   className="inline-flex items-center gap-2 text-[13px] font-bold px-4 py-2 rounded-lg bg-[#22A146] text-[#0C1F33] hover:bg-[#1E9040] transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Add profile
+                  {tFamily("addProfile")}
                 </Link>
               </div>
             ) : (
@@ -649,8 +646,7 @@ export default function SubscriptionPage() {
             {data.requests.some((r) => r.status === "REJECTED") && (
               <p className="flex items-center gap-2 text-[13px] text-[#64748B]">
                 <XCircle className="w-4 h-4" />
-                If a payment was rejected by mistake, please contact support
-                with your transaction ID.
+                {t("rejectedByMistake")}
               </p>
             )}
 

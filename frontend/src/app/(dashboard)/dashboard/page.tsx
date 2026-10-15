@@ -15,8 +15,10 @@ import { RecentResultsCard } from "@/components/dashboard/learner/recent-results
 import { RecentNotes } from "@/components/dashboard/learner/recent-notes";
 import { RecommendedCourses } from "@/components/dashboard/learner/recommended-courses";
 import { classStatus } from "@/components/dashboard/learner/utils";
+import { useTranslations } from "next-intl";
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboardHome");
   const { activeProfile } = useProfileStore();
   const { data, isLoading, isError } = useDashboard(activeProfile?.id ?? "");
 
@@ -38,12 +40,12 @@ export default function DashboardPage() {
   if (isError || !data) {
     return (
       <div className="flex items-center justify-center flex-col gap-4 h-full py-20">
-        <p className="text-red-600 font-medium">Failed to load dashboard</p>
+        <p className="text-red-600 font-medium">{t("loadFailed")}</p>
         <Link
           href="/profiles"
           className="text-[#22A146] font-semibold hover:underline"
         >
-          Go back to profiles
+          {t("backToProfiles")}
         </Link>
       </div>
     );

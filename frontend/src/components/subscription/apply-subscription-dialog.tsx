@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { BadgePercent, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,8 @@ function ApplyForm({
   payment: PaymentSettings;
   onDone: () => void;
 }) {
+  const t = useTranslations("subscription.applyDialog");
+  const tCommon = useTranslations("common");
   const createMutation = useCreateSubscriptionRequestMutation();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -93,11 +96,11 @@ function ApplyForm({
   const handleImage = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image");
+      toast.error(tCommon("chooseImage"));
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      toast.error("Image must be 5 MB or smaller");
+      toast.error(tCommon("imageTooLarge"));
       return;
     }
     setUploading(true);
@@ -105,7 +108,7 @@ function ApplyForm({
       const result = await subscriptionService.uploadPaymentProof(file);
       setProofUrl(result.url);
     } catch {
-      toast.error("Failed to upload the image");
+      toast.error(tCommon("imageUploadFailed"));
     } finally {
       setUploading(false);
       if (fileInput.current) fileInput.current.value = "";
@@ -143,8 +146,8 @@ function ApplyForm({
         onSuccess: () => {
           toast.success(
             fullyWaived
-              ? `Submitted. We'll subscribe ${profile.displayName} once it's approved.`
-              : `Payment submitted. We'll subscribe ${profile.displayName} once it's verified.`,
+              ? t("submittedWaived", { name: profile.displayName })
+              : t("submittedPayment", { name: profile.displayName }),
           );
           onDone();
         },
@@ -154,18 +157,22 @@ function ApplyForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5 pr-6">
+      <div className="flex flex-col gap-1.5 pe-6">
         <DialogTitle
           className="text-2xl text-[#0C1F33] font-normal"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          {profile.isSubscribed ? "Renew" : "Apply for"} {profile.displayName}
-          &apos;s subscription
+          {profile.isSubscribed
+            ? t("renewTitle", { name: profile.displayName })
+            : t("applyTitle", { name: profile.displayName })}
         </DialogTitle>
         <DialogDescription className="text-sm text-[#475569]">
           {fullyWaived
-            ? `${profile.displayName}'s fee waiver covers the whole month, so no payment is needed. An admin will approve it and subscribe ${profile.displayName} for one month.`
-            : `Enter the details of your ${formatMoney(amountDue, payment.currency)} payment. An admin will check it and subscribe ${profile.displayName} for one month.`}
+            ? t("fullyWaivedBody", { name: profile.displayName })
+            : t("paymentBody", {
+                name: profile.displayName,
+                amount: formatMoney(amountDue, payment.currency),
+              })}
         </DialogDescription>
       </div>
 
@@ -174,18 +181,18 @@ function ApplyForm({
           <BadgePercent className="w-5 h-5 text-[#157A34] shrink-0 mt-0.5" />
           <div className="text-sm text-[#0C1F33]">
             <p className="font-semibold">
-              {waiver.percent}% fee waiver applied
+              {t("waiverApplied", { percent: waiver.percent })}
             </p>
             <p className="text-[#475569]">
               {fullyWaived ? (
-                "Nothing to pay this month."
+                t("nothingToPay")
               ) : (
                 <>
                   <span className="line-through">
                     {formatMoney(payment.monthlyPrice, payment.currency)}
                   </span>{" "}
-                  → {formatMoney(amountDue, payment.currency)}. The waiver is
-                  used once this subscription is approved.
+                  → {formatMoney(amountDue, payment.currency)}.{" "}
+                  {t("waiverUsedNote")}
                 </>
               )}
             </p>
@@ -197,7 +204,7 @@ function ApplyForm({
         <>
           <div>
             <label className={labelClass} htmlFor="payment-method">
-              Paid to
+              {t("paidTo")}
             </label>
             <select
               id="payment-method"
@@ -210,14 +217,14 @@ function ApplyForm({
                   {account.label} · {account.accountNumber}
                 </option>
               ))}
-              <option value={OTHER_METHOD}>Other</option>
+              <option value={OTHER_METHOD}>{tCommon("other")}</option>
             </select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass} htmlFor="amount">
-                Amount ({payment.currency})
+                {t("amount", { currency: payment.currency })}
               </label>
               <input
                 id="amount"
@@ -233,7 +240,7 @@ function ApplyForm({
             </div>
             <div>
               <label className={labelClass} htmlFor="paid-at">
-                Payment date
+                {t("paymentDate")}
               </label>
               <input
                 id="paid-at"
@@ -249,13 +256,14 @@ function ApplyForm({
 
           <div>
             <label className={labelClass} htmlFor="transaction-id">
-              Transaction ID / reference
+              {t("transactionId")}
             </label>
             <input
               id="transaction-id"
               value={transactionId}
               onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="e.g. 9KD7X2LQ1P"
+              placeholder={t("transactionIdPlaceholder")}
+              dir="ltr"
               maxLength={100}
               className={inputClass}
               required
@@ -264,14 +272,16 @@ function ApplyForm({
 
           <div>
             <label className={labelClass} htmlFor="sender-account">
-              Paid from{" "}
-              <span className="font-normal text-[#64748B]">(optional)</span>
+              {t("paidFrom")}{" "}
+              <span className="font-normal text-[#64748B]">
+                ({tCommon("optional")})
+              </span>
             </label>
             <input
               id="sender-account"
               value={senderAccount}
               onChange={(e) => setSenderAccount(e.target.value)}
-              placeholder="Your account or mobile number"
+              placeholder={t("paidFromPlaceholder")}
               maxLength={100}
               className={inputClass}
             />
@@ -281,7 +291,10 @@ function ApplyForm({
 
       <div>
         <label className={labelClass} htmlFor="note">
-          Note <span className="font-normal text-[#64748B]">(optional)</span>
+          {t("note")}{" "}
+          <span className="font-normal text-[#64748B]">
+            ({tCommon("optional")})
+          </span>
         </label>
         <textarea
           id="note"
@@ -296,8 +309,10 @@ function ApplyForm({
       {!fullyWaived && (
         <div>
           <p className={labelClass}>
-            Payment screenshot / receipt{" "}
-            <span className="font-normal text-[#64748B]">(optional)</span>
+            {t("proof")}{" "}
+            <span className="font-normal text-[#64748B]">
+              ({tCommon("optional")})
+            </span>
           </p>
           <input
             ref={fileInput}
@@ -310,7 +325,7 @@ function ApplyForm({
             <div className="relative w-fit">
               <Image
                 src={proofUrl}
-                alt="Payment proof"
+                alt={t("proofAlt")}
                 width={160}
                 height={160}
                 className="h-32 w-auto rounded-lg border border-[#E3E8EF] object-cover"
@@ -318,8 +333,8 @@ function ApplyForm({
               <button
                 type="button"
                 onClick={() => setProofUrl(null)}
-                aria-label="Remove image"
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-[#E3E8EF] flex items-center justify-center shadow-sm hover:bg-gray-50"
+                aria-label={tCommon("removeImage")}
+                className="absolute -top-2 -end-2 w-6 h-6 rounded-full bg-white border border-[#E3E8EF] flex items-center justify-center shadow-sm hover:bg-gray-50"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -336,7 +351,7 @@ function ApplyForm({
               ) : (
                 <ImagePlus className="w-4 h-4" />
               )}
-              {uploading ? "Uploading..." : "Add image"}
+              {uploading ? tCommon("uploading") : tCommon("addImage")}
             </button>
           )}
         </div>
@@ -348,7 +363,7 @@ function ApplyForm({
           onClick={onDone}
           className="px-5 py-2.5 border border-[#E3E8EF] rounded-lg text-sm font-semibold text-[#475569] hover:bg-gray-50"
         >
-          Cancel
+          {tCommon("cancel")}
         </button>
         <button
           type="submit"
@@ -356,10 +371,10 @@ function ApplyForm({
           className="px-5 py-2.5 bg-[#22A146] rounded-lg text-sm font-bold text-[#0C1F33] hover:bg-[#1E9040] disabled:opacity-50"
         >
           {createMutation.isPending
-            ? "Submitting..."
+            ? tCommon("submitting")
             : fullyWaived
-              ? "Submit"
-              : "Submit payment"}
+              ? tCommon("submit")
+              : t("submitPayment")}
         </button>
       </div>
     </form>

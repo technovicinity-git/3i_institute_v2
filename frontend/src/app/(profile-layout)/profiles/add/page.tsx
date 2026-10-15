@@ -16,32 +16,43 @@ import { useCreateLearnerProfileMutation } from "@/hooks/use-learner-profiles";
 import { useLearnerAvatarUploadMutation } from "@/hooks/use-avatar-upload";
 import {
   DAYS,
-  MONTHS,
+  monthOptions,
   YEARS,
   formatDateToISO,
   calculateAge,
 } from "@/lib/date-utils";
+import { useLocale, useTranslations } from "next-intl";
 
-const addLearnerSchema = z
-  .object({
-    displayName: z.string().min(1, "Name is required").max(100),
-    day: z.string().min(1, "Day is required"),
-    month: z.string().min(1, "Month is required"),
-    year: z.string().min(4, "Year is required"),
-    pin: z
-      .string()
-      .length(4, "PIN must be exactly 4 digits")
-      .regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
-    confirmPin: z.string().length(4, "PIN must be exactly 4 digits"),
-  })
-  .refine((data) => data.pin === data.confirmPin, {
-    message: "PINs do not match",
-    path: ["confirmPin"],
-  });
+type ValidationT = ReturnType<typeof useTranslations<"learnerForm.validation">>;
 
-type AddLearnerFormData = z.infer<typeof addLearnerSchema>;
+// Built per render so validation messages use the current language
+const createSchema = (t: ValidationT) =>
+  z
+    .object({
+      displayName: z.string().min(1, t("nameRequired")).max(100),
+      day: z.string().min(1, t("dayRequired")),
+      month: z.string().min(1, t("monthRequired")),
+      year: z.string().min(4, t("yearRequired")),
+      pin: z
+        .string()
+        .length(4, t("pinFormat"))
+        .regex(/^\d{4}$/, t("pinFormat")),
+      confirmPin: z.string().length(4, t("pinFormat")),
+    })
+    .refine((data) => data.pin === data.confirmPin, {
+      message: t("pinMismatch"),
+      path: ["confirmPin"],
+    });
+
+type AddLearnerFormData = z.infer<ReturnType<typeof createSchema>>;
 
 export default function AddLearnerPage() {
+  const t = useTranslations("learnerForm");
+  const tCommon = useTranslations("common");
+  const tToast = useTranslations("learnerForm.toasts");
+  const tSocial = useTranslations("auth.social");
+  const tValidation = useTranslations("learnerForm.validation");
+  const locale = useLocale();
   const router = useRouter();
   const createMutation = useCreateLearnerProfileMutation();
   const avatarUploadMutation = useLearnerAvatarUploadMutation();
@@ -57,7 +68,7 @@ export default function AddLearnerPage() {
     control,
     formState: { errors },
   } = useForm<AddLearnerFormData>({
-    resolver: zodResolver(addLearnerSchema),
+    resolver: zodResolver(createSchema(tValidation)),
   });
 
   const handleAvatarClick = () => {
@@ -71,13 +82,13 @@ export default function AddLearnerPage() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF");
+      toast.error(tCommon("invalidImageType"));
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size exceeds 5MB limit");
+      toast.error(tCommon("imageTooLarge"));
       return;
     }
 
@@ -140,9 +151,9 @@ export default function AddLearnerPage() {
           if (details?.fieldErrors) {
             const fieldErrors = details.fieldErrors as Record<string, string[]>;
             const firstError = Object.values(fieldErrors)[0]?.[0];
-            toast.error(firstError ?? message ?? "Failed to create profile");
+            toast.error(firstError ?? message ?? tToast("createFailed"));
           } else {
-            toast.error(message ?? "Failed to create profile");
+            toast.error(message ?? tToast("createFailed"));
           }
         },
       },
@@ -167,11 +178,10 @@ export default function AddLearnerPage() {
     <div className="text-primary min-h-full bg-[#FBF9F4]">
       <main className="flex items-center justify-center px-5 py-10">
         <div className="w-full max-w-[640px] rounded-2xl border border-gray-200 bg-white p-7 shadow-sm md:p-10">
-          <Eyebrow className="mb-4">State A: Create</Eyebrow>
-          <h1 className="font-serif text-4xl mb-4">Add a learner</h1>
+          <Eyebrow className="mb-4">{t("eyebrow")}</Eyebrow>
+          <h1 className="font-serif text-4xl mb-4">{t("addTitle")}</h1>
           <p className="mb-8 max-w-md leading-relaxed text-gray-500">
-            This won&apos;t cost anything yet — you&apos;ll only pay when
-            they&apos;re ready to start a course.
+            {t("addSubtitle")}
           </p>
 
           {/* Avatar */}
@@ -181,7 +191,7 @@ export default function AddLearnerPage() {
                 {previewUrl ? (
                   <Image
                     src={previewUrl}
-                    alt="Profile preview"
+                    alt={t("photoPreview")}
                     width={112}
                     height={112}
                     className="w-full h-full rounded-full object-cover"
@@ -205,8 +215,8 @@ export default function AddLearnerPage() {
                 type="button"
                 onClick={handleAvatarClick}
                 disabled={avatarUploadMutation.isPending}
-                aria-label="Add profile picture"
-                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow hover:bg-primary-dark transition-colors disabled:opacity-50"
+                aria-label={t("addPhoto")}
+                className="absolute bottom-0 end-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {avatarUploadMutation.isPending ? (
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -236,7 +246,7 @@ export default function AddLearnerPage() {
                 onClick={removeAvatar}
                 className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors"
               >
-                Remove photo
+                {t("removePhoto")}
               </button>
             )}
           </div>
@@ -253,11 +263,11 @@ export default function AddLearnerPage() {
                 htmlFor="displayName"
                 className="mb-2 block text-sm font-semibold"
               >
-                Learner&apos;s name
+                {t("name")}
               </Label>
               <Input
                 id="displayName"
-                placeholder="e.g. Yusuf"
+                placeholder={t("namePlaceholder")}
                 {...register("displayName")}
                 onChange={(e) => {
                   register("displayName").onChange(e);
@@ -276,16 +286,16 @@ export default function AddLearnerPage() {
             {/* Date of Birth */}
             <div>
               <Label className="mb-2 block text-sm font-semibold">
-                Date of birth
+                {t("dateOfBirth")}
               </Label>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <select
                     {...register("day")}
                     className="w-full rounded-lg border border-gray-300 px-3 py-3 bg-white"
-                    aria-label="Day"
+                    aria-label={tSocial("day")}
                   >
-                    <option value="">Day</option>
+                    <option value="">{tSocial("day")}</option>
                     {DAYS.map((d) => (
                       <option key={d} value={d}>
                         {d}
@@ -303,10 +313,10 @@ export default function AddLearnerPage() {
                   <select
                     {...register("month")}
                     className="w-full rounded-lg border border-gray-300 px-3 py-3 bg-white"
-                    aria-label="Month"
+                    aria-label={tSocial("month")}
                   >
-                    <option value="">Month</option>
-                    {MONTHS.map((m) => (
+                    <option value="">{tSocial("month")}</option>
+                    {monthOptions(locale).map((m) => (
                       <option key={m.value} value={m.value}>
                         {m.label}
                       </option>
@@ -323,9 +333,9 @@ export default function AddLearnerPage() {
                   <select
                     {...register("year")}
                     className="w-full rounded-lg border border-gray-300 px-3 py-3 bg-white"
-                    aria-label="Year"
+                    aria-label={tSocial("year")}
                   >
-                    <option value="">Year</option>
+                    <option value="">{tSocial("year")}</option>
                     {YEARS.map((y) => (
                       <option key={y} value={y}>
                         {y}
@@ -343,16 +353,13 @@ export default function AddLearnerPage() {
 
             {/* PIN Section */}
             <div className="rounded-xl bg-surface p-5">
-              <h3 className="mb-1 font-bold">Set a PIN</h3>
-              <p className="mb-5 text-xs text-gray-500">
-                You&apos;ll use this PIN to switch to this profile. Choose one
-                only you know.
-              </p>
+              <h3 className="mb-1 font-bold">{t("setPinTitle")}</h3>
+              <p className="mb-5 text-xs text-gray-500">{t("setPinHint")}</p>
 
               <div className="space-y-4">
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
-                    4-Digit PIN
+                    {t("pin")}
                   </Label>
                   <Controller
                     name="pin"
@@ -374,7 +381,7 @@ export default function AddLearnerPage() {
 
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
-                    Confirm PIN
+                    {t("confirmPin")}
                   </Label>
                   <Controller
                     name="confirmPin"
@@ -404,7 +411,7 @@ export default function AddLearnerPage() {
                 onClick={() => router.push("/profile-management")}
                 className="w-1/3 py-4 border-gray-300"
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -414,10 +421,10 @@ export default function AddLearnerPage() {
                 }
               >
                 {createMutation.isPending
-                  ? "Adding..."
+                  ? t("adding")
                   : avatarUploadMutation.isPending
-                    ? "Uploading avatar..."
-                    : "Add learner"}
+                    ? t("uploadingAvatar")
+                    : t("submitAdd")}
               </Button>
             </div>
           </form>
@@ -462,7 +469,7 @@ function PinInput({ value, onChange, error }: PinInputProps) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" dir="ltr">
       {[0, 1, 2, 3].map((index) => (
         <input
           key={index}

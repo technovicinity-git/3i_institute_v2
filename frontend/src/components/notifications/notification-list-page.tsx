@@ -10,6 +10,7 @@ import {
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { useOpenNotification } from "@/components/notifications/use-open-notification";
 import { Pagination } from "@/components/ui/pagination";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE = 20;
 
@@ -23,6 +24,8 @@ export function NotificationListPage({
   learnerProfileId,
   emptyScopeMessage,
 }: NotificationListPageProps) {
+  const t = useTranslations("notifications");
+  const tCommon = useTranslations("common");
   const [page, setPage] = useState(1);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const scope = { learnerProfileId };
@@ -55,12 +58,12 @@ export function NotificationListPage({
         <div>
           <h1
             className="text-3xl md:text-[36px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            Notifications
+            {t("title")}
           </h1>
           <p className="text-base text-[#64748B]">
-            {data?.unreadCount ?? 0} unread
+            {t("unreadCount", { count: data?.unreadCount ?? 0 })}
           </p>
         </div>
         <button
@@ -70,14 +73,14 @@ export function NotificationListPage({
           className="flex items-center gap-2 px-4 py-2.5 border border-[#E3E8EF] bg-white rounded-lg text-sm font-semibold text-[#0C1F33] hover:bg-gray-50 disabled:opacity-50"
         >
           <CheckCheck className="w-4 h-4" />
-          Mark all as read
+          {t("markAllRead")}
         </button>
       </div>
 
       <div className="flex gap-2 mb-4" role="tablist">
         {[
-          { label: "All", value: false },
-          { label: "Unread", value: true },
+          { label: t("all"), value: false },
+          { label: t("unread"), value: true },
         ].map((tab) => (
           <button
             key={tab.label}
@@ -107,13 +110,13 @@ export function NotificationListPage({
 
       {isError && (
         <div className="bg-white border border-[#E3E8EF] rounded-xl p-10 text-center">
-          <p className="text-red-600 mb-3">Could not load notifications.</p>
+          <p className="text-red-600 mb-3">{t("loadFailed")}</p>
           <button
             type="button"
             onClick={() => refetch()}
             className="text-sm font-semibold text-[#22A146] hover:underline"
           >
-            Try again
+            {tCommon("tryAgain")}
           </button>
         </div>
       )}
@@ -122,7 +125,7 @@ export function NotificationListPage({
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-[#64748B]">
-            {unreadOnly ? "No unread notifications." : "No notifications yet."}
+            {unreadOnly ? t("noneUnread") : t("none")}
           </p>
         </div>
       )}
@@ -145,7 +148,7 @@ export function NotificationListPage({
             pageSize={PAGE_SIZE}
             total={data.total}
             onPageChange={setPage}
-            itemLabel="notifications"
+            itemLabel={t("itemLabel")}
             className="mt-4"
           />
         </>

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
+import { useTranslations } from "next-intl";
 import {
   Ban,
   CheckCircle2,
@@ -81,8 +82,8 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   tone = "danger",
   icon,
   onConfirm,
@@ -90,6 +91,7 @@ export function ConfirmDialog({
   confirmDisabled = false,
   children,
 }: ConfirmDialogProps) {
+  const tCommon = useTranslations("common");
   const [pending, setPending] = useState(false);
   const busy = loading || pending;
   const style = TONES[tone];
@@ -136,7 +138,7 @@ export function ConfirmDialog({
             <div className="min-w-0 flex-1 pt-0.5">
               <AlertDialogPrimitive.Title
                 className="text-lg text-[#0C1F33]"
-                style={{ fontFamily: "'Marcellus', serif" }}
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 {title}
               </AlertDialogPrimitive.Title>
@@ -158,7 +160,7 @@ export function ConfirmDialog({
               disabled={busy}
               className="h-10 rounded-lg border border-[#E3E8EF] bg-white px-4 text-sm font-semibold text-[#334155] transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
-              {cancelLabel}
+              {cancelLabel ?? tCommon("cancel")}
             </AlertDialogPrimitive.Cancel>
             <AlertDialogPrimitive.Action
               onClick={handleConfirm}
@@ -169,7 +171,7 @@ export function ConfirmDialog({
               )}
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-              {confirmLabel}
+              {confirmLabel ?? tCommon("confirm")}
             </AlertDialogPrimitive.Action>
           </div>
         </AlertDialogPrimitive.Content>

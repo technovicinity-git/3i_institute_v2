@@ -21,10 +21,14 @@ import { useEnrolMutation } from "@/hooks/use-enrolment";
 import { useWishlistToggle } from "@/hooks/use-wishlist";
 import { ShareDialog } from "@/components/share/share-dialog";
 import { siteUrl } from "@/lib/share";
-import { languageLabel, levelLabel } from "./utils";
+import { useTranslations } from "next-intl";
+import { levelKey } from "@/lib/course-level";
+import { languageLabel } from "./utils";
 
 /** Sticky right-rail card: enrol / continue actions, inclusions and sharing. */
 export function EnrolmentCard({ course }: { course: CourseDetails }) {
+  const t = useTranslations("courseDetails.card");
+  const tLevel = useTranslations("courseLevel");
   const [showShare, setShowShare] = useState(false);
 
   return (
@@ -42,7 +46,7 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
-                Course Preview
+                {t("preview")}
               </div>
             )}
           </div>
@@ -51,10 +55,10 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
             {/* CTA */}
             <div className="flex flex-col gap-3">
               <p className="text-xs font-bold text-[#B8912F] uppercase tracking-wide">
-                Included with membership
+                {t("included")}
               </p>
               <h3 className="font-serif text-2xl text-[#0C1F33]">
-                {course.isEnrolled ? "You're enrolled" : "Start learning today"}
+                {course.isEnrolled ? t("enrolledTitle") : t("startToday")}
               </h3>
 
               {course.isEnrolled ? (
@@ -65,15 +69,18 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
 
               <p className="text-[13px] text-[#64748B] text-center">
                 {course.maximumAge !== null
-                  ? `For ages ${course.minimumAge}–${course.maximumAge}`
-                  : `For ages ${course.minimumAge}+`}
+                  ? t("forAgesRange", {
+                      min: course.minimumAge,
+                      max: course.maximumAge,
+                    })
+                  : t("forAgesFrom", { min: course.minimumAge })}
               </p>
 
               <Link
                 href="/subscription"
                 className="text-sm font-semibold text-[#12304E] text-center underline"
               >
-                Manage subscription
+                {t("manageSubscription")}
               </Link>
             </div>
 
@@ -84,7 +91,7 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
               <>
                 <div>
                   <p className="text-[13px] font-bold text-[#0C1F33] mb-3">
-                    What&apos;s included
+                    {t("whatsIncluded")}
                   </p>
                   <ul className="space-y-3">
                     {course.whatIncluded.map((item, i) => (
@@ -112,7 +119,7 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
                 weeks
               </span> */}
               <span className="flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5" /> {levelLabel(course.level)}
+                <Award className="w-3.5 h-3.5" /> {tLevel(levelKey(course.level))}
               </span>
               <span className="flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5" /> {languageLabel(course.language)}
@@ -125,14 +132,14 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
               onClick={() => setShowShare(true)}
               className="flex items-center gap-2 text-sm text-[#0C1F33] hover:text-[#22A146] transition-colors"
             >
-              <Share2 className="w-3.5 h-3.5" /> Share this course
+              <Share2 className="w-3.5 h-3.5" /> {t("share")}
             </button>
             <ShareDialog
               open={showShare}
               onOpenChange={setShowShare}
               url={`${siteUrl()}/courses/${course.id}`}
               title={course.title}
-              text={`Check out "${course.title}" at 3i International Islamic Institute`}
+              text={t("shareText", { title: course.title })}
               campaign="course_share"
               imageUrl={course.thumbnailUrl ?? course.coverImageUrl}
               subtitle={course.instructor?.name}
@@ -146,6 +153,7 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
 
 /** Continue learning / chat room / dashboard for an enrolled learner. */
 function EnrolledActions({ course }: { course: CourseDetails }) {
+  const t = useTranslations("courseDetails.card");
   return (
     <>
       {course.type === "REGULAR" &&
@@ -159,14 +167,14 @@ function EnrolledActions({ course }: { course: CourseDetails }) {
             className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center flex items-center justify-center gap-2"
           >
             {course.isCompleted ? (
-              "Review Course"
+              t("reviewCourse")
             ) : course.lastWatchedLessonId ? (
               <>
                 <Play className="w-4 h-4" />
-                Continue Learning
+                {t("continue")}
               </>
             ) : (
-              "Start Learning"
+              t("start")
             )}
           </Link>
         ) : (
@@ -174,17 +182,17 @@ function EnrolledActions({ course }: { course: CourseDetails }) {
             disabled
             className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
           >
-            Lessons coming soon
+            {t("comingSoon")}
           </button>
         ))}
 
       {/* Chat Room Button */}
       {course.type !== "REGULAR" && (
         <Link
-          href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent("Your Batch")}`}
+          href={`/chat?courseId=${course.id}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.enrolmentBatchId ?? ""}&batchName=${encodeURIComponent(t("yourBatch"))}`}
           className="w-full py-3 bg-[#12304E] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1a4268] transition-colors text-center"
         >
-          Chat Room
+          {t("chatRoom")}
         </Link>
       )}
 
@@ -193,13 +201,13 @@ function EnrolledActions({ course }: { course: CourseDetails }) {
         href="/dashboard"
         className="w-full py-3 border border-[#12304E] text-[#12304E] rounded-lg text-[15px] font-semibold hover:bg-gray-50 transition-colors text-center"
       >
-        Go to Dashboard
+        {t("dashboard")}
       </Link>
 
       {/* Enrolled badge */}
       <span className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-[#22A146]">
         <CheckCircle className="w-4 h-4" />
-        Enrolled
+        {t("enrolled")}
       </span>
     </>
   );
@@ -207,6 +215,8 @@ function EnrolledActions({ course }: { course: CourseDetails }) {
 
 /** Enrol (regular) or batch selection (online class), plus wishlist. */
 function EnrolActions({ course }: { course: CourseDetails }) {
+  const t = useTranslations("courseDetails.card");
+  const tWishlist = useTranslations("wishlist");
   const router = useRouter();
   const queryClient = useQueryClient();
   const { activeProfile } = useProfileStore();
@@ -215,7 +225,7 @@ function EnrolActions({ course }: { course: CourseDetails }) {
 
   const handleRegularEnrol = () => {
     if (!activeProfile) {
-      toast.error("Please select a profile first");
+      toast.error(t("selectProfileToast"));
       router.push("/profiles");
       return;
     }
@@ -224,7 +234,6 @@ function EnrolActions({ course }: { course: CourseDetails }) {
       { learnerProfileId: activeProfile.id, courseId: course.id },
       {
         onSuccess: () => {
-          toast.success("Enrolled successfully");
           queryClient.invalidateQueries({
             queryKey: ["course-details", course.id, activeProfile.id],
           });
@@ -244,33 +253,38 @@ function EnrolActions({ course }: { course: CourseDetails }) {
         <>
           <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
             <p className="font-semibold">
-              Not available for {activeProfile?.displayName}
+              {t("notAvailableFor", { name: activeProfile?.displayName ?? "" })}
             </p>
             <p className="mt-0.5">
-              {eligibility.ageMessage} ({activeProfile?.displayName} is{" "}
-              {eligibility.age}).
+              {t("ageReason", {
+                message: eligibility.ageMessage ?? "",
+                name: activeProfile?.displayName ?? "",
+                age: eligibility.age ?? "",
+              })}
             </p>
           </div>
           <button
             disabled
             className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
           >
-            Enrol Now
+            {t("enrolNow")}
           </button>
         </>
       ) : needsSubscription ? (
         <>
           <p className="text-sm text-[#475569]">
-            <span className="font-semibold text-[#0C1F33]">
-              {activeProfile?.displayName}
-            </span>{" "}
-            needs a subscription to enrol in courses.
+            {t.rich("needsSubscription", {
+              name: activeProfile?.displayName ?? "",
+              strong: (chunks) => (
+                <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+              ),
+            })}
           </p>
           <Link
             href="/subscription"
             className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
           >
-            Subscribe to Enrol
+            {t("subscribeToEnrol")}
           </Link>
         </>
       ) : course.type === "REGULAR" ? (
@@ -282,10 +296,10 @@ function EnrolActions({ course }: { course: CourseDetails }) {
           {enrolMutation.isPending ? (
             <>
               <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              Enrolling...
+              {t("enrolling")}
             </>
           ) : (
-            "Enrol Now"
+            t("enrolNow")
           )}
         </button>
       ) : (
@@ -297,7 +311,7 @@ function EnrolActions({ course }: { course: CourseDetails }) {
           }
           className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
         >
-          {activeProfile ? "View Enrolment Options" : "Select Profile First"}
+          {activeProfile ? t("viewOptions") : t("selectProfileFirst")}
         </Link>
       )}
 
@@ -316,7 +330,7 @@ function EnrolActions({ course }: { course: CourseDetails }) {
         <Heart
           className={`w-4 h-4 ${wishlist.wishlisted ? "fill-[#2D6CDF]" : ""}`}
         />
-        {wishlist.wishlisted ? "Wishlisted" : "Add to wishlist"}
+        {wishlist.wishlisted ? t("wishlisted") : tWishlist("add")}
       </button>
     </>
   );

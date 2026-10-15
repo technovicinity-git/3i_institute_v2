@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { apiClient } from "@/lib/api-client";
 
 export interface UserProfile {
@@ -72,6 +73,7 @@ interface ApiErrorResponse {
 }
 
 export function useUpdateProfileMutation() {
+  const tToast = useTranslations("security.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -82,7 +84,7 @@ export function useUpdateProfileMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
-      toast.success("Profile updated successfully");
+      toast.success(tToast("profileUpdated"));
     },
     onError: (error: unknown) => {
       const apiError = error as ApiErrorResponse;
@@ -91,7 +93,7 @@ export function useUpdateProfileMutation() {
       const firstError = fieldErrors
         ? Object.values(fieldErrors)[0]?.[0]
         : undefined;
-      toast.error(firstError ?? message ?? "Failed to update profile");
+      toast.error(firstError ?? message ?? tToast("profileFailed"));
     },
   });
 }

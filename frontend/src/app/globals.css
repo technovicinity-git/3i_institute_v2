@@ -39,10 +39,33 @@
   --color-brand-cream: #faf9f6;
   --color-brand-gold: #c5a866;
 
-  --font-serif: "Libre Caslon Text", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  /* Script fonts (loaded in app/layout.tsx) follow the Latin face, so
+     Bengali, Hindi, Arabic and Urdu text renders in a proper font while Latin
+     text keeps its usual one. Named directly rather than via their next/font
+     variables, which are set on <body> and so don't resolve here on :root. */
+  --font-serif: "Libre Caslon Text", Georgia, "Noto Sans Bengali",
+    "Noto Sans Devanagari", "Noto Naskh Arabic", serif;
+  --font-sans: "Inter", "Noto Sans Bengali", "Noto Sans Devanagari",
+    "Noto Naskh Arabic", system-ui, sans-serif;
+  /* Headings / body text set inline as Marcellus / Figtree */
+  --font-display: "Marcellus", "Noto Sans Bengali", "Noto Sans Devanagari",
+    "Noto Naskh Arabic", serif;
+  --font-body: "Figtree", "Noto Sans Bengali", "Noto Sans Devanagari",
+    "Noto Naskh Arabic", sans-serif;
 
   --shadow-card: 0 4px 20px rgba(13, 43, 69, 0.06);
+}
+
+/* Arabic and Urdu keep the same (left-to-right) layout as every other
+   language; only text is right-to-left. Each paragraph takes its direction
+   and alignment from its own first letter, so Arabic/Urdu text runs and
+   aligns right-to-left while English content (course titles, names, emails)
+   stays left-to-right. Messages carry a leading right-to-left mark
+   (i18n/request.ts) so they read right-to-left even when they open with a
+   Latin word or a value. */
+html:lang(ar) body *,
+html:lang(ur) body * {
+  unicode-bidi: plaintext;
 }
 
 html,
@@ -84,7 +107,7 @@ select {
 }
 .rich-text-content h1,
 .rich-text-content h2 {
-  font-family: "Marcellus", serif;
+  font-family: var(--font-display);
   color: #0c1f33;
   line-height: 1.3;
 }

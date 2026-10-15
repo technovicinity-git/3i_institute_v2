@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { learnerAssignmentService } from "@/services/learner-assignment.service";
 import type { SubmitAssignmentInput } from "@/types/learner-assignment";
 
@@ -17,6 +18,7 @@ export function useCourseAssignments(
 }
 
 export function useSubmitAssignmentMutation() {
+  const tToast = useTranslations("assignments.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -24,11 +26,11 @@ export function useSubmitAssignmentMutation() {
       learnerAssignmentService.submitAssignment(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["learner-assignments"] });
-      toast.success("Assignment submitted");
+      toast.success(tToast("submitted"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to submit assignment");
+      toast.error(message ?? tToast("failed"));
     },
   });
 }

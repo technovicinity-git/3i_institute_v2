@@ -6,9 +6,11 @@ import { loadAppleScript } from "@/lib/social-auth";
 import { DobModal } from "@/components/social/dob-modal";
 import { useAppleLoginMutation } from "@/hooks/use-apple-auth";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "../ui/button";
 
 export function AppleButton() {
+  const t = useTranslations("auth.social");
   const appleLoginMutation = useAppleLoginMutation();
   const [showDobModal, setShowDobModal] = useState(false);
   const [appleData, setAppleData] = useState<{
@@ -30,14 +32,14 @@ export function AppleButton() {
         }
       })
       .catch(() => {
-        toast.error("Failed to load Apple sign-in");
+        toast.error(t("appleLoadFailed"));
       });
-  }, []);
+  }, [t]);
 
   const handleAppleClick = async () => {
     try {
       if (!window.AppleID) {
-        toast.error("Apple sign-in not available");
+        toast.error(t("appleUnavailable"));
         return;
       }
 
@@ -48,7 +50,7 @@ export function AppleButton() {
       const lastName = response.user?.name?.lastName;
 
       if (!identityToken) {
-        toast.error("No identity token received from Apple");
+        toast.error(t("appleNoToken"));
         return;
       }
 
@@ -72,7 +74,7 @@ export function AppleButton() {
       );
     } catch (error) {
       console.error("Apple sign-in error:", error);
-      toast.error("Apple sign-in failed");
+      toast.error(t("appleFailed"));
     }
   };
 
@@ -112,7 +114,7 @@ export function AppleButton() {
             fill="#000000"
           ></path>
         </svg>
-        Continue with Apple
+        {t("continueWithApple")}
       </Button>
 
       <DobModal

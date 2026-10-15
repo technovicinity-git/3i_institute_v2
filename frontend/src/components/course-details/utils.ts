@@ -1,17 +1,8 @@
-export function levelLabel(level: string): string {
-  return level === "1" ? "Beginner" : level === "2" ? "Intermediate" : "Advanced";
-}
+import { isLocale, localeNames } from "@/i18n/config";
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  en: "English",
-  bn: "Bangla",
-  hi: "Hindi",
-  ur: "Urdu",
-  ar: "Arabic",
-};
-
+/** A course's teaching language, named in its own script. */
 export function languageLabel(code: string): string {
-  return LANGUAGE_LABELS[code] ?? code;
+  return isLocale(code) ? localeNames[code] : code;
 }
 
 export function initials(name: string): string {

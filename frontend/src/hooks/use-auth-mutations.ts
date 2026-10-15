@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   authService,
@@ -87,13 +88,14 @@ export function useRegisterInstructorMutation() {
 
 export function useLogoutMutation() {
   const router = useRouter();
+  const t = useTranslations("auth.toasts");
   const { logout } = useAuthStore();
 
   return useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
       logout();
-      toast.success("Logged out");
+      toast.success(t("loggedOut"));
       router.push("/login");
     },
     onError: () => {

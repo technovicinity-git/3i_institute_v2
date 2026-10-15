@@ -2,6 +2,8 @@
 
 import { useDevices, useRemoveDeviceMutation } from "@/hooks/use-devices";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 // ---- Icons ----
 
@@ -110,6 +112,9 @@ function getDeviceIcon(platform: string) {
 // ---- Page ----
 
 export default function YourDevicesPage() {
+  const t = useTranslations("devices");
+  const tCommon = useTranslations("common");
+  const format = useDateFormat();
   const { data, isLoading, isError } = useDevices();
   const removeDeviceMutation = useRemoveDeviceMutation();
   const confirm = useConfirm();
@@ -117,15 +122,14 @@ export default function YourDevicesPage() {
   function handleDeauthorise(device: { id: string; name: string }) {
     confirm({
       tone: "warning",
-      title: "De-authorise device?",
-      description: (
-        <>
-          <span className="font-semibold text-[#0C1F33]">{device.name}</span>{" "}
-          will be signed out and must be added again to use 3i Institute.
-          This counts as one of your device swaps.
-        </>
-      ),
-      confirmLabel: "De-authorise",
+      title: t("deauthoriseTitle"),
+      description: t.rich("deauthoriseBody", {
+        name: device.name,
+        strong: (chunks) => (
+          <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+        ),
+      }),
+      confirmLabel: t("deauthorise"),
       onConfirm: () => removeDeviceMutation.mutateAsync(device.id),
     });
   }
@@ -133,15 +137,15 @@ export default function YourDevicesPage() {
   return (
     <section
       className="w-full min-h-full bg-[#FBF9F4] px-6 sm:px-10 lg:px-[120px] pt-10 sm:pt-14 pb-16 sm:pb-20"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
         {/* Title */}
         <h1
           className="text-3xl sm:text-[40px] leading-tight text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Your devices
+          {t("title")}
         </h1>
 
         {/* Loading */}
@@ -154,12 +158,12 @@ export default function YourDevicesPage() {
         {/* Error */}
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p className="text-red-600 font-medium">Failed to load devices</p>
+            <p className="text-red-600 font-medium">{t("loadFailed")}</p>
             <button
               onClick={() => window.location.reload()}
               className="text-[#22A146] font-semibold hover:underline"
             >
-              Try again
+              {tCommon("tryAgain")}
             </button>
           </div>
         )}
@@ -170,12 +174,15 @@ export default function YourDevicesPage() {
             {/* Summary card */}
             <div className="flex items-center justify-center px-6 py-5 bg-white border border-[#E3E8EF] rounded-lg shadow-sm">
               <p className="text-base text-[#0C1F33] text-center">
-                You have {data.totalSeats}{" "}
-                {data.totalSeats === 1 ? "seat" : "seats"}, so up to{" "}
-                {data.deviceLimit}{" "}
-                {data.deviceLimit === 1 ? "device" : "devices"}.{" "}
+                {t("summary", {
+                  seats: data.totalSeats,
+                  limit: data.deviceLimit,
+                })}{" "}
                 <span className="font-medium">
-                  {data.currentCount} of {data.deviceLimit} in use.
+                  {t("inUse", {
+                    count: data.currentCount,
+                    limit: data.deviceLimit,
+                  })}
                 </span>
               </p>
             </div>
@@ -183,7 +190,7 @@ export default function YourDevicesPage() {
             {/* Device list */}
             {data.devices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <p className="text-[#64748B]">No devices registered yet.</p>
+                <p className="text-[#64748B]">{t("empty")}</p>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
@@ -201,16 +208,16 @@ export default function YourDevicesPage() {
                           {device.name}
                         </span>
                         <span className="text-[13px] text-[#475569]">
-                          {device.lastSeen}
+                          {t("lastSeen", { when: format.relative(device.lastUsedAt) })}
                         </span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleDeauthorise(device)}
                       disabled={removeDeviceMutation.isPending}
-                      className="text-sm font-semibold transition-colors shrink-0 ml-4 disabled:opacity-50 text-red-600 hover:text-red-700"
+                      className="text-sm font-semibold transition-colors shrink-0 ms-4 disabled:opacity-50 text-red-600 hover:text-red-700"
                     >
-                      De-authorise
+                      {t("deauthorise")}
                     </button>
                   </div>
                 ))}
@@ -219,12 +226,11 @@ export default function YourDevicesPage() {
 
             {/* Swap limit note */}
             <p className="text-[13px] text-[#475569]">
-              You can swap devices up to {data.swapLimit} times every 30 days.
-              You&apos;ve used {data.swapsUsed} of {data.swapLimit}.
+              {t("swapNote", { limit: data.swapLimit, used: data.swapsUsed })}
               {data.swapsRemaining > 0 && (
                 <span className="font-medium text-[#22A146]">
                   {" "}
-                  ({data.swapsRemaining} remaining)
+                  {t("swapsRemaining", { count: data.swapsRemaining })}
                 </span>
               )}
             </p>

@@ -80,7 +80,7 @@ export function CourseHeader() {
               </p>
               <h2
                 className="truncate text-xl text-[#0C1F33] md:text-2xl"
-                style={{ fontFamily: "'Marcellus', serif" }}
+                style={{ fontFamily: "var(--font-display)" }}
                 title={course?.title}
               >
                 {course?.title ?? "Course not found"}

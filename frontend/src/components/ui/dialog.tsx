@@ -3,6 +3,8 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
+import { useTranslations } from "next-intl"
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
@@ -73,12 +75,12 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-2 right-2"
+              className="absolute top-2 end-2"
               size="icon-sm"
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only"><CloseLabel /></span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -117,7 +119,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline"><CloseLabel /></Button>
         </DialogPrimitive.Close>
       )}
     </div>
@@ -167,4 +169,9 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+}
+
+
+function CloseLabel() {
+  return useTranslations("common")("close")
 }

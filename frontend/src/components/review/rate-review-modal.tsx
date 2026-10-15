@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useRatingMutation } from "@/hooks/use-ratings";
+import { useTranslations } from "next-intl";
 
 interface RateReviewModalProps {
   courseId: string;
@@ -22,6 +23,8 @@ export function RateReviewModal({
   learnerProfileId,
   onClose,
 }: RateReviewModalProps) {
+  const t = useTranslations("review");
+  const tCommon = useTranslations("common");
   const ratingMutation = useRatingMutation();
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -30,7 +33,7 @@ export function RateReviewModal({
     e.preventDefault();
 
     if (rating === 0) {
-      toast.error("Please select a rating");
+      toast.error(t("selectRating"));
       return;
     }
 
@@ -57,7 +60,8 @@ export function RateReviewModal({
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-gray-100"
+          aria-label={tCommon("close")}
+          className="absolute top-4 end-4 w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-gray-100"
         >
           <X className="w-[18px] h-[18px]" />
         </button>
@@ -65,15 +69,15 @@ export function RateReviewModal({
         {/* Heading */}
         <h2
           className="text-[28px] sm:text-[40px] leading-[36px] sm:leading-[48px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Rate this course
+          {t("title")}
         </h2>
 
         {/* Attribution */}
         <div className="mt-5 bg-[#F9F6F0] rounded-lg px-5 py-3">
           <p className="text-sm sm:text-base font-medium text-[#0C1F33]">
-            Submitting as {learnerName}
+            {t("submittingAs", { name: learnerName })}
           </p>
         </div>
 
@@ -84,7 +88,7 @@ export function RateReviewModal({
           {/* Rating */}
           <div className="mt-5">
             <label className="block text-base font-semibold text-[#0C1F33] mb-2">
-              Your rating
+              {t("yourRating")}
             </label>
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -92,6 +96,7 @@ export function RateReviewModal({
                   key={star}
                   type="button"
                   onClick={() => setRating(star)}
+                  aria-label={t("stars", { count: star })}
                   className={`text-2xl transition-colors hover:scale-110 ${
                     star <= rating ? "text-[#B8912F]" : "text-[#E3E8EF]"
                   }`}
@@ -105,12 +110,12 @@ export function RateReviewModal({
           {/* Review */}
           <div className="mt-5">
             <label className="block text-base font-semibold text-[#0C1F33] mb-2">
-              Write a review (optional)
+              {t("writeReview")}
             </label>
             <textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              placeholder="Share your experience with this course..."
+              placeholder={t("placeholder")}
               rows={4}
               maxLength={2000}
               className="w-full px-4 py-3 bg-white border border-[#E3E8EF] rounded-lg text-base text-[#0C1F33] placeholder-[#64748B] resize-none focus:outline-none focus:ring-2 focus:ring-[#22A146]/30 focus:border-[#22A146]"
@@ -123,7 +128,7 @@ export function RateReviewModal({
             disabled={ratingMutation.isPending || rating === 0}
             className="mt-5 w-full h-[50px] bg-[#22A146] hover:bg-[#1B8A3A] text-[#0C1F33] font-semibold text-[15px] rounded-lg transition-colors disabled:opacity-50"
           >
-            {ratingMutation.isPending ? "Submitting..." : "Submit review"}
+            {ratingMutation.isPending ? tCommon("submitting") : t("submit")}
           </button>
         </form>
       </div>

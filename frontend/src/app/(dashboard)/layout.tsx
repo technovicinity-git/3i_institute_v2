@@ -89,7 +89,7 @@ export default function DashboardLayout({
             className="absolute inset-0 bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="absolute left-0 top-0 bottom-0 w-[260px] overflow-y-auto">
+          <div className="absolute start-0 top-0 bottom-0 w-[260px] overflow-y-auto">
             <Sidebar onNavigate={() => setSidebarOpen(false)} />
           </div>
         </div>

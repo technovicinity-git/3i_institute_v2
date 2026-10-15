@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { DAYS, MONTHS, YEARS } from "@/lib/date-utils";
+import { DAYS, monthOptions, YEARS } from "@/lib/date-utils";
+import { useLocale, useTranslations } from "next-intl";
 
 interface DobModalProps {
   isOpen: boolean;
@@ -25,6 +26,10 @@ export function DobModal({
   onSubmit,
   isLoading = false,
 }: DobModalProps) {
+  const t = useTranslations("auth.social");
+  const tCommon = useTranslations("common");
+  const tRegister = useTranslations("auth.register");
+  const locale = useLocale();
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
@@ -43,7 +48,7 @@ export function DobModal({
     e.preventDefault();
 
     if (!day || !month || !year) {
-      setError("Please select your date of birth");
+      setError(t("selectDob"));
       return;
     }
 
@@ -53,7 +58,7 @@ export function DobModal({
     const age = today.getFullYear() - dob.getFullYear();
 
     if (age < 13) {
-      setError("You must be at least 13 years old to create an account.");
+      setError(t("tooYoung"));
       return;
     }
 
@@ -79,28 +84,29 @@ export function DobModal({
                   clipRule="evenodd"
                 />
               </svg>
-              Signing in with {provider === "google" ? "Google" : "Apple"}
+              {t("signingInWith", {
+                provider: provider === "google" ? "Google" : "Apple",
+              })}
             </span>
           </div>
 
           <DialogTitle className="font-serif text-[32px] md:text-4xl leading-tight text-primary mb-4 tracking-tight">
-            Just one more step
+            {t("oneMoreStep")}
           </DialogTitle>
           <p className="text-muted text-base leading-relaxed">
-            We ask everyone for their date of birth to keep the platform safe
-            for young learners.
+            {t("dobReason")}
           </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <fieldset>
             <legend className="block text-sm font-semibold text-primary mb-3">
-              Date of birth
+              {tRegister("dateOfBirth")}
             </legend>
             <div className="grid grid-cols-[30%_1fr_33%] gap-3">
               <div>
                 <label className="sr-only" htmlFor="dob-day">
-                  Day
+                  {t("day")}
                 </label>
                 <select
                   id="dob-day"
@@ -110,7 +116,7 @@ export function DobModal({
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 md:px-4 py-3 text-muted text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="" disabled>
-                    DD
+                    {t("dayPlaceholder")}
                   </option>
                   {DAYS.map((d) => (
                     <option key={d} value={d}>
@@ -122,7 +128,7 @@ export function DobModal({
 
               <div>
                 <label className="sr-only" htmlFor="dob-month">
-                  Month
+                  {t("month")}
                 </label>
                 <select
                   id="dob-month"
@@ -132,9 +138,9 @@ export function DobModal({
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 md:px-4 py-3 text-muted text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="" disabled>
-                    Month
+                    {t("month")}
                   </option>
-                  {MONTHS.map((m) => (
+                  {monthOptions(locale).map((m) => (
                     <option key={m.value} value={m.value}>
                       {m.label}
                     </option>
@@ -144,7 +150,7 @@ export function DobModal({
 
               <div>
                 <label className="sr-only" htmlFor="dob-year">
-                  Year
+                  {t("year")}
                 </label>
                 <select
                   id="dob-year"
@@ -154,7 +160,7 @@ export function DobModal({
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 md:px-4 py-3 text-muted text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="" disabled>
-                    YYYY
+                    {t("yearPlaceholder")}
                   </option>
                   {YEARS.map((y) => (
                     <option key={y} value={y}>
@@ -173,7 +179,7 @@ export function DobModal({
             className="w-full bg-green hover:bg-green-dark text-white font-medium text-base md:text-lg py-3.5 px-4 rounded-lg"
             disabled={isLoading}
           >
-            {isLoading ? "Please wait..." : "Continue"}
+            {isLoading ? tCommon("pleaseWait") : tCommon("continue")}
           </Button>
         </form>
       </DialogContent>

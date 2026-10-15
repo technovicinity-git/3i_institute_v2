@@ -7,6 +7,8 @@ import { LandingLogo } from "@/components/landing/logo";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 function UserIcon({ className }: { className?: string }) {
   return (
@@ -113,15 +115,16 @@ function DropdownMenu({
   isLoggingOut,
 }: DropdownMenuProps) {
   const router = useRouter();
+  const t = useTranslations("nav");
   return (
-    <div className="absolute right-0 top-full mt-2 w-[200px] rounded-lg border border-[#E3E8EF] bg-white shadow-lg z-50 overflow-hidden">
+    <div className="absolute end-0 top-full mt-2 w-[200px] rounded-lg border border-[#E3E8EF] bg-white shadow-lg z-50 overflow-hidden">
       <button
         onClick={onManageAccount}
         className="flex w-full items-center gap-3 px-4 py-3.5 bg-[#FBF9F4] hover:bg-[#F5F2EB] transition-colors"
       >
         <SettingsIcon />
         <span className="text-[15px] text-[#0C1F33] font-normal">
-          Manage account
+          {t("manageAccount")}
         </span>
       </button>
       <div className="h-px bg-[#E3E8EF]" />
@@ -132,7 +135,9 @@ function DropdownMenu({
         className="flex w-full items-center gap-3 px-4 py-3.5 bg-[#FBF9F4] hover:bg-[#F5F2EB] transition-colors"
       >
         <UserIcon />
-        <span className="text-[15px] text-[#0C1F33] font-normal">Profiles</span>
+        <span className="text-[15px] text-[#0C1F33] font-normal">
+          {t("profiles")}
+        </span>
       </button>
       <button
         onClick={onLogOut}
@@ -141,7 +146,7 @@ function DropdownMenu({
       >
         <LogOutIcon />
         <span className="text-[15px] text-[#475569] font-normal">
-          {isLoggingOut ? "Logging out..." : "Log out"}
+          {isLoggingOut ? t("loggingOut") : t("logOut")}
         </span>
       </button>
     </div>
@@ -152,6 +157,7 @@ function DropdownMenu({
 
 export default function Header() {
   const router = useRouter();
+  const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -192,7 +198,7 @@ export default function Header() {
         setActiveProfile(null);
         localStorage.removeItem("activeProfile");
 
-        toast.success("Logged out successfully");
+        toast.success(t("loggedOut"));
         router.push("/login");
       },
       onError: () => {
@@ -219,24 +225,27 @@ export default function Header() {
         <LandingLogo asLink={false} size="sm" textColor="dark" />
       </button>
 
-      {/* User trigger + dropdown */}
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="flex items-center justify-center w-10 h-9 sm:h-10 rounded-full border border-[#E3E8EF] bg-white hover:bg-gray-50 transition-colors"
-          aria-label="User menu"
-          aria-expanded={isOpen}
-        >
-          <UserIcon />
-        </button>
+      {/* Language + user trigger + dropdown */}
+      <div className="flex items-center gap-2">
+        <LanguageSwitcher />
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="flex items-center justify-center w-10 h-9 sm:h-10 rounded-full border border-[#E3E8EF] bg-white hover:bg-gray-50 transition-colors"
+            aria-label={t("userMenu")}
+            aria-expanded={isOpen}
+          >
+            <UserIcon />
+          </button>
 
-        {isOpen && (
-          <DropdownMenu
-            onManageAccount={handleManageAccount}
-            onLogOut={handleLogout}
-            isLoggingOut={logoutMutation.isPending}
-          />
-        )}
+          {isOpen && (
+            <DropdownMenu
+              onManageAccount={handleManageAccount}
+              onLogOut={handleLogout}
+              isLoggingOut={logoutMutation.isPending}
+            />
+          )}
+        </div>
       </div>
     </header>
   );

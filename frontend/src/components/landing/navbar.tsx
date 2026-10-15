@@ -17,9 +17,12 @@ import { useProfileStore } from "@/stores/profile-store";
 import { useLogoutMutation } from "@/hooks/use-auth-mutations";
 import { useSessionRestore } from "@/hooks/use-session-restore";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 export function Navbar() {
   const router = useRouter();
+  const t = useTranslations("nav");
   const { user, isLoading } = useAuthStore();
   const { activeProfile, setActiveProfile } = useProfileStore();
   const logoutMutation = useLogoutMutation();
@@ -104,29 +107,30 @@ export function Navbar() {
           href="/courses"
           className="text-brand-navy hover:text-green transition-colors"
         >
-          Courses
+          {t("courses")}
         </Link>
         <Link
           href="/#pathways"
           className="text-brand-navy hover:text-green transition-colors"
         >
-          Programs
+          {t("programs")}
         </Link>
         <Link
           href="/#faculty"
           className="text-brand-navy hover:text-green transition-colors"
         >
-          Instructors
+          {t("instructors")}
         </Link>
         <Link
           href="/#about"
           className="text-brand-navy hover:text-green transition-colors"
         >
-          About
+          {t("about")}
         </Link>
       </div>
 
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         {isLoading ? (
           <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
         ) : isLoggedIn ? (
@@ -186,7 +190,7 @@ export function Navbar() {
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-30 overflow-hidden">
+                <div className="absolute end-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-30 overflow-hidden">
                   {/* Profile Info */}
                   <div className="px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
                     <p className="text-sm font-semibold text-[#12304E]">
@@ -197,12 +201,12 @@ export function Navbar() {
                     <p className="text-xs text-[#64748B]">{user?.email}</p>
                     {userRole === "Admin" && (
                       <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#B8912F]/10 text-[#B8912F]">
-                        ADMIN
+                        {t("admin")}
                       </span>
                     )}
                     {userRole === "Instructor" && (
                       <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#22A146]/10 text-[#22A146]">
-                        INSTRUCTOR
+                        {t("instructor")}
                       </span>
                     )}
                     {userRole !== "Admin" &&
@@ -215,7 +219,9 @@ export function Navbar() {
                               : "bg-orange-50 text-orange-600"
                           }`}
                         >
-                          {activeProfile.isActive ? "Subscribed" : "Not subscribed"}
+                          {activeProfile.isActive
+                            ? t("subscribed")
+                            : t("notSubscribed")}
                         </span>
                       )}
                   </div>
@@ -227,7 +233,7 @@ export function Navbar() {
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
                     >
                       <LayoutDashboard className="w-4 h-4 text-[#64748B]" />
-                      Dashboard
+                      {t("dashboard")}
                     </button>
 
                     {/* My Courses — only for learner */}
@@ -240,7 +246,7 @@ export function Navbar() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
                       >
                         <BookOpen className="w-4 h-4 text-[#64748B]" />
-                        My Courses
+                        {t("myCourses")}
                       </button>
                     )}
 
@@ -251,7 +257,7 @@ export function Navbar() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#12304E] hover:bg-gray-50"
                       >
                         <User className="w-4 h-4 text-[#64748B]" />
-                        Switch Profile
+                        {t("switchProfile")}
                       </button>
                     )}
                   </div>
@@ -264,7 +270,7 @@ export function Navbar() {
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
                       <LogOut className="w-4 h-4" />
-                      {logoutMutation.isPending ? "Logging out..." : "Log out"}
+                      {logoutMutation.isPending ? t("loggingOut") : t("logOut")}
                     </button>
                   </div>
                 </div>
@@ -277,13 +283,13 @@ export function Navbar() {
               href="/login"
               className="text-sm font-medium text-brand-navy hover:text-green"
             >
-              Log in
+              {t("logIn")}
             </Link>
             <Link
               href="/get-started"
               className="bg-green hover:bg-green-dark text-white text-sm font-medium py-2 px-5 rounded-md transition-colors shadow-sm"
             >
-              Get started
+              {t("getStarted")}
             </Link>
           </>
         )}

@@ -196,7 +196,7 @@ export default function InstructorCoursesPage() {
         <div>
           <h1
             className="text-3xl md:text-[36px] text-[#0C1F33] mb-1"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             My Courses
           </h1>
@@ -368,7 +368,7 @@ export default function InstructorCoursesPage() {
                         <div className="min-w-0">
                           <h3
                             className="text-base text-[#0C1F33] font-medium truncate"
-                            style={{ fontFamily: "'Marcellus', serif" }}
+                            style={{ fontFamily: "var(--font-display)" }}
                           >
                             {course.title}
                           </h3>
@@ -452,7 +452,7 @@ export default function InstructorCoursesPage() {
                         <div className="flex-1 min-w-0">
                           <h3
                             className="text-base text-[#0C1F33] font-medium line-clamp-2"
-                            style={{ fontFamily: "'Marcellus', serif" }}
+                            style={{ fontFamily: "var(--font-display)" }}
                           >
                             {course.title}
                           </h3>

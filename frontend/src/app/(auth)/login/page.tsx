@@ -15,15 +15,24 @@ import Link from "next/link";
 import { Eye, EyeClosed } from "lucide-react";
 import { UnverifiedEmailNotice } from "@/components/auth/unverified-email-notice";
 import { apiErrorCode, apiErrorMessage } from "@/lib/api-error";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address").toLowerCase().trim(),
-  password: z.string().min(1, "Password is required"),
-});
+type Translate = ReturnType<typeof useTranslations<"auth.validation">>;
 
-type LoginFormData = z.infer<typeof loginSchema>;
+// Built per render so validation messages use the current language
+const createLoginSchema = (t: Translate) =>
+  z.object({
+    email: z.string().email(t("emailInvalid")).toLowerCase().trim(),
+    password: z.string().min(1, t("passwordRequired")),
+  });
+
+type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>;
 
 export default function LoginPage() {
+  const t = useTranslations("auth.login");
+  const tAuth = useTranslations("auth");
+  const tValidation = useTranslations("auth.validation");
   const loginMutation = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,7 +41,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(createLoginSchema(tValidation)),
   });
 
   const onSubmit = (data: LoginFormData) => {
@@ -48,8 +57,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
       {/* Logo */}
-      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10">
+      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10 flex items-center justify-between">
         <LandingLogo size="md" />
+        <LanguageSwitcher />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 w-full max-w-md mx-auto">
@@ -64,11 +74,9 @@ export default function LoginPage() {
           {/* Card Header */}
           <div className="mb-8">
             <h1 className="text-[2rem] leading-tight text-primary font-serif mb-2">
-              Welcome back
+              {t("title")}
             </h1>
-            <p className="text-muted text-sm">
-              Please enter your credentials to log in.
-            </p>
+            <p className="text-muted text-sm">{t("subtitle")}</p>
           </div>
 
           {/* Form */}
@@ -83,23 +91,26 @@ export default function LoginPage() {
                 email={unverifiedEmail}
                 checkEmailPath="/check-email"
               />
-            ) : loginErrorMessage && (
-              <div
-                role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-              >
-                {loginErrorMessage}
-              </div>
+            ) : (
+              loginErrorMessage && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {loginErrorMessage}
+                </div>
+              )
             )}
 
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email address
+                {tAuth("emailLabel")}
               </Label>
               <Input
                 id="email"
                 type="email"
+                dir="ltr"
                 placeholder="sarah@example.com"
                 {...register("email")}
                 className="px-4 py-3"
@@ -115,13 +126,13 @@ export default function LoginPage() {
             <div className="space-y-2 relative">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {tAuth("passwordLabel")}
                 </Label>
                 <a
                   href="/forgot-password"
                   className="text-sm text-green hover:text-green-dark font-medium transition-colors"
                 >
-                  Forgot password?
+                  {t("forgotPassword")}
                 </a>
               </div>
 
@@ -130,15 +141,19 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="px-4 py-3 pr-24 tracking-[0.2em]"
+                  dir="ltr"
+                  className="px-4 py-3 pe-24 tracking-[0.2em]"
                   aria-invalid={!!errors.password}
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary px-1 cursor-pointer transition-colors"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-muted hover:text-primary px-1 cursor-pointer transition-colors"
                   tabIndex={-1}
+                  aria-label={
+                    showPassword ? tAuth("hidePassword") : tAuth("showPassword")
+                  }
                 >
                   {/* <span className="w-4 h-4 rounded-full bg-muted inline-block" /> */}
 
@@ -154,14 +169,16 @@ export default function LoginPage() {
 
             {/* Submit */}
             <Button type="submit" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? "Logging in..." : "Log in"}
+              {loginMutation.isPending ? t("submitting") : t("submit")}
             </Button>
           </form>
 
           {/* Divider */}
           <div className="relative my-8 flex items-center">
             <div className="flex-grow border-t border-surface-high" />
-            <span className="flex-shrink-0 mx-4 text-muted text-sm">or</span>
+            <span className="flex-shrink-0 mx-4 text-muted text-sm">
+              {tAuth("or")}
+            </span>
             <div className="flex-grow border-t border-surface-high" />
           </div>
 
@@ -174,12 +191,12 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="text-center mt-10 text-sm text-muted">
-            New to 3i?{" "}
+            {t("newHere")}{" "}
             <a
               href="/register"
               className="text-green hover:text-green-dark font-medium transition-colors"
             >
-              Create an account
+              {t("createAccount")}
             </a>
           </div>
         </div>

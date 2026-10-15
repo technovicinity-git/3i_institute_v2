@@ -12,31 +12,11 @@ import {
 import Link from "next/link";
 import { useProfileStore } from "@/stores/profile-store";
 import { useLearnerLiveClasses } from "@/hooks/use-learner-live-classes";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatDateFull(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import {
+  useFormatter,
+  useTranslations,
+  type DateTimeFormatOptions,
+} from "next-intl";
 
 function isSameDay(date1: Date, date2: Date): boolean {
   return (
@@ -46,38 +26,45 @@ function isSameDay(date1: Date, date2: Date): boolean {
   );
 }
 
-function getRelativeDay(dateStr: string): string {
-  const date = new Date(dateStr);
-  const today = new Date();
-  const tomorrow = new Date();
-  tomorrow.setDate(today.getDate() + 1);
+const ATTENDANCE_CLASS: Record<string, string> = {
+  present: "bg-[#22A146]/10 text-[#22A146]",
+  absent: "bg-red-50 text-red-600",
+  late: "bg-yellow-50 text-yellow-700",
+  excused: "bg-[#2563EB]/10 text-[#2563EB]",
+};
 
-  if (isSameDay(date, today)) return "Today";
-  if (isSameDay(date, tomorrow)) return "Tomorrow";
+/** Dates and "Today / Tomorrow / weekday" labels in the user's language. */
+function useLiveFormat() {
+  const t = useTranslations("liveClasses");
+  const format = useFormatter();
+  const date = (value: string, options: DateTimeFormatOptions) =>
+    format.dateTime(new Date(value), options);
 
-  const diffDays = Math.floor(
-    (date.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-  );
-
-  if (diffDays > 0 && diffDays < 7) {
-    return date.toLocaleDateString("en-US", { weekday: "long" });
-  }
-
-  return formatDate(dateStr);
-}
-
-function getAttendanceBadge(status: string | null) {
-  if (!status) return null;
-  const map: Record<string, { label: string; className: string }> = {
-    present: { label: "PRESENT", className: "bg-[#22A146]/10 text-[#22A146]" },
-    absent: { label: "ABSENT", className: "bg-red-50 text-red-600" },
-    late: { label: "LATE", className: "bg-yellow-50 text-yellow-700" },
-    excused: { label: "EXCUSED", className: "bg-[#2563EB]/10 text-[#2563EB]" },
+  return {
+    time: (value: string) => date(value, { hour: "numeric", minute: "2-digit" }),
+    full: (value: string) =>
+      date(value, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+    relativeDay: (value: string) => {
+      const day = new Date(value);
+      const today = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      if (isSameDay(day, today)) return t("today");
+      if (isSameDay(day, tomorrow)) return t("tomorrow");
+      const diffDays = Math.floor(
+        (day.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+      );
+      if (diffDays > 0 && diffDays < 7) return date(value, { weekday: "long" });
+      return date(value, { weekday: "short", month: "short", day: "numeric" });
+    },
   };
-  return map[status] ?? null;
 }
 
 export default function LearnerLiveClassesPage() {
+  const t = useTranslations("liveClasses");
+  const tSchedule = useTranslations("schedule");
+  const tClasses = useTranslations("classes");
+  const fmt = useLiveFormat();
   const { activeProfile } = useProfileStore();
   const {
     data: sessions,
@@ -109,12 +96,12 @@ export default function LearnerLiveClassesPage() {
       <div className="mb-6">
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Live Classes
+          {t("title")}
         </h1>
         <p className="text-base text-[#64748B]">
-          {sessions?.length ?? 0} upcoming sessions
+          {t("upcomingCount", { count: sessions?.length ?? 0 })}
         </p>
       </div>
 
@@ -128,7 +115,7 @@ export default function LearnerLiveClassesPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-[#22A146] uppercase tracking-wide">
-                  Happening Today
+                  {t("happeningToday")}
                 </p>
                 <p className="text-sm font-semibold text-[#0C1F33]">
                   {nextSession.title}
@@ -138,8 +125,8 @@ export default function LearnerLiveClassesPage() {
             <div className="flex items-center gap-4 text-xs text-[#64748B] mb-3 flex-wrap">
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                {formatTime(nextSession.scheduledAt)} •{" "}
-                {nextSession.durationMinutes} min
+                {fmt.time(nextSession.scheduledAt)} •{" "}
+                {tSchedule("minutes", { count: nextSession.durationMinutes })}
               </span>
               <span className="flex items-center gap-1">
                 <GraduationCap className="w-3.5 h-3.5" />
@@ -154,11 +141,11 @@ export default function LearnerLiveClassesPage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040]"
               >
                 <ExternalLink className="w-4 h-4" />
-                Join Class Now
+                {t("joinNow")}
               </a>
             ) : (
               <span className="text-xs font-semibold text-yellow-600">
-                Meeting link will be shared soon
+                {t("linkSoon")}
               </span>
             )}
           </div>
@@ -175,7 +162,7 @@ export default function LearnerLiveClassesPage() {
       {isError && (
         <div className="text-center py-20">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600">Failed to load sessions.</p>
+          <p className="text-red-600">{t("loadFailed")}</p>
         </div>
       )}
 
@@ -183,10 +170,8 @@ export default function LearnerLiveClassesPage() {
       {!isLoading && !isError && sessions?.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <Video className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-[#64748B] mb-2">No upcoming live classes.</p>
-          <p className="text-xs text-[#94A3B8]">
-            You&apos;ll see sessions here once your instructor schedules them.
-          </p>
+          <p className="text-[#64748B] mb-2">{t("none")}</p>
+          <p className="text-xs text-[#94A3B8]">{t("noneHint")}</p>
         </div>
       )}
 
@@ -199,25 +184,31 @@ export default function LearnerLiveClassesPage() {
               <div className="flex items-center gap-3 mb-4">
                 <div>
                   <p className="text-sm font-bold text-[#0C1F33]">
-                    {getRelativeDay(daySessions[0]!.scheduledAt)}
+                    {fmt.relativeDay(daySessions[0]!.scheduledAt)}
                   </p>
                   <p className="text-xs text-[#64748B]">
-                    {formatDateFull(daySessions[0]!.scheduledAt)}
+                    {fmt.full(daySessions[0]!.scheduledAt)}
                   </p>
                 </div>
                 <div className="flex-1 h-px bg-[#E3E8EF]" />
                 <span className="text-xs text-[#64748B]">
-                  {daySessions.length} session
-                  {daySessions.length > 1 ? "s" : ""}
+                  {tSchedule("sessionCount", { count: daySessions.length })}
                 </span>
               </div>
 
               {/* Sessions */}
               <div className="space-y-3">
                 {daySessions.map((session) => {
-                  const attendance = getAttendanceBadge(
-                    session.attendanceStatus,
-                  );
+                  const status = session.attendanceStatus;
+                  const attendance =
+                    status && status in ATTENDANCE_CLASS
+                      ? {
+                          label: t(
+                            `attendance.${status as "present" | "absent" | "late" | "excused"}`,
+                          ),
+                          className: ATTENDANCE_CLASS[status]!,
+                        }
+                      : null;
 
                   return (
                     <div
@@ -229,7 +220,7 @@ export default function LearnerLiveClassesPage() {
                         <div className="w-16 h-16 rounded-lg bg-[#F9F6F0] flex flex-col items-center justify-center shrink-0">
                           <Clock className="w-4 h-4 text-[#B8912F] mb-1" />
                           <span className="text-[11px] font-bold text-[#0C1F33]">
-                            {formatTime(session.scheduledAt)}
+                            {fmt.time(session.scheduledAt)}
                           </span>
                         </div>
 
@@ -253,7 +244,7 @@ export default function LearnerLiveClassesPage() {
                           <div className="flex items-center gap-3 mt-1.5 text-xs text-[#64748B] flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {session.durationMinutes} min
+                              {tSchedule("minutes", { count: session.durationMinutes })}
                             </span>
                             <span className="flex items-center gap-1">
                               <GraduationCap className="w-3 h-3" />
@@ -275,7 +266,7 @@ export default function LearnerLiveClassesPage() {
                           className="flex items-center gap-1.5 px-3 py-2 border border-[#E3E8EF] rounded-lg text-xs font-semibold text-[#0C1F33] hover:bg-gray-50"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          Chat
+                          {tClasses("chat")}
                         </Link>
 
                         {session.meetingLink ? (
@@ -286,11 +277,11 @@ export default function LearnerLiveClassesPage() {
                             className="flex items-center gap-1.5 px-4 py-2 bg-[#22A146] text-white rounded-lg text-xs font-semibold hover:bg-[#1E9040]"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            Join
+                            {t("join")}
                           </a>
                         ) : (
                           <span className="text-xs font-semibold text-yellow-600 px-3 py-2">
-                            No link yet
+                            {tSchedule("noLinkYet")}
                           </span>
                         )}
                       </div>

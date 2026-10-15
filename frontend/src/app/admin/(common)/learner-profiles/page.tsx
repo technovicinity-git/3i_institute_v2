@@ -39,7 +39,7 @@ export default function AdminLearnerProfilesPage() {
   return (
     <div className="p-6 md:p-10">
       <header className="mb-6">
-        <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "'Marcellus', serif" }}>Learner Profiles</h1>
+        <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "var(--font-display)" }}>Learner Profiles</h1>
         <p className="text-base text-[#64748B]">{data?.total ?? 0} learner profiles</p>
       </header>
 

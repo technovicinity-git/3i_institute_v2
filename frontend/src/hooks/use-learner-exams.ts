@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { learnerExamService } from "@/services/learner-exam.service";
 
 export function useCourseExams(courseId: string, learnerProfileId: string) {
@@ -27,6 +28,7 @@ export function useExamQuestions(examId: string) {
 }
 
 export function useSubmitExamMutation() {
+  const tToast = useTranslations("exams.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -56,7 +58,7 @@ export function useSubmitExamMutation() {
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to submit exam");
+      toast.error(message ?? tToast("submitFailed"));
     },
   });
 }

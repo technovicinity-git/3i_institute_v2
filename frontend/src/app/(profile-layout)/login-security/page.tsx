@@ -19,6 +19,7 @@ import {
 } from "@/hooks/use-security";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { parseApiFormError, type FieldErrors } from "@/lib/form-errors";
+import { useTranslations } from "next-intl";
 
 const MIN_PASSWORD = 10;
 const MAX_PASSWORD = 128;
@@ -52,6 +53,7 @@ function FormField({
   children,
 }: FormFieldProps) {
   const id = useId();
+  const tAuth = useTranslations("auth");
   const [revealed, setRevealed] = useState(false);
   const isPassword = type === "password";
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
@@ -74,9 +76,10 @@ function FormField({
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={!!error}
           aria-describedby={describedBy}
+          dir={type === "text" ? undefined : "ltr"}
           className={cn(
             "w-full h-12 px-4 text-base sm:text-[15px] text-[#0C1F33] placeholder:text-[#94A3B8] bg-white border rounded-lg outline-none transition-colors",
-            isPassword && "pr-12",
+            isPassword && "pe-12",
             error
               ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
               : "border-[#E3E8EF] focus:border-[#94A3B8] focus:ring-2 focus:ring-[#12304E]/10",
@@ -86,8 +89,10 @@ function FormField({
           <button
             type="button"
             onClick={() => setRevealed((r) => !r)}
-            className="absolute right-1 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-md text-[#64748B] hover:text-[#0C1F33] hover:bg-gray-50"
-            aria-label={revealed ? "Hide password" : "Show password"}
+            className="absolute end-1 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-md text-[#64748B] hover:text-[#0C1F33] hover:bg-gray-50"
+            aria-label={
+              revealed ? tAuth("hidePassword") : tAuth("showPassword")
+            }
             aria-pressed={revealed}
           >
             {revealed ? (
@@ -128,6 +133,7 @@ function FormAlert({
   message: string;
   onDismiss?: () => void;
 }) {
+  const tCommon = useTranslations("common");
   const Icon = tone === "error" ? AlertCircle : CheckCircle2;
   return (
     <div
@@ -146,7 +152,7 @@ function FormAlert({
           type="button"
           onClick={onDismiss}
           className="-m-1 p-1 rounded opacity-70 hover:opacity-100"
-          aria-label="Dismiss"
+          aria-label={tCommon("dismiss")}
         >
           <X className="w-4 h-4" />
         </button>
@@ -174,6 +180,7 @@ function Requirement({ met, label }: { met: boolean; label: string }) {
 }
 
 function SubmitButton({ pending, label }: { pending: boolean; label: string }) {
+  const tCommon = useTranslations("common");
   return (
     <button
       type="submit"
@@ -181,7 +188,7 @@ function SubmitButton({ pending, label }: { pending: boolean; label: string }) {
       className="w-full h-12 inline-flex items-center justify-center gap-2 bg-[#22A146] rounded-lg text-base font-bold text-[#0C1F33] hover:bg-[#1E9040] transition-colors disabled:opacity-60"
     >
       {pending && <Loader2 className="w-4 h-4 animate-spin" />}
-      {pending ? "Saving..." : label}
+      {pending ? tCommon("saving") : label}
     </button>
   );
 }
@@ -197,6 +204,9 @@ const toggleButtonClass =
 type EmailField = "newEmail" | "currentPassword";
 
 function EmailCard() {
+  const t = useTranslations("security");
+  const tErrors = useTranslations("security.errors");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useUserProfile();
   const changeEmailMutation = useChangeEmailMutation({ toasts: false });
@@ -235,13 +245,13 @@ function EmailCard() {
   function validate(): FieldErrors<EmailField> {
     const next: FieldErrors<EmailField> = {};
     const email = newEmail.trim().toLowerCase();
-    if (!email) next.newEmail = "Enter your new email address.";
+    if (!email) next.newEmail = tErrors("emailRequired");
     else if (!EMAIL_PATTERN.test(email))
-      next.newEmail = "Enter a valid email address, like name@example.com.";
+      next.newEmail = tErrors("emailInvalid");
     else if (email === currentEmail.toLowerCase())
-      next.newEmail = "This is already your email address.";
+      next.newEmail = tErrors("emailSame");
     if (!currentPassword)
-      next.currentPassword = "Enter your current password to confirm.";
+      next.currentPassword = tErrors("confirmWithPassword");
     return next;
   }
 
@@ -261,9 +271,7 @@ function EmailCard() {
         onSuccess: () => {
           reset();
           setIsEditing(false);
-          setSuccess(
-            "Email updated. Check your new inbox for a verification link.",
-          );
+          setSuccess(t("emailUpdated"));
           queryClient.invalidateQueries({ queryKey: ["user-profile"] });
         },
         onError: (error) => {
@@ -275,7 +283,7 @@ function EmailCard() {
               "already in use": "newEmail",
               email: "newEmail",
             },
-            "We couldn't update your email. Please try again.",
+            t("emailUpdateFailed"),
           );
           setErrors(parsed.fieldErrors);
           setFormError(parsed.formError);
@@ -298,28 +306,28 @@ function EmailCard() {
     <form onSubmit={handleSubmit} noValidate className={cardClass}>
       <h2
         className="text-2xl sm:text-[32px] leading-tight text-[#0C1F33]"
-        style={{ fontFamily: "'Marcellus', serif" }}
+        style={{ fontFamily: "var(--font-display)" }}
       >
-        Email
+        {t("email")}
       </h2>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-base text-[#0C1F33] break-all">
+          <bdi className="text-base text-[#0C1F33] break-all">
             {currentEmail}
-          </span>
+          </bdi>
           {isEmailVerified ? (
             <span className="text-[11px] font-semibold text-[#22A146]">
-              Verified ✓
+              {t("verified")}
             </span>
           ) : (
             <span className="text-[11px] font-semibold text-orange-500">
-              Unverified — check your email for verification link
+              {t("unverified")}
             </span>
           )}
         </div>
         <button type="button" onClick={toggleEditing} className={toggleButtonClass}>
-          {isEditing ? "Cancel" : "Change email"}
+          {isEditing ? tCommon("cancel") : t("changeEmail")}
         </button>
       </div>
 
@@ -336,9 +344,9 @@ function EmailCard() {
           {formError && <FormAlert tone="error" message={formError} />}
 
           <FormField
-            label="New email"
+            label={t("newEmail")}
             type="email"
-            placeholder="Enter new email address"
+            placeholder={t("newEmailPlaceholder")}
             value={newEmail}
             onChange={(v) => {
               setNewEmail(v);
@@ -350,28 +358,27 @@ function EmailCard() {
           />
 
           <FormField
-            label="Current password"
+            label={t("currentPassword")}
             type="password"
             autoComplete="current-password"
-            placeholder="Enter current password"
+            placeholder={t("currentPasswordPlaceholder")}
             value={currentPassword}
             onChange={(v) => {
               setCurrentPassword(v);
               setErrors((p) => ({ ...p, currentPassword: undefined }));
             }}
             error={errors.currentPassword}
-            hint="We ask for your password to confirm it's you."
+            hint={t("passwordConfirmHint")}
             inputRef={passwordRef}
           />
 
           <SubmitButton
             pending={changeEmailMutation.isPending}
-            label="Save email"
+            label={t("saveEmail")}
           />
 
           <p className="text-[13px] text-[#475569] leading-relaxed">
-            You&apos;ll need to verify your new email before it takes effect.
-            Your account stays fully active in the meantime.
+            {t("emailChangeNote")}
           </p>
         </>
       )}
@@ -384,6 +391,9 @@ function EmailCard() {
 type PasswordField = "currentPassword" | "newPassword" | "confirmPassword";
 
 function PasswordCard() {
+  const t = useTranslations("security");
+  const tErrors = useTranslations("security.errors");
+  const tCommon = useTranslations("common");
   const changePasswordMutation = useChangePasswordMutation({ toasts: false });
   const { data: profile } = useUserProfile();
 
@@ -429,19 +439,20 @@ function PasswordCard() {
 
   function validate(): FieldErrors<PasswordField> {
     const next: FieldErrors<PasswordField> = {};
-    if (!currentPassword)
-      next.currentPassword = "Enter your current password.";
-    if (!newPassword) next.newPassword = "Enter a new password.";
+    if (!currentPassword) next.currentPassword = tErrors("currentRequired");
+    if (!newPassword) next.newPassword = tErrors("newRequired");
     else if (newPassword.length < MIN_PASSWORD)
-      next.newPassword = `Use at least ${MIN_PASSWORD} characters (${MIN_PASSWORD - newPassword.length} more).`;
+      next.newPassword = tErrors("tooShort", {
+        min: MIN_PASSWORD,
+        remaining: MIN_PASSWORD - newPassword.length,
+      });
     else if (newPassword.length > MAX_PASSWORD)
-      next.newPassword = `Use ${MAX_PASSWORD} characters or fewer.`;
+      next.newPassword = tErrors("tooLong", { max: MAX_PASSWORD });
     else if (newPassword === currentPassword)
-      next.newPassword = "Choose a password different from your current one.";
-    if (!confirmPassword)
-      next.confirmPassword = "Re-enter your new password.";
+      next.newPassword = tErrors("sameAsCurrent");
+    if (!confirmPassword) next.confirmPassword = tErrors("confirmRequired");
     else if (confirmPassword !== newPassword)
-      next.confirmPassword = "Passwords don't match.";
+      next.confirmPassword = tErrors("mismatch");
     return next;
   }
 
@@ -461,9 +472,7 @@ function PasswordCard() {
         onSuccess: () => {
           reset();
           setIsEditing(false);
-          setSuccess(
-            "Password updated. Use your new password the next time you log in.",
-          );
+          setSuccess(t("passwordUpdated"));
         },
         onError: (error) => {
           const parsed = parseApiFormError<PasswordField>(
@@ -473,7 +482,7 @@ function PasswordCard() {
               "current password": "currentPassword",
               password: "newPassword",
             },
-            "We couldn't update your password. Please try again.",
+            t("passwordUpdateFailed"),
           );
           setErrors(parsed.fieldErrors);
           setFormError(parsed.formError);
@@ -488,15 +497,15 @@ function PasswordCard() {
     <form onSubmit={handleSubmit} noValidate className={cardClass}>
       <h2
         className="text-2xl sm:text-[32px] leading-tight text-[#0C1F33]"
-        style={{ fontFamily: "'Marcellus', serif" }}
+        style={{ fontFamily: "var(--font-display)" }}
       >
-        Password
+        {t("password")}
       </h2>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <span className="text-base text-[#0C1F33]">••••••••••</span>
         <button type="button" onClick={toggleEditing} className={toggleButtonClass}>
-          {isEditing ? "Cancel" : "Change password"}
+          {isEditing ? tCommon("cancel") : t("changePassword")}
         </button>
       </div>
 
@@ -523,10 +532,10 @@ function PasswordCard() {
           />
 
           <FormField
-            label="Current password"
+            label={t("currentPassword")}
             type="password"
             autoComplete="current-password"
-            placeholder="Enter current password"
+            placeholder={t("currentPasswordPlaceholder")}
             value={currentPassword}
             onChange={(v) => {
               setCurrentPassword(v);
@@ -537,10 +546,10 @@ function PasswordCard() {
           />
 
           <FormField
-            label="New password"
+            label={t("newPassword")}
             type="password"
             autoComplete="new-password"
-            placeholder="Enter new password"
+            placeholder={t("newPasswordPlaceholder")}
             value={newPassword}
             onChange={(v) => {
               setNewPassword(v);
@@ -549,20 +558,20 @@ function PasswordCard() {
             error={errors.newPassword}
             inputRef={newRef}
           >
-            <ul className="flex flex-col gap-1" aria-label="Password requirements">
+            <ul className="flex flex-col gap-1" aria-label={t("requirements")}>
               <Requirement
                 met={longEnough}
-                label={`At least ${MIN_PASSWORD} characters`}
+                label={t("reqLength", { min: MIN_PASSWORD })}
               />
-              <Requirement met={differs} label="Different from your current password" />
+              <Requirement met={differs} label={t("reqDifferent")} />
             </ul>
           </FormField>
 
           <FormField
-            label="Confirm new password"
+            label={t("confirmPassword")}
             type="password"
             autoComplete="new-password"
-            placeholder="Confirm new password"
+            placeholder={t("confirmPassword")}
             value={confirmPassword}
             onChange={(v) => {
               setConfirmPassword(v);
@@ -583,14 +592,14 @@ function PasswordCard() {
                 ) : (
                   <Circle className="w-3.5 h-3.5" />
                 )}
-                {matches ? "Passwords match" : "Passwords don't match yet"}
+                {matches ? t("passwordsMatch") : t("passwordsDontMatchYet")}
               </p>
             )}
           </FormField>
 
           <SubmitButton
             pending={changePasswordMutation.isPending}
-            label="Save password"
+            label={t("savePassword")}
           />
         </>
       )}
@@ -601,17 +610,18 @@ function PasswordCard() {
 // ---- Page ----
 
 export default function LoginSecurityPage() {
+  const t = useTranslations("security");
   return (
     <section
       className="w-full min-h-full bg-[#FBF9F4] px-4 sm:px-10 lg:px-[120px] pt-8 sm:pt-14 pb-16 sm:pb-20"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       <div className="max-w-[640px] mx-auto flex flex-col gap-6">
         <h1
           className="text-3xl sm:text-[40px] leading-tight text-[#0C1F33] text-center"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Login &amp; security
+          {t("title")}
         </h1>
 
         <EmailCard />

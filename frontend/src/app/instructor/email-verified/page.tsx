@@ -26,7 +26,7 @@ export default function EmailVerifiedPage() {
             </div>
             <h2
               className="mt-5 text-[40px] leading-[48px] text-[#0C1F33] text-center"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Email verified!
             </h2>

@@ -18,22 +18,27 @@ import {
 } from "@/hooks/use-profile-edit";
 import { useResetPinMutation } from "@/hooks/use-learner-profiles";
 import { useLearnerAvatarUploadMutation } from "@/hooks/use-avatar-upload";
+import { useTranslations } from "next-intl";
 
-const editProfileSchema = z.object({
-  displayName: z.string().min(1, "Name is required").max(100),
-});
+type ValidationT = ReturnType<typeof useTranslations<"learnerForm.validation">>;
 
-type EditProfileFormData = z.infer<typeof editProfileSchema>;
+const createEditSchema = (t: ValidationT) =>
+  z.object({
+    displayName: z.string().min(1, t("nameRequired")).max(100),
+  });
 
-const resetPinSchema = z.object({
-  newPin: z
-    .string()
-    .length(4, "PIN must be exactly 4 digits")
-    .regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
-  confirmNewPin: z.string().length(4, "PIN must be exactly 4 digits"),
-});
+type EditProfileFormData = z.infer<ReturnType<typeof createEditSchema>>;
 
-type ResetPinFormData = z.infer<typeof resetPinSchema>;
+const createResetPinSchema = (t: ValidationT) =>
+  z.object({
+    newPin: z
+      .string()
+      .length(4, t("pinFormat"))
+      .regex(/^\d{4}$/, t("pinFormat")),
+    confirmNewPin: z.string().length(4, t("pinFormat")),
+  });
+
+type ResetPinFormData = z.infer<ReturnType<typeof createResetPinSchema>>;
 
 function getInitials(name: string): string {
   return name
@@ -45,6 +50,9 @@ function getInitials(name: string): string {
 }
 
 export default function EditProfilePage() {
+  const t = useTranslations("learnerForm");
+  const tCommon = useTranslations("common");
+  const tValidation = useTranslations("learnerForm.validation");
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,14 +88,14 @@ export default function EditProfilePage() {
     handleSubmit,
     formState: { errors },
   } = useForm<EditProfileFormData>({
-    resolver: zodResolver(editProfileSchema),
+    resolver: zodResolver(createEditSchema(tValidation)),
     values: {
       displayName: profile?.displayName ?? "",
     },
   });
 
   const resetPinForm = useForm<ResetPinFormData>({
-    resolver: zodResolver(resetPinSchema),
+    resolver: zodResolver(createResetPinSchema(tValidation)),
   });
 
   const onSubmit = (data: EditProfileFormData) => {
@@ -108,7 +116,7 @@ export default function EditProfilePage() {
 
   const handleResetPin = (data: ResetPinFormData) => {
     if (data.newPin !== data.confirmNewPin) {
-      toast.error("PINs do not match");
+      toast.error(tValidation("pinMismatch"));
       return;
     }
 
@@ -134,13 +142,13 @@ export default function EditProfilePage() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid file type. Allowed: JPEG, PNG, WebP, GIF");
+      toast.error(tCommon("invalidImageType"));
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size exceeds 5MB limit");
+      toast.error(tCommon("imageTooLarge"));
       return;
     }
 
@@ -176,9 +184,9 @@ export default function EditProfilePage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="bg-white rounded-2xl shadow-card border border-outline-variant p-8 md:p-12 w-full max-w-md">
-          <Eyebrow className="mb-3">State B: Edit</Eyebrow>
+          <Eyebrow className="mb-3">{t("eyebrow")}</Eyebrow>
           <h1 className="text-4xl font-serif text-primary mb-10">
-            Edit {profile?.displayName}&apos;s profile
+            {t("editTitle", { name: profile?.displayName ?? "" })}
           </h1>
 
           {/* Avatar */}
@@ -212,8 +220,8 @@ export default function EditProfilePage() {
                 type="button"
                 onClick={handleAvatarClick}
                 disabled={avatarUploadMutation.isPending}
-                aria-label="Change profile picture"
-                className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-sm border border-white hover:bg-primary-dark transition-colors disabled:opacity-50"
+                aria-label={t("changePhoto")}
+                className="absolute bottom-0 end-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-sm border border-white hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {avatarUploadMutation.isPending ? (
                   <div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -248,7 +256,7 @@ export default function EditProfilePage() {
                 htmlFor="displayName"
                 className="block text-sm font-semibold mb-2"
               >
-                Child&apos;s name
+                {t("name")}
               </Label>
               <Input
                 id="displayName"
@@ -259,7 +267,7 @@ export default function EditProfilePage() {
               />
               {profile?.nameLocked && (
                 <p className="mt-1 text-xs text-orange-500">
-                  Name is locked because a certificate has been issued.
+                  {t("nameLocked")}
                 </p>
               )}
               {errors.displayName && (
@@ -272,7 +280,7 @@ export default function EditProfilePage() {
             {/* Security PIN */}
             <div>
               <Label className="block text-sm font-semibold mb-2">
-                Security PIN
+                {t("securityPin")}
               </Label>
               <Button
                 type="button"
@@ -280,18 +288,18 @@ export default function EditProfilePage() {
                 onClick={() => setShowResetPin(!showResetPin)}
                 className="w-full px-4 py-3 border-primary text-primary font-semibold hover:bg-surface"
               >
-                {profile?.hasPin ? "Reset PIN" : "Set PIN"}
+                {profile?.hasPin ? t("resetPin") : t("setPin")}
               </Button>
             </div>
 
             {/* Reset PIN form */}
             {showResetPin && (
               <div className="rounded-xl bg-surface p-5 space-y-4">
-                <h3 className="font-bold text-sm">Set new PIN</h3>
+                <h3 className="font-bold text-sm">{t("newPinTitle")}</h3>
 
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
-                    New 4-Digit PIN
+                    {t("newPin")}
                   </Label>
                   <Controller
                     name="newPin"
@@ -313,7 +321,7 @@ export default function EditProfilePage() {
 
                 <div>
                   <Label className="mb-2 block text-xs text-gray-500">
-                    Confirm New PIN
+                    {t("confirmNewPin")}
                   </Label>
                   <Controller
                     name="confirmNewPin"
@@ -340,7 +348,7 @@ export default function EditProfilePage() {
                     onClick={() => setShowResetPin(false)}
                     className="w-1/3 py-2 border-gray-300"
                   >
-                    Cancel
+                    {tCommon("cancel")}
                   </Button>
                   <Button
                     type="button"
@@ -348,7 +356,7 @@ export default function EditProfilePage() {
                     className="w-2/3 bg-green hover:bg-green-dark py-2 text-white"
                     disabled={resetPinMutation.isPending}
                   >
-                    {resetPinMutation.isPending ? "Saving..." : "Save PIN"}
+                    {resetPinMutation.isPending ? tCommon("saving") : t("savePin")}
                   </Button>
                 </div>
               </div>
@@ -361,7 +369,7 @@ export default function EditProfilePage() {
                 className="w-full bg-green hover:bg-green-dark text-white py-3 font-semibold shadow-sm"
                 disabled={updateMutation.isPending || profile?.nameLocked}
               >
-                {updateMutation.isPending ? "Saving..." : "Save changes"}
+                {updateMutation.isPending ? tCommon("saving") : t("saveChanges")}
               </Button>
             </div>
           </form>
@@ -406,7 +414,7 @@ function PinInput({ value = "", onChange, error }: PinInputProps) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" dir="ltr">
       {[0, 1, 2, 3].map((index) => (
         <input
           key={index}

@@ -6,6 +6,8 @@ import { useProfileStore } from "@/stores/profile-store";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 interface DashboardNavbarProps {
   onMenuClick: () => void;
@@ -17,6 +19,8 @@ export default function DashboardNavbar({
   profileName,
 }: DashboardNavbarProps) {
   const router = useRouter();
+  const t = useTranslations("dashboard");
+  const tNav = useTranslations("nav");
   const { activeProfile } = useProfileStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,16 +46,16 @@ export default function DashboardNavbar({
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-lg hover:bg-gray-50"
-          aria-label="Open menu"
+          aria-label={tNav("openMenu")}
         >
           <Menu className="w-5 h-5 text-[#12304E]" />
         </button>
         <div>
           <h1 className="font-serif text-[18px] md:text-[22px] text-[#12304E]">
-            Assalamu alaikum, {profileName}
+            {t("greeting", { name: profileName })}
           </h1>
           <p className="text-[12px] text-[#64748B] hidden sm:block">
-            Welcome back to your dashboard
+            {t("welcomeBack")}
           </p>
         </div>
       </div>
@@ -63,10 +67,12 @@ export default function DashboardNavbar({
           <Search className="w-4 h-4 text-[#94A3B8]" />
           <input
             type="text"
-            placeholder="Search courses, modules..."
+            placeholder={t("searchPlaceholder")}
             className="bg-transparent text-[12px] text-[#64748B] outline-none w-full placeholder:text-[#94A3B8]"
           />
         </div>
+
+        <LanguageSwitcher />
 
         {/* Notification */}
         <NotificationBell
@@ -94,13 +100,15 @@ export default function DashboardNavbar({
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-lg shadow-lg z-30">
+            <div className="absolute end-0 mt-2 w-56 bg-white border border-gray-100 rounded-lg shadow-lg z-30">
               <div className="p-3 border-b border-gray-100">
                 <p className="text-sm font-semibold text-[#12304E]">
                   {activeProfile?.displayName}
                 </p>
                 <p className="text-xs text-[#64748B]">
-                  {activeProfile?.isActive ? "Subscribed" : "Not subscribed"}
+                  {activeProfile?.isActive
+                    ? tNav("subscribed")
+                    : tNav("notSubscribed")}
                 </p>
               </div>
               <div className="py-2">
@@ -109,27 +117,27 @@ export default function DashboardNavbar({
                     router.push("/profiles");
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
+                  className="w-full text-start px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
                 >
-                  Switch Profile
+                  {tNav("switchProfile")}
                 </button>
                 <button
                   onClick={() => {
                     router.push("/account-settings");
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
+                  className="w-full text-start px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
                 >
-                  Settings
+                  {tNav("settings")}
                 </button>
                 <button
                   onClick={() => {
                     router.push("/subscription");
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
+                  className="w-full text-start px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
                 >
-                  Subscription
+                  {tNav("subscription")}
                 </button>
               </div>
             </div>

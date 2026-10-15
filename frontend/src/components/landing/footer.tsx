@@ -9,8 +9,11 @@ import {
   SocialIcon,
   type SocialNetwork,
 } from "@/components/landing/social-icon";
+import { useTranslations } from "next-intl";
 
 export function Footer() {
+  const t = useTranslations("footer");
+  const tNav = useTranslations("nav");
   const { data: categories } = useCategories();
   const { data: legalPages } = usePublishedPages();
   const { data: settings } = usePublicSettings();
@@ -32,18 +35,17 @@ export function Footer() {
               <LandingLogo size="sm" textColor="light" />
             </div>
             <p className="text-sm text-gold mb-4 font-serif">
-              Rigorous teaching. Global classrooms. One institute.
+              {t("tagline")}
             </p>
-            <p className="text-xs text-gray-400 leading-relaxed pr-4">
-              Structured, accredited programs across the sciences, humanities,
-              and professional fields, taught to students in 40 countries.
+            <p className="text-xs text-gray-400 leading-relaxed pe-4">
+              {t("about")}
             </p>
           </div>
 
           {/* Pathways */}
           <div>
             <h4 className="font-semibold text-white mb-6 uppercase tracking-wider text-xs">
-              Pathways
+              {t("pathways")}
             </h4>
             <ul className="space-y-3 text-sm text-gray-400">
               {pathways.map((category) => (
@@ -58,7 +60,7 @@ export function Footer() {
               ))}
               <li>
                 <Link href="/courses" className="hover:text-white">
-                  All courses
+                  {t("allCourses")}
                 </Link>
               </li>
             </ul>
@@ -67,22 +69,22 @@ export function Footer() {
           {/* Institute */}
           <div>
             <h4 className="font-semibold text-white mb-6 uppercase tracking-wider text-xs">
-              3i Institute
+              {t("institute")}
             </h4>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
                 <Link href="/#about" className="hover:text-white">
-                  About Us
+                  {t("aboutUs")}
                 </Link>
               </li>
               <li>
                 <Link href="/#faculty" className="hover:text-white">
-                  Our Faculty
+                  {t("faculty")}
                 </Link>
               </li>
               <li>
                 <Link href="/instructor/register" className="hover:text-white">
-                  Join as Instructor
+                  {t("joinInstructor")}
                 </Link>
               </li>
             </ul>
@@ -91,32 +93,32 @@ export function Footer() {
           {/* Support */}
           <div>
             <h4 className="font-semibold text-white mb-6 uppercase tracking-wider text-xs">
-              Support
+              {t("support")}
             </h4>
             <ul className="space-y-3 text-sm text-gray-400">
               <li>
                 <Link href="/help" className="hover:text-white">
-                  Help Center
+                  {t("help")}
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-white">
-                  Contact
+                  {t("contact")}
                 </Link>
               </li>
               <li>
                 <Link href="/verify" className="hover:text-white">
-                  Verify a certificate
+                  {t("verify")}
                 </Link>
               </li>
               <li>
                 <Link href="/get-started" className="hover:text-white">
-                  Create an account
+                  {t("createAccount")}
                 </Link>
               </li>
               <li>
                 <Link href="/login" className="hover:text-white">
-                  Log in
+                  {tNav("logIn")}
                 </Link>
               </li>
             </ul>
@@ -126,8 +128,7 @@ export function Footer() {
         <div className="border-t border-brand-navy-light pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
             <p className="text-xs text-gray-500">
-              © {new Date().getFullYear()} 3i International Islamic Institute.
-              All rights reserved.
+              {t("rights", { year: String(new Date().getFullYear()) })}
             </p>
             {(legalPages?.length ?? 0) > 0 && (
               <nav className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">

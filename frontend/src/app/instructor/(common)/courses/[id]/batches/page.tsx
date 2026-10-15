@@ -81,7 +81,7 @@ export default function BatchesPage() {
           <div>
             <h1
               className="text-3xl md:text-[36px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Batches
             </h1>
@@ -136,7 +136,7 @@ export default function BatchesPage() {
                   <div className="flex items-center gap-3">
                     <h2
                       className="text-lg font-semibold text-[#0C1F33]"
-                      style={{ fontFamily: "'Marcellus', serif" }}
+                      style={{ fontFamily: "var(--font-display)" }}
                     >
                       {batch.name}
                     </h2>

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/auth-store";
@@ -8,6 +9,7 @@ import { useAuthStore } from "@/stores/auth-store";
 export function useGoogleLoginMutation() {
   const router = useRouter();
   const { setUser, setAccessToken } = useAuthStore();
+  const t = useTranslations("auth.toasts");
 
   return useMutation({
     mutationFn: ({
@@ -20,7 +22,7 @@ export function useGoogleLoginMutation() {
     onSuccess: (data) => {
       setUser(data.user);
       setAccessToken(data.accessToken);
-      toast.success(`Welcome, ${data.user.firstName}!`);
+      toast.success(t("welcome", { name: data.user.firstName }));
       router.push("/courses");
     },
     onError: (error: any) => {
@@ -32,7 +34,7 @@ export function useGoogleLoginMutation() {
       ) {
         return;
       }
-      toast.error(message ?? "Google login failed");
+      toast.error(message ?? t("googleLoginFailed"));
     },
   });
 }

@@ -182,7 +182,7 @@ export default function EditExamPage() {
         >
           <ChevronLeft className="w-4 h-4" /> Back to exams
         </button>
-        <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "'Marcellus', serif" }}>
+        <h1 className="text-3xl md:text-[36px] text-[#0C1F33]" style={{ fontFamily: "var(--font-display)" }}>
           Edit Exam
         </h1>
       </div>

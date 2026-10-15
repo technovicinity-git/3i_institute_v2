@@ -26,6 +26,8 @@ import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProtectedPdfViewer } from "@/components/lesson/protected-pdf-viewer";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 function formatVideoDuration(seconds: number): string {
   const totalSeconds = Math.floor(seconds);
@@ -38,6 +40,9 @@ function formatVideoDuration(seconds: number): string {
 }
 
 export default function LessonPage() {
+  const t = useTranslations("lesson");
+  const tCommon = useTranslations("common");
+  const format = useDateFormat();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -174,7 +179,7 @@ export default function LessonPage() {
 
   const handleSaveNote = () => {
     if (!activeProfile || !notes.trim()) {
-      toast.error("Note cannot be empty");
+      toast.error(t("noteEmpty"));
       return;
     }
 
@@ -207,12 +212,12 @@ export default function LessonPage() {
   return (
     <div
       className="flex h-screen min-h-0 bg-[#FBF9F4] overflow-hidden"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       {/* LEFT: Video + Lesson */}
       <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {/* Scrollable content */}
-        <div className="flex-1 pl-4 pt-4 min-h-0 overflow-y-auto">
+        <div className="flex-1 ps-4 pt-4 min-h-0 overflow-y-auto">
           {/* Video */}
           {/* Media content */}
           {materialLoading ? (
@@ -221,7 +226,7 @@ export default function LessonPage() {
             </div>
           ) : !materialUrlData?.url ? (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
-              <p className="text-white/60 text-sm">Content unavailable</p>
+              <p className="text-white/60 text-sm">{t("contentUnavailable")}</p>
             </div>
           ) : materialUrlData.contentType === "document" ? (
             /* Document — protected viewer: no download, print or file URL */
@@ -230,18 +235,17 @@ export default function LessonPage() {
               <div className="relative w-full aspect-video bg-white flex flex-col items-center justify-center rounded-lg border border-[#E3E8EF] px-4 text-center">
                 <FileText className="w-14 h-14 text-gray-300 mb-3" />
                 <p className="text-[#0C1F33] font-semibold mb-1">
-                  Preview not available
+                  {t("previewUnavailable")}
                 </p>
                 <p className="text-sm text-[#64748B] max-w-md">
-                  This document format can&apos;t be shown here. Contact your
-                  instructor if you need access.
+                  {t("previewUnavailableBody")}
                 </p>
               </div>
             ) : (
               <ProtectedPdfViewer
                 key={lessonId}
                 documentPath={`/materials/${lessonId}/document`}
-                title={currentLesson?.title ?? "Document"}
+                title={currentLesson?.title ?? t("document")}
               />
             )
           ) : (
@@ -302,7 +306,7 @@ export default function LessonPage() {
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Previous</span>
+              <span className="hidden sm:inline">{t("previous")}</span>
             </button>
 
             <button
@@ -314,7 +318,7 @@ export default function LessonPage() {
                   : "bg-gray-100 text-[#94A3B8] cursor-not-allowed opacity-50"
               }`}
             >
-              <span className="hidden sm:inline">Next</span>
+              <span className="hidden sm:inline">{t("next")}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -325,17 +329,19 @@ export default function LessonPage() {
               <div className="w-full max-w-4xl mx-auto">
                 <h1
                   className="text-[28px] sm:text-[32px] text-[#0C1F33]"
-                  style={{ fontFamily: "'Marcellus', serif" }}
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {currentLesson?.title ?? "Lesson"}
+                  {currentLesson?.title ?? t("lesson")}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#475569]">
-                  <span>Course: {courseContent.courseTitle}</span>
+                  <span>{t("courseName", { title: courseContent.courseTitle })}</span>
                   {currentLesson?.type?.toLowerCase() === "video" &&
                     currentLesson.duration != null && (
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
-                        Video duration: {formatVideoDuration(currentLesson.duration)}
+                        {t("videoDuration", {
+                          duration: formatVideoDuration(currentLesson.duration),
+                        })}
                       </span>
                     )}
                 </div>
@@ -344,13 +350,13 @@ export default function LessonPage() {
                 <div className="flex mt-6 border-b border-[#E3E8EF]">
                   <button
                     onClick={() => setActiveTab("overview")}
-                    className={`px-2 py-3 mr-6 text-[15px] border-b-2 transition-colors ${
+                    className={`px-2 py-3 me-6 text-[15px] border-b-2 transition-colors ${
                       activeTab === "overview"
                         ? "text-[#157A34] border-[#157A34]"
                         : "text-[#475569] border-transparent"
                     }`}
                   >
-                    Overview
+                    {t("overview")}
                   </button>
                   <button
                     onClick={() => setActiveTab("notes")}
@@ -360,7 +366,7 @@ export default function LessonPage() {
                         : "text-[#475569] border-transparent"
                     }`}
                   >
-                    Notes
+                    {t("notes")}
                   </button>
                 </div>
 
@@ -373,7 +379,7 @@ export default function LessonPage() {
                       </p>
                     ) : (
                       <p className="text-base leading-6 text-[#64748B] italic">
-                        No overview available for this lesson.
+                        {t("noOverview")}
                       </p>
                     )}
                   </div>
@@ -383,12 +389,12 @@ export default function LessonPage() {
                 {activeTab === "notes" && (
                   <div className="pt-6 space-y-4">
                     <p className="text-[13px] text-[#475569]">
-                      Add personal notes for this lesson.
+                      {t("notesHint")}
                     </p>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Start typing your notes here..."
+                      placeholder={t("notesPlaceholder")}
                       className="w-full min-h-[200px] px-4 py-3 bg-white border border-[#E3E8EF] rounded-lg text-base text-[#0C1F33] placeholder-[#64748B] resize-y focus:outline-none focus:ring-2 focus:ring-[#22A146]/30"
                     />
                     <button
@@ -397,10 +403,10 @@ export default function LessonPage() {
                       className="flex items-center gap-2 px-5 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1E9040] disabled:opacity-50"
                     >
                       <Save className="w-4 h-4" />
-                      {saveNoteMutation.isPending ? "Saving..." : "Save Note"}
+                      {saveNoteMutation.isPending ? tCommon("saving") : t("saveNote")}
                     </button>
                     {noteSaved && (
-                      <p className="text-[12px] text-[#157A34]">✓ Note saved</p>
+                      <p className="text-[12px] text-[#157A34]">{t("noteSaved")}</p>
                     )}
                   </div>
                 )}
@@ -417,14 +423,14 @@ export default function LessonPage() {
                     <div className="flex-1 min-w-0">
                       <h2
                         className="text-xl text-[#0C1F33]"
-                        style={{ fontFamily: "'Marcellus', serif" }}
+                        style={{ fontFamily: "var(--font-display)" }}
                       >
-                        Course Exam
+                        {t("courseExam")}
                       </h2>
                       <p className="mt-2 text-sm text-[#475569]">
                         {isExamUnlocked
-                          ? "You have completed 90% of the course — you can now sit the exam."
-                          : `Complete 90% of the course to unlock the exam. You are at ${courseProgress}%.`}
+                          ? t("examUnlocked")
+                          : t("examLocked", { progress: courseProgress })}
                       </p>
                     </div>
                     <button
@@ -439,13 +445,13 @@ export default function LessonPage() {
                       {isExamUnlocked ? (
                         <>
                           <FileText className="w-4 h-4" />
-                          Take Exam
+                          {t("takeExam")}
                           <ChevronRight className="w-4 h-4" />
                         </>
                       ) : (
                         <>
                           <Lock className="w-4 h-4" />
-                          Locked
+                          {t("locked")}
                         </>
                       )}
                     </button>
@@ -454,7 +460,7 @@ export default function LessonPage() {
                   {/* Progress bar */}
                   <div className="mt-6">
                     <div className="flex items-center justify-between text-xs text-[#64748B] mb-1.5">
-                      <span>Course progress</span>
+                      <span>{t("courseProgress")}</span>
                       <span>{courseProgress}%</span>
                     </div>
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -466,9 +472,7 @@ export default function LessonPage() {
                       />
                     </div>
                     <p className="mt-2 text-xs text-[#64748B]">
-                      {isExamUnlocked
-                        ? "Exam unlocked — good luck!"
-                        : "The exam unlocks automatically once you reach 90% course completion."}
+                      {isExamUnlocked ? t("examUnlockedShort") : t("examUnlockHint")}
                     </p>
                   </div>
 
@@ -480,25 +484,17 @@ export default function LessonPage() {
                           <Award className="w-9 h-9 text-[#22A146]" />
                           <div>
                             <h3 className="text-base font-semibold text-[#0C1F33]">
-                              Certificate Generated
+                              {t("certificateGenerated")}
                             </h3>
                             <p className="text-xs text-[#64748B]">
-                              Issued on{" "}
-                              {new Date(certificate.issuedAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
+                              {t("issuedOn", { date: format.date(certificate.issuedAt) })}
                             </p>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-6 mt-4">
                           <div>
                             <p className="text-xs uppercase tracking-wide text-[#64748B]">
-                              Course Progress
+                              {t("courseProgress")}
                             </p>
                             <p className="text-xl font-semibold text-[#0C1F33] mt-1">
                               {certificate.details?.progress ?? 0}%
@@ -506,11 +502,11 @@ export default function LessonPage() {
                           </div>
                           <div>
                             <p className="text-xs uppercase tracking-wide text-[#64748B]">
-                              Last Exam Score
+                              {t("lastExamScore")}
                             </p>
                             <p className="text-xl font-semibold text-[#0C1F33] mt-1">
                               {certificate.details?.score === null
-                                ? "Pending"
+                                ? t("pending")
                                 : typeof certificate.details?.score === "number"
                                   ? certificate.details.score
                                   : "—"}
@@ -521,15 +517,17 @@ export default function LessonPage() {
                         </div>
                         {certificate.details?.examTitle && (
                           <p className="mt-3 text-xs text-[#64748B]">
-                            Latest attempt: {certificate.details.examTitle}
+                            {t("latestAttempt", {
+                              title: certificate.details.examTitle,
+                            })}
                             {certificate.details.attemptNumber
-                              ? ` · Attempt #${certificate.details.attemptNumber}`
+                              ? ` · ${t("attemptNumber", { number: certificate.details.attemptNumber })}`
                               : ""}
                           </p>
                         )}
                         <p className="mt-4 text-xs text-[#64748B]">
-                          Verification code:{" "}
-                          <span className="font-mono font-semibold text-[#0C1F33]">
+                          {t("verificationCode")}{" "}
+                          <span dir="ltr" className="font-mono font-semibold text-[#0C1F33]">
                             {certificate.verificationCode}
                           </span>
                         </p>
@@ -537,19 +535,19 @@ export default function LessonPage() {
                           onClick={() => downloadExamCertificatePdf(certificate)}
                           className="mt-4 px-4 py-2 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#0C1F33]"
                         >
-                          Download PDF
+                          {t("downloadPdf")}
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[#0C1F33]">
-                            Course Certificate
+                            {t("courseCertificate")}
                           </p>
                           <p className="mt-1 text-xs text-[#64748B]">
                             {hasExamAttempt
-                              ? "Generate a certificate showing your course progress and last exam score. This can only be done once."
-                              : "Take the exam at least once to unlock your certificate."}
+                              ? t("certificateHint")
+                              : t("certificateLocked")}
                           </p>
                         </div>
                         <button
@@ -563,8 +561,8 @@ export default function LessonPage() {
                         >
                           <Award className="w-4 h-4" />
                           {issueCertMutation.isPending
-                            ? "Generating..."
-                            : "Generate Certificate"}
+                            ? t("generating")
+                            : t("generateCertificate")}
                         </button>
                       </div>
                     )}
@@ -576,7 +574,7 @@ export default function LessonPage() {
         </div>
       </div>
       {/* RIGHT: Sidebar */}
-      <aside className="w-[380px] shrink-0 bg-white border-l border-[#E3E8EF] flex flex-col overflow-hidden hidden lg:flex">
+      <aside className="w-[380px] shrink-0 bg-white border-s border-[#E3E8EF] flex flex-col overflow-hidden hidden lg:flex">
         <CourseContentSidebar
           courseId={courseId}
           currentLessonId={lessonId}

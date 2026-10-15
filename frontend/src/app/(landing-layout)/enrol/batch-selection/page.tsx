@@ -5,12 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useCourseBatches, useEnrolMutation } from "@/hooks/use-enrolment";
 import { useProfileStore } from "@/stores/profile-store";
+import { useTranslations } from "next-intl";
 
 function BatchSelectionContent() {
+  const t = useTranslations("enrol");
+  const tCard = useTranslations("courseDetails.card");
+  const tSchedule = useTranslations("schedule");
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId") ?? "";
-  const courseTitle = searchParams.get("courseTitle") ?? "this course";
+  const courseTitle = searchParams.get("courseTitle") ?? t("thisCourse");
   const learnerProfileId = searchParams.get("learnerProfileId") ?? "";
 
   const { activeProfile } = useProfileStore();
@@ -20,21 +24,18 @@ function BatchSelectionContent() {
 
   const [selectedBatchId, setSelectedBatchId] = useState<string>("");
 
-  const enrollingProfileName = activeProfile?.displayName ?? "Learner";
+  const enrollingProfileName = activeProfile?.displayName ?? t("learner");
 
   const handleConfirm = () => {
     if (!selectedBatchId) {
-      toast.error("Please select a batch");
+      toast.error(t("toasts.selectBatch"));
       return;
     }
 
     if (!learnerProfileId) {
-      toast.error("Learner profile is required");
+      toast.error(t("toasts.profileRequired"));
       return;
     }
-
-    const selectedBatch = batches?.find((b) => b.id === selectedBatchId);
-    const selectedBatchName = selectedBatch?.name ?? "Batch";
 
     enrolMutation.mutate(
       {
@@ -45,12 +46,8 @@ function BatchSelectionContent() {
       {
         onSuccess: (data) => {
           if (data.waitlisted) {
-            toast.success(
-              "Added to waitlist. You'll be notified when a seat opens.",
-            );
             router.push("/dashboard");
           } else {
-            toast.success("Enrolled successfully!");
             // router.push(
             //   `/chat?courseId=${courseId}&courseTitle=${encodeURIComponent(courseTitle)}&batchId=${selectedBatchId}&batchName=${encodeURIComponent(selectedBatchName)}`,
             // );
@@ -70,27 +67,29 @@ function BatchSelectionContent() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-[9px] py-[5px] bg-white border border-[#E3E8EF] rounded text-[11px] font-bold text-[#0C1F33] uppercase">
-                COURSE
+                {t("courseBadge")}
               </span>
             </div>
             <h1
               className="text-[28px] sm:text-[40px] leading-[36px] sm:leading-[48px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
-              Enrol in {courseTitle}
+              {t("title", { course: courseTitle })}
             </h1>
             <p className="text-[15px] text-[#475569]">
-              Enrolling:{" "}
-              <span className="font-semibold text-[#0C1F33]">
-                {enrollingProfileName}
-              </span>
+              {t.rich("enrolling", {
+                name: enrollingProfileName,
+                strong: (chunks) => (
+                  <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+                ),
+              })}
             </p>
           </div>
 
           {/* Batch Selection */}
           <div className="mt-8">
             <h3 className="text-base font-semibold text-[#0C1F33]">
-              Choose a class time
+              {t("chooseTime")}
             </h3>
 
             {/* Loading */}
@@ -103,14 +102,14 @@ function BatchSelectionContent() {
             {/* Error */}
             {isError && (
               <p className="text-red-600 text-sm mt-4">
-                Failed to load batches.
+                {t("loadFailed")}
               </p>
             )}
 
             {/* No batches */}
             {!isLoading && !isError && batches?.length === 0 && (
               <p className="text-[#64748B] mt-4">
-                No batches available for this course right now.
+                {t("none")}
               </p>
             )}
 
@@ -128,7 +127,7 @@ function BatchSelectionContent() {
                       key={batch.id}
                       onClick={() => !isFull && setSelectedBatchId(batch.id)}
                       disabled={isFull}
-                      className={`w-full flex items-center rounded-xl px-5 py-5 transition-colors text-left ${
+                      className={`w-full flex items-center rounded-xl px-5 py-5 transition-colors text-start ${
                         isFull
                           ? "bg-gray-50 border border-[#E3E8EF] opacity-60 cursor-not-allowed"
                           : isSelected
@@ -148,12 +147,12 @@ function BatchSelectionContent() {
                       </div>
 
                       {/* Details */}
-                      <div className="ml-4 flex-1">
+                      <div className="ms-4 flex-1">
                         <p className="text-base font-semibold text-[#0C1F33]">
                           {batch.name}
                         </p>
                         <p className="text-sm text-[#475569] mt-1">
-                          {batch.sessions.length} sessions
+                          {tSchedule("sessionCount", { count: batch.sessions.length })}
                         </p>
                       </div>
 
@@ -168,8 +167,11 @@ function BatchSelectionContent() {
                         }`}
                       >
                         {isFull
-                          ? "Full"
-                          : `${batch.seatsRemaining} of ${batch.capacity} seats remaining`}
+                          ? t("full")
+                          : t("seatsRemaining", {
+                              remaining: batch.seatsRemaining,
+                              capacity: batch.capacity,
+                            })}
                       </span>
                     </button>
                   );
@@ -185,7 +187,9 @@ function BatchSelectionContent() {
               disabled={!selectedBatchId || enrolMutation.isPending}
               className="w-full h-12 bg-[#22A146] hover:bg-[#1B8A3A] text-[#0C1F33] font-semibold text-[15px] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             >
-              {enrolMutation.isPending ? "Enrolling..." : "Confirm enrolment"}
+              {enrolMutation.isPending
+                ? tCard("enrolling")
+                : t("confirm")}
             </button>
           </div>
         </div>
@@ -195,11 +199,12 @@ function BatchSelectionContent() {
 }
 
 export default function BatchSelectionPage() {
+  const tCommon = useTranslations("common");
   return (
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          Loading...
+          {tCommon("loading")}
         </div>
       }
     >

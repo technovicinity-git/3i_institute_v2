@@ -6,45 +6,7 @@ import type {
 } from "@/types/dashboard";
 
 export const card = "bg-white rounded-xl border border-[#E3E8EF]";
-export const serif = { fontFamily: "'Marcellus', serif" };
-
-export function formatShortDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-export function formatTime(value: string): string {
-  return new Date(value).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
-
-export function timeAgo(value: string): string {
-  const diffMs = Date.now() - new Date(value).getTime();
-  const hours = Math.floor(diffMs / 3_600_000);
-  if (hours < 1) return "Just now";
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return formatShortDate(value);
-}
-
-export function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
-export function dueLabel(daysRemaining: number): string {
-  if (daysRemaining <= 0) return "Due today";
-  if (daysRemaining === 1) return "Due tomorrow";
-  return `Due in ${daysRemaining} days`;
-}
+export const serif = { fontFamily: "var(--font-display)" };
 
 export function continueHref(course: ContinueLearningCourse): string {
   if (course.type === "ONLINE_CLASS" && course.batchId) {

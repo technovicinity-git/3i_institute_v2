@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 // ---- Props ----
 
 interface DeleteProfileCardProps {
   profileName: string;
-  destroyedItems: string;
-  survivesItems: string;
+  destroyedItems?: string;
+  survivesItems?: string;
   onDelete: () => void;
   dashboardHref?: string;
 }
@@ -17,11 +18,12 @@ interface DeleteProfileCardProps {
 
 export default function DeleteProfileCard({
   profileName = "Amina",
-  destroyedItems = "progress, enrolments, exam results, chat messages",
-  survivesItems = "certificates, moderation records",
+  destroyedItems,
+  survivesItems,
   onDelete,
   dashboardHref = "/dashboard",
 }: DeleteProfileCardProps) {
+  const t = useTranslations("deleteProfile");
   const [confirmName, setConfirmName] = useState("");
 
   const isConfirmed =
@@ -30,24 +32,24 @@ export default function DeleteProfileCard({
   return (
     <div
       className="flex items-start justify-center w-full min-h-[calc(100vh-73px)] px-4 sm:px-6 py-12 sm:py-[94px]"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       <div className="w-full max-w-[480px] bg-white rounded-lg shadow-lg p-8 sm:p-10 flex flex-col gap-7">
         {/* Title */}
         <h1
           className="text-2xl sm:text-[32px] leading-tight text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Delete {profileName}&apos;s profile?
+          {t("title", { name: profileName })}
         </h1>
 
         {/* Destroyed list */}
         <div className="flex flex-col gap-3">
           <p className="text-base font-semibold text-[#0C1F33]">
-            This will be destroyed:
+            {t("destroyed")}
           </p>
           <p className="text-base text-[#0C1F33] leading-relaxed">
-            {destroyedItems}
+            {destroyedItems ?? t("destroyedItems")}
           </p>
         </div>
 
@@ -57,10 +59,10 @@ export default function DeleteProfileCard({
         {/* Survives list */}
         <div className="flex flex-col gap-3">
           <p className="text-base font-semibold text-[#0C1F33]">
-            This will survive:
+            {t("survives")}
           </p>
           <p className="text-base text-[#0C1F33] leading-relaxed">
-            {survivesItems}
+            {survivesItems ?? t("survivesItems")}
           </p>
         </div>
 
@@ -70,7 +72,7 @@ export default function DeleteProfileCard({
             htmlFor="confirm-name"
             className="text-base font-semibold text-[#0C1F33]"
           >
-            Type the profile&apos;s name to confirm
+            {t("typeToConfirm")}
           </label>
           <input
             id="confirm-name"
@@ -93,13 +95,13 @@ export default function DeleteProfileCard({
                 : "bg-red-300 cursor-not-allowed"
             }`}
           >
-            Delete profile
+            {t("confirm")}
           </button>
           <Link
             href={dashboardHref}
             className="text-sm font-semibold text-[#157A34] hover:text-[#116B2C] transition-colors"
           >
-            No, go back to dashboard
+            {t("goBack")}
           </Link>
         </div>
       </div>

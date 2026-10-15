@@ -8,8 +8,10 @@ import { useVerifyEmailMutation } from "@/hooks/use-email-verification";
 import { postVerifyRoute } from "@/services/email.service";
 import { ExpiredVerificationLink } from "@/components/auth/expired-verification-link";
 import { apiErrorCode } from "@/lib/api-error";
+import { useTranslations } from "next-intl";
 
 function VerifyEmailContent() {
+  const t = useTranslations("auth.verifyEmail");
   const searchParams = useSearchParams();
   const router = useRouter();
   const verifyMutation = useVerifyEmailMutation();
@@ -24,7 +26,7 @@ function VerifyEmailContent() {
     submitted.current = true;
 
     if (!token) {
-      toast.error("Invalid verification link");
+      toast.error(t("invalidLink"));
       router.push("/login");
       return;
     }
@@ -45,7 +47,7 @@ function VerifyEmailContent() {
         }, 2000);
       },
     });
-  }, [token, verifyMutation, router]);
+  }, [token, verifyMutation, router, t]);
 
   const linkExpired =
     apiErrorCode(verifyMutation.error) === "VERIFICATION_LINK_EXPIRED";
@@ -62,9 +64,9 @@ function VerifyEmailContent() {
             <>
               <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mb-6" />
               <h1 className="font-serif text-2xl text-primary mb-2">
-                Verifying your email...
+                {t("verifying")}
               </h1>
-              <p className="text-muted text-sm">Please wait a moment</p>
+              <p className="text-muted text-sm">{t("pleaseWait")}</p>
             </>
           ) : verifyMutation.isSuccess ? (
             <>
@@ -84,21 +86,16 @@ function VerifyEmailContent() {
                 </svg>
               </div>
               <h1 className="font-serif text-2xl text-primary mb-2">
-                Email Verified!
+                {t("verifiedTitle")}
               </h1>
-              <p className="text-muted text-sm mb-4">
-                Your email has been verified. Redirecting to login...
-              </p>
+              <p className="text-muted text-sm mb-4">{t("verifiedBody")}</p>
             </>
           ) : linkExpired && token ? (
             <>
               <h1 className="font-serif text-2xl text-primary mb-2">
-                This link has expired
+                {t("expiredTitle")}
               </h1>
-              <p className="text-muted text-sm mb-6">
-                Verification links are valid for 24 hours. We can send a new
-                one to the same email address.
-              </p>
+              <p className="text-muted text-sm mb-6">{t("expiredBody")}</p>
               <ExpiredVerificationLink token={token} loginHref="/login" />
             </>
           ) : verifyMutation.isError ? (
@@ -119,12 +116,9 @@ function VerifyEmailContent() {
                 </svg>
               </div>
               <h1 className="font-serif text-2xl text-primary mb-2">
-                Verification Failed
+                {t("failedTitle")}
               </h1>
-              <p className="text-muted text-sm mb-4">
-                This verification link is invalid or has already been used.
-                Redirecting to login...
-              </p>
+              <p className="text-muted text-sm mb-4">{t("failedBody")}</p>
             </>
           ) : null}
         </section>
@@ -133,14 +127,19 @@ function VerifyEmailContent() {
   );
 }
 
+function LoadingFallback() {
+  const t = useTranslations("common");
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <p className="text-muted">{t("loading")}</p>
+    </div>
+  );
+}
+
 export default function VerifyEmailPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-surface">
-          <p className="text-muted">Loading...</p>
-        </div>
-      }
+      fallback={<LoadingFallback />}
     >
       <VerifyEmailContent />
     </Suspense>

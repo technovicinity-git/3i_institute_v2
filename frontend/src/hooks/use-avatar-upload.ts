@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { uploadService } from "@/services/upload.service";
 
 export function useLearnerAvatarUploadMutation() {
+  const tToast = useTranslations("learnerForm.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -17,11 +19,11 @@ export function useLearnerAvatarUploadMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["learner-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["learner-profile"] });
-      toast.success("Avatar updated");
+      toast.success(tToast("avatarUpdated"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to upload avatar");
+      toast.error(message ?? tToast("avatarFailed"));
     },
   });
 }

@@ -7,14 +7,18 @@ import {
 } from "lucide-react";
 import type { Deadline } from "@/types/dashboard";
 import { EmptyText, SectionHeader } from "./section-header";
-import { card, deadlineHref, dueLabel } from "./utils";
+import { card, deadlineHref } from "./utils";
+import { useTranslations } from "next-intl";
+import { useDashboardFormat } from "./use-dashboard-format";
 
 export function DeadlinesCard({ deadlines }: { deadlines: Deadline[] }) {
+  const t = useTranslations("dashboardHome.deadlines");
+  const fmt = useDashboardFormat();
   return (
     <div className={`${card} p-5`}>
-      <SectionHeader title="Deadlines" />
+      <SectionHeader title={t("title")} />
       {deadlines.length === 0 ? (
-        <EmptyText>Nothing due — you&apos;re all set.</EmptyText>
+        <EmptyText>{t("none")}</EmptyText>
       ) : (
         <div className="space-y-1">
           {deadlines.map((deadline) => {
@@ -43,9 +47,9 @@ export function DeadlinesCard({ deadlines }: { deadlines: Deadline[] }) {
                   </p>
                   <p className="text-[11px] text-[#64748B] truncate">
                     <span className={urgent ? "font-semibold text-red-500" : ""}>
-                      {dueLabel(deadline.daysRemaining)}
+                      {fmt.dueLabel(deadline.daysRemaining)}
                     </span>{" "}
-                    • {deadline.kind === "EXAM" ? "Exam" : "Assignment"} ·{" "}
+                    • {deadline.kind === "EXAM" ? t("exam") : t("assignment")} ·{" "}
                     {deadline.courseTitle}
                   </p>
                 </div>

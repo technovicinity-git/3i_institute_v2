@@ -10,14 +10,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForgotPasswordMutation } from "@/hooks/use-password-reset";
 import { LandingLogo } from "@/components/landing/logo";
+import { useTranslations } from "next-intl";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address").toLowerCase().trim(),
-});
+const createSchema = (invalidEmail: string) =>
+  z.object({
+    email: z.string().email(invalidEmail).toLowerCase().trim(),
+  });
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+type ForgotPasswordFormData = z.infer<ReturnType<typeof createSchema>>;
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("auth.forgotPassword");
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
+  const tValidation = useTranslations("auth.validation");
+  const tCheckEmail = useTranslations("auth.checkEmail");
   const forgotPasswordMutation = useForgotPasswordMutation();
   const [submitted, setSubmitted] = useState(false);
 
@@ -26,7 +33,7 @@ export default function ForgotPasswordPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(createSchema(tValidation("emailInvalid"))),
   });
 
   const onSubmit = (data: ForgotPasswordFormData) => {
@@ -64,11 +71,10 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="font-serif text-primary text-[30px] md:text-[32px] leading-[1.2]">
-                  Check your email
+                  {tCheckEmail("title")}
                 </h1>
                 <p className="text-[15px] md:text-base leading-6 text-muted">
-                  If an account with that email exists, we&apos;ve sent a
-                  password reset link.
+                  {t("sentBody")}
                 </p>
               </div>
 
@@ -77,7 +83,7 @@ export default function ForgotPasswordPage() {
                   href="/login"
                   className="text-sm font-semibold text-green underline underline-offset-4 hover:text-green-dark"
                 >
-                  Back to log in
+                  {tCommon("backToLogin")}
                 </a>
               </div>
             </section>
@@ -100,10 +106,10 @@ export default function ForgotPasswordPage() {
           <section className="bg-white rounded-xl border border-outline-variant/40 p-0 md:p-10 flex flex-col">
             <div className="flex flex-col gap-2 mb-8 md:mb-10">
               <h1 className="font-serif text-primary text-[30px] md:text-[32px] leading-[1.2]">
-                Reset your password
+                {t("title")}
               </h1>
               <p className="text-[15px] md:text-base leading-6 text-muted">
-                Enter the email on your account and we&apos;ll send you a link.
+                {t("subtitle")}
               </p>
             </div>
 
@@ -117,11 +123,12 @@ export default function ForgotPasswordPage() {
                   htmlFor="email"
                   className="text-sm leading-5 font-semibold text-primary"
                 >
-                  Email address
+                  {tAuth("emailLabel")}
                 </Label>
                 <Input
                   id="email"
                   type="email"
+                  dir="ltr"
                   placeholder="sarah@example.com"
                   {...register("email")}
                   className="h-12 px-4"
@@ -139,8 +146,8 @@ export default function ForgotPasswordPage() {
                 disabled={forgotPasswordMutation.isPending}
               >
                 {forgotPasswordMutation.isPending
-                  ? "Sending..."
-                  : "Send reset link"}
+                  ? tCommon("sending")
+                  : t("submit")}
               </Button>
             </form>
 
@@ -149,7 +156,7 @@ export default function ForgotPasswordPage() {
                 href="/login"
                 className="text-sm font-semibold text-green underline underline-offset-4 hover:text-green-dark"
               >
-                Back to log in
+                {tCommon("backToLogin")}
               </a>
             </div>
           </section>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import type { LiveClass } from "@/types/dashboard";
-import { formatTime, type ClassStatus } from "./utils";
+import { type ClassStatus } from "./utils";
+import { useTranslations } from "next-intl";
+import { useDashboardFormat } from "./use-dashboard-format";
 
 /** Banner for a class that is live now or starting within 30 minutes. */
 export function LiveClassBanner({
@@ -11,6 +13,8 @@ export function LiveClassBanner({
   liveClass: LiveClass;
   status: ClassStatus;
 }) {
+  const t = useTranslations("dashboardHome");
+  const fmt = useDashboardFormat();
   const isLive = status === "LIVE";
   return (
     <div
@@ -25,9 +29,11 @@ export function LiveClassBanner({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold truncate">
           {isLive
-            ? "Your class is live now"
-            : `Your class starts at ${formatTime(liveClass.scheduledAt)}`}
-          : {liveClass.title}
+            ? t("liveNowBanner", { title: liveClass.title })
+            : t("startsAtBanner", {
+                time: fmt.time(liveClass.scheduledAt),
+                title: liveClass.title,
+              })}
         </p>
         <p className="text-xs text-white/80 truncate">
           {liveClass.courseTitle} • {liveClass.instructor}
@@ -41,14 +47,14 @@ export function LiveClassBanner({
           className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0C1F33] hover:bg-white/90"
         >
           <ExternalLink className="w-4 h-4" />
-          Join class
+          {t("joinClass")}
         </a>
       ) : (
         <Link
           href={`/online-classes/${liveClass.batchId}`}
           className="rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25"
         >
-          View schedule
+          {t("viewSchedule")}
         </Link>
       )}
     </div>

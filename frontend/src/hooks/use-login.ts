@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { authService, type LoginInput } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/auth-store";
@@ -10,18 +11,19 @@ export function useLoginMutation() {
   const router = useRouter();
   const { setUser, setAccessToken } = useAuthStore();
   const logoutMutation = useLogoutMutation();
+  const t = useTranslations("auth.toasts");
 
   return useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
     onSuccess: (data) => {
       if (data.user.role !== "Account Holder") {
-        toast.error("You're not authorized to access this application.");
+        toast.error(t("notAuthorized"));
         logoutMutation.mutate(undefined);
         return;
       }
       setUser(data.user);
       setAccessToken(data.accessToken);
-      toast.success(`Welcome back, ${data.user.firstName}!`);
+      toast.success(t("welcomeBack", { name: data.user.firstName }));
       router.push("/profiles");
     },
     onError: (error: any) => {
@@ -33,9 +35,9 @@ export function useLoginMutation() {
       if (details?.fieldErrors) {
         const fieldErrors = details.fieldErrors as Record<string, string[]>;
         const firstError = Object.values(fieldErrors)[0]?.[0];
-        toast.error(firstError ?? message ?? "Login failed");
+        toast.error(firstError ?? message ?? t("loginFailed"));
       } else {
-        toast.error(message ?? "Login failed");
+        toast.error(message ?? t("loginFailed"));
       }
     },
   });

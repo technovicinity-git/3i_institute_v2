@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
@@ -34,7 +35,7 @@ interface ProtectedPdfViewerProps {
 
 type LoadState =
   | { status: "loading" }
-  | { status: "error"; message: string }
+  | { status: "error"; reason: "noAccess" | "gone" | "loadFailed" }
   | { status: "ready"; pdf: PDFDocumentProxy; pageSizes: PageSize[] };
 
 interface PageSize {
@@ -69,6 +70,8 @@ export function ProtectedPdfViewer({
 }: ProtectedPdfViewerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("lesson.pdf");
+  const tCommon = useTranslations("common");
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -115,12 +118,8 @@ export function ProtectedPdfViewer({
           ?.status;
         setState({
           status: "error",
-          message:
-            status === 403
-              ? "You don't have access to this document."
-              : status === 404
-                ? "This document is no longer available."
-                : "We couldn't load this document. Check your connection and try again.",
+          reason:
+            status === 403 ? "noAccess" : status === 404 ? "gone" : "loadFailed",
         });
       }
     })();
@@ -202,11 +201,13 @@ export function ProtectedPdfViewer({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-[#E3E8EF] bg-[#FBF9F4]">
         <p className="min-w-0 truncate text-xs sm:text-sm font-semibold text-[#0C1F33]">
-          {pageCount > 0 ? `Page ${currentPage} of ${pageCount}` : title}
+          {pageCount > 0
+            ? t("pageOf", { page: currentPage, total: pageCount })
+            : title}
         </p>
         <div className="flex items-center gap-1">
           <ToolbarButton
-            label="Zoom out"
+            label={t("zoomOut")}
             onClick={() => changeZoom(-ZOOM_STEP)}
             disabled={zoom <= MIN_ZOOM || state.status !== "ready"}
           >
@@ -217,20 +218,20 @@ export function ProtectedPdfViewer({
             onClick={() => setZoom(1)}
             disabled={state.status !== "ready"}
             className="hidden sm:block min-w-14 h-9 px-2 rounded-md text-xs font-semibold text-[#334155] tabular-nums hover:bg-white disabled:opacity-40"
-            aria-label="Fit to width"
-            title="Fit to width"
+            aria-label={t("fitWidth")}
+            title={t("fitWidth")}
           >
             {Math.round(zoom * 100)}%
           </button>
           <ToolbarButton
-            label="Zoom in"
+            label={t("zoomIn")}
             onClick={() => changeZoom(ZOOM_STEP)}
             disabled={zoom >= MAX_ZOOM || state.status !== "ready"}
           >
             <ZoomIn className="w-4 h-4" />
           </ToolbarButton>
           <ToolbarButton
-            label={isFullscreen ? "Exit full screen" : "Full screen"}
+            label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
             onClick={toggleFullscreen}
           >
             {isFullscreen ? (
@@ -250,14 +251,14 @@ export function ProtectedPdfViewer({
         {state.status === "loading" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm text-[#64748B]">
             <Loader2 className="w-8 h-8 animate-spin text-[#12304E]" />
-            Loading document…
+            {t("loading")}
           </div>
         )}
 
         {state.status === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
             <AlertTriangle className="w-10 h-10 text-red-500" />
-            <p className="text-sm text-[#334155] max-w-sm">{state.message}</p>
+            <p className="text-sm text-[#334155] max-w-sm">{t(state.reason)}</p>
             <button
               type="button"
               onClick={() => {
@@ -267,7 +268,7 @@ export function ProtectedPdfViewer({
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#12304E] text-white text-sm font-semibold"
             >
               <RotateCcw className="w-4 h-4" />
-              Try again
+              {tCommon("tryAgain")}
             </button>
           </div>
         )}
@@ -291,7 +292,7 @@ export function ProtectedPdfViewer({
 
       <div className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#FBF9F4] border-t border-[#E3E8EF] text-[11px] sm:text-xs text-[#64748B] text-center">
         <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-        Protected document • View only, downloading and printing are disabled
+        {t("protected")}
       </div>
     </div>
   );

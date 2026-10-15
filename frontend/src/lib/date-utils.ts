@@ -17,6 +17,15 @@ export const MONTHS = [
   { value: "12", label: "December" },
 ];
 
+/** Month options with names in the given language, e.g. "জানুয়ারি" for "bn". */
+export function monthOptions(locale: string) {
+  const format = new Intl.DateTimeFormat(locale, { month: "long" });
+  return MONTHS.map((month, index) => ({
+    value: month.value,
+    label: format.format(new Date(2000, index, 1)),
+  }));
+}
+
 export const YEARS = Array.from({ length: 100 }, (_, i) =>
   String(new Date().getFullYear() - i),
 );

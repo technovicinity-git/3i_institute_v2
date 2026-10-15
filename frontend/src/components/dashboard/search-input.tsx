@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface SearchInputProps {
   value: string;
@@ -13,6 +14,7 @@ export function SearchInput({
   onChange,
   placeholder = "Search...",
 }: SearchInputProps) {
+  const t = useTranslations("myCourses");
   return (
     <div className="flex items-center gap-2 bg-white border border-[#E3E8EF] rounded-lg px-4 py-2.5 max-w-[400px]">
       <Search className="w-4 h-4 text-[#94A3B8] shrink-0" />
@@ -27,7 +29,7 @@ export function SearchInput({
         <button
           onClick={() => onChange("")}
           className="text-[#94A3B8] hover:text-[#0C1F33] shrink-0"
-          aria-label="Clear search"
+          aria-label={t("clearSearch")}
         >
           <X className="w-4 h-4" />
         </button>

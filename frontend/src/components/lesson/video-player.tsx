@@ -11,6 +11,7 @@ import {
   SkipForward,
   SkipBack,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -25,6 +26,7 @@ export function VideoPlayer({
   onProgress,
   onComplete,
 }: VideoPlayerProps) {
+  const t = useTranslations("lesson.video");
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -316,7 +318,7 @@ export function VideoPlayer({
                 video.currentTime = Math.max(0, video.currentTime - 10);
             }}
             className="text-white hover:text-white/80"
-            title="Back 10s (J)"
+            title={t("back10")}
           >
             <SkipBack className="w-4 h-4" />
           </button>
@@ -331,7 +333,7 @@ export function VideoPlayer({
                 );
             }}
             className="text-white hover:text-white/80"
-            title="Forward 10s (L)"
+            title={t("forward10")}
           >
             <SkipForward className="w-4 h-4" />
           </button>
@@ -356,7 +358,7 @@ export function VideoPlayer({
           <button
             onClick={cyclePlaybackSpeed}
             className="text-[12px] font-semibold text-white hover:text-white/80 px-2"
-            title="Playback speed"
+            title={t("speed")}
           >
             {playbackSpeed}x
           </button>

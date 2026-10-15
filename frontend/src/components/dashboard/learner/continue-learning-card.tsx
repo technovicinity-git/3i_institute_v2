@@ -4,6 +4,7 @@ import { BookOpen, CalendarDays, GraduationCap, PlayCircle } from "lucide-react"
 import type { ContinueLearningCourse } from "@/types/dashboard";
 import { SectionHeader } from "./section-header";
 import { card, continueHref } from "./utils";
+import { useTranslations } from "next-intl";
 
 export function ContinueLearningCard({
   courses,
@@ -12,22 +13,21 @@ export function ContinueLearningCard({
   courses: ContinueLearningCourse[];
   hasCourses: boolean;
 }) {
+  const t = useTranslations("dashboardHome");
   return (
     <div className={`${card} p-6`}>
-      <SectionHeader title="Continue learning" href="/my-courses" />
+      <SectionHeader title={t("continue.title")} href="/my-courses" />
       {courses.length === 0 ? (
         <div className="rounded-lg bg-[#FBF9F4] p-6 text-center">
           <GraduationCap className="w-10 h-10 text-[#B8912F] mx-auto mb-3" />
           <p className="text-sm text-[#0C1F33] font-semibold">
-            {hasCourses
-              ? "You've finished all your courses!"
-              : "You haven't started a course yet"}
+            {hasCourses ? t("continue.allFinished") : t("continue.notStarted")}
           </p>
           <Link
             href="/courses"
             className="inline-block mt-3 text-sm font-semibold text-[#22A146] hover:underline"
           >
-            Browse courses
+            {t("browseCourses")}
           </Link>
         </div>
       ) : (
@@ -42,6 +42,7 @@ export function ContinueLearningCard({
 }
 
 function ContinueLearningRow({ course }: { course: ContinueLearningCourse }) {
+  const t = useTranslations("dashboardHome.continue");
   const isOnline = course.type === "ONLINE_CLASS";
   return (
     <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 py-4 first:pt-0 last:pb-0">
@@ -65,10 +66,10 @@ function ContinueLearningRow({ course }: { course: ContinueLearningCourse }) {
         </p>
         <p className="text-xs text-[#64748B] truncate mt-0.5">
           {course.nextLessonTitle
-            ? `Next: ${course.nextLessonTitle}`
+            ? t("next", { title: course.nextLessonTitle })
             : isOnline
-              ? "Live online class"
-              : "No lessons yet"}
+              ? t("liveOnline")
+              : t("noLessons")}
         </p>
         {course.totalLessons > 0 && (
           <div className="flex items-center gap-2 mt-2">
@@ -79,7 +80,10 @@ function ContinueLearningRow({ course }: { course: ContinueLearningCourse }) {
               />
             </div>
             <span className="text-[11px] text-[#64748B] whitespace-nowrap">
-              {course.completedLessons}/{course.totalLessons} lessons
+              {t("lessonsProgress", {
+                done: course.completedLessons,
+                total: course.totalLessons,
+              })}
             </span>
           </div>
         )}
@@ -94,10 +98,10 @@ function ContinueLearningRow({ course }: { course: ContinueLearningCourse }) {
           <PlayCircle className="w-3.5 h-3.5" />
         )}
         {isOnline
-          ? "Schedule"
+          ? t("schedule")
           : course.completedLessons > 0
-            ? "Resume"
-            : "Start"}
+            ? t("resume")
+            : t("start")}
       </Link>
     </div>
   );

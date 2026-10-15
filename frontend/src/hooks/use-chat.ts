@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { chatService } from "@/services/chat.service";
 import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/stores/auth-store";
@@ -10,6 +11,7 @@ import type { ChatMessage } from "@/types/chat";
 import { useProfileStore } from "@/stores/profile-store";
 
 export function useChat(courseId: string, batchId: string | null) {
+  const tToast = useTranslations("chat.toasts");
   const { accessToken } = useAuthStore();
   const { activeProfile } = useProfileStore();
 
@@ -119,7 +121,7 @@ export function useChat(courseId: string, batchId: string | null) {
     (text: string) => {
       const socket = socketRef.current;
       if (!socket || !socket.connected) {
-        toast.error("Chat is disconnected. Please refresh.");
+        toast.error(tToast("disconnected"));
         return;
       }
 
@@ -130,20 +132,20 @@ export function useChat(courseId: string, batchId: string | null) {
         learnerProfileId: activeProfile?.id, // NEW
       });
     },
-    [courseId, batchId, activeProfile?.id],
+    [courseId, batchId, activeProfile?.id, tToast],
   );
 
   const reportMessage = useCallback(
     async (messageId: string, reason: string) => {
       try {
         await chatService.reportMessage(messageId, reason);
-        toast.success("Message reported");
+        toast.success(tToast("reported"));
       } catch (error: any) {
         const message = error.response?.data?.error?.message;
-        toast.error(message ?? "Failed to report message");
+        toast.error(message ?? tToast("reportFailed"));
       }
     },
-    [],
+    [tToast],
   );
 
   return {
