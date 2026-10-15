@@ -1,5 +1,6 @@
 import type { Prisma } from "#/generated/prisma/client";
 import { prisma } from "#/lib/prisma";
+import { recordAudit } from "#/shared/audit";
 import {
   ConflictError,
   NotFoundError,
@@ -113,6 +114,16 @@ export class SubscriptionService {
       where: { key: PAYMENT_SETTINGS_KEY },
       create: { key: PAYMENT_SETTINGS_KEY, value: settings, updatedById: adminId },
       update: { value: settings, updatedById: adminId },
+    });
+    await recordAudit({
+      actorId: adminId,
+      action: "PAYMENT_SETTINGS_UPDATED",
+      resource: "payment_settings",
+      details: {
+        monthlyPrice: settings.monthlyPrice,
+        currency: settings.currency,
+        accounts: settings.accounts.map((a) => `${a.label} · ${a.accountNumber}`),
+      },
     });
     return settings;
   }

@@ -44,7 +44,7 @@ export class ContentController {
 
   deletePage = handle(async (req, res) => {
     const slug = pageSlugSchema.parse(req.params["slug"]);
-    await contentService.deletePage(slug);
+    await contentService.deletePage(slug, req.user!.sub);
     sendSuccess(res, null, 200, "Page removed");
   });
 

@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { recordAudit } from "#/shared/audit";
 import {
   ForbiddenError,
   NotFoundError,
@@ -434,6 +435,14 @@ export class CourseService {
         approvedAt: new Date(),
         approvedBy: adminId,
       },
+    });
+
+    await recordAudit({
+      actorId: adminId,
+      action: "COURSE_APPROVED",
+      resource: "course",
+      resourceId: courseId,
+      details: { title: course.title },
     });
 
     notificationEvents.courseReviewed(courseId, true);

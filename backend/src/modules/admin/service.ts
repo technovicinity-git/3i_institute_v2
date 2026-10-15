@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { recordAudit } from "#/shared/audit";
 import { isManualSubscription } from "#/modules/seat/service";
 import { ForbiddenError, NotFoundError } from "#/shared/errors";
 import {
@@ -82,17 +83,31 @@ export class AdminService {
     return profile;
   }
 
-  async archiveLearnerProfile(profileId: string) {
+  async archiveLearnerProfile(profileId: string, actorId: string) {
     const profile = await prisma.learnerProfile.findUnique({ where: { id: profileId } });
     if (!profile) throw new NotFoundError("Learner profile not found");
     await prisma.learnerProfile.update({ where: { id: profileId }, data: { deletedAt: new Date() } });
+    await recordAudit({
+      actorId,
+      action: "LEARNER_PROFILE_ARCHIVED",
+      resource: "learner_profile",
+      resourceId: profileId,
+      details: { displayName: profile.displayName },
+    });
     return { message: "Learner profile archived" };
   }
 
-  async restoreLearnerProfile(profileId: string) {
+  async restoreLearnerProfile(profileId: string, actorId: string) {
     const profile = await prisma.learnerProfile.findUnique({ where: { id: profileId } });
     if (!profile) throw new NotFoundError("Learner profile not found");
     await prisma.learnerProfile.update({ where: { id: profileId }, data: { deletedAt: null } });
+    await recordAudit({
+      actorId,
+      action: "LEARNER_PROFILE_RESTORED",
+      resource: "learner_profile",
+      resourceId: profileId,
+      details: { displayName: profile.displayName },
+    });
     return { message: "Learner profile restored" };
   }
 
@@ -195,10 +210,20 @@ export class AdminService {
 
     await terminateUserSessions(userId, "deactivated");
 
+    if (user.isActive) {
+      await recordAudit({
+        actorId,
+        action: "USER_DEACTIVATED",
+        resource: "user",
+        resourceId: userId,
+        details: { name: `${user.firstName} ${user.lastName}`.trim(), email: user.email },
+      });
+    }
+
     return { id: userId, isActive: false };
   }
 
-  async activateUser(userId: string) {
+  async activateUser(userId: string, actorId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { role: { select: { name: true } } },
@@ -220,6 +245,13 @@ export class AdminService {
     setCachedStatus(userId, true);
 
     if (!user.isActive) {
+      await recordAudit({
+        actorId,
+        action: "USER_REACTIVATED",
+        resource: "user",
+        resourceId: userId,
+        details: { name: `${user.firstName} ${user.lastName}`.trim(), email: user.email },
+      });
       emailService.sendInBackground({
         to: user.email,
         template: "account.reactivated",
@@ -248,6 +280,14 @@ export class AdminService {
     }
 
     await prisma.user.delete({ where: { id: userId } });
+    // The user is gone, so keep who it was in the entry
+    await recordAudit({
+      actorId,
+      action: "USER_DELETED",
+      resource: "user",
+      resourceId: userId,
+      details: { name: `${user.firstName} ${user.lastName}`.trim(), email: user.email },
+    });
     await terminateUserSessions(userId, "deleted");
 
     return { message: "User deleted" };
@@ -454,7 +494,7 @@ export class AdminService {
     return { courses: formattedCourses, total };
   }
 
-  async suspendCourse(courseId: string) {
+  async suspendCourse(courseId: string, actorId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: { instructor: { select: { email: true, firstName: true } } },
@@ -471,6 +511,13 @@ export class AdminService {
 
     notificationEvents.courseSuspended(courseId);
     if (course.status !== "SUSPENDED") {
+      await recordAudit({
+        actorId,
+        action: "COURSE_SUSPENDED",
+        resource: "course",
+        resourceId: courseId,
+        details: { title: course.title },
+      });
       emailService.sendInBackground({
         to: course.instructor.email,
         template: "instructor.course-suspended",
@@ -485,7 +532,7 @@ export class AdminService {
     return updated;
   }
 
-  async activateCourse(courseId: string) {
+  async activateCourse(courseId: string, actorId: string) {
     const course = await prisma.course.findUnique({ where: { id: courseId } });
 
     if (!course) {
@@ -496,6 +543,16 @@ export class AdminService {
       where: { id: courseId },
       data: { status: "PUBLISHED" },
     });
+
+    if (course.status !== "PUBLISHED") {
+      await recordAudit({
+        actorId,
+        action: "COURSE_REACTIVATED",
+        resource: "course",
+        resourceId: courseId,
+        details: { title: course.title, previousStatus: course.status },
+      });
+    }
 
     return updated;
   }

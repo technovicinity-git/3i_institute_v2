@@ -5,12 +5,20 @@ import {
   updateCategorySchema,
 } from "#/modules/category/schema";
 import { sendSuccess } from "#/shared/response";
+import { recordAudit } from "#/shared/audit";
 
 export class CategoryController {
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = createCategorySchema.parse(req.body);
       const category = await categoryService.create(input);
+      await recordAudit({
+        actorId: req.user!.sub,
+        action: "CATEGORY_CREATED",
+        resource: "category",
+        resourceId: category.id,
+        details: { name: category.name },
+      });
       sendSuccess(res, category, 201, "Category created");
     } catch (error) {
       next(error);
@@ -24,6 +32,13 @@ export class CategoryController {
         req.params["id"] as string,
         input,
       );
+      await recordAudit({
+        actorId: req.user!.sub,
+        action: "CATEGORY_UPDATED",
+        resource: "category",
+        resourceId: category.id,
+        details: { name: category.name, changes: Object.keys(input) },
+      });
       sendSuccess(res, category, 200, "Category updated");
     } catch (error) {
       next(error);
@@ -32,7 +47,7 @@ export class CategoryController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await categoryService.delete(req.params["id"] as string);
+      await categoryService.delete(req.params["id"] as string, req.user!.sub);
       sendSuccess(res, null, 200, "Category deleted");
     } catch (error) {
       next(error);
