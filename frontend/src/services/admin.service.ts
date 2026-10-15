@@ -218,13 +218,39 @@ export interface AdminWaiversResponse {
   total: number;
 }
 
+export interface ModerationUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isActive?: boolean;
+}
+
 export interface ChatReport {
   id: string;
-  messageId: string;
-  reporterId: string;
   reason: string;
   reportedAt: string;
-  status: string;
+  reporter: ModerationUser | null;
+}
+
+export type ModerationAction = "DELETE" | "REMOVE";
+
+export interface ModerationQueueItem {
+  messageId: string;
+  /** Null when the message no longer exists. */
+  message: {
+    id: string;
+    text: string;
+    displayName: string;
+    createdAt: string;
+  } | null;
+  sender: ModerationUser | null;
+  course: { id: string; title: string } | null;
+  batch: { id: string; name: string } | null;
+  reportCount: number;
+  firstReportedAt: string;
+  lastReportedAt: string;
+  reports: ChatReport[];
 }
 
 export interface AdminReport {
@@ -418,12 +444,15 @@ export const adminService = {
     return response.data.data;
   },
 
-  getModerationQueue: async (): Promise<ChatReport[]> => {
+  getModerationQueue: async (): Promise<ModerationQueueItem[]> => {
     const response = await apiClient.get("/chat/moderation-queue");
     return response.data.data;
   },
 
-  moderateMessage: async (messageId: string, action: string): Promise<void> => {
+  moderateMessage: async (
+    messageId: string,
+    action: ModerationAction,
+  ): Promise<void> => {
     await apiClient.post("/chat/moderate", { messageId, action });
   },
 

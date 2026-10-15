@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminService } from "@/services/admin.service";
+import type { ModerationAction } from "@/services/admin.service";
 
 export function useAdminUsers(
   page: number,
@@ -306,11 +307,14 @@ export function useModerateMessageMutation() {
       action,
     }: {
       messageId: string;
-      action: string;
+      action: ModerationAction;
     }) => adminService.moderateMessage(messageId, action),
-    onSuccess: () => {
+    onSuccess: (_data, { action }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-queue"] });
-      toast.success("Moderation action completed");
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      toast.success(
+        action === "DELETE" ? "Message deleted" : "Reports dismissed",
+      );
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

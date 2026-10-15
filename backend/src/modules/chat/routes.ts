@@ -150,10 +150,10 @@ router.post(
  * /api/v1/chat/moderation-queue:
  *   get:
  *     tags: [Chat]
- *     summary: Get moderation queue (admin)
+ *     summary: Get open chat reports grouped by message (admin)
  *     responses:
  *       200:
- *         description: List of reports
+ *         description: Reported messages with their open reports
  */
 router.get(
   "/moderation-queue",
@@ -184,10 +184,13 @@ router.get(
  *             required: [messageId, action]
  *             properties:
  *               messageId: { type: string, format: uuid }
- *               action: { type: string, enum: [DELETE, MUTE, REMOVE] }
+ *               action:
+ *                 type: string
+ *                 enum: [DELETE, REMOVE]
+ *                 description: DELETE removes the message, REMOVE dismisses the reports
  *     responses:
  *       200:
- *         description: Moderation action logged
+ *         description: Moderation action applied and logged
  */
 router.post(
   "/moderate",

@@ -1,7 +1,7 @@
 import type { Server as HttpServer } from "node:http";
 import { Server as SocketIOServer } from "socket.io";
 import { verifyAccessToken } from "#/lib/jwt";
-import { chatService } from "#/modules/chat/service";
+import { chatService, onChatMessageDeleted } from "#/modules/chat/service";
 import { env } from "#/config/env";
 import { prisma } from "#/lib/prisma";
 import { isAccountActive } from "#/modules/user/account-status";
@@ -213,6 +213,14 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
     socket.on("disconnect", () => {
       console.log(`🔌 User disconnected: ${user.email}`);
     });
+  });
+
+  // Moderators deleting a message removes it from everyone's chat.
+  onChatMessageDeleted((courseId, batchId, messageId) => {
+    const roomName = batchId
+      ? `course:${courseId}:batch:${batchId}`
+      : `course:${courseId}`;
+    io?.to(roomName).emit("message-deleted", { messageId });
   });
 
   registerNotificationSocket(io);
