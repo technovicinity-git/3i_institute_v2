@@ -90,9 +90,10 @@ export const NOTIFICATION_EVENTS = {
     email: true,
     priority: "high",
   }),
-  "waiver.approved": event("billing", { push: true, email: true }),
-  "waiver.rejected": event("billing", { push: true, email: true }),
-  "waiver.revoked": event("billing", { push: true, email: true }),
+  // Waiver emails are sent directly by waiver/service.ts.
+  "waiver.approved": event("billing", { push: true }),
+  "waiver.rejected": event("billing", { push: true }),
+  "waiver.revoked": event("billing", { push: true }),
 
   // ── Instructor ───────────────────────────────
   // Emailed directly by instructor/service.ts (see note at the top).

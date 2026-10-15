@@ -152,20 +152,6 @@ export interface AdminExamAttempt {
   submittedAt: string | null;
 }
 
-export interface PendingWaiver {
-  id: string;
-  accountId: string;
-  account: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  explanation: string;
-  evidenceFiles: string[];
-  status: string;
-  createdAt: string;
-}
-
 export interface AdminCourse {
   id: string;
   title: string;
@@ -193,28 +179,6 @@ export interface AdminCourse {
 
 export interface AdminCoursesResponse {
   courses: AdminCourse[];
-  total: number;
-}
-
-export interface AdminWaiver {
-  id: string;
-  accountId: string;
-  account: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  explanation: string;
-  evidenceFiles: string[];
-  status: string;
-  tier: number | null;
-  reviewedBy: string | null;
-  reviewedAt: string | null;
-  createdAt: string;
-}
-
-export interface AdminWaiversResponse {
-  waivers: AdminWaiver[];
   total: number;
 }
 
@@ -401,25 +365,6 @@ export const adminService = {
     await apiClient.post(`/courses/${courseId}/reject`, { reason });
   },
 
-  getPendingWaivers: async (): Promise<PendingWaiver[]> => {
-    const response = await apiClient.get("/admin/waivers/pending");
-    return response.data.data;
-  },
-
-  approveWaiver: async (waiverId: string, tier: number): Promise<void> => {
-    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
-      approved: true,
-      tier,
-    });
-  },
-
-  rejectWaiver: async (waiverId: string, reason: string): Promise<void> => {
-    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
-      approved: false,
-      reason,
-    });
-  },
-
   getAllCourses: async (
     page = 1,
     status?: string,
@@ -436,16 +381,6 @@ export const adminService = {
 
   activateCourse: async (courseId: string): Promise<void> => {
     await apiClient.post(`/admin/courses/${courseId}/activate`);
-  },
-
-  getAllWaivers: async (
-    page = 1,
-    status?: string,
-  ): Promise<AdminWaiversResponse> => {
-    const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (status) params.set("status", status);
-    const response = await apiClient.get(`/admin/waivers?${params.toString()}`);
-    return response.data.data;
   },
 
   getModerationQueue: async (): Promise<ModerationQueueItem[]> => {

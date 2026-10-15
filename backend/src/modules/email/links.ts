@@ -25,6 +25,7 @@ export const emailLinks = {
   instructorCourse: (courseId: string) =>
     url(`/instructor/courses/${courseId}/edit`),
   contact: () => url("/contact"),
+  subscription: () => url("/subscription"),
   onlineClass: (batchId: string) => url(`/online-classes/${batchId}`),
   courseExams: (courseId: string) => url(`/my-courses/${courseId}/exams`),
   instructorLogin: () => url("/instructor/login"),

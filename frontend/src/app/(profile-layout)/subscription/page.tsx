@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  BadgePercent,
   Building2,
   CheckCircle,
   Clock,
@@ -22,6 +23,7 @@ import {
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useProfileStore } from "@/stores/profile-store";
 import { ApplySubscriptionDialog } from "@/components/subscription/apply-subscription-dialog";
+import { WaiverRequestDialog } from "@/components/subscription/waiver-request-dialog";
 import {
   formatMoney,
   PAYMENT_ACCOUNT_TYPE_LABEL,
@@ -29,6 +31,7 @@ import {
   type PaymentSettings,
   type ProfileSubscriptionStatus,
   type SubscriptionRequest,
+  type Waiver,
 } from "@/services/subscription.service";
 
 function formatDate(dateStr: string): string {
@@ -62,7 +65,11 @@ function copy(text: string) {
 
 function AccountIcon({ type }: { type: PaymentAccount["type"] }) {
   const Icon =
-    type === "BANK" ? Building2 : type === "MOBILE_BANKING" ? Smartphone : Wallet;
+    type === "BANK"
+      ? Building2
+      : type === "MOBILE_BANKING"
+        ? Smartphone
+        : Wallet;
   return (
     <div className="w-10 h-10 rounded-full bg-[#F9F6F0] flex items-center justify-center shrink-0">
       <Icon className="w-5 h-5 text-[#B8912F]" />
@@ -199,16 +206,70 @@ function statusLine(profile: ProfileSubscriptionStatus): string {
   return parts.join(" · ");
 }
 
+function WaiverLine({
+  profile,
+  onRequestWaiver,
+}: {
+  profile: ProfileSubscriptionStatus;
+  onRequestWaiver: () => void;
+}) {
+  const { usable, pending, lastRejectionReason, applicationsLeft } =
+    profile.waiver;
+  if (usable) {
+    return (
+      <p className="flex items-center gap-1.5 text-[13px] text-[#157A34] font-semibold">
+        <BadgePercent className="w-4 h-4" />
+        {usable.percent}% fee waiver ready — use by{" "}
+        {formatDate(usable.expiresAt)}
+      </p>
+    );
+  }
+  if (pending) {
+    return (
+      <p className="flex items-center gap-1.5 text-[13px] text-[#2D6CDF]">
+        <BadgePercent className="w-4 h-4" />
+        Fee waiver request under review
+      </p>
+    );
+  }
+  return (
+    <p className="text-[13px] text-[#475569]">
+      {lastRejectionReason && (
+        <span className="text-red-600">
+          Waiver not approved: {lastRejectionReason}.{" "}
+        </span>
+      )}
+      {applicationsLeft > 0 ? (
+        <button
+          onClick={onRequestWaiver}
+          className="font-semibold text-[#12304E] underline hover:text-[#22A146]"
+        >
+          Need help with the fee? Request a waiver
+        </button>
+      ) : (
+        <span className="text-[#64748B]">
+          Waiver limit reached for this year
+          {profile.waiver.nextApplicationAt
+            ? ` (next on ${formatDate(profile.waiver.nextApplicationAt)})`
+            : ""}
+        </span>
+      )}
+    </p>
+  );
+}
+
 function ProfileRow({
   profile,
   canApply,
   onApply,
   onCancel,
+  onRequestWaiver,
 }: {
   profile: ProfileSubscriptionStatus;
   canApply: boolean;
   onApply: () => void;
   onCancel: () => void;
+  onRequestWaiver: () => void;
 }) {
   return (
     <div
@@ -252,6 +313,7 @@ function ProfileRow({
                 : "."}
             </p>
           )}
+          <WaiverLine profile={profile} onRequestWaiver={onRequestWaiver} />
         </div>
       </div>
 
@@ -324,12 +386,19 @@ function RequestHistory({ requests }: { requests: SubscriptionRequest[] }) {
               </span>
               <span className="text-[#334155]">
                 {formatMoney(request.amount, request.currency)}
+                {request.discountPercent > 0 && (
+                  <span className="block text-xs text-[#157A34]">
+                    {request.discountPercent}% waiver
+                  </span>
+                )}
               </span>
               <span className="md:col-span-2 text-[#475569] min-w-0">
                 <span className="block truncate">{request.paymentMethod}</span>
-                <span className="block text-xs text-[#64748B] font-mono truncate">
-                  {request.transactionId}
-                </span>
+                {request.transactionId && (
+                  <span className="block text-xs text-[#64748B] font-mono truncate">
+                    {request.transactionId}
+                  </span>
+                )}
               </span>
               <span className="text-[#64748B]">
                 {formatDate(request.createdAt)}
@@ -359,6 +428,78 @@ function RequestHistory({ requests }: { requests: SubscriptionRequest[] }) {
   );
 }
 
+// ---- Waiver history ----
+
+const WAIVER_STATUS: Record<
+  Waiver["status"],
+  { label: string; className: string }
+> = {
+  PENDING: { label: "Under review", className: "bg-blue-50 text-[#2D6CDF]" },
+  APPROVED: {
+    label: "Ready to use",
+    className: "bg-[#22A146]/10 text-[#157A34]",
+  },
+  USED: { label: "Used", className: "bg-gray-100 text-gray-600" },
+  REJECTED: { label: "Not approved", className: "bg-red-50 text-red-600" },
+  EXPIRED: { label: "Expired", className: "bg-gray-100 text-gray-600" },
+  REVOKED: { label: "Withdrawn", className: "bg-gray-100 text-gray-600" },
+};
+
+function WaiverHistory({ waivers }: { waivers: Waiver[] }) {
+  return (
+    <div className={`${card} overflow-hidden`}>
+      <div className="px-5 sm:px-6 py-4 border-b border-[#E3E8EF]">
+        <h2
+          className="text-xl text-[#0C1F33]"
+          style={{ fontFamily: "'Marcellus', serif" }}
+        >
+          Fee waivers
+        </h2>
+      </div>
+      <div className="divide-y divide-[#E3E8EF]">
+        {waivers.map((waiver) => {
+          const status = WAIVER_STATUS[waiver.status];
+          const reason = waiver.rejectionReason ?? waiver.revokeReason;
+          return (
+            <div
+              key={waiver.id}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-5 sm:px-6 py-4 text-sm"
+            >
+              <div className="min-w-0">
+                <p className="font-semibold text-[#0C1F33]">
+                  {waiver.learnerProfile?.displayName ?? "Learner"}
+                  {waiver.percent !== null && (
+                    <span className="ml-2 font-normal text-[#475569]">
+                      {waiver.percent}% off one month
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-[#64748B]">
+                  Requested {formatDate(waiver.createdAt)}
+                  {waiver.status === "APPROVED" &&
+                    waiver.expiresAt &&
+                    ` · use by ${formatDate(waiver.expiresAt)}`}
+                  {waiver.status === "USED" &&
+                    waiver.usedAt &&
+                    ` · used ${formatDate(waiver.usedAt)}`}
+                </p>
+                {reason && (
+                  <p className="text-xs text-red-600 mt-0.5">{reason}</p>
+                )}
+              </div>
+              <span
+                className={`inline-block w-fit text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${status.className}`}
+              >
+                {status.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ---- Page ----
 
 export default function SubscriptionPage() {
@@ -367,6 +508,9 @@ export default function SubscriptionPage() {
   const confirm = useConfirm();
   const { activeProfile, setActiveProfile } = useProfileStore();
   const [applyFor, setApplyFor] = useState<ProfileSubscriptionStatus | null>(
+    null,
+  );
+  const [waiverFor, setWaiverFor] = useState<ProfileSubscriptionStatus | null>(
     null,
   );
 
@@ -424,8 +568,8 @@ export default function SubscriptionPage() {
             Subscription
           </h1>
           <p className="text-[15px] text-[#475569]">
-            Each learner profile needs its own subscription to enrol in
-            courses. A subscription lasts one month from approval.
+            Each learner profile needs its own subscription to enrol in courses.
+            A subscription lasts one month from approval.
           </p>
         </div>
 
@@ -488,6 +632,7 @@ export default function SubscriptionPage() {
                     canApply={data.payment.accounts.length > 0}
                     onApply={() => setApplyFor(profile)}
                     onCancel={() => handleCancel(profile)}
+                    onRequestWaiver={() => setWaiverFor(profile)}
                   />
                 ))}
               </div>
@@ -495,6 +640,10 @@ export default function SubscriptionPage() {
 
             {data.requests.length > 0 && (
               <RequestHistory requests={data.requests} />
+            )}
+
+            {data.waivers.length > 0 && (
+              <WaiverHistory waivers={data.waivers} />
             )}
 
             {data.requests.some((r) => r.status === "REJECTED") && (
@@ -509,6 +658,11 @@ export default function SubscriptionPage() {
               profile={applyFor}
               payment={data.payment}
               onOpenChange={(open) => !open && setApplyFor(null)}
+            />
+
+            <WaiverRequestDialog
+              profile={waiverFor}
+              onOpenChange={(open) => !open && setWaiverFor(null)}
             />
           </>
         )}

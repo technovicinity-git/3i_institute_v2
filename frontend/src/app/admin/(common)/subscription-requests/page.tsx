@@ -117,12 +117,21 @@ export default function AdminSubscriptionRequestsPage() {
           {request.profileSubscribedUntil
             ? `, starting when the current period ends (${formatDateTime(request.profileSubscribedUntil)})`
             : " from now"}
-          . It ends at 12am in the account holder&apos;s timezone. Make sure{" "}
-          {formatMoney(request.amount, request.currency)} with transaction ID{" "}
-          <span className="font-mono font-semibold text-[#0C1F33]">
-            {request.transactionId}
-          </span>{" "}
-          has arrived.
+          . It ends at 12am in the account holder&apos;s timezone.{" "}
+          {request.transactionId ? (
+            <>
+              Make sure {formatMoney(request.amount, request.currency)} with
+              transaction ID{" "}
+              <span className="font-mono font-semibold text-[#0C1F33]">
+                {request.transactionId}
+              </span>{" "}
+              has arrived.
+            </>
+          ) : (
+            "A 100% fee waiver covers this month, so there's no payment to check."
+          )}
+          {request.discountPercent > 0 &&
+            ` Their ${request.discountPercent}% waiver will be used up.`}
         </>
       ),
       confirmLabel: "Approve",
@@ -274,6 +283,11 @@ export default function AdminSubscriptionRequestsPage() {
                     <p className="text-sm font-semibold text-[#0C1F33]">
                       {formatMoney(request.amount, request.currency)}
                     </p>
+                    {request.discountPercent > 0 && (
+                      <p className="text-xs text-[#157A34]">
+                        {request.discountPercent}% waiver
+                      </p>
+                    )}
                     {request.profileSubscribedUntil &&
                       request.status === "PENDING" && (
                         <p className="text-xs text-[#2D6CDF]">Renewal</p>
@@ -285,9 +299,11 @@ export default function AdminSubscriptionRequestsPage() {
                     <p className="text-sm text-[#334155] truncate">
                       {request.paymentMethod}
                     </p>
-                    <p className="text-xs text-[#64748B] font-mono truncate">
-                      {request.transactionId}
-                    </p>
+                    {request.transactionId && (
+                      <p className="text-xs text-[#64748B] font-mono truncate">
+                        {request.transactionId}
+                      </p>
+                    )}
                   </div>
 
                   {/* Submitted */}
@@ -423,15 +439,36 @@ function ReviewDialog({
                   {STATUS_BADGE[request.status].label}
                 </span>
               </DetailRow>
-              <DetailRow label="Amount">
+              <DetailRow label="Amount paid">
                 <span className="font-semibold">
                   {formatMoney(request.amount, request.currency)}
                 </span>
+                {request.expectedAmount !== null &&
+                  request.transactionId &&
+                  request.amount !== request.expectedAmount && (
+                    <span className="ml-2 text-xs text-orange-600">
+                      expected{" "}
+                      {formatMoney(request.expectedAmount, request.currency)}
+                    </span>
+                  )}
               </DetailRow>
+              {request.discountPercent > 0 && request.listPrice !== null && (
+                <DetailRow label="Fee waiver">
+                  <span className="text-[#157A34] font-semibold">
+                    {request.discountPercent}% off
+                  </span>{" "}
+                  <span className="text-[#64748B]">
+                    ({formatMoney(request.listPrice, request.currency)} →{" "}
+                    {formatMoney(request.expectedAmount ?? 0, request.currency)})
+                  </span>
+                </DetailRow>
+              )}
               <DetailRow label="Paid to">{request.paymentMethod}</DetailRow>
-              <DetailRow label="Transaction ID">
-                <span className="font-mono">{request.transactionId}</span>
-              </DetailRow>
+              {request.transactionId && (
+                <DetailRow label="Transaction ID">
+                  <span className="font-mono">{request.transactionId}</span>
+                </DetailRow>
+              )}
               {request.senderAccount && (
                 <DetailRow label="Paid from">
                   <span className="font-mono">{request.senderAccount}</span>

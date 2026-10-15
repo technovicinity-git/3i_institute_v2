@@ -36,11 +36,18 @@ export interface SubscriptionRequest {
   paymentMethod: string;
   amount: number;
   currency: string;
-  transactionId: string;
+  /** Null when a 100% waiver covered the price. */
+  transactionId: string | null;
   senderAccount: string | null;
   paidAt: string;
   note: string | null;
   proofImageUrl: string | null;
+  /** Waiver discount applied to this request (0 when none). */
+  discountPercent: number;
+  listPrice: number | null;
+  /** Price after the waiver discount. */
+  expectedAmount: number | null;
+  waiverId: string | null;
   reviewedAt: string | null;
   rejectionReason: string | null;
   periodStart: string | null;
@@ -69,24 +76,117 @@ export interface ProfileSubscriptionStatus {
   subscribedUntil: string | null;
   pendingRequestId: string | null;
   lastRejection: { reason: string | null; reviewedAt: string | null } | null;
+  waiver: {
+    /** Approved and unused: applied to the next subscription request. */
+    usable: { id: string; percent: number; expiresAt: string } | null;
+    pending: boolean;
+    lastRejectionReason: string | null;
+    applicationsLeft: number;
+    nextApplicationAt: string | null;
+  };
 }
 
 export interface SubscriptionOverview {
   payment: PaymentSettings;
   profiles: ProfileSubscriptionStatus[];
   requests: SubscriptionRequest[];
+  waivers: Waiver[];
 }
 
+/** Payment fields are left out when a 100% waiver covers the price. */
 export interface CreateSubscriptionRequestInput {
   learnerProfileId: string;
-  paymentMethod: string;
-  amount: number;
-  transactionId: string;
+  paymentMethod?: string;
+  amount?: number;
+  transactionId?: string;
   senderAccount?: string;
-  paidAt: string;
+  paidAt?: string;
   note?: string;
   proofImageUrl?: string;
 }
+
+// ─── Fee waivers ───
+
+export type WaiverStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "REVOKED"
+  | "USED"
+  | "EXPIRED";
+
+export const WAIVER_TIERS = [25, 50, 75, 100] as const;
+
+export interface Waiver {
+  id: string;
+  status: WaiverStatus;
+  /** Discount percent, set when approved. */
+  percent: number | null;
+  explanation: string;
+  evidenceFiles: string[];
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  /** Use-by date of an approved waiver. */
+  expiresAt: string | null;
+  usedAt: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  createdAt: string;
+  /** Set while a pending subscription request is holding this waiver. */
+  reservedByRequestId: string | null;
+  account: { id: string; firstName: string; lastName: string; email: string };
+  learnerProfile: {
+    id: string;
+    displayName: string;
+    avatarUrl: string | null;
+    age: number;
+  } | null;
+}
+
+export const waiverService = {
+  apply: async (input: {
+    learnerProfileId: string;
+    explanation: string;
+    evidenceFiles: string[];
+  }): Promise<Waiver> => {
+    const response = await apiClient.post("/waivers", input);
+    return response.data.data;
+  },
+
+  // ─── Admin ───
+
+  list: async (
+    page: number,
+    filters: { status?: string; search?: string },
+  ): Promise<{ waivers: Waiver[]; total: number; pendingCount: number }> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    if (filters.status) params.set("status", filters.status);
+    if (filters.search) params.set("search", filters.search);
+    const response = await apiClient.get(`/admin/waivers?${params.toString()}`);
+    return response.data.data;
+  },
+
+  approve: async (waiverId: string, tier: number): Promise<Waiver> => {
+    const response = await apiClient.post(`/admin/waivers/${waiverId}/approve`, {
+      tier,
+    });
+    return response.data.data;
+  },
+
+  reject: async (waiverId: string, reason: string): Promise<Waiver> => {
+    const response = await apiClient.post(`/admin/waivers/${waiverId}/reject`, {
+      reason,
+    });
+    return response.data.data;
+  },
+
+  revoke: async (waiverId: string, reason: string): Promise<Waiver> => {
+    const response = await apiClient.post(`/admin/waivers/${waiverId}/revoke`, {
+      reason,
+    });
+    return response.data.data;
+  },
+};
 
 export const subscriptionService = {
   getOverview: async (): Promise<SubscriptionOverview> => {
@@ -171,6 +271,11 @@ export const subscriptionService = {
     return response.data.data;
   },
 };
+
+/** Price after a waiver discount (matches the server's rounding). */
+export function discountedPrice(price: number, discountPercent: number): number {
+  return Math.round(price * (100 - discountPercent)) / 100;
+}
 
 export function formatMoney(amount: number, currency: string): string {
   return `${currency} ${amount.toLocaleString("en-US", {

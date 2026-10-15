@@ -1,4 +1,7 @@
 import { customEmail } from "#/modules/email/templates/admin/custom-email";
+import { waiverApproved } from "#/modules/email/templates/billing/waiver-approved";
+import { waiverRejected } from "#/modules/email/templates/billing/waiver-rejected";
+import { waiverRevoked } from "#/modules/email/templates/billing/waiver-revoked";
 import { passwordChanged } from "#/modules/email/templates/auth/password-changed";
 import { passwordReset } from "#/modules/email/templates/auth/password-reset";
 import { verifyEmail } from "#/modules/email/templates/auth/verify-email";
@@ -58,6 +61,11 @@ export const emailTemplates = {
   "learner.session-cancelled": sessionCancelled,
   "learner.exam-published": examPublished,
   "learner.exam-rescheduled": examRescheduled,
+
+  // Billing (sent to the account holder)
+  "billing.waiver-approved": waiverApproved,
+  "billing.waiver-rejected": waiverRejected,
+  "billing.waiver-revoked": waiverRevoked,
 
   // Admin (written by an admin on the Send Email page)
   "admin.custom-email": customEmail,

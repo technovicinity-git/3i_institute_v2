@@ -144,19 +144,6 @@ export class AdminController {
     }
   };
 
-  getPendingWaivers = async (
-    _req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const result = await adminService.getPendingWaivers();
-      sendSuccess(res, result, 200);
-    } catch (error) {
-      next(error);
-    }
-  };
-
   getAllCourses = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const page = Number(req.query["page"] ?? 1);
@@ -189,17 +176,6 @@ export class AdminController {
     }
   };
 
-  getAllWaivers = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const page = Number(req.query["page"] ?? 1);
-      const limit = Number(req.query["limit"] ?? 20);
-      const status = req.query["status"] as string | undefined;
-      const result = await adminService.getAllWaivers(page, limit, status);
-      sendSuccess(res, result, 200);
-    } catch (error) {
-      next(error);
-    }
-  };
 
   getSubscriptions = async (
     req: Request,

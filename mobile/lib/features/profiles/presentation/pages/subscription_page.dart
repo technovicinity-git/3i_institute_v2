@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
 import '../widgets/apply_subscription_sheet.dart';
+import '../widgets/waiver_request_sheet.dart';
 import '../widgets/learner_avatar.dart';
 
 const _navy = Color(0xff12304e);
@@ -37,6 +38,22 @@ class SubscriptionPage extends ConsumerWidget {
         SnackBar(
           content: Text(
             'Payment submitted. We’ll subscribe ${profile.displayName} once it’s verified.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _requestWaiver(
+    BuildContext context,
+    ProfileSubscription profile,
+  ) async {
+    final sent = await showWaiverRequestSheet(context, profile: profile);
+    if (sent && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Waiver request sent. We’ll email you once it’s reviewed.',
           ),
         ),
       );
@@ -179,6 +196,7 @@ class SubscriptionPage extends ConsumerWidget {
                     canApply: data.payment.accounts.isNotEmpty,
                     onApply: () => _apply(context, profile, data.payment),
                     onCancel: () => _cancel(context, ref, profile),
+                    onRequestWaiver: () => _requestWaiver(context, profile),
                   ),
                 if (data.requests.isNotEmpty) ...[
                   const SizedBox(height: 18),
@@ -193,9 +211,31 @@ class SubscriptionPage extends ConsumerWidget {
                   Card(
                     child: Column(
                       children: [
-                        for (final (index, request) in data.requests.indexed) ...[
+                        for (final (index, request)
+                            in data.requests.indexed) ...[
                           if (index > 0) const Divider(height: 1),
                           _RequestTile(request: request),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                if (data.waivers.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Text(
+                    'Fee waivers',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontFamily: 'serif',
+                      color: _ink,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Card(
+                    child: Column(
+                      children: [
+                        for (final (index, waiver) in data.waivers.indexed) ...[
+                          if (index > 0) const Divider(height: 1),
+                          _WaiverTile(waiver: waiver),
                         ],
                       ],
                     ),
@@ -361,9 +401,9 @@ class _AccountTile extends StatelessWidget {
                         ClipboardData(text: account.accountNumber),
                       );
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Copied')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('Copied')));
                       }
                     },
                     icon: const Icon(Icons.copy, color: _muted),
@@ -389,12 +429,63 @@ class _ProfileCard extends StatelessWidget {
     required this.canApply,
     required this.onApply,
     required this.onCancel,
+    required this.onRequestWaiver,
   });
 
   final ProfileSubscription profile;
   final bool canApply;
   final VoidCallback onApply;
   final VoidCallback onCancel;
+  final VoidCallback onRequestWaiver;
+
+  Widget _waiverLine() {
+    final expires = profile.waiverExpiresAt;
+    if (profile.hasUsableWaiver) {
+      return _IconLine(
+        icon: Icons.discount_outlined,
+        color: const Color(0xff157a34),
+        text:
+            '${profile.waiverPercent}% fee waiver ready'
+            '${expires != null ? ' — use by ${DateFormat.yMMMd().format(expires)}' : ''}',
+      );
+    }
+    if (profile.waiverPending) {
+      return const _IconLine(
+        icon: Icons.discount_outlined,
+        color: _blue,
+        text: 'Fee waiver request under review',
+      );
+    }
+    final next = profile.nextWaiverApplicationAt;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (profile.waiverRejectionReason != null)
+          Text(
+            'Waiver not approved: ${profile.waiverRejectionReason}',
+            style: const TextStyle(fontSize: 13, color: Colors.red),
+          ),
+        if (profile.waiverApplicationsLeft > 0)
+          TextButton(
+            onPressed: onRequestWaiver,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: const Text(
+              'Need help with the fee? Request a waiver',
+              style: TextStyle(decoration: TextDecoration.underline),
+            ),
+          )
+        else
+          Text(
+            'Waiver limit reached for this year'
+            '${next != null ? ' (next on ${DateFormat.yMMMd().format(next)})' : ''}',
+            style: const TextStyle(fontSize: 12, color: _muted),
+          ),
+      ],
+    );
+  }
 
   String get _statusLine {
     final until = profile.subscribedUntil;
@@ -450,7 +541,10 @@ class _ProfileCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(_statusLine, style: const TextStyle(fontSize: 13, color: _muted)),
+          Text(
+            _statusLine,
+            style: const TextStyle(fontSize: 13, color: _muted),
+          ),
           if (!profile.isPending && profile.lastRejected) ...[
             const SizedBox(height: 4),
             Text(
@@ -459,6 +553,8 @@ class _ProfileCard extends StatelessWidget {
               style: const TextStyle(fontSize: 13, color: Colors.red),
             ),
           ],
+          const SizedBox(height: 6),
+          _waiverLine(),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -564,14 +660,15 @@ class _RequestTile extends StatelessWidget {
     final periodEnd = request.periodEnd;
     return ListTile(
       title: Text(
-        '${request.profileName} · ${formatMoney(request.amount, request.currency)}',
+        '${request.profileName} · ${formatMoney(request.amount, request.currency)}'
+        '${request.discountPercent > 0 ? ' (${request.discountPercent}% waiver)' : ''}',
         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${request.paymentMethod} · ${request.transactionId}',
+            [request.paymentMethod, ?request.transactionId].join(' · '),
             style: const TextStyle(fontSize: 12),
           ),
           if (created != null)
@@ -587,6 +684,95 @@ class _RequestTile extends StatelessWidget {
           if (request.status == 'REJECTED' && request.rejectionReason != null)
             Text(
               request.rejectionReason!,
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+        ],
+      ),
+      trailing: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _IconLine extends StatelessWidget {
+  const _IconLine({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 16, color: color),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class _WaiverTile extends StatelessWidget {
+  const _WaiverTile({required this.waiver});
+  final WaiverItem waiver;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (waiver.status) {
+      'APPROVED' => ('Ready to use', const Color(0xff157a34)),
+      'USED' => ('Used', Colors.blueGrey),
+      'REJECTED' => ('Not approved', Colors.red),
+      'EXPIRED' => ('Expired', Colors.blueGrey),
+      'REVOKED' => ('Withdrawn', Colors.blueGrey),
+      _ => ('Under review', _blue),
+    };
+    final created = waiver.createdAt;
+    final expires = waiver.expiresAt;
+    final used = waiver.usedAt;
+    return ListTile(
+      title: Text(
+        '${waiver.profileName}'
+        '${waiver.percent != null ? ' · ${waiver.percent}% off one month' : ''}',
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (created != null)
+            Text(
+              'Requested ${DateFormat.yMMMd().format(created)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          if (waiver.status == 'APPROVED' && expires != null)
+            Text(
+              'Use by ${DateFormat.yMMMd().format(expires)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          if (waiver.status == 'USED' && used != null)
+            Text(
+              'Used ${DateFormat.yMMMd().format(used)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          if (waiver.reason != null)
+            Text(
+              waiver.reason!,
               style: const TextStyle(fontSize: 12, color: Colors.red),
             ),
         ],

@@ -8,6 +8,7 @@ import {
 import { calculateAge } from "#/shared/course-eligibility";
 import { isValidTimeZone, oneMonthPeriodEnd } from "#/shared/zoned-time";
 import { notificationEvents } from "#/modules/notification/events";
+import { findUsableWaiver, waiverService } from "#/modules/waiver/service";
 import {
   isManualSubscription,
   MANUAL_SUBSCRIPTION_PREFIX,
@@ -27,7 +28,19 @@ const requestInclude = {
   learnerProfile: {
     select: { id: true, displayName: true, dateOfBirth: true, avatarUrl: true },
   },
+  waiver: { select: { id: true, tier: true, status: true } },
 } satisfies Prisma.SubscriptionRequestInclude;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Shown as the payment method when a 100% waiver covers the price. */
+const FULL_WAIVER_METHOD = "Fee waiver (100%)";
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+/** What the account holder should pay after a waiver discount. */
+export function discountedPrice(price: number, discountPercent: number) {
+  return round2((price * (100 - discountPercent)) / 100);
+}
 
 type RequestWithRelations = Prisma.SubscriptionRequestGetPayload<{
   include: typeof requestInclude;
@@ -45,6 +58,13 @@ function formatRequest(request: RequestWithRelations) {
     paidAt: request.paidAt,
     note: request.note,
     proofImageUrl: request.proofImageUrl,
+    discountPercent: request.discountPercent,
+    listPrice: request.listPrice === null ? null : Number(request.listPrice),
+    expectedAmount:
+      request.listPrice === null
+        ? null
+        : discountedPrice(Number(request.listPrice), request.discountPercent),
+    waiverId: request.waiverId,
     reviewedAt: request.reviewedAt,
     rejectionReason: request.rejectionReason,
     periodStart: request.periodStart,
@@ -99,10 +119,10 @@ export class SubscriptionService {
 
   // ─── Account holder ───
 
-  /** Payment details, each profile's status and recent requests. */
+  /** Payment details, each profile's status, waivers and recent requests. */
   async getOverview(accountId: string) {
     const now = new Date();
-    const [payment, profiles, requests] = await Promise.all([
+    const [payment, profiles, requests, waivers] = await Promise.all([
       this.getPaymentSettings(),
       prisma.learnerProfile.findMany({
         where: { accountId, deletedAt: null },
@@ -127,11 +147,33 @@ export class SubscriptionService {
         orderBy: { createdAt: "desc" },
         take: 50,
       }),
+      waiverService.listMine(accountId),
     ]);
+
+    const allowances = new Map(
+      await Promise.all(
+        profiles.map(
+          async (profile) =>
+            [
+              profile.id,
+              await waiverService.applicationAllowance(profile.id),
+            ] as const,
+        ),
+      ),
+    );
 
     return {
       payment,
+      waivers,
       profiles: profiles.map((profile) => {
+        const profileWaivers = waivers.filter(
+          (w) => w.learnerProfile?.id === profile.id,
+        );
+        const usableWaiver = profileWaivers.find(
+          (w) => w.status === "APPROVED" && w.expiresAt && w.expiresAt > now,
+        );
+        const latestWaiver = profileWaivers[0];
+        const allowance = allowances.get(profile.id)!;
         const subscribedUntil =
           profile.seats
             .map((seat) => seat.subscription.currentPeriodEnd)
@@ -157,6 +199,23 @@ export class SubscriptionService {
                   reviewedAt: latest.reviewedAt,
                 }
               : null,
+          waiver: {
+            /** Approved and unused: applied to the next subscription request */
+            usable: usableWaiver
+              ? {
+                  id: usableWaiver.id,
+                  percent: usableWaiver.percent ?? 0,
+                  expiresAt: usableWaiver.expiresAt,
+                }
+              : null,
+            pending: profileWaivers.some((w) => w.status === "PENDING"),
+            lastRejectionReason:
+              latestWaiver?.status === "REJECTED"
+                ? latestWaiver.rejectionReason
+                : null,
+            applicationsLeft: allowance.remaining,
+            nextApplicationAt: allowance.nextAvailableAt,
+          },
         };
       }),
       requests: requests.map(formatRequest),
@@ -180,31 +239,74 @@ export class SubscriptionService {
       );
     }
 
-    // The same payment can't be used twice
-    const duplicate = await prisma.subscriptionRequest.findFirst({
-      where: {
-        transactionId: { equals: input.transactionId, mode: "insensitive" },
-        status: { in: ["PENDING", "APPROVED"] },
-      },
-    });
-    if (duplicate) {
-      throw new ConflictError("This transaction ID has already been submitted");
-    }
+    const { currency, monthlyPrice } = await this.getPaymentSettings();
 
-    const { currency } = await this.getPaymentSettings();
+    // An approved, unused waiver is applied automatically
+    const waiver = await findUsableWaiver(prisma, profile.id);
+    const discountPercent = waiver?.tier ?? 0;
+    const fullyWaived = discountPercent >= 100;
+
+    let payment: {
+      paymentMethod: string;
+      amount: number;
+      transactionId: string | null;
+      paidAt: Date;
+    };
+    if (fullyWaived) {
+      payment = {
+        paymentMethod: FULL_WAIVER_METHOD,
+        amount: 0,
+        transactionId: null,
+        paidAt: new Date(),
+      };
+    } else {
+      const transactionId = input.transactionId?.trim() ?? "";
+      if (!input.paymentMethod) {
+        throw new ValidationError("Payment method is required");
+      }
+      if (!input.amount || input.amount <= 0) {
+        throw new ValidationError("Amount must be more than 0");
+      }
+      if (transactionId.length < 3) {
+        throw new ValidationError("Transaction ID is required");
+      }
+      if (!input.paidAt) {
+        throw new ValidationError("Payment date is required");
+      }
+
+      // The same payment can't be used twice
+      const duplicate = await prisma.subscriptionRequest.findFirst({
+        where: {
+          transactionId: { equals: transactionId, mode: "insensitive" },
+          status: { in: ["PENDING", "APPROVED"] },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictError(
+          "This transaction ID has already been submitted",
+        );
+      }
+
+      payment = {
+        paymentMethod: input.paymentMethod,
+        amount: input.amount,
+        transactionId,
+        paidAt: input.paidAt,
+      };
+    }
 
     const request = await prisma.subscriptionRequest.create({
       data: {
         accountId,
         learnerProfileId: profile.id,
-        paymentMethod: input.paymentMethod,
-        amount: input.amount,
+        ...payment,
         currency,
-        transactionId: input.transactionId,
-        senderAccount: input.senderAccount || null,
-        paidAt: input.paidAt,
+        senderAccount: fullyWaived ? null : input.senderAccount || null,
         note: input.note || null,
-        proofImageUrl: input.proofImageUrl || null,
+        proofImageUrl: fullyWaived ? null : input.proofImageUrl || null,
+        waiverId: waiver?.id ?? null,
+        discountPercent,
+        listPrice: monthlyPrice,
       },
       include: requestInclude,
     });
@@ -230,6 +332,7 @@ export class SubscriptionService {
       data: { status: "CANCELLED" },
       include: requestInclude,
     });
+    await this.releaseWaiver(updated.waiverId);
     return formatRequest(updated);
   }
 
@@ -334,6 +437,20 @@ export class SubscriptionService {
       }
       if (request.learnerProfile.deletedAt) {
         throw new ValidationError("This learner profile has been deleted");
+      }
+
+      // One waiver, one subscription: mark it used. The status check makes
+      // this safe against a second approval racing this one.
+      if (request.waiverId) {
+        const used = await tx.waiver.updateMany({
+          where: { id: request.waiverId, status: "APPROVED" },
+          data: { status: "USED", usedAt: new Date() },
+        });
+        if (used.count === 0) {
+          throw new ValidationError(
+            "The fee waiver on this request is no longer valid. Reject the request and ask the family to apply again.",
+          );
+        }
       }
 
       const timeZone = isValidTimeZone(request.account.timezone)
@@ -446,6 +563,7 @@ export class SubscriptionService {
       },
       include: requestInclude,
     });
+    await this.releaseWaiver(updated.waiverId);
 
     await prisma.auditLog.create({
       data: {
@@ -459,6 +577,19 @@ export class SubscriptionService {
 
     notificationEvents.subscriptionRequestDecided(updated.id);
     return formatRequest(updated);
+  }
+
+  /**
+   * A waiver held by a rejected or cancelled request stays usable. If it
+   * would expire within a week (the review took a while), give it a week.
+   */
+  private async releaseWaiver(waiverId: string | null) {
+    if (!waiverId) return;
+    const minimum = new Date(Date.now() + 7 * DAY_MS);
+    await prisma.waiver.updateMany({
+      where: { id: waiverId, status: "APPROVED", expiresAt: { lt: minimum } },
+      data: { expiresAt: minimum },
+    });
   }
 
   // ─── Expiry ───

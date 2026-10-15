@@ -29,6 +29,10 @@ String initialsOf(String name) => name
 String formatMoney(double amount, String currency) =>
     '$currency ${amount.toStringAsFixed(2)}';
 
+/// Price after a waiver discount (matches the server's rounding).
+double discountedPrice(double price, int discountPercent) =>
+    (price * (100 - discountPercent)).roundToDouble() / 100;
+
 /// An account the admin accepts payments into (bank or mobile banking).
 class PaymentAccount {
   const PaymentAccount({
@@ -100,6 +104,12 @@ class ProfileSubscription {
     required this.pendingRequestId,
     required this.lastRejectionReason,
     required this.lastRejected,
+    required this.waiverPercent,
+    required this.waiverExpiresAt,
+    required this.waiverPending,
+    required this.waiverRejectionReason,
+    required this.waiverApplicationsLeft,
+    required this.nextWaiverApplicationAt,
   });
 
   final String id;
@@ -111,12 +121,24 @@ class ProfileSubscription {
   final String? lastRejectionReason;
   final bool lastRejected;
 
+  /// Percent of an approved, unused waiver (applied to the next request).
+  final int? waiverPercent;
+  final DateTime? waiverExpiresAt;
+  final bool waiverPending;
+  final String? waiverRejectionReason;
+  final int waiverApplicationsLeft;
+  final DateTime? nextWaiverApplicationAt;
+
+  bool get hasUsableWaiver => waiverPercent != null;
+
   bool get isSubscribed => subscribedUntil != null;
   bool get isPending => pendingRequestId != null;
   String get initials => initialsOf(displayName);
 
   factory ProfileSubscription.fromJson(Map<String, dynamic> json) {
     final rejection = json['lastRejection'];
+    final waiver = _map(json['waiver']);
+    final usable = waiver['usable'];
     return ProfileSubscription(
       id: _string(json['id']),
       displayName: _string(json['displayName'], 'Learner'),
@@ -130,8 +152,59 @@ class ProfileSubscription {
       lastRejectionReason: rejection is Map
           ? _nullable(rejection['reason'])
           : null,
+      waiverPercent: usable is Map
+          ? (usable['percent'] as num?)?.toInt()
+          : null,
+      waiverExpiresAt: usable is Map ? _date(usable['expiresAt']) : null,
+      waiverPending: waiver['pending'] == true,
+      waiverRejectionReason: _nullable(waiver['lastRejectionReason']),
+      waiverApplicationsLeft:
+          (waiver['applicationsLeft'] as num?)?.toInt() ?? 0,
+      nextWaiverApplicationAt: _date(waiver['nextApplicationAt']),
     );
   }
+}
+
+/// A fee waiver request for one learner profile.
+class WaiverItem {
+  const WaiverItem({
+    required this.id,
+    required this.status,
+    required this.profileName,
+    required this.percent,
+    required this.createdAt,
+    required this.expiresAt,
+    required this.usedAt,
+    required this.reason,
+  });
+
+  final String id;
+
+  /// PENDING, APPROVED, REJECTED, REVOKED, USED or EXPIRED.
+  final String status;
+  final String profileName;
+  final int? percent;
+  final DateTime? createdAt;
+  final DateTime? expiresAt;
+  final DateTime? usedAt;
+
+  /// Rejection or withdrawal reason.
+  final String? reason;
+
+  factory WaiverItem.fromJson(Map<String, dynamic> json) => WaiverItem(
+    id: _string(json['id']),
+    status: _string(json['status'], 'PENDING'),
+    profileName: _string(
+      _map(json['learnerProfile'])['displayName'],
+      'Learner',
+    ),
+    percent: (json['percent'] as num?)?.toInt(),
+    createdAt: _date(json['createdAt']),
+    expiresAt: _date(json['expiresAt']),
+    usedAt: _date(json['usedAt']),
+    reason:
+        _nullable(json['rejectionReason']) ?? _nullable(json['revokeReason']),
+  );
 }
 
 /// A submitted payment waiting for (or after) admin review.
@@ -147,6 +220,7 @@ class SubscriptionRequest {
     required this.createdAt,
     required this.periodEnd,
     required this.rejectionReason,
+    required this.discountPercent,
   });
 
   final String id;
@@ -157,10 +231,13 @@ class SubscriptionRequest {
   final String paymentMethod;
   final double amount;
   final String currency;
-  final String transactionId;
+
+  /// Null when a 100% waiver covered the price.
+  final String? transactionId;
   final DateTime? createdAt;
   final DateTime? periodEnd;
   final String? rejectionReason;
+  final int discountPercent;
 
   factory SubscriptionRequest.fromJson(Map<String, dynamic> json) =>
       SubscriptionRequest(
@@ -173,10 +250,11 @@ class SubscriptionRequest {
         paymentMethod: _string(json['paymentMethod']),
         amount: _double(json['amount']),
         currency: _string(json['currency']),
-        transactionId: _string(json['transactionId']),
+        transactionId: _nullable(json['transactionId']),
         createdAt: _date(json['createdAt']),
         periodEnd: _date(json['periodEnd']),
         rejectionReason: _nullable(json['rejectionReason']),
+        discountPercent: (json['discountPercent'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -185,11 +263,13 @@ class SubscriptionOverview {
     required this.payment,
     required this.profiles,
     required this.requests,
+    required this.waivers,
   });
 
   final PaymentSettings payment;
   final List<ProfileSubscription> profiles;
   final List<SubscriptionRequest> requests;
+  final List<WaiverItem> waivers;
 
   int get subscribedCount =>
       profiles.where((profile) => profile.isSubscribed).length;
@@ -203,6 +283,9 @@ class SubscriptionOverview {
         requests: _list(
           json['requests'],
         ).map(SubscriptionRequest.fromJson).toList(growable: false),
+        waivers: _list(
+          json['waivers'],
+        ).map(WaiverItem.fromJson).toList(growable: false),
       );
 }
 
@@ -268,12 +351,13 @@ class SubscriptionActions {
     return url;
   }
 
+  /// Payment fields are left out when a 100% waiver covers the price.
   Future<void> apply({
     required String learnerProfileId,
-    required String paymentMethod,
-    required double amount,
-    required String transactionId,
-    required DateTime paidAt,
+    String? paymentMethod,
+    double? amount,
+    String? transactionId,
+    DateTime? paidAt,
     String? senderAccount,
     String? note,
     String? proofImageUrl,
@@ -282,14 +366,30 @@ class SubscriptionActions {
       '/subscriptions/requests',
       data: {
         'learnerProfileId': learnerProfileId,
-        'paymentMethod': paymentMethod,
-        'amount': amount,
-        'transactionId': transactionId,
-        'paidAt': paidAt.toUtc().toIso8601String(),
+        'paymentMethod': ?paymentMethod,
+        'amount': ?amount,
+        'transactionId': ?transactionId,
+        if (paidAt != null) 'paidAt': paidAt.toUtc().toIso8601String(),
         if (senderAccount != null && senderAccount.isNotEmpty)
           'senderAccount': senderAccount,
         if (note != null && note.isNotEmpty) 'note': note,
         'proofImageUrl': ?proofImageUrl,
+      },
+    );
+    _ref.invalidate(subscriptionOverviewProvider);
+  }
+
+  Future<void> applyWaiver({
+    required String learnerProfileId,
+    required String explanation,
+    required List<String> evidenceFiles,
+  }) async {
+    await _dio.post<void>(
+      '/waivers',
+      data: {
+        'learnerProfileId': learnerProfileId,
+        'explanation': explanation,
+        'evidenceFiles': evidenceFiles,
       },
     );
     _ref.invalidate(subscriptionOverviewProvider);

@@ -880,16 +880,21 @@ function waiverRequested(waiverId: string) {
       select: {
         id: true,
         account: { select: { firstName: true, lastName: true } },
+        learnerProfile: { select: { displayName: true } },
       },
     });
     if (!waiver) return;
+    const accountName =
+      `${waiver.account.firstName} ${waiver.account.lastName}`.trim();
     await notificationService.notify({
       type: "admin.waiver_requested",
       recipients: await admins(),
       groupKey: `waiver:${waiver.id}`,
       dedupeKey: `admin.waiver_requested:${waiver.id}`,
       title: "Waiver request",
-      body: `New waiver request from ${waiver.account.firstName} ${waiver.account.lastName}`.trim(),
+      body: waiver.learnerProfile
+        ? `${accountName} asked for a fee waiver for ${waiver.learnerProfile.displayName}`
+        : `New waiver request from ${accountName}`,
       data: { waiverId: waiver.id, route: "/admin/waivers" },
     });
   });
@@ -900,26 +905,34 @@ function waiverDecided(waiverId: string, reason?: string) {
     await notificationService.resolveGroup(`waiver:${waiverId}`);
     const waiver = await prisma.waiver.findUnique({
       where: { id: waiverId },
-      select: { id: true, accountId: true, status: true, tier: true },
+      select: {
+        id: true,
+        accountId: true,
+        status: true,
+        tier: true,
+        rejectionReason: true,
+        learnerProfile: { select: { displayName: true } },
+      },
     });
     if (!waiver) return;
+    const name = waiver.learnerProfile?.displayName ?? "your learner";
     const content = {
       APPROVED: {
         type: "waiver.approved" as const,
         title: "Waiver approved",
-        body: waiver.tier
-          ? `Your ${waiver.tier}% waiver is now active`
-          : "Your waiver is now active",
+        body: `${name} has a ${waiver.tier ?? 0}% waiver to use on their next subscription within 30 days`,
       },
       REJECTED: {
         type: "waiver.rejected" as const,
         title: "Waiver not approved",
-        body: "Your waiver request was not approved",
+        body: `The fee waiver request for ${name} was not approved.${
+          waiver.rejectionReason ? ` Reason: ${waiver.rejectionReason}` : ""
+        }`,
       },
       REVOKED: {
         type: "waiver.revoked" as const,
-        title: "Waiver revoked",
-        body: `Your waiver has been revoked.${reason ? ` Reason: ${reason}` : ""}`,
+        title: "Waiver withdrawn",
+        body: `The fee waiver for ${name} has been withdrawn.${reason ? ` Reason: ${reason}` : ""}`,
       },
     }[waiver.status as "APPROVED" | "REJECTED" | "REVOKED"];
     if (!content) return;
@@ -927,7 +940,7 @@ function waiverDecided(waiverId: string, reason?: string) {
       ...content,
       recipients: [{ userId: waiver.accountId }],
       dedupeKey: `${content.type}:${waiver.id}`,
-      data: { waiverId: waiver.id, route: "/account-settings" },
+      data: { waiverId: waiver.id, route: "/subscription" },
     });
   });
 }

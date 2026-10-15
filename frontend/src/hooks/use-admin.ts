@@ -211,47 +211,6 @@ export function useRejectCourseMutation() {
   });
 }
 
-export function usePendingWaivers() {
-  return useQuery({
-    queryKey: ["admin-pending-waivers"],
-    queryFn: () => adminService.getPendingWaivers(),
-  });
-}
-
-export function useApproveWaiverMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ waiverId, tier }: { waiverId: string; tier: number }) =>
-      adminService.approveWaiver(waiverId, tier),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-waivers"] });
-      toast.success("Waiver approved");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to approve waiver");
-    },
-  });
-}
-
-export function useRejectWaiverMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ waiverId, reason }: { waiverId: string; reason: string }) =>
-      adminService.rejectWaiver(waiverId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-waivers"] });
-      toast.success("Waiver rejected");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to reject waiver");
-    },
-  });
-}
-
 export function useAdminAllCourses(page: number, status?: string) {
   return useQuery({
     queryKey: ["admin-all-courses", page, status],
@@ -280,13 +239,6 @@ export function useActivateCourseMutation() {
       queryClient.invalidateQueries({ queryKey: ["admin-all-courses"] });
       toast.success("Course activated");
     },
-  });
-}
-
-export function useAdminAllWaivers(page: number, status?: string) {
-  return useQuery({
-    queryKey: ["admin-all-waivers", page, status],
-    queryFn: () => adminService.getAllWaivers(page, status),
   });
 }
 

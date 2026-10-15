@@ -25,6 +25,7 @@ import {
   subscriptionRoutes,
   adminSubscriptionRequestRoutes,
 } from "#/modules/subscription/routes";
+import { waiverRoutes, adminWaiverRoutes } from "#/modules/waiver/routes";
 import { dashboardRoutes } from "#/modules/dashboard/routes";
 import { uploadRoutes } from "#/modules/upload/routes";
 import { wishlistRoutes } from "#/modules/wishlist/routes";
@@ -64,6 +65,7 @@ router.use("/progress", progressRoutes);
 router.use("/ratings", ratingRoutes);
 router.use("/seats", seatRoutes);
 router.use("/subscriptions", subscriptionRoutes);
+router.use("/waivers", waiverRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/wishlist", wishlistRoutes);
@@ -72,6 +74,7 @@ router.use("/instructors/assignments", instructorAssignmentRoutes);
 router.use("/admin/content", adminContentRoutes);
 router.use("/admin/emails", adminEmailRoutes);
 router.use("/admin/subscription-requests", adminSubscriptionRequestRoutes);
+router.use("/admin/waivers", adminWaiverRoutes);
 router.use("/admin", adminRoutes);
 router.use("/assignments", learnerAssignmentRoutes);
 router.use("/notes", noteRoutes);

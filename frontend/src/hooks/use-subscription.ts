@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   subscriptionService,
+  waiverService,
   type CreateSubscriptionRequestInput,
   type PaymentSettings,
 } from "@/services/subscription.service";
@@ -125,4 +126,81 @@ export function useSavePaymentSettingsMutation() {
       toast.error(errorMessage(error, "Failed to save payment details"));
     },
   });
+}
+
+// ─── Fee waivers ───
+
+export function useApplyWaiverMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      learnerProfileId: string;
+      explanation: string;
+      evidenceFiles: string[];
+    }) => waiverService.apply(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription-overview"] });
+    },
+    onError: (error: any) => {
+      toast.error(errorMessage(error, "Failed to submit the waiver request"));
+    },
+  });
+}
+
+export function useAdminWaivers(
+  page: number,
+  filters: { status?: string; search?: string },
+) {
+  return useQuery({
+    queryKey: ["admin-waivers", page, filters],
+    queryFn: () => waiverService.list(page, filters),
+  });
+}
+
+function useWaiverDecision<TInput>(
+  mutationFn: (input: TInput) => Promise<unknown>,
+  successMessage: string,
+  failureMessage: string,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-waivers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      toast.success(successMessage);
+    },
+    onError: (error: any) => {
+      toast.error(errorMessage(error, failureMessage));
+    },
+  });
+}
+
+export function useApproveWaiverMutation() {
+  return useWaiverDecision(
+    ({ waiverId, tier }: { waiverId: string; tier: number }) =>
+      waiverService.approve(waiverId, tier),
+    "Waiver approved — the family has been emailed",
+    "Failed to approve the waiver",
+  );
+}
+
+export function useRejectWaiverMutation() {
+  return useWaiverDecision(
+    ({ waiverId, reason }: { waiverId: string; reason: string }) =>
+      waiverService.reject(waiverId, reason),
+    "Waiver rejected — the family has been emailed",
+    "Failed to reject the waiver",
+  );
+}
+
+export function useRevokeWaiverMutation() {
+  return useWaiverDecision(
+    ({ waiverId, reason }: { waiverId: string; reason: string }) =>
+      waiverService.revoke(waiverId, reason),
+    "Waiver revoked — the family has been emailed",
+    "Failed to revoke the waiver",
+  );
 }

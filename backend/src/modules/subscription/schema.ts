@@ -26,22 +26,21 @@ export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
 
 // ─── Learner: apply for a subscription ───
 
+// Payment fields are optional only because a 100% waiver needs no payment;
+// the service requires them otherwise.
 export const createSubscriptionRequestSchema = z.object({
   learnerProfileId: z.string().uuid("Invalid learner profile ID"),
   /** Label of the admin account paid into, or "Other" */
-  paymentMethod: z.string().trim().min(1, "Payment method is required").max(100),
-  amount: z.coerce.number().positive("Amount must be more than 0").max(1_000_000),
-  transactionId: z
-    .string()
-    .trim()
-    .min(3, "Transaction ID is required")
-    .max(100),
+  paymentMethod: z.string().trim().max(100).optional(),
+  amount: z.coerce.number().min(0).max(1_000_000).optional(),
+  transactionId: z.string().trim().max(100).optional(),
   senderAccount: z.string().trim().max(100).optional(),
   paidAt: z.coerce
     .date()
     .refine((date) => date.getTime() <= Date.now() + 24 * 60 * 60 * 1000, {
       message: "Payment date can't be in the future",
-    }),
+    })
+    .optional(),
   note: z.string().trim().max(1000).optional(),
   proofImageUrl: z.string().url().max(1000).optional(),
 });
