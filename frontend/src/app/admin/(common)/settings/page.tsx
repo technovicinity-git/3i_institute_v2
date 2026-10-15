@@ -102,68 +102,12 @@ export default function AdminSettingsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={settings.registrationOpen}
-            onChange={(e) =>
-              setSettings({ ...settings, registrationOpen: e.target.checked })
-            }
-            className="w-4 h-4"
-          />
-          <span className="text-sm">Registration open</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={settings.instructorApplicationsOpen}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                instructorApplicationsOpen: e.target.checked,
-              })
-            }
-            className="w-4 h-4"
-          />
-          <span className="text-sm">Instructor applications open</span>
-        </div>
+        
       </div>
 
       {/* Subscription payments (saved separately) */}
       <PaymentSettingsSection />
 
-      {/* Notifications */}
-      <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-5">
-        <h2 className="text-lg font-semibold text-[#0C1F33] flex items-center gap-2">
-          <Bell className="w-5 h-5 text-[#B8912F]" />
-          Notifications
-        </h2>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={settings.emailNotifications}
-            onChange={(e) =>
-              setSettings({ ...settings, emailNotifications: e.target.checked })
-            }
-            className="w-4 h-4"
-          />
-          <span className="text-sm">Email notifications</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={settings.pushNotifications}
-            onChange={(e) =>
-              setSettings({ ...settings, pushNotifications: e.target.checked })
-            }
-            className="w-4 h-4"
-          />
-          <span className="text-sm">Push notifications</span>
-        </div>
-      </div>
 
       {/* Password */}
       <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-5">
