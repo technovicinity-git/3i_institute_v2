@@ -42,13 +42,6 @@ const envSchema = z.object({
     .default("true")
     .transform((value) => value === "true"),
 
-  // Free subscribe/unsubscribe buttons until a payment gateway is added.
-  // Set to "false" in production.
-  MANUAL_SUBSCRIPTIONS_ENABLED: z
-    .enum(["true", "false"])
-    .default("true")
-    .transform((value) => value === "true"),
-
   // DigitalOcean Spaces
   SPACES_ENDPOINT: z.string(),
   SPACES_REGION: z.string(),

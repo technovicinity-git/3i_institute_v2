@@ -184,6 +184,33 @@ export class UploadController {
     }
   };
 
+  /** Screenshot / receipt attached to a subscription request. */
+  uploadPaymentProof = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const accountId = req.user?.sub!;
+      const imageFile = (req as any).files?.image?.[0];
+      if (!imageFile) {
+        throw new ValidationError(
+          "Image file is required (field name: 'image')",
+        );
+      }
+      const result = await uploadService.uploadImage(
+        accountId,
+        imageFile.buffer,
+        imageFile.mimetype,
+        imageFile.originalname,
+        "payments",
+      );
+      sendSuccess(res, result, 201, "Payment proof uploaded");
+    } catch (error) {
+      next(error);
+    }
+  };
+
   uploadImage = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Use "guest" or a temp identifier when not logged in

@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { isManualSubscription } from "#/modules/seat/service";
 import { ForbiddenError, NotFoundError } from "#/shared/errors";
 import {
   setCachedStatus,
@@ -563,6 +564,9 @@ export class AdminService {
               email: true,
             },
           },
+          assignedSeats: {
+            select: { learnerProfile: { select: { displayName: true } } },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
@@ -576,6 +580,8 @@ export class AdminService {
       accountName: `${sub.account.firstName} ${sub.account.lastName}`,
       accountEmail: sub.account.email,
       stripeSubscriptionId: sub.stripeSubscriptionId,
+      isManual: isManualSubscription(sub),
+      profiles: sub.assignedSeats.map((seat) => seat.learnerProfile.displayName),
       status: sub.status,
       seats: sub.seats,
       currentPeriodStart: sub.currentPeriodStart,

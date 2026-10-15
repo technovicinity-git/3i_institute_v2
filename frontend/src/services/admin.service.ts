@@ -267,6 +267,10 @@ export interface AdminSubscription {
   accountName: string;
   accountEmail: string;
   stripeSubscriptionId: string;
+  /** Paid manually and approved by an admin (not Stripe). */
+  isManual: boolean;
+  /** Learner profiles on this subscription. */
+  profiles: string[];
   status: string;
   seats: number;
   currentPeriodStart: string;

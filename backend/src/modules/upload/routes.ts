@@ -224,4 +224,32 @@ router.post("/delete", authenticate, uploadController.deleteImage);
  */
 router.post("/images", uploadImage, uploadController.uploadImage);
 
+/**
+ * @swagger
+ * /api/v1/uploads/payment-proof:
+ *   post:
+ *     tags: [Uploads]
+ *     summary: Upload a payment screenshot / receipt for a subscription request
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Image uploaded
+ */
+router.post(
+  "/payment-proof",
+  authenticate,
+  uploadImage,
+  uploadController.uploadPaymentProof,
+);
+
 export { router as uploadRoutes };

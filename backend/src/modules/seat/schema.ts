@@ -10,8 +10,4 @@ export const cancelSeatSchema = z.object({
   learnerProfileId: z.string().uuid("Invalid learner profile ID"),
 });
 
-export const profileSubscriptionSchema = z.object({
-  learnerProfileId: z.string().uuid("Invalid learner profile ID"),
-});
-
 export type CancelSeatInput = z.infer<typeof cancelSeatSchema>;

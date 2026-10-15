@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
+import '../widgets/apply_subscription_sheet.dart';
 import '../widgets/learner_avatar.dart';
 
 const _navy = Color(0xff12304e);
@@ -12,94 +14,89 @@ const _ink = Color(0xff0c1f33);
 const _muted = Color(0xff475569);
 const _green = Color(0xff22a146);
 const _gold = Color(0xffb8912f);
+const _blue = Color(0xff2d6cdf);
 const _border = Color(0xffe3e8ef);
 
-String _price(double amount) => '\$${amount.toStringAsFixed(2)}';
+String _dateTime(DateTime date) => DateFormat.yMMMd().add_jm().format(date);
 
-class SubscriptionPage extends ConsumerStatefulWidget {
+class SubscriptionPage extends ConsumerWidget {
   const SubscriptionPage({super.key});
 
-  @override
-  ConsumerState<SubscriptionPage> createState() => _SubscriptionPageState();
-}
+  Future<void> _apply(
+    BuildContext context,
+    ProfileSubscription profile,
+    PaymentSettings payment,
+  ) async {
+    final submitted = await showApplySubscriptionSheet(
+      context,
+      profile: profile,
+      payment: payment,
+    );
+    if (submitted && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Payment submitted. We’ll subscribe ${profile.displayName} once it’s verified.',
+          ),
+        ),
+      );
+    }
+  }
 
-class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
-  String? _pendingId;
-
-  Future<void> _change(ProfileSubscription profile) async {
-    final subscribe = !profile.isSubscribed;
+  Future<void> _cancel(
+    BuildContext context,
+    WidgetRef ref,
+    ProfileSubscription profile,
+  ) async {
+    final requestId = profile.pendingRequestId;
+    if (requestId == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          subscribe
-              ? 'Subscribe ${profile.displayName}?'
-              : 'Unsubscribe ${profile.displayName}?',
-        ),
+        title: const Text('Cancel this request?'),
         content: Text(
-          subscribe
-              ? '${profile.displayName} will be able to enrol in courses for '
-                    'their age. Payment isn’t collected yet, so this is '
-                    'activated straight away.'
-              : '${profile.displayName} won’t be able to enrol in new courses. '
-                    'Their progress, results and certificates are kept.',
+          'The payment for ${profile.displayName} won’t be reviewed. You can '
+          'submit it again later.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(subscribe ? 'Cancel' : 'Keep subscription'),
+            child: const Text('Keep it'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: subscribe ? _green : Colors.deepOrange,
-            ),
-            child: Text(subscribe ? 'Subscribe' : 'Unsubscribe'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.deepOrange),
+            child: const Text('Cancel request'),
           ),
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _pendingId = profile.id);
+    if (confirmed != true || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final actions = ref.read(subscriptionActionsProvider);
-      if (subscribe) {
-        await actions.subscribe(profile.id);
-      } else {
-        await actions.unsubscribe(profile.id);
-      }
+      await ref.read(subscriptionActionsProvider).cancel(requestId);
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            subscribe
-                ? '${profile.displayName} is now subscribed'
-                : '${profile.displayName} has been unsubscribed',
-          ),
-        ),
+        const SnackBar(content: Text('Request cancelled')),
       );
     } catch (error) {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            apiErrorMessage(
-              error,
-              fallback: subscribe
-                  ? 'Failed to subscribe'
-                  : 'Failed to unsubscribe',
-            ),
+            apiErrorMessage(error, fallback: 'Failed to cancel the request'),
           ),
         ),
       );
-    } finally {
-      if (mounted) setState(() => _pendingId = null);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(subscriptionOverviewProvider, (_, next) {
+      final data = next.asData?.value;
+      if (data != null) syncActiveProfileSubscription(ref, data);
+    });
     final overview = ref.watch(subscriptionOverviewProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xfffbf9f4),
       body: overview.when(
@@ -116,158 +113,269 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
             ],
           ),
         ),
-        data: (data) => RefreshIndicator(
-          onRefresh: () => ref.refresh(subscriptionOverviewProvider.future),
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                'Subscription',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontFamily: 'serif',
-                  color: _navy,
+        data: (data) {
+          final pending = data.profiles.where((p) => p.isPending).length;
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(subscriptionOverviewProvider.future),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                Text(
+                  'Subscription',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontFamily: 'serif',
+                    color: _navy,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Each learner profile needs its own subscription to enrol in '
-                'courses.',
-                style: TextStyle(color: _muted),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryTile(
-                      label: 'Subscribed',
-                      value:
-                          '${data.subscribedCount} of ${data.profiles.length}',
+                const SizedBox(height: 6),
+                const Text(
+                  'Each learner profile needs its own subscription to enrol in '
+                  'courses. A subscription lasts one month from approval.',
+                  style: TextStyle(color: _muted),
+                ),
+                const SizedBox(height: 18),
+                _PaymentDetails(payment: data.payment),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Learner profiles',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontFamily: 'serif', color: _ink),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryTile(
-                      label: 'Per profile',
-                      value: '${_price(data.pricePerProfile)}/mo',
+                    Text(
+                      '${data.subscribedCount} of ${data.profiles.length} subscribed'
+                      '${pending > 0 ? ' · $pending under review' : ''}',
+                      style: const TextStyle(fontSize: 12, color: _muted),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryTile(
-                      label: 'Monthly total',
-                      value: _price(
-                        data.subscribedCount * data.pricePerProfile,
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (data.profiles.isEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Add a learner profile to subscribe.',
+                            style: TextStyle(color: _muted),
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.icon(
+                            onPressed: () => context.push('/profiles/add'),
+                            icon: const Icon(Icons.person_add_alt_1_outlined),
+                            label: const Text('Add profile'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _Notice(manualEnabled: data.manualSubscriptionsEnabled),
-              const SizedBox(height: 18),
-              if (data.profiles.isEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
+                for (final profile in data.profiles)
+                  _ProfileCard(
+                    profile: profile,
+                    canApply: data.payment.accounts.isNotEmpty,
+                    onApply: () => _apply(context, profile, data.payment),
+                    onCancel: () => _cancel(context, ref, profile),
+                  ),
+                if (data.requests.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Text(
+                    'Payment history',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontFamily: 'serif',
+                      color: _ink,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Card(
                     child: Column(
                       children: [
-                        const Text(
-                          'Add a learner profile to subscribe.',
-                          style: TextStyle(color: _muted),
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton.icon(
-                          onPressed: () => context.push('/profiles/add'),
-                          icon: const Icon(Icons.person_add_alt_1_outlined),
-                          label: const Text('Add profile'),
-                        ),
+                        for (final (index, request) in data.requests.indexed) ...[
+                          if (index > 0) const Divider(height: 1),
+                          _RequestTile(request: request),
+                        ],
                       ],
                     ),
                   ),
-                ),
-              for (final profile in data.profiles)
-                _ProfileCard(
-                  profile: profile,
-                  price: data.pricePerProfile,
-                  canManage: data.manualSubscriptionsEnabled,
-                  pending: _pendingId == profile.id,
-                  onChange: _pendingId == null ? () => _change(profile) : null,
-                ),
-            ],
-          ),
-        ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({required this.label, required this.value});
-  final String label;
-  final String value;
+class _PaymentDetails extends StatelessWidget {
+  const _PaymentDetails({required this.payment});
+  final PaymentSettings payment;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       border: Border.all(color: _border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: _muted)),
-        const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'serif',
-              fontSize: 18,
-              color: _ink,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+              child: Text(
+                'How to pay',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 19,
+                  color: _ink,
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formatMoney(payment.monthlyPrice, payment.currency),
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 20,
+                    color: _ink,
+                  ),
+                ),
+                const Text(
+                  'per profile · one month',
+                  style: TextStyle(fontSize: 11, color: _muted),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Send the payment to one of these accounts, then apply for each '
+          'profile with your transaction details.',
+          style: TextStyle(fontSize: 13, color: _muted),
+        ),
+        if (payment.instructions.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _gold.withValues(alpha: .1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _gold.withValues(alpha: .3)),
+            ),
+            child: Text(
+              payment.instructions,
+              style: const TextStyle(fontSize: 13, color: _ink),
             ),
           ),
-        ),
+        ],
+        const SizedBox(height: 12),
+        if (payment.accounts.isEmpty)
+          const Text(
+            'Payment details haven’t been added yet. Please contact support.',
+            style: TextStyle(fontSize: 13, color: _muted),
+          ),
+        for (final account in payment.accounts) _AccountTile(account: account),
       ],
     ),
   );
 }
 
-class _Notice extends StatelessWidget {
-  const _Notice({required this.manualEnabled});
-  final bool manualEnabled;
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({required this.account});
+  final PaymentAccount account;
+
+  IconData get _icon => switch (account.type) {
+    'BANK' => Icons.account_balance_outlined,
+    'MOBILE_BANKING' => Icons.phone_android_outlined,
+    _ => Icons.account_balance_wallet_outlined,
+  };
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
+    margin: const EdgeInsets.only(top: 10),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: manualEnabled ? _gold.withValues(alpha: .1) : Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: manualEnabled ? _gold.withValues(alpha: .3) : _border,
-      ),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: _border),
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.info_outline,
-          size: 20,
-          color: manualEnabled ? _gold : _muted,
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: const Color(0xfff9f6f0),
+          child: Icon(_icon, size: 18, color: _gold),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            manualEnabled
-                ? 'Online payment is coming soon. For now, subscriptions are '
-                      'activated as soon as you subscribe and no payment is '
-                      'taken.'
-                : 'Subscriptions can’t be changed here right now. Please '
-                      'contact support.',
-            style: TextStyle(fontSize: 13, color: manualEnabled ? _ink : _muted),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                account.typeLabel.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .6,
+                  color: _gold,
+                ),
+              ),
+              Text(
+                account.label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              if (account.accountName.isNotEmpty)
+                Text(
+                  account.accountName,
+                  style: const TextStyle(fontSize: 13, color: _muted),
+                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: SelectableText(
+                      account.accountNumber,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 14,
+                        color: _ink,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Copy account number',
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 16,
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: account.accountNumber),
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Copied')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.copy, color: _muted),
+                  ),
+                ],
+              ),
+              if (account.details.isNotEmpty)
+                Text(
+                  account.details,
+                  style: const TextStyle(fontSize: 12, color: _muted),
+                ),
+            ],
           ),
         ),
       ],
@@ -278,127 +386,143 @@ class _Notice extends StatelessWidget {
 class _ProfileCard extends StatelessWidget {
   const _ProfileCard({
     required this.profile,
-    required this.price,
-    required this.canManage,
-    required this.pending,
-    required this.onChange,
+    required this.canApply,
+    required this.onApply,
+    required this.onCancel,
   });
 
   final ProfileSubscription profile;
-  final double price;
-  final bool canManage;
-  final bool pending;
-  final VoidCallback? onChange;
+  final bool canApply;
+  final VoidCallback onApply;
+  final VoidCallback onCancel;
+
+  String get _statusLine {
+    final until = profile.subscribedUntil;
+    final parts = <String>[
+      if (until != null) 'Subscribed until ${_dateTime(until)}',
+      if (profile.isPending)
+        profile.isSubscribed
+            ? 'Renewal payment under review'
+            : 'Payment under review — usually within a day',
+    ];
+    return parts.isEmpty ? 'Subscribe to enrol in courses' : parts.join(' · ');
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final since = profile.subscribedAt;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                LearnerAvatar(
-                  imageUrl: profile.avatarUrl,
-                  initials: profile.initials,
-                  radius: 26,
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.only(bottom: 12),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              LearnerAvatar(
+                imageUrl: profile.avatarUrl,
+                initials: profile.initials,
+                radius: 26,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.displayName,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _StatusBadge(profile: profile),
+                        _Pill(label: 'Age ${profile.age}'),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        profile.displayName,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          _StatusBadge(subscribed: profile.isSubscribed),
-                          _Pill(label: 'Age ${profile.age}'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              profile.isSubscribed && since != null
-                  ? 'Subscribed since ${DateFormat.yMMMd().format(since.toLocal())} · can enrol in courses'
-                  : '${_price(price)} / month · subscribe to enrol in courses',
-              style: const TextStyle(fontSize: 13, color: _muted),
-            ),
-            if (canManage) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: profile.isSubscribed
-                    ? OutlinedButton(
-                        onPressed: onChange,
-                        child: pending
-                            ? const _Spinner()
-                            : const Text('Unsubscribe'),
-                      )
-                    : FilledButton(
-                        onPressed: onChange,
-                        style: FilledButton.styleFrom(backgroundColor: _green),
-                        child: pending
-                            ? const _Spinner(color: Colors.white)
-                            : const Text('Subscribe'),
-                      ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Text(_statusLine, style: const TextStyle(fontSize: 13, color: _muted)),
+          if (!profile.isPending && profile.lastRejected) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Last payment wasn’t approved'
+              '${profile.lastRejectionReason != null ? ': ${profile.lastRejectionReason}' : '.'}',
+              style: const TextStyle(fontSize: 13, color: Colors.red),
+            ),
           ],
-        ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: profile.isPending
+                ? OutlinedButton(
+                    onPressed: onCancel,
+                    child: const Text('Cancel request'),
+                  )
+                : profile.isSubscribed
+                ? OutlinedButton(
+                    onPressed: canApply ? onApply : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xff157a34),
+                      side: const BorderSide(color: _green),
+                    ),
+                    child: const Text('Renew'),
+                  )
+                : FilledButton(
+                    onPressed: canApply ? onApply : null,
+                    style: FilledButton.styleFrom(backgroundColor: _green),
+                    child: const Text('Apply for subscription'),
+                  ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.subscribed});
-  final bool subscribed;
+  const _StatusBadge({required this.profile});
+  final ProfileSubscription profile;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: subscribed ? _green : Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: subscribed ? null : Border.all(color: _gold),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          subscribed ? Icons.check_circle_outline : Icons.schedule,
-          size: 12,
-          color: _ink,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          subscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED',
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: _ink,
+  Widget build(BuildContext context) {
+    final (label, icon, background, border, color) = profile.isSubscribed
+        ? ('SUBSCRIBED', Icons.check_circle_outline, _green, null, _ink)
+        : profile.isPending
+        ? ('UNDER REVIEW', Icons.schedule, Colors.white, _blue, _blue)
+        : ('NOT SUBSCRIBED', Icons.schedule, Colors.white, _gold, _ink);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: border == null ? null : Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _Pill extends StatelessWidget {
@@ -424,13 +548,57 @@ class _Pill extends StatelessWidget {
   );
 }
 
-class _Spinner extends StatelessWidget {
-  const _Spinner({this.color});
-  final Color? color;
+class _RequestTile extends StatelessWidget {
+  const _RequestTile({required this.request});
+  final SubscriptionRequest request;
 
   @override
-  Widget build(BuildContext context) => SizedBox.square(
-    dimension: 18,
-    child: CircularProgressIndicator(strokeWidth: 2, color: color),
-  );
+  Widget build(BuildContext context) {
+    final (label, color) = switch (request.status) {
+      'APPROVED' => ('Approved', const Color(0xff157a34)),
+      'REJECTED' => ('Rejected', Colors.red),
+      'CANCELLED' => ('Cancelled', Colors.blueGrey),
+      _ => ('Under review', _blue),
+    };
+    final created = request.createdAt;
+    final periodEnd = request.periodEnd;
+    return ListTile(
+      title: Text(
+        '${request.profileName} · ${formatMoney(request.amount, request.currency)}',
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${request.paymentMethod} · ${request.transactionId}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          if (created != null)
+            Text(
+              'Submitted ${DateFormat.yMMMd().format(created)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          if (request.status == 'APPROVED' && periodEnd != null)
+            Text(
+              'Until ${DateFormat.yMMMd().format(periodEnd)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          if (request.status == 'REJECTED' && request.rejectionReason != null)
+            Text(
+              request.rejectionReason!,
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+        ],
+      ),
+      trailing: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
 }

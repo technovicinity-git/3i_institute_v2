@@ -6,17 +6,18 @@ const DAYS_IN_PERIOD = 30;
 
 export class DeviceService {
   async getDeviceLimit(accountId: string): Promise<number> {
-    const subscription = await prisma.subscription.findFirst({
+    // Each subscribed profile has its own seat (manual subscriptions are one
+    // seat per profile), so count active seats across the account.
+    const seats = await prisma.seat.count({
       where: {
-        accountId,
         status: "ACTIVE",
-      },
-      select: {
-        seats: true,
+        subscription: {
+          accountId,
+          status: "ACTIVE",
+          currentPeriodEnd: { gt: new Date() },
+        },
       },
     });
-
-    const seats = subscription?.seats ?? 0;
     return 1 + seats;
   }
 

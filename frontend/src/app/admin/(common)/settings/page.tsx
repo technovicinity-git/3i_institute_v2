@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Save, Bell, Globe, Shield, Lock } from "lucide-react";
 import { useChangePasswordMutation } from "@/hooks/use-security";
+import { PaymentSettingsSection } from "@/components/admin/payment-settings-section";
 
 export default function AdminSettingsPage() {
   const changePasswordMutation = useChangePasswordMutation();
@@ -128,6 +129,9 @@ export default function AdminSettingsPage() {
           <span className="text-sm">Instructor applications open</span>
         </div>
       </div>
+
+      {/* Subscription payments (saved separately) */}
+      <PaymentSettingsSection />
 
       {/* Notifications */}
       <div className="bg-white rounded-xl border border-[#E3E8EF] p-6 mb-6 space-y-5">

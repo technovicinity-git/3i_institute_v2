@@ -2,12 +2,16 @@ import { createServer } from "node:http";
 import { env } from "#/config/env";
 import { app } from "#/app";
 import { initializeSocket } from "#/modules/chat/socket";
+import { startSubscriptionExpiryJob } from "#/modules/subscription/expiry-job";
 
 async function bootstrap(): Promise<void> {
   const httpServer = createServer(app);
 
   // Initialize Socket.IO
   initializeSocket(httpServer);
+
+  // End manually-paid subscriptions when their month is over
+  startSubscriptionExpiryJob();
 
   httpServer.listen(env.PORT, () => {
     console.log(`🚀 3i Platform API running on port ${env.PORT}`);

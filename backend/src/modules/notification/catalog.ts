@@ -83,6 +83,13 @@ export const NOTIFICATION_EVENTS = {
     mandatory: true,
   }),
   "billing.subscription_cancelled": event("billing", { email: true }),
+  "subscription.approved": event("billing", { push: true, email: true }),
+  "subscription.rejected": event("billing", { push: true, email: true }),
+  "subscription.expired": event("billing", {
+    push: true,
+    email: true,
+    priority: "high",
+  }),
   "waiver.approved": event("billing", { push: true, email: true }),
   "waiver.rejected": event("billing", { push: true, email: true }),
   "waiver.revoked": event("billing", { push: true, email: true }),
@@ -106,6 +113,7 @@ export const NOTIFICATION_EVENTS = {
   "admin.instructor_application": event("admin", { email: true }),
   "admin.course_review_requested": event("admin", { email: true }),
   "admin.waiver_requested": event("admin", { email: true }),
+  "admin.subscription_requested": event("admin", { email: true }),
   "admin.chat_reported": event("admin", {
     push: true,
     email: true,

@@ -134,7 +134,7 @@ export class BillingService {
 
     if (isManualSubscription(subscription)) {
       throw new ValidationError(
-        "This subscription is managed per profile. Unsubscribe each profile from the subscription page.",
+        "This subscription was paid manually and ends automatically at the end of its period.",
       );
     }
 

@@ -1023,6 +1023,98 @@ function subscriptionCancelled(stripeSubscriptionId: string) {
 }
 
 // ──────────────────────────────────
+// Manual subscriptions
+// ──────────────────────────────────
+
+function subscriptionRequested(requestId: string) {
+  background("subscriptionRequested", async () => {
+    const request = await prisma.subscriptionRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        learnerProfile: { select: { displayName: true } },
+        account: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!request) return;
+    const accountName =
+      `${request.account.firstName} ${request.account.lastName}`.trim();
+    await notificationService.notify({
+      type: "admin.subscription_requested",
+      recipients: await admins(),
+      groupKey: `subscription-request:${request.id}`,
+      dedupeKey: `admin.subscription_requested:${request.id}`,
+      title: "Subscription payment to review",
+      body: `${accountName} applied for a subscription for ${request.learnerProfile.displayName}`,
+      data: { requestId: request.id, route: "/admin/subscription-requests" },
+    });
+  });
+}
+
+function subscriptionRequestDecided(requestId: string) {
+  background("subscriptionRequestDecided", async () => {
+    await notificationService.resolveGroup(`subscription-request:${requestId}`);
+    const request = await prisma.subscriptionRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        accountId: true,
+        status: true,
+        periodEnd: true,
+        rejectionReason: true,
+        learnerProfile: { select: { displayName: true } },
+      },
+    });
+    if (!request) return;
+    const name = request.learnerProfile.displayName;
+    if (request.status === "APPROVED" && request.periodEnd) {
+      const periodEnd = request.periodEnd;
+      await notifyLocalized(
+        {
+          type: "subscription.approved",
+          recipients: [{ userId: request.accountId }],
+          dedupeKey: `subscription.approved:${request.id}`,
+        },
+        (zone) => ({
+          title: "Subscription approved",
+          body: `${name} is subscribed until ${formatDateTime(periodEnd, zone)}`,
+          data: { requestId: request.id, route: "/subscription" },
+        }),
+      );
+    } else if (request.status === "REJECTED") {
+      await notificationService.notify({
+        type: "subscription.rejected",
+        recipients: [{ userId: request.accountId }],
+        dedupeKey: `subscription.rejected:${request.id}`,
+        title: "Subscription not approved",
+        body: `The subscription payment for ${name} was not approved.${
+          request.rejectionReason ? ` Reason: ${request.rejectionReason}` : ""
+        }`,
+        data: { requestId: request.id, route: "/subscription" },
+      });
+    }
+  });
+}
+
+function subscriptionExpired(
+  subscriptionId: string,
+  accountId: string,
+  profileNames: string[],
+) {
+  background("subscriptionExpired", async () => {
+    if (profileNames.length === 0) return;
+    await notificationService.notify({
+      type: "subscription.expired",
+      recipients: [{ userId: accountId }],
+      dedupeKey: `subscription.expired:${subscriptionId}`,
+      title: "Subscription ended",
+      body: `The subscription for ${profileNames.join(", ")} has ended. Renew to keep enrolling in courses.`,
+      data: { subscriptionId, route: "/subscription" },
+    });
+  });
+}
+
+// ──────────────────────────────────
 // Admin: moderation
 // ──────────────────────────────────
 
@@ -1085,4 +1177,7 @@ export const notificationEvents = {
   paymentFailed,
   subscriptionCancelled,
   chatMessageReported,
+  subscriptionRequested,
+  subscriptionRequestDecided,
+  subscriptionExpired,
 };
