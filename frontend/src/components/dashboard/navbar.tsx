@@ -100,7 +100,7 @@ export default function DashboardNavbar({
                   {activeProfile?.displayName}
                 </p>
                 <p className="text-xs text-[#64748B]">
-                  {activeProfile?.isActive ? "Active" : "No seat"}
+                  {activeProfile?.isActive ? "Subscribed" : "Not subscribed"}
                 </p>
               </div>
               <div className="py-2">
@@ -124,12 +124,12 @@ export default function DashboardNavbar({
                 </button>
                 <button
                   onClick={() => {
-                    router.push("/seats");
+                    router.push("/subscription");
                     setShowDropdown(false);
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-[#12304E] hover:bg-gray-50"
                 >
-                  Manage Seats
+                  Subscription
                 </button>
               </div>
             </div>

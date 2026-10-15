@@ -1,5 +1,7 @@
 import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
+import { checkCourseAge } from "#/shared/course-eligibility";
+import { seatService } from "#/modules/seat/service";
 
 export class CourseDetailsService {
   async getCourseDetails(courseId: string, learnerProfileId?: string) {
@@ -211,6 +213,31 @@ export class CourseDetailsService {
     let lastWatchedLessonId: string | null = null;
     let isCompleted = false;
 
+    let enrolmentEligibility: {
+      isSubscribed: boolean;
+      age: number;
+      ageEligible: boolean;
+      ageMessage: string | null;
+      canOverrideAge: boolean;
+    } | null = null;
+
+    if (learnerProfileId) {
+      const profile = await prisma.learnerProfile.findUnique({
+        where: { id: learnerProfileId },
+        select: { dateOfBirth: true },
+      });
+      if (profile) {
+        const ageCheck = checkCourseAge(profile.dateOfBirth, course);
+        enrolmentEligibility = {
+          isSubscribed: await seatService.isProfileSubscribed(learnerProfileId),
+          age: ageCheck.age,
+          ageEligible: ageCheck.eligible,
+          ageMessage: ageCheck.eligible ? null : ageCheck.message,
+          canOverrideAge: !ageCheck.eligible && ageCheck.canOverride,
+        };
+      }
+    }
+
     if (learnerProfileId) {
       const enrolment = await prisma.enrolment.findFirst({
         where: {
@@ -275,6 +302,7 @@ export class CourseDetailsService {
       level: course.level,
       language: course.language,
       minimumAge: course.minimumAge,
+      maximumAge: course.maximumAge,
 
       // Content
       learningOutcomes: (course.learningOutcomes as string[]) ?? [],
@@ -345,6 +373,7 @@ export class CourseDetailsService {
       relatedCourses: related,
       enrolmentCount: course._count.enrolments,
       isEnrolled,
+      enrolmentEligibility,
       enrolmentBatchId,
       firstLessonId: course.materials[0]?.id ?? null,
       continueLessonId,

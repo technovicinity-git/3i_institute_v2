@@ -7,6 +7,7 @@ import type {
 } from "#/modules/billing/schema";
 import { env } from "#/config/env";
 import { notificationEvents } from "#/modules/notification/events";
+import { isManualSubscription } from "#/modules/seat/service";
 
 // Stripe is lazy-loaded to avoid initialization in non-billing contexts
 let stripeClient: any = null;
@@ -129,6 +130,12 @@ export class BillingService {
 
     if (!subscription) {
       throw new NotFoundError("No active subscription found");
+    }
+
+    if (isManualSubscription(subscription)) {
+      throw new ValidationError(
+        "This subscription is managed per profile. Unsubscribe each profile from the subscription page.",
+      );
     }
 
     const stripe = await getStripe();

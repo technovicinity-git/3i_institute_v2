@@ -84,11 +84,9 @@ class ProfileManagementPage extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  !profile.isActive && profile.hasSeat
-                                      ? 'Cancelled'
-                                      : !profile.isActive
-                                      ? 'Never activated'
-                                      : 'Active',
+                                  profile.isActive
+                                      ? 'Subscribed'
+                                      : 'Not subscribed',
                                   style: TextStyle(
                                     color: !profile.isActive
                                         ? Colors.blueGrey
@@ -107,6 +105,26 @@ class ProfileManagementPage extends ConsumerWidget {
                         spacing: 8,
                         runSpacing: 4,
                         children: [
+                          profile.isActive
+                              ? OutlinedButton.icon(
+                                  onPressed: () =>
+                                      context.push('/subscription'),
+                                  icon: const Icon(
+                                    Icons.card_membership_outlined,
+                                  ),
+                                  label: const Text('Subscription'),
+                                )
+                              : FilledButton.icon(
+                                  onPressed: () =>
+                                      context.push('/subscription'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xff22a146),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.card_membership_outlined,
+                                  ),
+                                  label: const Text('Subscribe'),
+                                ),
                           OutlinedButton.icon(
                             onPressed: () =>
                                 context.push('/profiles/${profile.id}/edit'),

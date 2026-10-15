@@ -63,11 +63,17 @@ export function EnrolmentCard({ course }: { course: CourseDetails }) {
                 <EnrolActions course={course} />
               )}
 
+              <p className="text-[13px] text-[#64748B] text-center">
+                {course.maximumAge !== null
+                  ? `For ages ${course.minimumAge}–${course.maximumAge}`
+                  : `For ages ${course.minimumAge}+`}
+              </p>
+
               <Link
-                href="/pricing"
+                href="/subscription"
                 className="text-sm font-semibold text-[#12304E] text-center underline"
               >
-                See membership plans
+                Manage subscription
               </Link>
             </div>
 
@@ -227,9 +233,47 @@ function EnrolActions({ course }: { course: CourseDetails }) {
     );
   };
 
+  const eligibility = activeProfile ? course.enrolmentEligibility : null;
+  const blockedByAge = eligibility !== null && !eligibility.ageEligible;
+  const needsSubscription =
+    eligibility !== null && !blockedByAge && !eligibility.isSubscribed;
+
   return (
     <>
-      {course.type === "REGULAR" ? (
+      {blockedByAge ? (
+        <>
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+            <p className="font-semibold">
+              Not available for {activeProfile?.displayName}
+            </p>
+            <p className="mt-0.5">
+              {eligibility.ageMessage} ({activeProfile?.displayName} is{" "}
+              {eligibility.age}).
+            </p>
+          </div>
+          <button
+            disabled
+            className="w-full py-3 bg-gray-200 text-gray-500 rounded-lg text-[15px] font-semibold cursor-not-allowed"
+          >
+            Enrol Now
+          </button>
+        </>
+      ) : needsSubscription ? (
+        <>
+          <p className="text-sm text-[#475569]">
+            <span className="font-semibold text-[#0C1F33]">
+              {activeProfile?.displayName}
+            </span>{" "}
+            needs a subscription to enrol in courses.
+          </p>
+          <Link
+            href="/subscription"
+            className="w-full py-3 bg-[#22A146] text-white rounded-lg text-[15px] font-semibold hover:bg-[#1D8F3D] transition-colors text-center"
+          >
+            Subscribe to Enrol
+          </Link>
+        </>
+      ) : course.type === "REGULAR" ? (
         <button
           onClick={handleRegularEnrol}
           disabled={enrolMutation.isPending}

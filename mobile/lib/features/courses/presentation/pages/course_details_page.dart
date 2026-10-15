@@ -217,8 +217,14 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
       }
     } catch (error) {
       if (mounted) {
+        final needsSubscription = apiErrorCode(error) == 'SUBSCRIPTION_REQUIRED';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(error, fallback: 'Enrolment failed.'))),
+          SnackBar(
+            content: Text(apiErrorMessage(error, fallback: 'Enrolment failed.')),
+            action: needsSubscription
+                ? SnackBarAction(label: 'Subscribe', onPressed: () => context.push('/subscription'))
+                : null,
+          ),
         );
       }
     } finally {
@@ -243,7 +249,11 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
   @override
   Widget build(BuildContext context) {
     final course = widget.course;
-    final wishlisted = ref.watch(wishlistedCourseIdsProvider(ref.watch(activeLearnerProfileProvider)?.id ?? ''));
+    final profile = ref.watch(activeLearnerProfileProvider);
+    final wishlisted = ref.watch(wishlistedCourseIdsProvider(profile?.id ?? ''));
+    final eligibility = profile == null ? null : course.eligibility;
+    final blockedByAge = eligibility != null && !eligibility.ageEligible;
+    final needsSubscription = eligibility != null && !blockedByAge && !eligibility.isSubscribed;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -257,7 +267,42 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
           const SizedBox(height: 14),
           if (course.enrolled)
             _EnrolledActions(course: course)
-          else
+          else if (blockedByAge) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFED7AA)),
+              ),
+              child: Text(
+                'Not available for ${profile!.displayName}. ${eligibility.ageMessage ?? ''} (${profile.displayName} is ${eligibility.age}).',
+                style: const TextStyle(color: Color(0xFF9A3412), fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(onPressed: null, child: Text('Enrol now')),
+            ),
+          ] else if (needsSubscription) ...[
+            Text(
+              '${profile!.displayName} needs a subscription to enrol in courses.',
+              style: const TextStyle(color: Color(0xFF475569), fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                onPressed: () => context.push('/subscription'),
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF22A146)),
+                child: const Text('Subscribe to enrol'),
+              ),
+            ),
+          ] else
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -274,7 +319,14 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
             _WishlistButton(courseId: course.id, wishlistState: wishlisted),
           ],
           const SizedBox(height: 10),
-          const Center(child: Text('One membership. Every course.', style: TextStyle(color: Color(0xFF12304E), fontSize: 13, decoration: TextDecoration.underline))),
+          Center(child: Text(course.ageLabel, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13))),
+          const SizedBox(height: 6),
+          Center(
+            child: TextButton(
+              onPressed: () => context.push('/subscription'),
+              child: const Text('Manage subscription', style: TextStyle(color: Color(0xFF12304E), fontSize: 13, decoration: TextDecoration.underline)),
+            ),
+          ),
           const Divider(height: 28),
           if (course.whatIncluded.isNotEmpty) ...[
             const Text('What’s included', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0C1F33))),

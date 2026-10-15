@@ -32,6 +32,17 @@ class LearnerProfile {
       .join()
       .toUpperCase();
 
+  LearnerProfile copyWith({bool? isActive, bool? hasSeat}) => LearnerProfile(
+    id: id,
+    displayName: displayName,
+    dateOfBirth: dateOfBirth,
+    avatarUrl: avatarUrl,
+    isActive: isActive ?? this.isActive,
+    hasPin: hasPin,
+    nameLocked: nameLocked,
+    hasSeat: hasSeat ?? this.hasSeat,
+  );
+
   factory LearnerProfile.fromJson(Map<String, dynamic> json) => LearnerProfile(
     id: json['id'] as String? ?? '',
     displayName: json['displayName'] as String? ?? 'Learner',

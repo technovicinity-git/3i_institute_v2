@@ -59,6 +59,8 @@ class LandingLayout extends ConsumerWidget {
                 );
               } else if (value == 'my-courses') {
                 context.go('/my-courses');
+              } else if (value == 'subscription') {
+                context.push('/subscription');
               } else if (value == 'logout') {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
                 try {
@@ -121,6 +123,10 @@ class LandingLayout extends ConsumerWidget {
               const PopupMenuItem(value: 'dashboard', child: Text('Dashboard')),
               if (!isInstructor) ...const [
                 PopupMenuItem(value: 'my-courses', child: Text('My Courses')),
+                PopupMenuItem(
+                  value: 'subscription',
+                  child: Text('Subscription'),
+                ),
                 PopupMenuItem(
                   value: 'switch',
                   child: Text('Switch learner profile'),

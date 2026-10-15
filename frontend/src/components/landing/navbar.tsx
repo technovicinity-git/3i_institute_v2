@@ -215,7 +215,7 @@ export function Navbar() {
                               : "bg-orange-50 text-orange-600"
                           }`}
                         >
-                          {activeProfile.isActive ? "Active" : "No Seat"}
+                          {activeProfile.isActive ? "Subscribed" : "Not subscribed"}
                         </span>
                       )}
                   </div>

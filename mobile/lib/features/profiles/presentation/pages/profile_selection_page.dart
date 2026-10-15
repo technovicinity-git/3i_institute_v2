@@ -117,7 +117,7 @@ class ProfileSelectionPage extends ConsumerWidget {
                                     ),
                                     if (!profile.isActive)
                                       const Text(
-                                        'No seat',
+                                        'Not subscribed',
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: Colors.deepOrange,

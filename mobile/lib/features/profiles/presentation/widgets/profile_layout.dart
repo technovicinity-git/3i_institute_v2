@@ -33,6 +33,9 @@ class ProfileLayout extends ConsumerWidget {
               case 'manage':
                 context.push('/profile-management');
                 break;
+              case 'subscription':
+                context.push('/subscription');
+                break;
               case 'settings':
                 context.push('/account-settings');
                 break;
@@ -48,6 +51,7 @@ class ProfileLayout extends ConsumerWidget {
               child: Text('Switch learner profile'),
             ),
             PopupMenuItem(value: 'manage', child: Text('Family & profiles')),
+            PopupMenuItem(value: 'subscription', child: Text('Subscription')),
             PopupMenuItem(value: 'settings', child: Text('Manage account')),
             PopupMenuItem(value: 'logout', child: Text('Log out')),
           ],

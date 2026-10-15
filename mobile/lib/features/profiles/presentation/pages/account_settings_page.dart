@@ -31,8 +31,8 @@ class AccountSettingsPage extends StatelessWidget {
       _SettingRow(
         icon: Icons.credit_card_outlined,
         title: 'Subscription & billing',
-        description: 'View your plan and invoices on the website',
-        disabled: true,
+        description: 'Subscribe or unsubscribe each learner profile',
+        onTap: () => context.push('/subscription'),
       ),
       _SettingRow(
         icon: Icons.lock_outline,

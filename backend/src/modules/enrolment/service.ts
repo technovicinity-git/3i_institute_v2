@@ -1,25 +1,15 @@
 import { prisma } from "#/lib/prisma";
 import {
+  AppError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
 } from "#/shared/errors";
+import { checkCourseAge } from "#/shared/course-eligibility";
+import { seatService } from "#/modules/seat/service";
 import type { EnrolInput } from "#/modules/enrolment/schema";
 import { notificationEvents } from "#/modules/notification/events";
-
-function calculateAge(dateOfBirth: Date): number {
-  const today = new Date();
-  let age = today.getFullYear() - dateOfBirth.getFullYear();
-  const monthDiff = today.getMonth() - dateOfBirth.getMonth();
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < dateOfBirth.getDate())
-  ) {
-    age--;
-  }
-  return age;
-}
 
 export class EnrolmentService {
   async enrol(accountId: string, input: EnrolInput) {
@@ -54,23 +44,23 @@ export class EnrolmentService {
       throw new ValidationError("Course is not available for enrolment");
     }
 
-    // FR-ENR-03: Age gating
-    const learnerAge = calculateAge(profile.dateOfBirth);
-
-    if (learnerAge < course.minimumAge) {
-      // FR-ENR-04: Guardian can override upward by up to 2 years
-      if (input.ageOverride && learnerAge >= course.minimumAge - 2) {
-        // Override allowed
-      } else {
-        throw new ForbiddenError(
-          `Learner does not meet the minimum age requirement of ${course.minimumAge}`,
-        );
-      }
+    // FR-ENR-03/04/05: Age gating (minimum, maximum, adults-only)
+    const ageCheck = checkCourseAge(
+      profile.dateOfBirth,
+      course,
+      input.ageOverride,
+    );
+    if (!ageCheck.eligible) {
+      throw new ForbiddenError(ageCheck.message);
     }
 
-    // FR-ENR-05: No override into 18+ courses
-    if (course.minimumAge >= 18 && learnerAge < 18) {
-      throw new ForbiddenError("This course is restricted to adults");
+    // Only subscribed profiles can enrol
+    if (!(await seatService.isProfileSubscribed(profile.id))) {
+      throw new AppError(
+        403,
+        "SUBSCRIPTION_REQUIRED",
+        `${profile.displayName} needs an active subscription to enrol in courses`,
+      );
     }
 
     // Check if already enrolled
@@ -131,8 +121,8 @@ export class EnrolmentService {
         batchId,
         waitlisted,
         waitlistPosition,
-        ageOverrideApplied: input.ageOverride,
-        ageOverrideApprovedBy: input.ageOverride ? accountId : null,
+        ageOverrideApplied: ageCheck.overrideApplied,
+        ageOverrideApprovedBy: ageCheck.overrideApplied ? accountId : null,
       },
     });
 

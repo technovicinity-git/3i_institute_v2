@@ -34,6 +34,7 @@ import '../../features/profiles/presentation/pages/edit_learner_page.dart';
 import '../../features/profiles/presentation/pages/delete_learner_page.dart';
 import '../../features/profiles/presentation/pages/account_settings_page.dart';
 import '../../features/profiles/presentation/pages/login_security_page.dart';
+import '../../features/profiles/presentation/pages/subscription_page.dart';
 import '../../features/profiles/presentation/widgets/profile_layout.dart';
 import '../../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../pages/startup_page.dart';
@@ -325,6 +326,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/login-security',
             builder: (context, state) => const LoginSecurityPage(),
+          ),
+          GoRoute(
+            path: '/subscription',
+            builder: (context, state) => const SubscriptionPage(),
           ),
         ],
       ),
