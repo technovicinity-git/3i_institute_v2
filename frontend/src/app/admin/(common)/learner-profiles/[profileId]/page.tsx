@@ -36,7 +36,7 @@ export default function AdminLearnerProfileDetailsPage() {
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Date of birth</p><p className="text-sm text-[#0C1F33]">{formatDate(profile.dateOfBirth)}</p></div>
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Parent / account holder</p><p className="text-sm text-[#0C1F33]">{profile.account.firstName} {profile.account.lastName}</p><p className="text-xs text-[#64748B]">{profile.account.email}</p></div>
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Account type</p><p className="text-sm text-[#0C1F33]">{profile.account.accountType.replaceAll("_", " ")}</p></div>
-        <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Seat status</p><p className="text-sm text-[#0C1F33]">{profile.isActive ? "Active seat assigned" : "No active seat"}</p></div>
+        <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Subscription</p><p className="text-sm text-[#0C1F33]">{profile.isActive ? "Subscribed" : "Not subscribed"}</p></div>
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Chat</p><p className="text-sm text-[#0C1F33]">{profile.chatEnabled ? "Enabled" : "Disabled"}</p></div>
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Profile created</p><p className="text-sm text-[#0C1F33]">{formatDate(profile.createdAt)}</p></div>
         <div><p className="text-xs uppercase font-bold text-[#64748B] mb-1">Exam attempts</p><p className="text-sm text-[#0C1F33]">{profile._count.examAttempts}</p></div>

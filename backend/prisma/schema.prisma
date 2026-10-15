@@ -50,12 +50,21 @@ enum WaiverStatus {
   APPROVED
   REJECTED
   REVOKED
+  USED
+  EXPIRED
 }
 
 enum CertificateType {
   ATTENDANCE
   COMPLETION
   EXAM
+}
+
+enum SubscriptionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum SeatStatus {
@@ -141,6 +150,7 @@ model User {
   learnerProfiles  LearnerProfile[]
   courses          Course[]
   subscriptions    Subscription[]
+  subscriptionRequests SubscriptionRequest[]
   waivers          Waiver[]
   courseRatings CourseRating[]
   notifications           Notification[]
@@ -210,6 +220,8 @@ model LearnerProfile {
    courseRatings CourseRating[]
 
   seats         Seat[]
+  subscriptionRequests SubscriptionRequest[]
+  waivers       Waiver[]
 
   enrolments    Enrolment[]
   progress      MaterialProgress[]
@@ -533,7 +545,7 @@ model Subscription {
   cancelledAt           DateTime?
 
   assignedSeats         Seat[]
-  waiver                Waiver?
+  requests              SubscriptionRequest[]
 
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
@@ -541,27 +553,85 @@ model Subscription {
   @@index([accountId])
 }
 
-model Waiver {
-  id              String         @id @default(uuid())
-  subscriptionId  String?        @unique
-  subscription    Subscription?  @relation(fields: [subscriptionId], references: [id])
-  accountId       String
-  account         User           @relation(fields: [accountId], references: [id])
-  explanation     String
-  evidenceFiles   String[]
-  status          WaiverStatus   @default(PENDING)
-  tier            Int?
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  effectiveAt     DateTime?
-  expiresAt       DateTime?
-  revokedAt       DateTime?
-  revokeReason    String?
+// A learner profile's application for a one-month subscription, paid
+// manually (bank transfer, mobile banking, ...). An admin checks the payment
+// and approves (subscribes the profile) or rejects it.
+model SubscriptionRequest {
+  id               String                    @id @default(uuid())
+  accountId        String
+  account          User                      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile   LearnerProfile            @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  status           SubscriptionRequestStatus @default(PENDING)
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  // Payment details entered by the account holder
+  paymentMethod    String
+  amount           Decimal                   @db.Decimal(10, 2)
+  currency         String
+  // Null when a 100% waiver covers the whole price
+  transactionId    String?
+  senderAccount    String?
+  paidAt           DateTime
+  note             String?
+  proofImageUrl    String?
+
+  // Fee waiver applied to this request (used up when it's approved)
+  waiverId         String?
+  waiver           Waiver?                   @relation(fields: [waiverId], references: [id], onDelete: SetNull)
+  discountPercent  Int                       @default(0)
+  listPrice        Decimal?                  @db.Decimal(10, 2)
+
+  // Review
+  reviewedById     String?
+  reviewedAt       DateTime?
+  rejectionReason  String?
+
+  // Set on approval: the subscription it created or extended
+  subscriptionId   String?
+  subscription     Subscription?             @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  periodStart      DateTime?
+  periodEnd        DateTime?
+
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([accountId])
+  @@index([learnerProfileId])
+  @@index([transactionId])
+}
+
+// A fee waiver for one learner profile. Once approved it discounts one
+// subscription request (by `tier` percent) and must be used within 30 days.
+model Waiver {
+  id               String          @id @default(uuid())
+  accountId        String
+  account          User            @relation(fields: [accountId], references: [id])
+  // Null only for waivers created before waivers were per profile
+  learnerProfileId String?
+  learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  explanation      String
+  evidenceFiles    String[]
+  status           WaiverStatus    @default(PENDING)
+  // Discount percent: 25, 50, 75 or 100
+  tier             Int?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  rejectionReason  String?
+  // Use-by date of an approved waiver
+  expiresAt        DateTime?
+  usedAt           DateTime?
+  revokedAt        DateTime?
+  revokeReason     String?
+
+  subscriptionRequests SubscriptionRequest[]
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([accountId])
+  @@index([learnerProfileId, status])
+  @@index([status, createdAt])
 }
 
 model AuditLog {

@@ -1,6 +1,30 @@
 import { prisma } from "#/lib/prisma";
-import {  NotFoundError } from "#/shared/errors";
+import { NotFoundError, ValidationError } from "#/shared/errors";
 import { notificationEvents } from "#/modules/notification/events";
+
+export const MODERATION_ACTIONS = ["DELETE", "REMOVE"] as const;
+export type ModerationAction = (typeof MODERATION_ACTIONS)[number];
+
+type MessageDeletedListener = (
+  courseId: string,
+  batchId: string | null,
+  messageId: string,
+) => void;
+
+let messageDeletedListener: MessageDeletedListener | null = null;
+
+/** Lets the socket layer broadcast deletions without a circular import. */
+export function onChatMessageDeleted(listener: MessageDeletedListener) {
+  messageDeletedListener = listener;
+}
+
+function emitMessageDeleted(
+  courseId: string,
+  batchId: string | null,
+  messageId: string,
+) {
+  messageDeletedListener?.(courseId, batchId, messageId);
+}
 
 interface SendMessageInput {
   courseId: string;
@@ -147,27 +171,166 @@ export class ChatService {
     return report;
   }
 
+  /**
+   * Open chat reports grouped by message. A report is open when no
+   * moderation action was recorded on its message after it was filed.
+   */
   async getModerationQueue() {
-    return prisma.auditLog.findMany({
-      where: { action: "CHAT_REPORT" },
+    const events = await prisma.auditLog.findMany({
+      where: { action: { in: ["CHAT_REPORT", "CHAT_MODERATION"] } },
       orderBy: { createdAt: "asc" },
     });
+
+    const lastModeratedAt = new Map<string, Date>();
+    for (const e of events) {
+      if (e.action === "CHAT_MODERATION" && e.resourceId) {
+        lastModeratedAt.set(e.resourceId, e.createdAt);
+      }
+    }
+
+    const openReports = events.filter((e) => {
+      if (e.action !== "CHAT_REPORT" || !e.resourceId) return false;
+      const moderatedAt = lastModeratedAt.get(e.resourceId);
+      return !moderatedAt || moderatedAt < e.createdAt;
+    });
+
+    if (openReports.length === 0) return [];
+
+    const messageIds = [...new Set(openReports.map((r) => r.resourceId!))];
+    const messages = await prisma.chatMessage.findMany({
+      where: { id: { in: messageIds } },
+    });
+    const messageMap = new Map(messages.map((m) => [m.id, m]));
+
+    const courseIds = [...new Set(messages.map((m) => m.courseId))];
+    const batchIds = [
+      ...new Set(
+        messages.map((m) => m.batchId).filter((id): id is string => !!id),
+      ),
+    ];
+    const userIds = [
+      ...new Set([
+        ...messages.map((m) => m.senderId),
+        ...openReports
+          .map((r) => r.userId)
+          .filter((id): id is string => !!id),
+      ]),
+    ];
+
+    const [courses, batches, users] = await Promise.all([
+      prisma.course.findMany({
+        where: { id: { in: courseIds } },
+        select: { id: true, title: true },
+      }),
+      prisma.batch.findMany({
+        where: { id: { in: batchIds } },
+        select: { id: true, name: true },
+      }),
+      prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          isActive: true,
+        },
+      }),
+    ]);
+    const courseMap = new Map(courses.map((c) => [c.id, c]));
+    const batchMap = new Map(batches.map((b) => [b.id, b]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const grouped = new Map<string, typeof openReports>();
+    for (const report of openReports) {
+      const list = grouped.get(report.resourceId!) ?? [];
+      list.push(report);
+      grouped.set(report.resourceId!, list);
+    }
+
+    return [...grouped.entries()]
+      .map(([messageId, reports]) => {
+        const message = messageMap.get(messageId) ?? null;
+        const latest = reports[reports.length - 1]!;
+        return {
+          messageId,
+          message: message && {
+            id: message.id,
+            text: message.message,
+            displayName: message.displayName,
+            createdAt: message.createdAt,
+          },
+          sender: message ? (userMap.get(message.senderId) ?? null) : null,
+          course: message ? (courseMap.get(message.courseId) ?? null) : null,
+          batch: message?.batchId
+            ? (batchMap.get(message.batchId) ?? null)
+            : null,
+          reportCount: reports.length,
+          firstReportedAt: reports[0]!.createdAt,
+          lastReportedAt: latest.createdAt,
+          reports: reports.map((r) => {
+            const details = (r.details ?? {}) as { reason?: string };
+            const reporter = r.userId ? userMap.get(r.userId) : undefined;
+            return {
+              id: r.id,
+              reason: details.reason ?? "",
+              reportedAt: r.createdAt,
+              reporter: reporter
+                ? {
+                    id: reporter.id,
+                    firstName: reporter.firstName,
+                    lastName: reporter.lastName,
+                    email: reporter.email,
+                  }
+                : null,
+            };
+          }),
+        };
+      })
+      .sort(
+        (a, b) => b.lastReportedAt.getTime() - a.lastReportedAt.getTime(),
+      );
   }
 
+  /**
+   * DELETE removes the message from the chat; REMOVE dismisses the reports
+   * and keeps the message. Either way the open reports are closed.
+   */
   async moderateMessage(
     moderatorId: string,
     messageId: string,
-    action: "DELETE" | "MUTE" | "REMOVE",
+    action: ModerationAction,
   ) {
+    if (!messageId) {
+      throw new ValidationError("messageId is required");
+    }
+    if (!MODERATION_ACTIONS.includes(action)) {
+      throw new ValidationError(
+        `action must be one of ${MODERATION_ACTIONS.join(", ")}`,
+      );
+    }
+
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
     });
 
-    if (!message) {
-      throw new NotFoundError("Message not found");
+    if (action === "DELETE") {
+      if (!message) {
+        throw new NotFoundError("Message not found");
+      }
+      await prisma.chatMessage.delete({ where: { id: messageId } });
+      emitMessageDeleted(message.courseId, message.batchId, messageId);
+    } else {
+      // Dismissing is allowed even if the message is already gone.
+      const hasReports = await prisma.auditLog.count({
+        where: { action: "CHAT_REPORT", resourceId: messageId },
+      });
+      if (!message && hasReports === 0) {
+        throw new NotFoundError("Message not found");
+      }
     }
 
-    const moderation = await prisma.auditLog.create({
+    return prisma.auditLog.create({
       data: {
         userId: moderatorId,
         action: "CHAT_MODERATION",
@@ -176,11 +339,15 @@ export class ChatService {
         details: {
           action,
           moderatedAt: new Date().toISOString(),
+          ...(message && {
+            courseId: message.courseId,
+            batchId: message.batchId,
+            senderId: message.senderId,
+            message: message.message,
+          }),
         },
       },
     });
-
-    return moderation;
   }
 }
 

@@ -209,9 +209,15 @@ interface ProfileRowProps {
   profile: LearnerProfile;
   onEdit: (profile: LearnerProfile) => void;
   onResetPin: (profile: LearnerProfile) => void;
+  onSubscription: () => void;
 }
 
-function ProfileRow({ profile, onEdit, onResetPin }: ProfileRowProps) {
+function ProfileRow({
+  profile,
+  onEdit,
+  onResetPin,
+  onSubscription,
+}: ProfileRowProps) {
   const age = calculateAge(profile.dateOfBirth);
   const status = getProfileStatus(profile);
 
@@ -224,9 +230,11 @@ function ProfileRow({ profile, onEdit, onResetPin }: ProfileRowProps) {
     },
   ];
 
-  if (status === "active") {
-    actions.push({ label: "Cancel seat", variant: "ghost" });
-  }
+  actions.push(
+    status === "active"
+      ? { label: "Subscription", variant: "ghost", onClick: onSubscription }
+      : { label: "Subscribe", variant: "green", onClick: onSubscription },
+  );
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center justify-between p-5 sm:px-8 bg-white border border-[#E3E8EF] rounded-xl shadow-sm gap-4">
@@ -360,6 +368,7 @@ export default function FamilyProfilesPage() {
                 profile={profile}
                 onEdit={handleEdit}
                 onResetPin={handleResetPin}
+                onSubscription={() => router.push("/subscription")}
               />
             ))}
           </div>

@@ -134,7 +134,7 @@ export default function ProfilesPage() {
                   </span>
                   {!profile.isActive && (
                     <span className="mt-1 text-[10px] text-orange-500 font-medium">
-                      No seat
+                      Not subscribed
                     </span>
                   )}
                 </button>

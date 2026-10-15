@@ -83,9 +83,17 @@ export const NOTIFICATION_EVENTS = {
     mandatory: true,
   }),
   "billing.subscription_cancelled": event("billing", { email: true }),
-  "waiver.approved": event("billing", { push: true, email: true }),
-  "waiver.rejected": event("billing", { push: true, email: true }),
-  "waiver.revoked": event("billing", { push: true, email: true }),
+  "subscription.approved": event("billing", { push: true, email: true }),
+  "subscription.rejected": event("billing", { push: true, email: true }),
+  "subscription.expired": event("billing", {
+    push: true,
+    email: true,
+    priority: "high",
+  }),
+  // Waiver emails are sent directly by waiver/service.ts.
+  "waiver.approved": event("billing", { push: true }),
+  "waiver.rejected": event("billing", { push: true }),
+  "waiver.revoked": event("billing", { push: true }),
 
   // ── Instructor ───────────────────────────────
   // Emailed directly by instructor/service.ts (see note at the top).
@@ -106,6 +114,7 @@ export const NOTIFICATION_EVENTS = {
   "admin.instructor_application": event("admin", { email: true }),
   "admin.course_review_requested": event("admin", { email: true }),
   "admin.waiver_requested": event("admin", { email: true }),
+  "admin.subscription_requested": event("admin", { email: true }),
   "admin.chat_reported": event("admin", {
     push: true,
     email: true,

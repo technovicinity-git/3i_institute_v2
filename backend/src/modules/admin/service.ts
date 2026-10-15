@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { isManualSubscription } from "#/modules/seat/service";
 import { ForbiddenError, NotFoundError } from "#/shared/errors";
 import {
   setCachedStatus,
@@ -363,25 +364,6 @@ export class AdminService {
     return courses;
   }
 
-  async getPendingWaivers() {
-    const waivers = await prisma.waiver.findMany({
-      where: { status: "PENDING" },
-      include: {
-        account: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    return waivers;
-  }
-
   async getAllCourses(page: number, limit: number, status?: string) {
     const where: any = {
       ...(status ? { status } : {}),
@@ -518,34 +500,6 @@ export class AdminService {
     return updated;
   }
 
-  async getAllWaivers(page: number, limit: number, status?: string) {
-    const where: any = {
-      ...(status ? { status } : {}),
-    };
-
-    const [total, waivers] = await Promise.all([
-      prisma.waiver.count({ where }),
-      prisma.waiver.findMany({
-        where,
-        include: {
-          account: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
-
-    return { waivers, total };
-  }
-
   async getSubscriptions(page: number, limit: number, status?: string) {
     const where: any = {
       ...(status ? { status } : {}),
@@ -563,6 +517,9 @@ export class AdminService {
               email: true,
             },
           },
+          assignedSeats: {
+            select: { learnerProfile: { select: { displayName: true } } },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
@@ -576,6 +533,8 @@ export class AdminService {
       accountName: `${sub.account.firstName} ${sub.account.lastName}`,
       accountEmail: sub.account.email,
       stripeSubscriptionId: sub.stripeSubscriptionId,
+      isManual: isManualSubscription(sub),
+      profiles: sub.assignedSeats.map((seat) => seat.learnerProfile.displayName),
       status: sub.status,
       seats: sub.seats,
       currentPeriodStart: sub.currentPeriodStart,

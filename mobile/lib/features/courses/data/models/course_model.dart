@@ -92,6 +92,7 @@ class CourseDetailsModel extends CourseDetails {
     required super.continueLessonId,
     required super.lastWatchedLessonId,
     required super.isCompleted,
+    super.eligibility,
   });
 
   factory CourseDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -201,6 +202,17 @@ class CourseDetailsModel extends CourseDetails {
       continueLessonId: json['continueLessonId'] as String?,
       lastWatchedLessonId: json['lastWatchedLessonId'] as String?,
       isCompleted: boolValue(json['isCompleted']),
+      eligibility: json['enrolmentEligibility'] is Map
+          ? _eligibility(asJsonMap(json['enrolmentEligibility']))
+          : null,
     );
   }
 }
+
+EnrolmentEligibility _eligibility(Map<String, dynamic> json) =>
+    EnrolmentEligibility(
+      isSubscribed: boolValue(json['isSubscribed']),
+      age: intValue(json['age']),
+      ageEligible: json['ageEligible'] is bool ? json['ageEligible'] as bool : true,
+      ageMessage: json['ageMessage'] as String?,
+    );

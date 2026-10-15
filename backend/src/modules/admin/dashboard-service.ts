@@ -147,12 +147,17 @@ export class AdminDashboardService {
       }),
     ]);
 
-    const [pendingInstructorApplications, openChatReports, topCourses] =
-      await Promise.all([
-        this.countPendingInstructorApplications(),
-        this.countOpenChatReports(),
-        this.getTopCourses(last30),
-      ]);
+    const [
+      pendingInstructorApplications,
+      openChatReports,
+      pendingSubscriptionRequests,
+      topCourses,
+    ] = await Promise.all([
+      this.countPendingInstructorApplications(),
+      this.countOpenChatReports(),
+      prisma.subscriptionRequest.count({ where: { status: "PENDING" } }),
+      this.getTopCourses(last30),
+    ]);
 
     const activeSeats = activeSubscriptions.reduce((sum, s) => sum + s.seats, 0);
     const weeklySignups = bucketByWeek(
@@ -191,6 +196,7 @@ export class AdminDashboardService {
         pendingInstructorApplications,
         pendingCourses,
         pendingWaivers,
+        pendingSubscriptionRequests,
         openChatReports,
         pastDueSubscriptions,
         overdueGrading,

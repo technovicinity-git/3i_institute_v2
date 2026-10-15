@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   enrolmentService,
@@ -16,6 +17,7 @@ export function useCourseBatches(courseId: string) {
 
 export function useEnrolMutation() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: (input: EnrolInput) => enrolmentService.enrol(input),
@@ -28,8 +30,17 @@ export function useEnrolMutation() {
       }
     },
     onError: (error: any) => {
-      const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Enrolment failed");
+      const apiError = error.response?.data?.error;
+      if (apiError?.code === "SUBSCRIPTION_REQUIRED") {
+        toast.error(apiError.message, {
+          action: {
+            label: "Subscribe",
+            onClick: () => router.push("/subscription"),
+          },
+        });
+        return;
+      }
+      toast.error(apiError?.message ?? "Enrolment failed");
     },
   });
 }

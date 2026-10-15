@@ -152,20 +152,6 @@ export interface AdminExamAttempt {
   submittedAt: string | null;
 }
 
-export interface PendingWaiver {
-  id: string;
-  accountId: string;
-  account: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  explanation: string;
-  evidenceFiles: string[];
-  status: string;
-  createdAt: string;
-}
-
 export interface AdminCourse {
   id: string;
   title: string;
@@ -196,35 +182,39 @@ export interface AdminCoursesResponse {
   total: number;
 }
 
-export interface AdminWaiver {
+export interface ModerationUser {
   id: string;
-  accountId: string;
-  account: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  explanation: string;
-  evidenceFiles: string[];
-  status: string;
-  tier: number | null;
-  reviewedBy: string | null;
-  reviewedAt: string | null;
-  createdAt: string;
-}
-
-export interface AdminWaiversResponse {
-  waivers: AdminWaiver[];
-  total: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isActive?: boolean;
 }
 
 export interface ChatReport {
   id: string;
-  messageId: string;
-  reporterId: string;
   reason: string;
   reportedAt: string;
-  status: string;
+  reporter: ModerationUser | null;
+}
+
+export type ModerationAction = "DELETE" | "REMOVE";
+
+export interface ModerationQueueItem {
+  messageId: string;
+  /** Null when the message no longer exists. */
+  message: {
+    id: string;
+    text: string;
+    displayName: string;
+    createdAt: string;
+  } | null;
+  sender: ModerationUser | null;
+  course: { id: string; title: string } | null;
+  batch: { id: string; name: string } | null;
+  reportCount: number;
+  firstReportedAt: string;
+  lastReportedAt: string;
+  reports: ChatReport[];
 }
 
 export interface AdminReport {
@@ -241,6 +231,10 @@ export interface AdminSubscription {
   accountName: string;
   accountEmail: string;
   stripeSubscriptionId: string;
+  /** Paid manually and approved by an admin (not Stripe). */
+  isManual: boolean;
+  /** Learner profiles on this subscription. */
+  profiles: string[];
   status: string;
   seats: number;
   currentPeriodStart: string;
@@ -371,25 +365,6 @@ export const adminService = {
     await apiClient.post(`/courses/${courseId}/reject`, { reason });
   },
 
-  getPendingWaivers: async (): Promise<PendingWaiver[]> => {
-    const response = await apiClient.get("/admin/waivers/pending");
-    return response.data.data;
-  },
-
-  approveWaiver: async (waiverId: string, tier: number): Promise<void> => {
-    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
-      approved: true,
-      tier,
-    });
-  },
-
-  rejectWaiver: async (waiverId: string, reason: string): Promise<void> => {
-    await apiClient.post(`/billing/waivers/${waiverId}/review`, {
-      approved: false,
-      reason,
-    });
-  },
-
   getAllCourses: async (
     page = 1,
     status?: string,
@@ -408,22 +383,15 @@ export const adminService = {
     await apiClient.post(`/admin/courses/${courseId}/activate`);
   },
 
-  getAllWaivers: async (
-    page = 1,
-    status?: string,
-  ): Promise<AdminWaiversResponse> => {
-    const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (status) params.set("status", status);
-    const response = await apiClient.get(`/admin/waivers?${params.toString()}`);
-    return response.data.data;
-  },
-
-  getModerationQueue: async (): Promise<ChatReport[]> => {
+  getModerationQueue: async (): Promise<ModerationQueueItem[]> => {
     const response = await apiClient.get("/chat/moderation-queue");
     return response.data.data;
   },
 
-  moderateMessage: async (messageId: string, action: string): Promise<void> => {
+  moderateMessage: async (
+    messageId: string,
+    action: ModerationAction,
+  ): Promise<void> => {
     await apiClient.post("/chat/moderate", { messageId, action });
   },
 

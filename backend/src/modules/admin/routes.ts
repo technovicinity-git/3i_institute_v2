@@ -160,23 +160,6 @@ router.get(
   adminController.getPendingCourses,
 );
 
-/**
- * @swagger
- * /api/v1/admin/waivers/pending:
- *   get:
- *     tags: [Admin]
- *     summary: Get pending waiver requests
- *     responses:
- *       200:
- *         description: Pending waivers
- */
-router.get(
-  "/waivers/pending",
-  authenticate,
-  authorize("admin.access"),
-  adminController.getPendingWaivers,
-);
-
 // Get all courses with optional status filter
 router.get(
   "/courses",
@@ -199,13 +182,6 @@ router.post(
   authenticate,
   authorize("admin.access"),
   adminController.activateCourse,
-);
-
-router.get(
-  "/waivers",
-  authenticate,
-  authorize("admin.access"),
-  adminController.getAllWaivers,
 );
 
 router.get(

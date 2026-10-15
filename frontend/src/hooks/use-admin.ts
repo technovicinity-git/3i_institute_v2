@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminService } from "@/services/admin.service";
+import type { ModerationAction } from "@/services/admin.service";
 
 export function useAdminUsers(
   page: number,
@@ -210,47 +211,6 @@ export function useRejectCourseMutation() {
   });
 }
 
-export function usePendingWaivers() {
-  return useQuery({
-    queryKey: ["admin-pending-waivers"],
-    queryFn: () => adminService.getPendingWaivers(),
-  });
-}
-
-export function useApproveWaiverMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ waiverId, tier }: { waiverId: string; tier: number }) =>
-      adminService.approveWaiver(waiverId, tier),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-waivers"] });
-      toast.success("Waiver approved");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to approve waiver");
-    },
-  });
-}
-
-export function useRejectWaiverMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ waiverId, reason }: { waiverId: string; reason: string }) =>
-      adminService.rejectWaiver(waiverId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-waivers"] });
-      toast.success("Waiver rejected");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to reject waiver");
-    },
-  });
-}
-
 export function useAdminAllCourses(page: number, status?: string) {
   return useQuery({
     queryKey: ["admin-all-courses", page, status],
@@ -282,13 +242,6 @@ export function useActivateCourseMutation() {
   });
 }
 
-export function useAdminAllWaivers(page: number, status?: string) {
-  return useQuery({
-    queryKey: ["admin-all-waivers", page, status],
-    queryFn: () => adminService.getAllWaivers(page, status),
-  });
-}
-
 export function useModerationQueue() {
   return useQuery({
     queryKey: ["admin-moderation-queue"],
@@ -306,11 +259,14 @@ export function useModerateMessageMutation() {
       action,
     }: {
       messageId: string;
-      action: string;
+      action: ModerationAction;
     }) => adminService.moderateMessage(messageId, action),
-    onSuccess: () => {
+    onSuccess: (_data, { action }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-queue"] });
-      toast.success("Moderation action completed");
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      toast.success(
+        action === "DELETE" ? "Message deleted" : "Reports dismissed",
+      );
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

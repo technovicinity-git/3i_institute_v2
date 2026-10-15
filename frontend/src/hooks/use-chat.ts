@@ -88,6 +88,10 @@ export function useChat(courseId: string, batchId: string | null) {
       setMessages((prev) => [...prev, message]);
     });
 
+    socket.on("message-deleted", ({ messageId }: { messageId: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    });
+
     socket.on("error", (error: { message: string }) => {
       console.error("Socket error:", error);
       toast.error(error.message);

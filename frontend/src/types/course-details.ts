@@ -80,6 +80,7 @@ export interface CourseDetails {
   level: string;
   language: string;
   minimumAge: number;
+  maximumAge: number | null;
   batches: CourseBatch[];
 
   learningOutcomes: string[];
@@ -104,6 +105,14 @@ export interface CourseDetails {
   relatedCourses: RelatedCourse[];
   enrolmentCount: number;
   isEnrolled: boolean;
+  /** Present when the request carried a learner profile. */
+  enrolmentEligibility: {
+    isSubscribed: boolean;
+    age: number;
+    ageEligible: boolean;
+    ageMessage: string | null;
+    canOverrideAge: boolean;
+  } | null;
   enrolmentBatchId: string | null;
   firstLessonId: string | null;
   continueLessonId: string | null;

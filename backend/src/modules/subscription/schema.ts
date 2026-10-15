@@ -1,0 +1,56 @@
+import { z } from "zod";
+
+// ─── Admin payment settings (bank / mobile banking accounts) ───
+
+export const paymentAccountSchema = z.object({
+  id: z.string().min(1).max(64),
+  type: z.enum(["BANK", "MOBILE_BANKING", "OTHER"]).default("BANK"),
+  /** e.g. "Dutch-Bangla Bank" or "bKash (Personal)" */
+  label: z.string().trim().min(1, "Name is required").max(100),
+  accountName: z.string().trim().max(150).default(""),
+  accountNumber: z.string().trim().min(1, "Account number is required").max(100),
+  /** Branch, routing / SWIFT code, or other instructions */
+  details: z.string().trim().max(1000).default(""),
+});
+
+export type PaymentAccount = z.infer<typeof paymentAccountSchema>;
+
+export const paymentSettingsSchema = z.object({
+  monthlyPrice: z.coerce.number().min(0).max(1_000_000).default(9.99),
+  currency: z.string().trim().min(1).max(10).default("USD"),
+  instructions: z.string().trim().max(2000).default(""),
+  accounts: z.array(paymentAccountSchema).max(20).default([]),
+});
+
+export type PaymentSettings = z.infer<typeof paymentSettingsSchema>;
+
+// ─── Learner: apply for a subscription ───
+
+// Payment fields are optional only because a 100% waiver needs no payment;
+// the service requires them otherwise.
+export const createSubscriptionRequestSchema = z.object({
+  learnerProfileId: z.string().uuid("Invalid learner profile ID"),
+  /** Label of the admin account paid into, or "Other" */
+  paymentMethod: z.string().trim().max(100).optional(),
+  amount: z.coerce.number().min(0).max(1_000_000).optional(),
+  transactionId: z.string().trim().max(100).optional(),
+  senderAccount: z.string().trim().max(100).optional(),
+  paidAt: z.coerce
+    .date()
+    .refine((date) => date.getTime() <= Date.now() + 24 * 60 * 60 * 1000, {
+      message: "Payment date can't be in the future",
+    })
+    .optional(),
+  note: z.string().trim().max(1000).optional(),
+  proofImageUrl: z.string().url().max(1000).optional(),
+});
+
+export type CreateSubscriptionRequestInput = z.infer<
+  typeof createSubscriptionRequestSchema
+>;
+
+// ─── Admin: review ───
+
+export const rejectSubscriptionRequestSchema = z.object({
+  reason: z.string().trim().min(1, "A reason is required").max(1000),
+});

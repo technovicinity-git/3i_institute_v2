@@ -42,6 +42,13 @@ export function AttentionPanel({
       href: "/admin/waivers",
     },
     {
+      count: attention.pendingSubscriptionRequests,
+      label: "Subscription payments",
+      hint: "Payments to verify",
+      icon: CreditCard,
+      href: "/admin/subscription-requests",
+    },
+    {
       count: attention.openChatReports,
       label: "Reported messages",
       hint: "Chat moderation queue",

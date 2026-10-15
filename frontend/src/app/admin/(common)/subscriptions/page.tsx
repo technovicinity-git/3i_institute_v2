@@ -115,8 +115,9 @@ export default function AdminSubscriptionsPage() {
                         {subscription.accountEmail}
                       </p>
                       <p className="text-xs text-[#94A3B8] mt-1">
-                        Stripe: {subscription.stripeSubscriptionId.slice(0, 20)}
-                        ...
+                        {subscription.isManual
+                          ? `Manual payment · ${subscription.profiles.join(", ") || "No profile"}`
+                          : `Stripe: ${subscription.stripeSubscriptionId.slice(0, 20)}...`}
                       </p>
                     </div>
                   </div>

@@ -16,6 +16,7 @@ export interface AdminDashboardAttention {
   pendingInstructorApplications: number;
   pendingCourses: number;
   pendingWaivers: number;
+  pendingSubscriptionRequests: number;
   openChatReports: number;
   pastDueSubscriptions: number;
   overdueGrading: number;

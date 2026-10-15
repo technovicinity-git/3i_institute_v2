@@ -1,6 +1,16 @@
 import { prisma } from "#/lib/prisma";
 import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 
+/**
+ * Subscriptions created by approving a manually-paid subscription request
+ * are tagged with this prefix in place of a Stripe subscription id.
+ */
+export const MANUAL_SUBSCRIPTION_PREFIX = "manual_";
+
+export function isManualSubscription(sub: { stripeSubscriptionId: string }) {
+  return sub.stripeSubscriptionId.startsWith(MANUAL_SUBSCRIPTION_PREFIX);
+}
+
 export class SeatService {
   /**
    * Assign a seat to a learner profile
@@ -57,13 +67,21 @@ export class SeatService {
       );
     }
 
-    // Assign seat
-    const seat = await prisma.seat.create({
-      data: {
+    // Assign seat (reactivates a seat this profile held earlier on the
+    // same subscription — the pair is unique)
+    const seat = await prisma.seat.upsert({
+      where: {
+        subscriptionId_learnerProfileId: {
+          subscriptionId: subscription.id,
+          learnerProfileId: input.learnerProfileId,
+        },
+      },
+      create: {
         subscriptionId: subscription.id,
         learnerProfileId: input.learnerProfileId,
         status: "ACTIVE",
       },
+      update: { status: "ACTIVE", assignedAt: new Date(), cancelledAt: null },
     });
 
     // Activate the profile
@@ -200,6 +218,22 @@ export class SeatService {
       hasActiveSeat: profile.seats.length > 0,
       seatId: profile.seats[0]?.id ?? null,
     };
+  }
+
+  /**
+   * True when the profile holds an active seat on a subscription whose
+   * period hasn't ended. Only subscribed profiles can enrol in courses.
+   */
+  async isProfileSubscribed(learnerProfileId: string): Promise<boolean> {
+    const seat = await prisma.seat.findFirst({
+      where: {
+        learnerProfileId,
+        status: "ACTIVE",
+        subscription: { status: "ACTIVE", currentPeriodEnd: { gt: new Date() } },
+      },
+      select: { id: true },
+    });
+    return seat !== null;
   }
 }
 

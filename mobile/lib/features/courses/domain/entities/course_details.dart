@@ -39,6 +39,7 @@ class CourseDetails extends Course {
     required this.continueLessonId,
     required this.lastWatchedLessonId,
     required this.isCompleted,
+    this.eligibility,
   });
 
   final String description;
@@ -63,6 +64,23 @@ class CourseDetails extends Course {
   final String? continueLessonId;
   final String? lastWatchedLessonId;
   final bool isCompleted;
+
+  /// Whether the active learner profile may enrol. Null without a profile.
+  final EnrolmentEligibility? eligibility;
+}
+
+class EnrolmentEligibility {
+  const EnrolmentEligibility({
+    required this.isSubscribed,
+    required this.age,
+    required this.ageEligible,
+    required this.ageMessage,
+  });
+
+  final bool isSubscribed;
+  final int age;
+  final bool ageEligible;
+  final String? ageMessage;
 }
 
 class CourseFaq {

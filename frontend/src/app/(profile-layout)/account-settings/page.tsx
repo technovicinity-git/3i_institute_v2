@@ -188,8 +188,8 @@ const settingsItems: SettingsRowProps[] = [
   {
     icon: <CreditCardIcon />,
     title: "Subscription & billing",
-    description: "View your plan, payment method, and invoices",
-    href: "/account/billing",
+    description: "Subscribe or unsubscribe each learner profile",
+    href: "/subscription",
   },
   {
     icon: <LockIcon />,

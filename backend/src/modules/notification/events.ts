@@ -880,16 +880,21 @@ function waiverRequested(waiverId: string) {
       select: {
         id: true,
         account: { select: { firstName: true, lastName: true } },
+        learnerProfile: { select: { displayName: true } },
       },
     });
     if (!waiver) return;
+    const accountName =
+      `${waiver.account.firstName} ${waiver.account.lastName}`.trim();
     await notificationService.notify({
       type: "admin.waiver_requested",
       recipients: await admins(),
       groupKey: `waiver:${waiver.id}`,
       dedupeKey: `admin.waiver_requested:${waiver.id}`,
       title: "Waiver request",
-      body: `New waiver request from ${waiver.account.firstName} ${waiver.account.lastName}`.trim(),
+      body: waiver.learnerProfile
+        ? `${accountName} asked for a fee waiver for ${waiver.learnerProfile.displayName}`
+        : `New waiver request from ${accountName}`,
       data: { waiverId: waiver.id, route: "/admin/waivers" },
     });
   });
@@ -900,26 +905,34 @@ function waiverDecided(waiverId: string, reason?: string) {
     await notificationService.resolveGroup(`waiver:${waiverId}`);
     const waiver = await prisma.waiver.findUnique({
       where: { id: waiverId },
-      select: { id: true, accountId: true, status: true, tier: true },
+      select: {
+        id: true,
+        accountId: true,
+        status: true,
+        tier: true,
+        rejectionReason: true,
+        learnerProfile: { select: { displayName: true } },
+      },
     });
     if (!waiver) return;
+    const name = waiver.learnerProfile?.displayName ?? "your learner";
     const content = {
       APPROVED: {
         type: "waiver.approved" as const,
         title: "Waiver approved",
-        body: waiver.tier
-          ? `Your ${waiver.tier}% waiver is now active`
-          : "Your waiver is now active",
+        body: `${name} has a ${waiver.tier ?? 0}% waiver to use on their next subscription within 30 days`,
       },
       REJECTED: {
         type: "waiver.rejected" as const,
         title: "Waiver not approved",
-        body: "Your waiver request was not approved",
+        body: `The fee waiver request for ${name} was not approved.${
+          waiver.rejectionReason ? ` Reason: ${waiver.rejectionReason}` : ""
+        }`,
       },
       REVOKED: {
         type: "waiver.revoked" as const,
-        title: "Waiver revoked",
-        body: `Your waiver has been revoked.${reason ? ` Reason: ${reason}` : ""}`,
+        title: "Waiver withdrawn",
+        body: `The fee waiver for ${name} has been withdrawn.${reason ? ` Reason: ${reason}` : ""}`,
       },
     }[waiver.status as "APPROVED" | "REJECTED" | "REVOKED"];
     if (!content) return;
@@ -927,7 +940,7 @@ function waiverDecided(waiverId: string, reason?: string) {
       ...content,
       recipients: [{ userId: waiver.accountId }],
       dedupeKey: `${content.type}:${waiver.id}`,
-      data: { waiverId: waiver.id, route: "/account-settings" },
+      data: { waiverId: waiver.id, route: "/subscription" },
     });
   });
 }
@@ -1023,6 +1036,98 @@ function subscriptionCancelled(stripeSubscriptionId: string) {
 }
 
 // ──────────────────────────────────
+// Manual subscriptions
+// ──────────────────────────────────
+
+function subscriptionRequested(requestId: string) {
+  background("subscriptionRequested", async () => {
+    const request = await prisma.subscriptionRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        learnerProfile: { select: { displayName: true } },
+        account: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!request) return;
+    const accountName =
+      `${request.account.firstName} ${request.account.lastName}`.trim();
+    await notificationService.notify({
+      type: "admin.subscription_requested",
+      recipients: await admins(),
+      groupKey: `subscription-request:${request.id}`,
+      dedupeKey: `admin.subscription_requested:${request.id}`,
+      title: "Subscription payment to review",
+      body: `${accountName} applied for a subscription for ${request.learnerProfile.displayName}`,
+      data: { requestId: request.id, route: "/admin/subscription-requests" },
+    });
+  });
+}
+
+function subscriptionRequestDecided(requestId: string) {
+  background("subscriptionRequestDecided", async () => {
+    await notificationService.resolveGroup(`subscription-request:${requestId}`);
+    const request = await prisma.subscriptionRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        accountId: true,
+        status: true,
+        periodEnd: true,
+        rejectionReason: true,
+        learnerProfile: { select: { displayName: true } },
+      },
+    });
+    if (!request) return;
+    const name = request.learnerProfile.displayName;
+    if (request.status === "APPROVED" && request.periodEnd) {
+      const periodEnd = request.periodEnd;
+      await notifyLocalized(
+        {
+          type: "subscription.approved",
+          recipients: [{ userId: request.accountId }],
+          dedupeKey: `subscription.approved:${request.id}`,
+        },
+        (zone) => ({
+          title: "Subscription approved",
+          body: `${name} is subscribed until ${formatDateTime(periodEnd, zone)}`,
+          data: { requestId: request.id, route: "/subscription" },
+        }),
+      );
+    } else if (request.status === "REJECTED") {
+      await notificationService.notify({
+        type: "subscription.rejected",
+        recipients: [{ userId: request.accountId }],
+        dedupeKey: `subscription.rejected:${request.id}`,
+        title: "Subscription not approved",
+        body: `The subscription payment for ${name} was not approved.${
+          request.rejectionReason ? ` Reason: ${request.rejectionReason}` : ""
+        }`,
+        data: { requestId: request.id, route: "/subscription" },
+      });
+    }
+  });
+}
+
+function subscriptionExpired(
+  subscriptionId: string,
+  accountId: string,
+  profileNames: string[],
+) {
+  background("subscriptionExpired", async () => {
+    if (profileNames.length === 0) return;
+    await notificationService.notify({
+      type: "subscription.expired",
+      recipients: [{ userId: accountId }],
+      dedupeKey: `subscription.expired:${subscriptionId}`,
+      title: "Subscription ended",
+      body: `The subscription for ${profileNames.join(", ")} has ended. Renew to keep enrolling in courses.`,
+      data: { subscriptionId, route: "/subscription" },
+    });
+  });
+}
+
+// ──────────────────────────────────
 // Admin: moderation
 // ──────────────────────────────────
 
@@ -1085,4 +1190,7 @@ export const notificationEvents = {
   paymentFailed,
   subscriptionCancelled,
   chatMessageReported,
+  subscriptionRequested,
+  subscriptionRequestDecided,
+  subscriptionExpired,
 };
