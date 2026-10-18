@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
 
@@ -19,12 +21,13 @@ class ProfileLayout extends ConsumerWidget {
           'assets/images/logo-icon.png',
           width: 42,
           height: 42,
-          semanticLabel: '3i International Islamic Institute logo',
+          semanticLabel: context.l10n.commonLogoLabel,
         ),
       ),
       actions: [
+        const LanguageButton(color: Color(0xFF12304E)),
         PopupMenuButton<String>(
-          tooltip: 'Account menu',
+          tooltip: context.l10n.menuAccount,
           onSelected: (value) async {
             switch (value) {
               case 'profiles':
@@ -45,15 +48,27 @@ class ProfileLayout extends ConsumerWidget {
                 if (context.mounted) context.go('/login');
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (context) => [
             PopupMenuItem(
               value: 'profiles',
-              child: Text('Switch learner profile'),
+              child: Text(context.l10n.menuSwitchLearner),
             ),
-            PopupMenuItem(value: 'manage', child: Text('Family & profiles')),
-            PopupMenuItem(value: 'subscription', child: Text('Subscription')),
-            PopupMenuItem(value: 'settings', child: Text('Manage account')),
-            PopupMenuItem(value: 'logout', child: Text('Log out')),
+            PopupMenuItem(
+              value: 'manage',
+              child: Text(context.l10n.menuFamily),
+            ),
+            PopupMenuItem(
+              value: 'subscription',
+              child: Text(context.l10n.menuSubscription),
+            ),
+            PopupMenuItem(
+              value: 'settings',
+              child: Text(context.l10n.menuManageAccount),
+            ),
+            PopupMenuItem(
+              value: 'logout',
+              child: Text(context.l10n.menuLogOut),
+            ),
           ],
         ),
       ],

@@ -3,32 +3,34 @@
 import Link from "next/link";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { usePublicSettings } from "@/hooks/use-content";
+import { useTranslations } from "next-intl";
 
 export default function ContactPage() {
+  const t = useTranslations("contact");
   const { data: settings, isLoading } = usePublicSettings();
 
   const items = settings
     ? [
         settings.contactEmail && {
           icon: Mail,
-          label: "Email",
+          label: t("email"),
           value: settings.contactEmail,
           href: `mailto:${settings.contactEmail}`,
         },
         settings.contactPhone && {
           icon: Phone,
-          label: "Phone",
+          label: t("phone"),
           value: settings.contactPhone,
           href: `tel:${settings.contactPhone.replace(/[^\d+]/g, "")}`,
         },
         settings.supportHours && {
           icon: Clock,
-          label: "Support hours",
+          label: t("hours"),
           value: settings.supportHours,
         },
         settings.address && {
           icon: MapPin,
-          label: "Address",
+          label: t("address"),
           value: settings.address,
         },
       ].filter(
@@ -46,17 +48,22 @@ export default function ContactPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
       <p className="text-xs font-semibold text-[#B8912F] uppercase tracking-widest mb-2">
-        Contact
+        {t("eyebrow")}
       </p>
       <h1 className="font-serif text-3xl md:text-[44px] leading-tight text-[#0C1F33]">
-        Get in touch
+        {t("title")}
       </h1>
       <p className="mt-3 text-[#64748B]">
-        Have a question? Check the{" "}
-        <Link href="/help" className="text-[#22A146] font-semibold hover:underline">
-          Help Center
-        </Link>{" "}
-        first — or reach us directly.
+        {t.rich("intro", {
+          link: (chunks) => (
+            <Link
+              href="/help"
+              className="text-[#22A146] font-semibold hover:underline"
+            >
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
 
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -102,7 +109,7 @@ export default function ContactPage() {
 
       {!isLoading && items.length === 0 && (
         <p className="mt-6 text-sm text-[#64748B]">
-          Contact details will be available soon.
+          {t("soon")}
         </p>
       )}
     </div>

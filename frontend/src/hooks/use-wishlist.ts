@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { wishlistService } from "@/services/wishlist.service";
 import { useProfileStore } from "@/stores/profile-store";
 
@@ -15,6 +16,7 @@ export function useWishlist(learnerProfileId: string) {
 }
 
 export function useAddToWishlistMutation() {
+  const tToast = useTranslations("wishlist.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -28,16 +30,17 @@ export function useAddToWishlistMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
-      toast.success("Added to wishlist");
+      toast.success(tToast("added"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to add to wishlist");
+      toast.error(message ?? tToast("addFailed"));
     },
   });
 }
 
 export function useRemoveFromWishlistMutation() {
+  const tToast = useTranslations("wishlist.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -51,11 +54,11 @@ export function useRemoveFromWishlistMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
-      toast.success("Removed from wishlist");
+      toast.success(tToast("removed"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      toast.error(message ?? "Failed to remove from wishlist");
+      toast.error(message ?? tToast("removeFailed"));
     },
   });
 }
@@ -64,6 +67,7 @@ export function useRemoveFromWishlistMutation() {
 // The learner's wishlist is the source of truth, so every card and the course
 // page agree; the heart flips immediately while the request is in flight.
 export function useWishlistToggle(courseId: string) {
+  const tToast = useTranslations("wishlist.toasts");
   const { activeProfile } = useProfileStore();
   const profileId = activeProfile?.id ?? "";
   const queryClient = useQueryClient();
@@ -78,7 +82,7 @@ export function useWishlistToggle(courseId: string) {
 
   const toggle = async () => {
     if (!profileId) {
-      toast.error("Please select a learner profile first");
+      toast.error(tToast("selectProfile"));
       return;
     }
     if (pending) return;

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { learnerService } from "@/services/learner.service";
 
 export function useLearnerProfile(profileId: string) {
@@ -12,6 +13,7 @@ export function useLearnerProfile(profileId: string) {
 }
 
 export function useUpdateLearnerProfileMutation() {
+  const tToast = useTranslations("learnerForm.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -30,7 +32,7 @@ export function useUpdateLearnerProfileMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["learner-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["learner-profile"] });
-      toast.success("Profile updated");
+      toast.success(tToast("updated"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
@@ -39,9 +41,9 @@ export function useUpdateLearnerProfileMutation() {
       if (details?.fieldErrors) {
         const fieldErrors = details.fieldErrors as Record<string, string[]>;
         const firstError = Object.values(fieldErrors)[0]?.[0];
-        toast.error(firstError ?? message ?? "Failed to update profile");
+        toast.error(firstError ?? message ?? tToast("updateFailed"));
       } else {
-        toast.error(message ?? "Failed to update profile");
+        toast.error(message ?? tToast("updateFailed"));
       }
     },
   });

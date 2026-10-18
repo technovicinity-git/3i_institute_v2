@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
+
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     required this.title,
     required this.description,
     required this.child,
+    this.showLanguage = true,
     super.key,
   });
 
   final String title;
   final String description;
   final Widget child;
+
+  /// Off on instructor screens, which are always in English.
+  final bool showLanguage;
 
   @override
   Widget build(BuildContext context) {
@@ -25,12 +32,20 @@ class AuthScaffold extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (showLanguage)
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: LanguageButton(
+                        showName: true,
+                        color: Color(0xFF12304E),
+                      ),
+                    ),
                   Center(
                     child: Column(
                       children: [
-                        Image.asset('assets/images/logo-icon.png', width: 76, height: 76, semanticLabel: '3i International Islamic Institute logo'),
+                        Image.asset('assets/images/logo-icon.png', width: 76, height: 76, semanticLabel: context.l10n.commonLogoLabel),
                         const SizedBox(height: 8),
-                        Text('International Islamic Institute', style: theme.textTheme.labelLarge?.copyWith(color: const Color(0xFF12304E), fontWeight: FontWeight.w600)),
+                        Text(context.l10n.commonInstituteName, style: theme.textTheme.labelLarge?.copyWith(color: const Color(0xFF12304E), fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),

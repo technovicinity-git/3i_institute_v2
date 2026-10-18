@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
 export function useAuth() {
   const {
@@ -17,10 +17,7 @@ export function useAuth() {
     // On mount, try to refresh token to restore session
     const restoreSession = async () => {
       try {
-        const response = await apiClient.post("/auth/refresh", {});
-
-        const { accessToken: newToken } = response.data.data;
-        setAccessToken(newToken);
+        await refreshAccessToken();
 
         // Fetch user profile
         const userResponse = await apiClient.get("/users/me");

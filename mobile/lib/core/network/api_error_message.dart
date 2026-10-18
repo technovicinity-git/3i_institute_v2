@@ -1,5 +1,10 @@
 import 'package:dio/dio.dart';
 
+/// Shown when the server can't be reached; set to the current language by the
+/// app shell, since this helper has no BuildContext.
+String connectionErrorMessage =
+    'Unable to connect. Check your internet connection.';
+
 String apiErrorMessage(Object error, {required String fallback}) {
   if (error is DioException) {
     final body = error.response?.data;
@@ -21,7 +26,7 @@ String apiErrorMessage(Object error, {required String fallback}) {
     }
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.connectionError) {
-      return 'Unable to connect. Check your connection and API URL.';
+      return connectionErrorMessage;
     }
   }
   if (error is FormatException) return error.message;

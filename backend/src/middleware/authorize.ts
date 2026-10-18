@@ -9,6 +9,8 @@ function authorize(...requiredPermissions: string[]) {
       throw new UnauthorizedError("Authentication required");
     }
 
+    // Permissions come from the access token claims, not the database, so a
+    // role change applies once the user's token is next refreshed.
     const userPermissions: string[] = user.permissions ?? [];
 
     const hasAll = requiredPermissions.every((perm) =>

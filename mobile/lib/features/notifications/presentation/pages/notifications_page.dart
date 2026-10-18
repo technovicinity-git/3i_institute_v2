@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/app_notification.dart';
 import '../notifications_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF0C1F33);
 const _muted = Color(0xFF64748B);
@@ -47,6 +48,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scope = ref.watch(notificationScopeProvider);
     final scopeKey = notificationScopeKey(scope);
     final feed = ref.watch(notificationFeedProvider(scopeKey));
@@ -66,9 +68,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Notifications',
+                  context.l10n.notifTitle,
                   style: TextStyle(
                     fontFamily: 'serif',
                     fontSize: 27,
@@ -82,14 +84,14 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                     : () => ref
                           .read(notificationFeedProvider(scopeKey).notifier)
                           .markAllRead()
-                          .catchError((_) => _notify('Could not mark as read')),
+                          .catchError((_) => _notify(l10n.notifMarkReadFailed)),
                 style: TextButton.styleFrom(foregroundColor: _green),
                 icon: const Icon(Icons.done_all, size: 18),
-                label: const Text('Mark all read'),
+                label: Text(context.l10n.notifMarkAllRead),
               ),
             ],
           ),
-          Text('$unread unread', style: const TextStyle(color: _muted)),
+          Text(context.l10n.notifUnread(unread), style: const TextStyle(color: _muted)),
           const SizedBox(height: 16),
           ...feed.when(
             loading: () => const [
@@ -101,19 +103,19 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             error: (_, _) => [
               _Message(
                 icon: Icons.error_outline,
-                text: 'Could not load notifications.',
+                text: context.l10n.notifLoadFailed,
                 action: TextButton(
                   onPressed: () =>
                       ref.invalidate(notificationFeedProvider(scopeKey)),
-                  child: const Text('Tap to retry'),
+                  child: Text(context.l10n.notifTapRetry),
                 ),
               ),
             ],
             data: (state) => [
               if (state.items.isEmpty)
-                const _Message(
+                _Message(
                   icon: Icons.notifications_none,
-                  text: "You're all caught up.",
+                  text: context.l10n.notifCaughtUp,
                 )
               else
                 Container(
@@ -134,7 +136,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                               .read(notificationFeedProvider(scopeKey).notifier)
                               .remove(state.items[i])
                               .catchError(
-                                (_) => _notify('Could not remove notification'),
+                                (_) => _notify(l10n.notifRemoveFailed),
                               ),
                         ),
                       ],
@@ -242,7 +244,7 @@ class _NotificationTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _timeAgo(notification.createdAt),
+                        _timeAgo(context.l10n, notification.createdAt),
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF94A3B8),
@@ -301,11 +303,11 @@ class _Message extends StatelessWidget {
   _ => (Icons.notifications_none, _muted),
 };
 
-String _timeAgo(DateTime date) {
+String _timeAgo(AppLocalizations l10n, DateTime date) {
   final diff = DateTime.now().difference(date);
-  if (diff.inMinutes < 1) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return '${diff.inDays}d ago';
-  return DateFormat('MMM d, y').format(date);
+  if (diff.inMinutes < 1) return l10n.notifJustNow;
+  if (diff.inMinutes < 60) return l10n.notifMinutesAgo(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.notifHoursAgo(diff.inHours);
+  if (diff.inDays < 7) return l10n.notifDaysAgo(diff.inDays);
+  return DateFormat.yMMMd().format(date);
 }

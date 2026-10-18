@@ -10,9 +10,11 @@ import {
 import { DobModal } from "@/components/social/dob-modal";
 import { useGoogleLoginMutation } from "@/hooks/use-google-auth";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "../ui/button";
 
 export function GoogleButton() {
+  const t = useTranslations("auth.social");
   const googleLoginMutation = useGoogleLoginMutation();
   const [showDobModal, setShowDobModal] = useState(false);
   const [idToken, setIdToken] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function GoogleButton() {
         }
       })
       .catch(() => {
-        toast.error("Failed to load Google sign-in");
+        toast.error(t("googleLoadFailed"));
       });
   }, []);
 
@@ -56,6 +58,7 @@ export function GoogleButton() {
         onError: (error: any) => {
           const message = error.response?.data?.error?.message;
           if (
+            error.response?.data?.error?.code === "DATE_OF_BIRTH_REQUIRED" ||
             message?.includes("date of birth") ||
             message?.includes("Date of birth") ||
             error.response?.status === 422
@@ -84,7 +87,7 @@ export function GoogleButton() {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
     } else {
-      toast.error("Google sign-in is not available");
+      toast.error(t("googleUnavailable"));
     }
   };
 
@@ -118,7 +121,7 @@ export function GoogleButton() {
             d="m419.404 58.936-82.933 67.896C313.136 112.246 285.552 103.82 256 103.82c-66.729 0-123.429 42.957-143.965 102.724l-83.397-68.276h-.014C71.23 56.123 157.06 0 256 0c62.115 0 119.068 22.126 163.404 58.936z"
           ></path>
         </svg>
-        Continue with Google
+        {t("continueWithGoogle")}
       </Button>
 
       <DobModal

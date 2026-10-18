@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -15,7 +16,7 @@ class HomePage extends ConsumerWidget {
         title: const Text('3i'),
         actions: [
           IconButton(
-            tooltip: 'Log out',
+            tooltip: context.l10n.menuLogOut,
             onPressed: () async {
               await ref.read(authControllerProvider.notifier).logout();
               if (context.mounted) context.go('/login');
@@ -31,13 +32,13 @@ class HomePage extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Welcome${account?.firstName.isNotEmpty == true ? ', ${account!.firstName}' : ''}',
+                account?.firstName.isNotEmpty == true ? context.l10n.homeWelcomeName(account!.firstName) : context.l10n.homeWelcome,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               Text(
-                'You are signed in. Learner profiles and courses will be added in the next phase.',
+                context.l10n.homeSignedIn,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),

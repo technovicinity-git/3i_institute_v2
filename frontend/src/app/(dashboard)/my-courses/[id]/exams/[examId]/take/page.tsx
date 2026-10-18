@@ -28,7 +28,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useProfileStore } from "@/stores/profile-store";
 import {
-  useExamQuestions,
+  useExamIntro,
+  useStartExamMutation,
   useSubmitExamMutation,
 } from "@/hooks/use-learner-exams";
 import {
@@ -42,6 +43,7 @@ import {
   isAnswered,
   loadExamSession,
   saveExamSession,
+  sessionFromStart,
   type ExamAnswer,
   type ExamSession,
 } from "@/lib/exam-session";
@@ -54,6 +56,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { ExamQuestion } from "@/types/learner-exam";
+import { useLocale, useTranslations } from "next-intl";
 
 const WARNING_THRESHOLDS_SEC = [5 * 60, 60];
 
@@ -68,11 +71,22 @@ function formatDuration(totalSeconds: number): string {
   return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-function getErrorMessage(error: unknown): string {
+function getErrorMessage(error: unknown, fallback: string): string {
   const message = (
     error as { response?: { data?: { error?: { message?: string } } } }
   )?.response?.data?.error?.message;
-  return message ?? "We couldn't submit your exam. Please try again.";
+  return message ?? fallback;
+}
+
+/** Countdown and exam start time in the user's language. */
+function useExamFormat() {
+  const t = useTranslations("exams");
+  const locale = useLocale();
+  return {
+    countdown: (seconds: number) =>
+      formatCountdown(seconds, (d, h, m) => t("countdownDays", { d, h, m })),
+    startTime: (date: Date | null) => formatExamStartTime(date, locale),
+  };
 }
 
 function subscribeOnline(callback: () => void) {
@@ -85,6 +99,9 @@ function subscribeOnline(callback: () => void) {
 }
 
 export default function TakeExamPage() {
+  const t = useTranslations("takeExam");
+  const tExams = useTranslations("exams");
+  const fmt = useExamFormat();
   const params = useParams();
   const router = useRouter();
   const examId = params.examId as string;
@@ -100,7 +117,9 @@ export default function TakeExamPage() {
     isError,
     refetch,
     isRefetching,
-  } = useExamQuestions(examId);
+  } = useExamIntro(examId);
+  const { mutateAsync: startOnServer, isPending: isStarting } =
+    useStartExamMutation();
   const { mutateAsync: submitExam, isPending: isSubmitting } =
     useSubmitExamMutation();
 
@@ -170,26 +189,24 @@ export default function TakeExamPage() {
     );
 
     try {
+      // The question set, start time and deadline belong to the server
+      // session, so only the answers are sent.
       await submitExam({
+        sessionId: current.sessionId,
         examId: current.examId,
-        learnerProfileId: current.learnerProfileId,
         answers,
-        startedAt: new Date(current.startedAt).toISOString(),
-        // Echo back exactly which questions were shown so REGULAR dynamic
-        // exams are graded against the same random set the learner answered.
-        questionSet: current.questions.map((q) => ({ questionId: q.id })),
       });
       clearExamSession(current.learnerProfileId, current.examId);
       setSubmitted(true);
-      toast.success("Exam submitted");
+      toast.success(t("submittedToast"));
       router.replace(`/my-courses/${courseId}/exams/${examId}/result`);
     } catch (error) {
-      setSubmitError(getErrorMessage(error));
+      setSubmitError(getErrorMessage(error, t("submitError")));
       throw error;
     } finally {
       submittingRef.current = false;
     }
-  }, [submitExam, router, courseId, examId]);
+  }, [submitExam, router, courseId, examId, t]);
 
   // Auto-submit once when time runs out (also right after a reload if the
   // time already ran out while the page was closed).
@@ -211,12 +228,12 @@ export default function TakeExamPage() {
       if (previous > threshold && remainingSec <= threshold) {
         toast.warning(
           threshold >= 120
-            ? `${threshold / 60} minutes left`
-            : "1 minute left — your exam will be submitted automatically",
+            ? t("minutesLeft", { count: threshold / 60 })
+            : t("oneMinuteLeft"),
         );
       }
     }
-  }, [inProgress, remainingSec]);
+  }, [inProgress, remainingSec, t]);
 
   // Warn before closing or reloading the tab mid-exam. The attempt resumes
   // if they do, but the timer keeps running.
@@ -288,33 +305,31 @@ export default function TakeExamPage() {
     }));
   };
 
-  const startExam = () => {
-    if (!examData || !profileId) return;
+  const startExam = async () => {
+    if (!examData || !profileId || isStarting) return;
+    // Quick check for a friendly message; the server makes the real call
+    // with its own clock.
     const access = getExamAccess({ ...examData.exam, now: new Date() });
     if (access.status !== "open") {
       toast.error(
         access.status === "upcoming"
-          ? "This exam hasn't started yet"
-          : "The start window for this exam has closed",
+          ? t("notStartedToast")
+          : t("windowClosedToast"),
       );
       return;
+    }
+    let start;
+    try {
+      // Resumes the server attempt if one is already running (e.g. started
+      // on another device), with its original deadline.
+      start = await startOnServer({ examId, learnerProfileId: profileId });
+    } catch {
+      return; // Toast shown by the mutation.
     }
     autoSubmitFiredRef.current = false;
     lastRemainingRef.current = null;
     setNow(Date.now());
-    setSession({
-      version: 1,
-      examId,
-      learnerProfileId: profileId,
-      title: examData.exam.title,
-      closeDate: examData.exam.closeDate,
-      startedAt: Date.now(),
-      durationMinutes: examData.exam.duration,
-      questions: examData.questions,
-      answers: {},
-      flagged: [],
-      currentQuestion: 0,
-    });
+    setSession(sessionFromStart(start, profileId));
   };
 
   const retrySubmit = () => {
@@ -334,8 +349,8 @@ export default function TakeExamPage() {
     return (
       <StatusCard
         icon={<CheckCircle className="w-12 h-12 text-[#22A146]" />}
-        title="Exam Submitted"
-        description="Taking you to your result…"
+        title={t("submittedTitle")}
+        description={t("takingToResult")}
       >
         <Loader2 className="w-5 h-5 animate-spin text-[#64748B] mx-auto mt-4" />
       </StatusCard>
@@ -353,8 +368,8 @@ export default function TakeExamPage() {
       return (
         <StatusCard
           icon={<AlertTriangle className="w-12 h-12 text-red-500" />}
-          title="Couldn't Load Exam"
-          description="Check your connection and try again."
+          title={t("loadFailedTitle")}
+          description={t("loadFailedBody")}
         >
           <div className="mt-6 flex flex-col-reverse sm:flex-row gap-2 justify-center">
             <BackButton onClick={() => router.push(examsHref)} />
@@ -368,7 +383,7 @@ export default function TakeExamPage() {
               ) : (
                 <RotateCcw className="w-4 h-4" />
               )}
-              Retry
+              {t("retry")}
             </button>
           </div>
         </StatusCard>
@@ -386,24 +401,20 @@ export default function TakeExamPage() {
       return (
         <StatusCard
           icon={<Clock className="w-12 h-12 text-yellow-600" />}
-          title="Exam Not Started Yet"
-          description={
-            <>
-              This exam starts on{" "}
-              <span className="font-semibold text-[#0C1F33]">
-                {formatExamStartTime(access.startTime)}
-              </span>
-              . You can start it any time after the start time until 50% of
-              the exam duration has elapsed.
-            </>
-          }
+          title={t("notStartedTitle")}
+          description={t.rich("notStartedBody", {
+            date: fmt.startTime(access.startTime),
+            strong: (chunks) => (
+              <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+            ),
+          })}
         >
           <div className="mt-5 inline-flex flex-col items-center rounded-xl bg-[#FBF9F4] border border-[#E3E8EF] px-6 py-3">
             <span className="text-[11px] font-bold uppercase tracking-wide text-[#64748B]">
-              Starts in
+              {tExams("startsIn")}
             </span>
             <span className="text-2xl font-bold tabular-nums text-[#0C1F33]">
-              {formatCountdown(startsInSec)}
+              {fmt.countdown(startsInSec)}
             </span>
           </div>
           <div className="mt-6">
@@ -417,16 +428,13 @@ export default function TakeExamPage() {
       return (
         <StatusCard
           icon={<Clock className="w-12 h-12 text-[#64748B]" />}
-          title="Start Window Closed"
-          description={
-            <>
-              This exam could be started until{" "}
-              <span className="font-semibold text-[#0C1F33]">
-                {formatExamStartTime(access.windowEnd)}
-              </span>
-              . The start window has now passed.
-            </>
-          }
+          title={t("closedTitle")}
+          description={t.rich("closedBody", {
+            date: fmt.startTime(access.windowEnd),
+            strong: (chunks) => (
+              <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+            ),
+          })}
         >
           <div className="mt-6">
             <BackButton onClick={() => router.push(examsHref)} />
@@ -435,12 +443,12 @@ export default function TakeExamPage() {
       );
     }
 
-    if (examData.questions.length === 0) {
+    if (examData.questionCount === 0) {
       return (
         <StatusCard
           icon={<FileText className="w-12 h-12 text-gray-300" />}
-          title="No Questions Available"
-          description="This exam doesn't have any questions yet. Please check back later."
+          title={t("noQuestionsTitle")}
+          description={t("noQuestionsBody")}
         >
           <div className="mt-6">
             <BackButton onClick={() => router.push(examsHref)} />
@@ -456,9 +464,10 @@ export default function TakeExamPage() {
     return (
       <ExamIntro
         exam={examData.exam}
-        questionCount={examData.questions.length}
+        questionCount={examData.questionCount}
         startWindowLeftSec={startWindowLeftSec}
         windowEnd={access.windowEnd}
+        starting={isStarting}
         onStart={startExam}
         onBack={() => router.push(examsHref)}
       />
@@ -502,17 +511,17 @@ export default function TakeExamPage() {
           <div className="min-w-0 flex-1">
             <h1
               className="truncate text-base md:text-lg text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
               title={session.title}
             >
               {session.title}
             </h1>
             <p className="text-xs text-[#64748B]">
-              {answeredCount} of {questions.length} answered
+              {t("answeredOf", { answered: answeredCount, total: questions.length })}
               {flaggedCount > 0 && (
                 <span className="text-amber-700">
                   {" "}
-                  · {flaggedCount} flagged
+                  · {t("flaggedCount", { count: flaggedCount })}
                 </span>
               )}
             </p>
@@ -527,7 +536,7 @@ export default function TakeExamPage() {
             type="button"
             onClick={() => setNavigatorOpen(true)}
             className="lg:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#E3E8EF] bg-white text-[#0C1F33]"
-            aria-label="Show all questions"
+            aria-label={t("showAll")}
           >
             <LayoutGrid className="w-5 h-5" />
           </button>
@@ -535,7 +544,7 @@ export default function TakeExamPage() {
         <div
           className="h-1 bg-[#E3E8EF]"
           role="progressbar"
-          aria-label="Answered questions"
+          aria-label={t("answeredProgress")}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progressPct}
@@ -551,10 +560,7 @@ export default function TakeExamPage() {
         <div className="max-w-[1100px] mx-auto px-4 md:px-6 mt-4">
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <WifiOff className="w-4 h-4 mt-0.5 shrink-0" />
-            <p>
-              You&apos;re offline. Your answers are saved on this device —
-              reconnect before the time runs out so they can be submitted.
-            </p>
+            <p>{t("offline")}</p>
           </div>
         </div>
       )}
@@ -566,10 +572,10 @@ export default function TakeExamPage() {
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">
-                  Question {index + 1} of {questions.length}
+                  {t("questionOf", { n: index + 1, total: questions.length })}
                 </span>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-[#12304E]/5 text-[#12304E]">
-                  {question.marks} {question.marks === 1 ? "mark" : "marks"}
+                  {t("marks", { count: question.marks })}
                 </span>
               </div>
               <button
@@ -588,9 +594,9 @@ export default function TakeExamPage() {
                   className={cn("w-3.5 h-3.5", isFlagged && "fill-current")}
                 />
                 <span className="hidden sm:inline">
-                  {isFlagged ? "Flagged" : "Flag for review"}
+                  {isFlagged ? t("flagged") : t("flagForReview")}
                 </span>
-                <span className="sm:hidden">{isFlagged ? "Flagged" : "Flag"}</span>
+                <span className="sm:hidden">{isFlagged ? t("flagged") : t("flag")}</span>
               </button>
             </div>
 
@@ -616,7 +622,7 @@ export default function TakeExamPage() {
               className="inline-flex items-center gap-1 px-4 py-2.5 border border-[#E3E8EF] bg-white rounded-lg text-sm font-semibold text-[#0C1F33] hover:bg-gray-50 disabled:opacity-40"
             >
               <ChevronLeft className="w-4 h-4" />
-              Previous
+              {t("previous")}
             </button>
             {isLast ? (
               <button
@@ -626,7 +632,7 @@ export default function TakeExamPage() {
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A] disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
-                Review &amp; Submit
+                {t("reviewSubmit")}
               </button>
             ) : (
               <button
@@ -634,20 +640,19 @@ export default function TakeExamPage() {
                 onClick={() => goTo(index + 1)}
                 className="inline-flex items-center gap-1 px-5 py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#0C1F33]"
               >
-                Next
+                {t("next")}
                 <ChevronRight className="w-4 h-4" />
               </button>
             )}
           </div>
           <p className="hidden lg:block mt-3 text-center text-xs text-[#94A3B8]">
-            Tip: use the ← and → keys to move between questions. Answers are
-            saved automatically.
+            {t("tip")}
           </p>
         </div>
 
         {/* Desktop question navigator */}
         <aside className="hidden lg:block sticky top-24 bg-white rounded-xl border border-[#E3E8EF] p-5">
-          <p className="text-sm font-semibold text-[#0C1F33] mb-3">Questions</p>
+          <p className="text-sm font-semibold text-[#0C1F33] mb-3">{t("questions")}</p>
           {navigatorPanel}
           <button
             type="button"
@@ -656,7 +661,7 @@ export default function TakeExamPage() {
             className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A] disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
-            Submit Exam
+            {t("submitExam")}
           </button>
         </aside>
       </div>
@@ -669,7 +674,7 @@ export default function TakeExamPage() {
             onClick={() => goTo(index - 1)}
             disabled={index === 0}
             className="inline-flex h-12 w-12 shrink-0 items-center justify-center border border-[#E3E8EF] rounded-lg text-[#0C1F33] disabled:opacity-40"
-            aria-label="Previous question"
+            aria-label={t("previousQuestion")}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -681,7 +686,7 @@ export default function TakeExamPage() {
               className="flex-1 inline-flex h-12 items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
-              Review &amp; Submit
+              {t("reviewSubmit")}
             </button>
           ) : (
             <button
@@ -689,7 +694,7 @@ export default function TakeExamPage() {
               onClick={() => goTo(index + 1)}
               className="flex-1 inline-flex h-12 items-center justify-center gap-1 bg-[#12304E] text-white rounded-lg text-sm font-semibold"
             >
-              Next
+              {t("next")}
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
@@ -703,9 +708,9 @@ export default function TakeExamPage() {
           className="rounded-t-2xl bg-white max-h-[80vh] pb-[max(1rem,env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="pb-0">
-            <SheetTitle className="text-[#0C1F33]">Questions</SheetTitle>
+            <SheetTitle className="text-[#0C1F33]">{t("questions")}</SheetTitle>
             <SheetDescription>
-              {answeredCount} of {questions.length} answered
+              {t("answeredOf", { answered: answeredCount, total: questions.length })}
             </SheetDescription>
           </SheetHeader>
           <div className="overflow-y-auto px-4">{navigatorPanel}</div>
@@ -720,7 +725,7 @@ export default function TakeExamPage() {
               className="w-full inline-flex h-12 items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
-              Submit Exam
+              {t("submitExam")}
             </button>
           </div>
         </SheetContent>
@@ -732,26 +737,26 @@ export default function TakeExamPage() {
         onOpenChange={setConfirmOpen}
         tone="success"
         icon={Send}
-        title="Submit your exam?"
+        title={t("confirmTitle")}
         description={
           unansweredCount > 0
-            ? `You have ${unansweredCount} unanswered ${unansweredCount === 1 ? "question" : "questions"}. You can't change your answers after submitting.`
-            : "You've answered every question. You can't change your answers after submitting."
+            ? t("confirmUnanswered", { count: unansweredCount })
+            : t("confirmAll")
         }
-        confirmLabel="Submit Exam"
-        cancelLabel="Keep Working"
+        confirmLabel={t("submitExam")}
+        cancelLabel={t("keepWorking")}
         loading={isSubmitting}
         onConfirm={submit}
       >
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <SummaryStat label="Answered" value={answeredCount} tone="green" />
+          <SummaryStat label={t("answered")} value={answeredCount} tone="green" />
           <SummaryStat
-            label="Unanswered"
+            label={t("unanswered")}
             value={unansweredCount}
             tone={unansweredCount > 0 ? "red" : "muted"}
           />
           <SummaryStat
-            label="Flagged"
+            label={t("flagged")}
             value={flaggedCount}
             tone={flaggedCount > 0 ? "amber" : "muted"}
           />
@@ -773,15 +778,12 @@ export default function TakeExamPage() {
                 <h2
                   id="time-up-title"
                   className="text-xl text-[#0C1F33]"
-                  style={{ fontFamily: "'Marcellus', serif" }}
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Submission Failed
+                  {t("submissionFailed")}
                 </h2>
                 <p className="mt-2 text-sm text-[#64748B]">{submitError}</p>
-                <p className="mt-2 text-xs text-[#94A3B8]">
-                  Your answers are saved on this device. Check your connection
-                  and try again.
-                </p>
+                <p className="mt-2 text-xs text-[#94A3B8]">{t("savedOnDevice")}</p>
                 <div className="mt-6 flex flex-col-reverse sm:flex-row gap-2 justify-center">
                   <button
                     type="button"
@@ -789,7 +791,7 @@ export default function TakeExamPage() {
                     disabled={isSubmitting}
                     className="h-11 px-4 rounded-lg border border-[#E3E8EF] text-sm font-semibold text-[#334155] hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Discard &amp; Leave
+                    {t("discardLeave")}
                   </button>
                   <button
                     type="button"
@@ -802,7 +804,7 @@ export default function TakeExamPage() {
                     ) : (
                       <RotateCcw className="w-4 h-4" />
                     )}
-                    Retry Submit
+                    {t("retrySubmit")}
                   </button>
                 </div>
               </>
@@ -812,12 +814,12 @@ export default function TakeExamPage() {
                 <h2
                   id="time-up-title"
                   className="text-xl text-[#0C1F33]"
-                  style={{ fontFamily: "'Marcellus', serif" }}
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Time&apos;s Up
+                  {t("timesUp")}
                 </h2>
                 <p className="mt-2 text-sm text-[#64748B]">
-                  Submitting your answers…
+                  {t("submittingAnswers")}
                 </p>
                 <Loader2 className="w-6 h-6 animate-spin text-[#12304E] mx-auto mt-4" />
               </>
@@ -856,7 +858,7 @@ function StatusCard({
         <div className="flex justify-center mb-4">{icon}</div>
         <h1
           className="text-xl sm:text-2xl text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {title}
         </h1>
@@ -872,6 +874,7 @@ function StatusCard({
 }
 
 function BackButton({ onClick }: { onClick: () => void }) {
+  const t = useTranslations("exams");
   return (
     <button
       type="button"
@@ -879,7 +882,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
       className="inline-flex items-center justify-center gap-1 px-5 py-2.5 border border-[#E3E8EF] bg-white text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
     >
       <ChevronLeft className="w-4 h-4" />
-      Back to Exams
+      {t("backToExams")}
     </button>
   );
 }
@@ -889,6 +892,7 @@ function ExamIntro({
   questionCount,
   startWindowLeftSec,
   windowEnd,
+  starting,
   onStart,
   onBack,
 }: {
@@ -902,14 +906,19 @@ function ExamIntro({
   questionCount: number;
   startWindowLeftSec: number | null;
   windowEnd: Date | null;
+  starting: boolean;
   onStart: () => void;
   onBack: () => void;
 }) {
+  const t = useTranslations("takeExam");
+  const tExams = useTranslations("exams");
+  const tCommon = useTranslations("common");
+  const fmt = useExamFormat();
   const stats = [
-    { icon: Clock, label: "Duration", value: `${exam.duration} min` },
-    { icon: FileText, label: "Questions", value: String(questionCount) },
-    { icon: Award, label: "Total marks", value: String(exam.totalMarks) },
-    { icon: CheckCircle, label: "Pass mark", value: `${exam.passMark}%` },
+    { icon: Clock, label: t("duration"), value: tExams("minutes", { count: exam.duration }) },
+    { icon: FileText, label: t("questions"), value: String(questionCount) },
+    { icon: Award, label: t("totalMarks"), value: String(exam.totalMarks) },
+    { icon: CheckCircle, label: t("passMark"), value: `${exam.passMark}%` },
   ];
 
   return (
@@ -920,7 +929,7 @@ function ExamIntro({
         className="flex items-center gap-1 text-sm font-semibold text-[#64748B] hover:text-[#0C1F33] mb-4"
       >
         <ChevronLeft className="w-4 h-4" />
-        Back to Exams
+        {tExams("backToExams")}
       </button>
 
       <div className="bg-white rounded-xl border border-[#E3E8EF] p-5 sm:p-8">
@@ -932,11 +941,11 @@ function ExamIntro({
               : "bg-[#2563EB]/10 text-[#2563EB]",
           )}
         >
-          {exam.type.toUpperCase()}
+          {tExams(`type.${exam.type}`)}
         </span>
         <h1
           className="mt-3 text-2xl sm:text-3xl text-[#0C1F33] break-words"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {exam.title}
         </h1>
@@ -958,28 +967,26 @@ function ExamIntro({
           <div className="mt-5 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <Clock className="w-4 h-4 mt-0.5 shrink-0" />
             <p>
-              You must start before{" "}
-              <span className="font-semibold">
-                {formatExamStartTime(windowEnd)}
-              </span>{" "}
-              (<span className="tabular-nums">
-                {formatCountdown(startWindowLeftSec)}
-              </span>{" "}
-              left). Once started, you get the full exam duration.
+              {t.rich("mustStartBefore", {
+                date: fmt.startTime(windowEnd),
+                left: fmt.countdown(startWindowLeftSec),
+                strong: (chunks) => <span className="font-semibold">{chunks}</span>,
+                time: (chunks) => <span className="tabular-nums">{chunks}</span>,
+              })}
             </p>
           </div>
         )}
 
         <div className="mt-6">
           <p className="text-sm font-semibold text-[#0C1F33] mb-2">
-            Before you begin
+            {t("beforeYouBegin")}
           </p>
           <ul className="space-y-2 text-sm text-[#475569]">
             {[
-              `The timer starts as soon as you press Start and runs for ${exam.duration} minutes — it keeps running even if you leave or close the page.`,
-              "Your answers are saved automatically on this device. If you reload or come back, you'll continue where you left off.",
-              "Use the same device and browser for the whole exam.",
-              "When the time runs out, your answers are submitted automatically.",
+              t("rule1", { minutes: exam.duration }),
+              t("rule2"),
+              t("rule3"),
+              t("rule4"),
             ].map((line) => (
               <li key={line} className="flex gap-2">
                 <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#22A146]" />
@@ -995,15 +1002,20 @@ function ExamIntro({
             onClick={onBack}
             className="h-12 sm:h-11 px-5 border border-[#E3E8EF] text-[#0C1F33] rounded-lg text-sm font-semibold hover:bg-gray-50"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             type="button"
             onClick={onStart}
-            className="h-12 sm:h-11 px-6 inline-flex items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A]"
+            disabled={starting}
+            className="h-12 sm:h-11 px-6 inline-flex items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A] disabled:opacity-60"
           >
-            Start Exam
-            <ChevronRight className="w-4 h-4" />
+            {t("start")}
+            {starting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>
@@ -1018,6 +1030,7 @@ function ExamTimer({
   remainingSec: number;
   durationMinutes: number;
 }) {
+  const t = useTranslations("takeExam");
   const critical = remainingSec <= 60;
   const warning = remainingSec <= 5 * 60;
   return (
@@ -1032,7 +1045,7 @@ function ExamTimer({
       )}
       role="timer"
       aria-live="off"
-      aria-label={`Time remaining ${formatDuration(remainingSec)}`}
+      aria-label={t("timeRemaining", { time: formatDuration(remainingSec) })}
     >
       <span
         className={cn(
@@ -1044,7 +1057,7 @@ function ExamTimer({
         {formatDuration(remainingSec)}
       </span>
       <span className="hidden sm:block text-[11px] opacity-70">
-        of {durationMinutes} min
+        {t("ofMinutes", { count: durationMinutes })}
       </span>
     </div>
   );
@@ -1061,6 +1074,7 @@ function QuestionAnswer({
   disabled: boolean;
   onChange: (answer: ExamAnswer) => void;
 }) {
+  const t = useTranslations("takeExam");
   if (question.type === "short_answer" || question.type === "essay") {
     const value = typeof answer === "string" ? answer : "";
     return (
@@ -1070,12 +1084,14 @@ function QuestionAnswer({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           rows={question.type === "essay" ? 10 : 4}
-          placeholder="Type your answer..."
-          aria-label="Your answer"
+          placeholder={t("answerPlaceholder")}
+          aria-label={t("yourAnswer")}
           className="w-full px-4 py-3 border border-[#E3E8EF] rounded-lg text-base sm:text-sm text-[#0C1F33] focus:outline-none focus:ring-2 focus:ring-[#2D6CDF]/30 focus:border-[#2D6CDF] disabled:bg-gray-50 resize-y"
         />
         <p className="mt-1 text-right text-xs text-[#94A3B8]">
-          {value.trim() ? value.trim().split(/\s+/).length : 0} words
+          {t("words", {
+            count: value.trim() ? value.trim().split(/\s+/).length : 0,
+          })}
         </p>
       </div>
     );
@@ -1106,7 +1122,7 @@ function QuestionAnswer({
   if (options.length === 0) {
     return (
       <p className="mt-5 text-sm text-[#64748B]">
-        No options available for this question.
+        {t("noOptions")}
       </p>
     );
   }
@@ -1115,13 +1131,13 @@ function QuestionAnswer({
     <div className="mt-5">
       {isMulti && (
         <p className="mb-3 text-xs font-semibold text-[#64748B]">
-          Select all that apply
+          {t("selectAll")}
         </p>
       )}
       <div
         className="space-y-2.5"
         role={isMulti ? "group" : "radiogroup"}
-        aria-label="Answer options"
+        aria-label={t("answerOptions")}
       >
         {options.map((option, i) => {
           const isSelected = selected.includes(option);
@@ -1134,7 +1150,7 @@ function QuestionAnswer({
               disabled={disabled}
               onClick={() => toggle(option)}
               className={cn(
-                "w-full min-h-12 flex items-center gap-3 text-left px-4 py-3 rounded-lg border transition-colors disabled:cursor-not-allowed",
+                "w-full min-h-12 flex items-center gap-3 text-start px-4 py-3 rounded-lg border transition-colors disabled:cursor-not-allowed",
                 isSelected
                   ? "border-[#2D6CDF] bg-[#F4F8FF] ring-1 ring-[#2D6CDF]"
                   : "border-[#E3E8EF] hover:border-gray-300 hover:bg-gray-50/60",
@@ -1180,6 +1196,7 @@ function QuestionNavigator({
   current: number;
   onSelect: (index: number) => void;
 }) {
+  const t = useTranslations("takeExam");
   return (
     <div>
       <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-5 gap-2">
@@ -1192,7 +1209,10 @@ function QuestionNavigator({
               key={q.id}
               type="button"
               onClick={() => onSelect(i)}
-              aria-label={`Question ${i + 1}${answered ? ", answered" : ", not answered"}${isFlagged ? ", flagged" : ""}`}
+              aria-label={t(isFlagged ? "navLabelFlagged" : "navLabel", {
+                n: i + 1,
+                state: answered ? t("answered") : t("notAnswered"),
+              })}
               aria-current={isCurrent ? "step" : undefined}
               className={cn(
                 "relative h-10 rounded-lg border text-sm font-semibold transition-colors",
@@ -1204,7 +1224,7 @@ function QuestionNavigator({
             >
               {i + 1}
               {isFlagged && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500 ring-2 ring-white" />
+                <span className="absolute -top-1 -end-1 h-3 w-3 rounded-full bg-amber-500 ring-2 ring-white" />
               )}
             </button>
           );
@@ -1212,14 +1232,14 @@ function QuestionNavigator({
       </div>
       <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#64748B]">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-[#12304E]" /> Answered
+          <span className="h-3 w-3 rounded bg-[#12304E]" /> {t("answered")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded border border-[#CBD5E1] bg-white" />{" "}
-          Not answered
+          {t("notAnswered")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-amber-500" /> Flagged
+          <span className="h-3 w-3 rounded-full bg-amber-500" /> {t("flagged")}
         </span>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { recordAudit } from "#/shared/audit";
 import { NotFoundError } from "#/shared/errors";
 import {
   siteSettingsSchema,
@@ -78,23 +79,49 @@ export class ContentService {
         ? existing.publishedAt
         : new Date()
       : null;
-    return prisma.sitePage.upsert({
+    const page = await prisma.sitePage.upsert({
       where: { slug },
       create: { slug, ...input, publishedAt, updatedById: adminId },
       update: { ...input, publishedAt, updatedById: adminId },
     });
+    await recordAudit({
+      actorId: adminId,
+      action: "SITE_PAGE_SAVED",
+      resource: "site_page",
+      resourceId: slug,
+      details: { title: page.title, published: page.published },
+    });
+    return page;
   }
 
-  async deletePage(slug: string) {
+  async deletePage(slug: string, adminId: string) {
+    const page = await prisma.sitePage.findUnique({
+      where: { slug },
+      select: { title: true },
+    });
     if (STANDARD_PAGES.some((p) => p.slug === slug)) {
       // Standard pages can be unpublished but not removed.
       await prisma.sitePage.updateMany({
         where: { slug },
         data: { published: false, publishedAt: null },
       });
+      await recordAudit({
+        actorId: adminId,
+        action: "SITE_PAGE_UNPUBLISHED",
+        resource: "site_page",
+        resourceId: slug,
+        details: { title: page?.title ?? slug },
+      });
       return;
     }
     await prisma.sitePage.deleteMany({ where: { slug } });
+    await recordAudit({
+      actorId: adminId,
+      action: "SITE_PAGE_DELETED",
+      resource: "site_page",
+      resourceId: slug,
+      details: { title: page?.title ?? slug },
+    });
   }
 
   async getPublishedPage(slug: string) {
@@ -153,6 +180,11 @@ export class ContentService {
       where: { key: SETTINGS_KEY },
       create: { key: SETTINGS_KEY, value: settings, updatedById: adminId },
       update: { value: settings, updatedById: adminId },
+    });
+    await recordAudit({
+      actorId: adminId,
+      action: "SITE_SETTINGS_UPDATED",
+      resource: "site_settings",
     });
     return settings;
   }

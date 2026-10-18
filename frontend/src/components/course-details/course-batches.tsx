@@ -6,9 +6,11 @@ import type {
   CourseBatch,
   CourseBatchSession,
 } from "@/types/course-details";
+import { useFormatter, useTranslations } from "next-intl";
 
 /** "Choose Your Batch": expandable batches with their sessions. */
 export function CourseBatches({ batches }: { batches: CourseBatch[] }) {
+  const t = useTranslations("courseDetails.batches");
   const [expandedBatch, setExpandedBatch] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
@@ -16,16 +18,14 @@ export function CourseBatches({ batches }: { batches: CourseBatch[] }) {
     <section className="mt-10">
       <div className="mb-5">
         <p className="text-sm font-bold text-[#B8912F] uppercase tracking-wide">
-          Available Batches
+          {t("eyebrow")}
         </p>
 
         <h2 className="font-serif text-[28px] text-[#0C1F33] mt-1">
-          Choose Your Batch
+          {t("title")}
         </h2>
 
-        <p className="text-sm text-[#64748B] mt-2">
-          View the schedule and sessions for each available batch.
-        </p>
+        <p className="text-sm text-[#64748B] mt-2">{t("subtitle")}</p>
       </div>
 
       <div className="space-y-4">
@@ -61,13 +61,15 @@ function BatchCard({
   expandedSession: string | null;
   onToggleSession: (sessionId: string) => void;
 }) {
+  const t = useTranslations("courseDetails.batches");
+  const tSchedule = useTranslations("schedule");
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white">
       {/* Batch Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-6 py-5 text-left transition-colors hover:bg-[#FAFBFC]"
+        className="w-full px-6 py-5 text-start transition-colors hover:bg-[#FAFBFC]"
       >
         <div className="flex items-center justify-between gap-5">
           <div className="flex items-center gap-4">
@@ -89,15 +91,14 @@ function BatchCard({
                       : "bg-[#F8F3E8] text-[#9A7624]"
                   }`}
                 >
-                  {batch.status === "ACTIVE" ? "Active" : "Upcoming"}
+                  {batch.status === "ACTIVE" ? t("active") : t("upcoming")}
                 </span>
               </div>
 
               <p className="mt-1 text-sm text-[#64748B]">
-                {batch.sessions.length}{" "}
-                {batch.sessions.length === 1 ? "session" : "sessions"}
+                {tSchedule("sessionCount", { count: batch.sessions.length })}
                 {" · "}
-                {batch.capacity} seats
+                {t("seats", { count: batch.capacity })}
               </p>
             </div>
           </div>
@@ -144,13 +145,17 @@ function SessionItem({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations("courseDetails.batches");
+  const tSchedule = useTranslations("schedule");
+  const format = useFormatter();
+  const when = new Date(session.scheduledAt);
   return (
     <div className="overflow-hidden rounded-xl border border-[#E3E8EF] bg-white">
       {/* Session Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-5 py-4 text-left transition-colors hover:bg-[#FCFCFC]"
+        className="w-full px-5 py-4 text-start transition-colors hover:bg-[#FCFCFC]"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
@@ -165,24 +170,21 @@ function SessionItem({
               </h4>
 
               <p className="mt-1 text-sm text-[#64748B]">
-                {new Date(session.scheduledAt).toLocaleDateString(undefined, {
+                {format.dateTime(when, {
                   weekday: "short",
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
                 {" · "}
-                {new Date(session.scheduledAt).toLocaleTimeString(undefined, {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                {format.dateTime(when, { hour: "numeric", minute: "2-digit" })}
               </p>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-4">
             <span className="hidden text-sm text-[#64748B] sm:block">
-              {session.durationMinutes} min
+              {tSchedule("minutes", { count: session.durationMinutes })}
             </span>
 
             <ChevronDown
@@ -200,11 +202,11 @@ function SessionItem({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                Date & Time
+                {t("dateTime")}
               </p>
 
               <p className="mt-1 text-sm text-[#334155]">
-                {new Date(session.scheduledAt).toLocaleString(undefined, {
+                {format.dateTime(when, {
                   weekday: "long",
                   year: "numeric",
                   month: "long",
@@ -217,11 +219,11 @@ function SessionItem({
 
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                Duration
+                {t("duration")}
               </p>
 
               <p className="mt-1 text-sm text-[#334155]">
-                {session.durationMinutes} minutes
+                {t("minutesLong", { count: session.durationMinutes })}
               </p>
             </div>
           </div>
@@ -229,7 +231,7 @@ function SessionItem({
           {session.notes && (
             <div className="mt-4 rounded-lg bg-[#FAFBFC] p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                Session Notes
+                {tSchedule("sessionNotes")}
               </p>
 
               <p className="mt-1 text-sm leading-6 text-[#475569]">

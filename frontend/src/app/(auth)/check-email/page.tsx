@@ -4,11 +4,14 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Logo } from "@/components/layout/logo";
 import { useResendVerificationMutation } from "@/hooks/use-email-verification";
+import { useTranslations } from "next-intl";
 
 function CheckEmailContent() {
+  const t = useTranslations("auth.checkEmail");
+  const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") ?? "";
-  const email = emailParam || "your email";
+  const email = emailParam || t("yourEmail");
 
   const resendMutation = useResendVerificationMutation();
 
@@ -68,15 +71,19 @@ function CheckEmailContent() {
 
           {/* Heading */}
           <h1 className="font-serif text-primary text-[30px] leading-[1.2] sm:text-[34px] lg:text-4xl mb-4">
-            Check your email
+            {t("title")}
           </h1>
 
           {/* Description */}
           <p className="text-muted text-sm sm:text-base leading-6 max-w-md mb-8">
-            We&apos;ve sent a verification link to{" "}
-            <span className="font-semibold text-primary break-all">
-              {email}
-            </span>
+            {t.rich("sentTo", {
+              email,
+              strong: (chunks) => (
+                <bdi className="font-semibold text-primary break-all">
+                  {chunks}
+                </bdi>
+              ),
+            })}
           </p>
 
           {/* Resend Button */}
@@ -85,30 +92,26 @@ function CheckEmailContent() {
             disabled={!canResend || resendMutation.isPending}
             className="w-full h-12 sm:h-[52px] bg-white border border-outline-variant text-outline font-medium text-sm sm:text-base rounded-xl hover:bg-surface-container hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {resendMutation.isPending ? "Sending..." : "Resend email"}
+            {resendMutation.isPending ? tCommon("sending") : t("resend")}
           </button>
 
           {/* Countdown */}
           <p className="text-sm text-outline mt-4" aria-live="polite">
-            {canResend ? (
-              "You can resend now"
-            ) : countdown <= 0 ? (
-              "Sign in to request a new verification email"
-            ) : (
-              <>
-                You can resend in <span>{countdown}</span> seconds
-              </>
-            )}
+            {canResend
+              ? t("canResendNow")
+              : countdown <= 0
+                ? t("signInToResend")
+                : t("resendIn", { seconds: countdown })}
           </p>
 
           {/* Wrong Email */}
           <p className="text-sm text-muted mt-8">
-            Wrong email?{" "}
+            {t("wrongEmail")}{" "}
             <a
               href="/register"
               className="text-green font-medium hover:underline underline-offset-4 decoration-2 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-sm"
             >
-              Go back
+              {t("goBack")}
             </a>
           </p>
         </section>
@@ -122,14 +125,19 @@ function CheckEmailContent() {
   );
 }
 
+function LoadingFallback() {
+  const t = useTranslations("common");
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <p className="text-muted">{t("loading")}</p>
+    </div>
+  );
+}
+
 export default function CheckEmailPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-surface">
-          <p className="text-muted">Loading...</p>
-        </div>
-      }
+      fallback={<LoadingFallback />}
     >
       <CheckEmailContent />
     </Suspense>

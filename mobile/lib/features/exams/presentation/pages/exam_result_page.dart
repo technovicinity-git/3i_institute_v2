@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -38,7 +39,7 @@ class ExamResultPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(child: Text('Select a learner profile first.'));
+      return Center(child: Text(context.l10n.examsSelectProfileFirst));
     }
     final resultKey = '$examId|${profile.id}';
     final examsKey = '$courseId|${profile.id}';
@@ -94,14 +95,14 @@ class ExamResultPage extends ConsumerWidget {
                   TextButton.icon(
                     onPressed: () => context.go(_examsPath),
                     icon: const Icon(Icons.arrow_back, size: 18),
-                    label: const Text('Back to exams'),
+                    label: Text(context.l10n.examsBack),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0xFF64748B),
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'Reload',
+                    tooltip: context.l10n.lessonReload,
                     onPressed: () => _reload(ref, resultKey, examsKey),
                     icon: const Icon(Icons.refresh, color: _navy),
                   ),
@@ -154,10 +155,10 @@ class ExamResultPage extends ConsumerWidget {
                     const SizedBox(height: 5),
                     Text(
                       passed
-                          ? 'Congratulations! You passed.'
+                          ? context.l10n.resultPassed
                           : pending
-                          ? 'Your written answers are being graded.'
-                          : 'You did not pass. Review your answers and try again.',
+                          ? context.l10n.resultGrading
+                          : context.l10n.resultFailed,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: passed
@@ -179,7 +180,7 @@ class ExamResultPage extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Pass mark: ${data.exam.passMark}%  •  ${data.exam.duration} mins',
+                        context.l10n.resultPassDuration(data.exam.passMark, data.exam.duration),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
@@ -191,20 +192,20 @@ class ExamResultPage extends ConsumerWidget {
                       children: [
                         _Stat(
                           icon: Icons.track_changes,
-                          label: 'Score',
+                          label: context.l10n.resultScore,
                           value: percent == null ? '—' : '$percent%',
                         ),
                         const SizedBox(width: 8),
                         _Stat(
                           icon: Icons.description_outlined,
-                          label: 'Attempts',
+                          label: context.l10n.resultAttempts,
                           value: '${data.attempts.length}',
                         ),
                         const SizedBox(width: 8),
                         _Stat(
                           icon: Icons.timer_outlined,
-                          label: 'Time taken',
-                          value: _timeTaken(latest),
+                          label: context.l10n.resultTimeTaken,
+                          value: _timeTaken(context.l10n, latest),
                         ),
                       ],
                     ),
@@ -213,7 +214,7 @@ class ExamResultPage extends ConsumerWidget {
               ),
               if (data.attempts.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                const _SectionTitle('Attempt history'),
+                _SectionTitle(context.l10n.resultHistory),
                 const SizedBox(height: 9),
                 ...data.attempts.map(
                   (attempt) => _AttemptTile(attempt: attempt),
@@ -221,10 +222,10 @@ class ExamResultPage extends ConsumerWidget {
               ],
               if (data.questionResults.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                const _SectionTitle('Question review'),
+                _SectionTitle(context.l10n.resultReview),
                 const SizedBox(height: 4),
-                const Text(
-                  'Review your responses and the correct answers.',
+                Text(
+                  context.l10n.resultReviewHint,
                   style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 10),
@@ -235,8 +236,8 @@ class ExamResultPage extends ConsumerWidget {
                 const SizedBox(height: 5),
                 Text(
                   best == null
-                      ? 'No attempts found.'
-                      : 'Showing answers from Attempt #${best.attemptNumber}.',
+                      ? context.l10n.resultNoAttempts
+                      : context.l10n.resultShowingAttempt(best.attemptNumber),
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
@@ -249,7 +250,7 @@ class ExamResultPage extends ConsumerWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => context.go(_examsPath),
-                      child: const Text('Back to exams'),
+                      child: Text(context.l10n.examsBack),
                     ),
                   ),
                   if (canRetry) ...[
@@ -260,7 +261,7 @@ class ExamResultPage extends ConsumerWidget {
                           '/my-courses/$courseId/exams/$examId/take${onlineClass ? '?online=true' : ''}',
                         ),
                         style: FilledButton.styleFrom(backgroundColor: _green),
-                        child: const Text('Retake exam'),
+                        child: Text(context.l10n.resultRetake),
                       ),
                     ),
                   ],
@@ -353,7 +354,7 @@ class _QuestionReview extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.marks} ${item.marks == 1 ? 'mark' : 'marks'}${graded ? ' • ${_number(item.marksAwarded!)} of ${item.marks} awarded' : ''}',
+                        '${context.l10n.takeMarks(item.marks)}${graded ? ' • ${context.l10n.resultAwarded(_number(item.marksAwarded!), item.marks)}' : ''}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF94A3B8),
@@ -372,10 +373,10 @@ class _QuestionReview extends StatelessWidget {
                   color: color,
                   size: 20,
                   semanticLabel: switch (status) {
-                    _ReviewStatus.pending => 'Awaiting grading',
-                    _ReviewStatus.correct => 'Correct',
-                    _ReviewStatus.partial => 'Partially correct',
-                    _ReviewStatus.incorrect => 'Incorrect',
+                    _ReviewStatus.pending => context.l10n.resultAwaitingGrading,
+                    _ReviewStatus.correct => context.l10n.resultCorrect,
+                    _ReviewStatus.partial => context.l10n.resultPartial,
+                    _ReviewStatus.incorrect => context.l10n.resultIncorrect,
                   },
                 ),
               ],
@@ -390,8 +391,8 @@ class _QuestionReview extends StatelessWidget {
               children: [
                 if (written) ...[
                   _AnswerBlock(
-                    label: 'Your answer',
-                    value: _answerText(item.myAnswer),
+                    label: context.l10n.resultYourAnswer,
+                    value: _answerText(context.l10n, item.myAnswer),
                     tint: switch (status) {
                       _ReviewStatus.pending => const Color(0xFFFFF7ED),
                       _ReviewStatus.correct => const Color(0xFFF0FDF4),
@@ -402,7 +403,7 @@ class _QuestionReview extends StatelessWidget {
                   if (item.suggestedAnswer?.isNotEmpty == true) ...[
                     const SizedBox(height: 10),
                     _AnswerBlock(
-                      label: 'Suggested answer',
+                      label: context.l10n.resultSuggestedAnswer,
                       value: item.suggestedAnswer!,
                       tint: const Color(0xFFF0FDF4),
                     ),
@@ -455,7 +456,7 @@ class _QuestionReview extends StatelessWidget {
                           ),
                           if (selected)
                             Text(
-                              'Your answer',
+                              context.l10n.resultYourAnswer,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -468,23 +469,23 @@ class _QuestionReview extends StatelessWidget {
                   }),
                 ] else ...[
                   _AnswerBlock(
-                    label: 'Your answer',
-                    value: _answerText(item.myAnswer),
+                    label: context.l10n.resultYourAnswer,
+                    value: _answerText(context.l10n, item.myAnswer),
                     tint: correct
                         ? const Color(0xFFF0FDF4)
                         : const Color(0xFFFEF2F2),
                   ),
                   const SizedBox(height: 10),
                   _AnswerBlock(
-                    label: 'Correct answer',
-                    value: _answerText(item.correctAnswer),
+                    label: context.l10n.resultCorrectAnswer,
+                    value: _answerText(context.l10n, item.correctAnswer),
                     tint: const Color(0xFFF0FDF4),
                   ),
                 ],
                 if (item.explanation?.isNotEmpty == true) ...[
                   const SizedBox(height: 12),
-                  const Text(
-                    'Explanation',
+                  Text(
+                    context.l10n.resultExplanation,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -557,10 +558,10 @@ class _AttemptTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = !attempt.graded
-        ? 'PENDING'
+        ? context.l10n.resultPending
         : attempt.passed == true
-        ? 'PASSED'
-        : 'FAILED';
+        ? context.l10n.resultPassedBadge
+        : context.l10n.resultFailedBadge;
     final color = !attempt.graded
         ? Colors.orange
         : attempt.passed == true
@@ -581,7 +582,7 @@ class _AttemptTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Attempt #${attempt.attemptNumber}',
+                  context.l10n.resultAttempt(attempt.attemptNumber),
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0C1F33),
@@ -589,7 +590,7 @@ class _AttemptTile extends StatelessWidget {
                 ),
                 if (date != null)
                   Text(
-                    DateFormat('MMM d, y • h:mm a').format(date),
+                    DateFormat.yMMMd().add_jm().format(date),
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF64748B),
@@ -674,12 +675,12 @@ class _ResultError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Could not load exam results.',
+          Text(
+            context.l10n.resultLoadFailed,
             style: TextStyle(color: Colors.red),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
-          TextButton(onPressed: onBack, child: const Text('Back to exams')),
+          TextButton(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)),
+          TextButton(onPressed: onBack, child: Text(context.l10n.examsBack)),
         ],
       ),
     ),
@@ -691,8 +692,8 @@ List<String> _asList(Object? value) => value == null
     : value is List
     ? value.map((e) => '$e').toList()
     : ['$value'];
-String _answerText(Object? value) => value == null
-    ? 'Not answered'
+String _answerText(AppLocalizations l10n, Object? value) => value == null
+    ? l10n.takeNotAnswered
     : value is List
     ? value.join(', ')
     : '$value';
@@ -705,11 +706,11 @@ bool _answersEqual(Object? a, Object? b) {
 String _number(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
-String _timeTaken(ExamAttempt? attempt) {
+String _timeTaken(AppLocalizations l10n, ExamAttempt? attempt) {
   if (attempt?.startedAt == null || attempt?.submittedAt == null) return '—';
   final start = DateTime.tryParse(attempt!.startedAt!);
   final end = DateTime.tryParse(attempt.submittedAt!);
   if (start == null || end == null) return '—';
   final minutes = end.difference(start).inMinutes.clamp(1, 999999);
-  return '${minutes}m';
+  return l10n.resultMinutesShort(minutes);
 }

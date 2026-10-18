@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
 import '../widgets/learner_avatar.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/network/api_error_message.dart';
 
 class EditLearnerPage extends ConsumerStatefulWidget {
   const EditLearnerPage({
@@ -61,7 +63,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
         _name.text = _profile!.displayName;
       }
     } catch (error) {
-      if (mounted) _message('Could not load learner profile: $error');
+      if (mounted) _message(apiErrorMessage(error, fallback: context.l10n.learnerLoadFailed));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -72,6 +74,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
   ).showSnackBar(SnackBar(content: Text(value)));
 
   Future<void> _chooseImage() async {
+    final l10n = context.l10n;
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -82,16 +85,16 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
       if (image == null) return;
       final extension = image.name.split('.').last.toLowerCase();
       if (!const {'jpg', 'jpeg', 'png', 'webp', 'gif'}.contains(extension)) {
-        _message('Choose a JPEG, PNG, WebP, or GIF image.');
+        _message(l10n.imageInvalidType);
         return;
       }
       if (await image.length() > 5 * 1024 * 1024) {
-        _message('Image size exceeds the 5 MB limit.');
+        _message(l10n.imageTooLarge);
         return;
       }
       setState(() => _image = image);
     } catch (_) {
-      _message('Could not open your photo library.');
+      _message(l10n.imagePickerFailed);
     }
   }
 
@@ -127,16 +130,16 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
     if (profile == null || _saving) return;
     final name = _name.text.trim();
     if (name.isEmpty || name.length > 100) {
-      _message('Enter a name up to 100 characters.');
+      _message(context.l10n.learnerNameTooLong);
       return;
     }
     if (_showPin &&
         (_pin.text.length != 4 || !RegExp(r'^\d{4}$').hasMatch(_pin.text))) {
-      _message('PIN must be exactly 4 digits.');
+      _message(context.l10n.learnerPinFormat);
       return;
     }
     if (_showPin && _pin.text != _confirmPin.text) {
-      _message('PINs do not match.');
+      _message(context.l10n.learnerPinMismatch);
       return;
     }
     setState(() => _saving = true);
@@ -163,7 +166,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
       ref.invalidate(learnerProfilesProvider);
       if (mounted) context.go('/profile-management');
     } catch (error) {
-      if (mounted) _message('Could not save profile: $error');
+      if (mounted) _message(apiErrorMessage(error, fallback: context.l10n.learnerUpdateFailed));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -175,7 +178,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _profile == null
-        ? const Center(child: Text('Profile not found'))
+        ? Center(child: Text(context.l10n.learnerNotFound))
         : SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -184,7 +187,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                   padding: const EdgeInsets.all(22),
                   children: [
                     Text(
-                      'Edit ${_profile!.displayName}’s profile',
+                      context.l10n.learnerEditTitle(_profile!.displayName),
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             fontFamily: 'serif',
@@ -213,7 +216,7 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                             child: IconButton.filled(
                               onPressed: _chooseImage,
                               icon: const Icon(Icons.camera_alt_outlined),
-                              tooltip: 'Change profile picture',
+                              tooltip: context.l10n.learnerChangePhoto,
                             ),
                           ),
                         ],
@@ -225,10 +228,10 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                       readOnly: _profile!.nameLocked,
                       maxLength: 100,
                       decoration: InputDecoration(
-                        labelText: 'Learner’s name',
+                        labelText: context.l10n.learnerName,
                         border: const OutlineInputBorder(),
                         helperText: _profile!.nameLocked
-                            ? 'Name is locked because a certificate has been issued.'
+                            ? context.l10n.learnerNameLocked
                             : null,
                       ),
                     ),
@@ -237,10 +240,10 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                       onPressed: () => setState(() => _showPin = !_showPin),
                       child: Text(
                         _showPin
-                            ? 'Cancel PIN change'
+                            ? context.l10n.learnerCancelPinChange
                             : _profile!.hasPin
-                            ? 'Reset PIN'
-                            : 'Set PIN',
+                            ? context.l10n.pinReset
+                            : context.l10n.pinSet,
                       ),
                     ),
                     if (_showPin) ...[
@@ -250,8 +253,8 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                         obscureText: true,
                         keyboardType: TextInputType.number,
                         maxLength: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'New 4-digit PIN',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.learnerNewPin,
                           border: OutlineInputBorder(),
                           counterText: '',
                         ),
@@ -262,8 +265,8 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                         obscureText: true,
                         keyboardType: TextInputType.number,
                         maxLength: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirm new PIN',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.learnerConfirmNewPin,
                           border: OutlineInputBorder(),
                           counterText: '',
                         ),
@@ -274,11 +277,11 @@ class _EditLearnerPageState extends ConsumerState<EditLearnerPage> {
                       onPressed: _saving || _profile!.nameLocked && !_showPin
                           ? null
                           : _save,
-                      child: Text(_saving ? 'Saving…' : 'Save changes'),
+                      child: Text(_saving ? context.l10n.commonSaving : context.l10n.learnerSaveChanges),
                     ),
                     TextButton(
                       onPressed: () => context.pop(),
-                      child: const Text('Cancel'),
+                      child: Text(context.l10n.commonCancel),
                     ),
                   ],
                 ),

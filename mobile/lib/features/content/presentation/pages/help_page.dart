@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/content_repository.dart';
 import '../content_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _ink = Color(0xFF0C1F33);
 const _muted = Color(0xFF64748B);
@@ -47,7 +48,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF12304E),
         elevation: 0,
-        title: const Text('Help & support'),
+        title: Text(context.l10n.helpTitle),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -59,15 +60,15 @@ class _HelpPageState extends ConsumerState<HelpPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 40),
           children: [
-            const Text(
-              'Frequently asked questions',
+            Text(
+              context.l10n.helpFaq,
               style: TextStyle(fontFamily: 'serif', fontSize: 22, color: _ink),
             ),
             const SizedBox(height: 12),
             TextField(
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Search questions…',
+                hintText: context.l10n.helpSearch,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
@@ -91,8 +92,8 @@ class _HelpPageState extends ConsumerState<HelpPage> {
             else if (categories.isEmpty)
               Text(
                 q.isNotEmpty
-                    ? 'No questions match “$_query”.'
-                    : 'No questions have been published yet.',
+                    ? context.l10n.helpNoMatch(_query)
+                    : context.l10n.helpNone,
                 style: const TextStyle(color: _muted),
               )
             else
@@ -160,8 +161,8 @@ class _HelpPageState extends ConsumerState<HelpPage> {
               ],
             if (contact != null && !contact.isEmpty) ...[
               const SizedBox(height: 14),
-              const Text(
-                'Contact us',
+              Text(
+                context.l10n.helpContactUs,
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 22,
@@ -173,8 +174,8 @@ class _HelpPageState extends ConsumerState<HelpPage> {
             ],
             if (pages.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
-                'Policies',
+              Text(
+                context.l10n.helpPolicies,
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 22,

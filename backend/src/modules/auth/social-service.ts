@@ -5,6 +5,7 @@ import { generateTokenPair } from "#/lib/jwt";
 import { verifyGoogleToken, verifyAppleToken } from "#/lib/social-auth";
 import {
   AccountInactiveError,
+  AppError,
   UnauthorizedError,
   ValidationError,
 } from "#/shared/errors";
@@ -38,6 +39,9 @@ function calculateAge(dateOfBirth: Date): number {
   return age;
 }
 
+// Social accounts have no password of their own. A long random one fills
+// the required column and can't be guessed; the user can still set a real
+// password later through "forgot password".
 function generateRandomPassword(): string {
   return crypto.randomBytes(32).toString("hex");
 }
@@ -50,6 +54,8 @@ export class SocialAuthService {
       throw new UnauthorizedError("Invalid Google token");
     }
 
+    // Accounts are matched by email: signing in with Google on an address
+    // that already registered with a password logs into that same account.
     let user = await prisma.user.findUnique({
       where: { email: googleUser.email },
       include: {
@@ -63,9 +69,14 @@ export class SocialAuthService {
       },
     });
 
+    // First sign-in: create the account. Same age rules as email sign-up
+    // (13+, 13–17 become STANDALONE_MINOR).
     if (!user) {
       if (!input.dateOfBirth) {
-        throw new ValidationError(
+        // Clients ask for the date of birth when they see this code.
+        throw new AppError(
+          422,
+          "DATE_OF_BIRTH_REQUIRED",
           "Date of birth is required for first-time social login",
         );
       }
@@ -111,6 +122,8 @@ export class SocialAuthService {
       });
       sendWelcomeEmail(user);
     } else {
+      // Existing account: a provider sign-in on this address counts as
+      // verifying it, so an unverified email sign-up can now log in.
       if (!user.emailVerified) {
         await prisma.user.update({
           where: { id: user.id },
@@ -133,6 +146,7 @@ export class SocialAuthService {
       throw new UnauthorizedError("Invalid Apple token");
     }
 
+    // Accounts are matched by email, as with Google.
     let user = await prisma.user.findUnique({
       where: { email: appleUser.email },
       include: {
@@ -146,9 +160,14 @@ export class SocialAuthService {
       },
     });
 
+    // First sign-in: create the account. Same age rules as email sign-up
+    // (13+, 13–17 become STANDALONE_MINOR).
     if (!user) {
       if (!input.dateOfBirth) {
-        throw new ValidationError(
+        // Clients ask for the date of birth when they see this code.
+        throw new AppError(
+          422,
+          "DATE_OF_BIRTH_REQUIRED",
           "Date of birth is required for first-time social login",
         );
       }
@@ -194,6 +213,8 @@ export class SocialAuthService {
       });
       sendWelcomeEmail(user);
     } else {
+      // Existing account: a provider sign-in on this address counts as
+      // verifying it, so an unverified email sign-up can now log in.
       if (!user.emailVerified) {
         await prisma.user.update({
           where: { id: user.id },
@@ -206,6 +227,8 @@ export class SocialAuthService {
     return this.generateTokens(user);
   }
 
+  // Same session setup as password login (see AuthService.login). The
+  // deviceInfo tag marks these refresh tokens as social sign-ins.
   private async generateTokens(user: any) {
     if (!user.isActive) {
       throw new AccountInactiveError();

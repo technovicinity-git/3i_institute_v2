@@ -97,7 +97,7 @@ model Role {
   permissions RolePermission[]
   users       User[]
 
-  createdAt   DateTime         @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Permission {
@@ -106,7 +106,7 @@ model Permission {
   description String?
   roles       RolePermission[]
 
-  createdAt   DateTime         @default(now())
+  createdAt DateTime @default(now())
 }
 
 model RolePermission {
@@ -119,121 +119,122 @@ model RolePermission {
 }
 
 model User {
-  id            String      @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String      @unique
-  passwordHash  String
-  avatarUrl    String? 
-  dateOfBirth   DateTime
-  locale        String      @default("en")
-  timezone      String      @default("UTC")
-  accountType   AccountType
-  emailVerified Boolean     @default(false)
+  id                   String      @id @default(uuid())
+  firstName            String
+  lastName             String
+  email                String      @unique
+  passwordHash         String
+  avatarUrl            String?
+  dateOfBirth          DateTime
+  locale               String      @default("en")
+  timezone             String      @default("UTC")
+  accountType          AccountType
+  emailVerified        Boolean     @default(false)
   // One-time token columns hold the SHA-256 hash, never the raw token
   // (see shared/one-time-token.ts).
-  emailVerifyToken String?  @unique
-  emailVerifyExpires DateTime?
-  passwordResetToken String? @unique
+  emailVerifyToken     String?     @unique
+  emailVerifyExpires   DateTime?
+  passwordResetToken   String?     @unique
   passwordResetExpires DateTime?
-   bio         String?
+  bio                  String?
 
-  roleId        String
-  role          Role        @relation(fields: [roleId], references: [id])
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
 
-  guardianName      String?
-  guardianEmail     String?
+  guardianName       String?
+  guardianEmail      String?
   guardianNotifiedAt DateTime?
 
-  devices          Device[]
-  refreshTokens    RefreshToken[]
-  learnerProfiles  LearnerProfile[]
-  courses          Course[]
-  subscriptions    Subscription[]
-  subscriptionRequests SubscriptionRequest[]
-  waivers          Waiver[]
-  courseRatings CourseRating[]
+  devices                 Device[]
+  refreshTokens           RefreshToken[]
+  learnerProfiles         LearnerProfile[]
+  courses                 Course[]
+  subscriptions           Subscription[]
+  subscriptionRequests    SubscriptionRequest[]
+  waivers                 Waiver[]
+  courseRatings           CourseRating[]
   notifications           Notification[]
   pushTokens              PushToken[]
   notificationBroadcasts  NotificationBroadcast[]
   adminEmails             AdminEmail[]
   notificationPreferences NotificationPreference[]
 
-  stripeCustomerId   String?
+  stripeCustomerId    String?
   billingContactName  String?
   billingContactEmail String?
 
-  failedLoginAttempts  Int       @default(0)
-  lockedUntil          DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
 
   // Admin-controlled account status. Inactive users cannot log in and any
   // existing session is cut off.
-  isActive             Boolean   @default(true)
-  deactivatedAt        DateTime?
+  isActive      Boolean   @default(true)
+  deactivatedAt DateTime?
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
 }
 
 model Device {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceName    String
-  deviceToken   String
-  platform      String
-  lastUsedAt    DateTime  @default(now())
-  createdAt     DateTime  @default(now())
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName  String
+  deviceToken String
+  platform    String
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@index([userId])
   @@index([deviceToken])
 }
 
 model RefreshToken {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash     String    @unique
-  deviceInfo    String?
-  expiresAt     DateTime
-  revokedAt     DateTime?
-  createdAt     DateTime  @default(now())
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  deviceInfo String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([userId])
   @@index([tokenHash])
 }
 
 model LearnerProfile {
-  id            String    @id @default(uuid())
+  id            String         @id @default(uuid())
   accountId     String
-  account       User      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account       User           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   displayName   String
   dateOfBirth   DateTime
   avatarUrl     String?
   pinHash       String?
-  chatEnabled   Boolean   @default(false)
-  nameLocked    Boolean   @default(false)
-  isActive      Boolean   @default(false)  // NEW: true when seat assigned
-  wishlistItems   WishlistItem[]
-   courseRatings CourseRating[]
+  chatEnabled   Boolean        @default(false)
+  nameLocked    Boolean        @default(false)
+  isActive      Boolean        @default(false) // NEW: true when seat assigned
+  wishlistItems WishlistItem[]
+  courseRatings CourseRating[]
 
-  seats         Seat[]
+  seats                Seat[]
   subscriptionRequests SubscriptionRequest[]
-  waivers       Waiver[]
+  waivers              Waiver[]
 
-  enrolments    Enrolment[]
-  progress      MaterialProgress[]
-  examAttempts  ExamAttempt[]
-  attendance    Attendance[]
-  certificates  Certificate[]
-  assignmentSubmissions AssignmentSubmission[]
+  enrolments              Enrolment[]
+  progress                MaterialProgress[]
+  examAttempts            ExamAttempt[]
+  examSessions            ExamSession[]
+  attendance              Attendance[]
+  certificates            Certificate[]
+  assignmentSubmissions   AssignmentSubmission[]
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
 
-  createdAt     DateTime  @default(now())
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@index([accountId])
 }
@@ -248,14 +249,14 @@ model Category {
   active      Boolean  @default(true)
   courses     Course[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
 
 model Course {
-  id            String        @id @default(uuid())
+  id            String     @id @default(uuid())
   title         String
   summary       String
   description   String
@@ -263,41 +264,41 @@ model Course {
   coverImageUrl String?
   type          CourseType
   level         String
-  language      String        @default("en")
+  language      String     @default("en")
 
-   learningOutcomes Json?     
-  requirements     Json?     
-  whatIncluded     Json?     
-  faq              Json?    
-  totalLessons     Int       @default(0)
-  totalDurationMinutes Int   @default(0)
-  totalModules     Int       @default(0)
-  wishlistItems   WishlistItem[]
+  learningOutcomes     Json?
+  requirements         Json?
+  whatIncluded         Json?
+  faq                  Json?
+  totalLessons         Int            @default(0)
+  totalDurationMinutes Int            @default(0)
+  totalModules         Int            @default(0)
+  wishlistItems        WishlistItem[]
 
-  minimumAge    Int
-  maximumAge    Int?
+  minimumAge Int
+  maximumAge Int?
 
-  status        CourseStatus  @default(DRAFT)
-  isDraft       Boolean       @default(false)
-  approvedAt    DateTime?
-  approvedBy    String?
+  status     CourseStatus @default(DRAFT)
+  isDraft    Boolean      @default(false)
+  approvedAt DateTime?
+  approvedBy String?
 
-  instructorId  String
-  instructor    User          @relation(fields: [instructorId], references: [id])
+  instructorId String
+  instructor   User   @relation(fields: [instructorId], references: [id])
 
-  categoryId    String?
-  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  materials     Material[]
-  batches       Batch[]
-  exams         Exam[]
-  enrolments    Enrolment[]
-  ratings       CourseRating[]
-  questions     Question[]
-  assignments   Assignment[]
+  materials   Material[]
+  batches     Batch[]
+  exams       Exam[]
+  enrolments  Enrolment[]
+  ratings     CourseRating[]
+  questions   Question[]
+  assignments Assignment[]
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([categoryId])
@@ -305,111 +306,111 @@ model Course {
 }
 
 model CourseRating {
-  id            String    @id @default(uuid())
-  courseId      String
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  accountId     String
-  account       User      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id               String          @id @default(uuid())
+  courseId         String
+  course           Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  accountId        String
+  account          User            @relation(fields: [accountId], references: [id], onDelete: Cascade)
   learnerProfileId String?
   learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: SetNull)
-  rating        Int
-  review        String?
-  hidden        Boolean   @default(false)
+  rating           Int
+  review           String?
+  hidden           Boolean         @default(false)
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([courseId, learnerProfileId])
 }
 
 model Material {
-  id            String    @id @default(uuid())
-  courseId      String
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?   // NEW: optional overview
-  type          String
-  url           String
-  duration      Int?
-  order         Int       @default(0)
-  captionUrl    String?
+  id          String  @id @default(uuid())
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String? // NEW: optional overview
+  type        String
+  url         String
+  duration    Int?
+  order       Int     @default(0)
+  captionUrl  String?
 
-  progress      MaterialProgress[]
+  progress MaterialProgress[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([courseId])
 }
 
 model MaterialProgress {
-  id              String    @id @default(uuid())
-  materialId      String
-  material        Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  materialId       String
+  material         Material       @relation(fields: [materialId], references: [id], onDelete: Cascade)
   learnerProfileId String
-  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  watchedSeconds  Int       @default(0)
-  completed       Boolean   @default(false)
-  completedAt     DateTime?
-  lastPosition    Int       @default(0)
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  watchedSeconds   Int            @default(0)
+  completed        Boolean        @default(false)
+  completedAt      DateTime?
+  lastPosition     Int            @default(0)
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([materialId, learnerProfileId])
 }
 
 model Batch {
-  id            String    @id @default(uuid())
-  courseId      String
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  name          String
-  capacity      Int
-  status        BatchStatus @default(UPCOMING)
+  id       String      @id @default(uuid())
+  courseId String
+  course   Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name     String
+  capacity Int
+  status   BatchStatus @default(UPCOMING)
 
-  sessions      Session[]
-  enrolments    Enrolment[]
+  sessions    Session[]
+  enrolments  Enrolment[]
   assignments Assignment[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([courseId])
 }
 
 model Session {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   batchId         String
-  batch           Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batch           Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
   title           String
   scheduledAt     DateTime
   durationMinutes Int
   meetingLink     String?
   notes           String?
 
-  attendance      Attendance[]
+  attendance Attendance[]
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([batchId])
 }
 
 model Enrolment {
-  id                String    @id @default(uuid())
-  learnerProfileId  String
-  learnerProfile    LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  courseId          String
-  course            Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  batchId           String?
-  batch             Batch?    @relation(fields: [batchId], references: [id])
+  id               String         @id @default(uuid())
+  learnerProfileId String
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  batchId          String?
+  batch            Batch?         @relation(fields: [batchId], references: [id])
 
-  ageOverrideApplied    Boolean   @default(false)
+  ageOverrideApplied    Boolean @default(false)
   ageOverrideApprovedBy String?
 
-  waitlisted        Boolean   @default(false)
-  waitlistPosition  Int?
+  waitlisted       Boolean @default(false)
+  waitlistPosition Int?
 
-  enrolledAt        DateTime  @default(now())
+  enrolledAt DateTime @default(now())
 
   @@unique([learnerProfileId, courseId, batchId])
   @@index([learnerProfileId])
@@ -417,40 +418,40 @@ model Enrolment {
 }
 
 model Attendance {
-  id              String    @id @default(uuid())
-  sessionId       String
-  session         Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  sessionId        String
+  session          Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   learnerProfileId String
-  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  status          String
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  status           String
 
-  markedAt        DateTime  @default(now())
-  markedBy        String
+  markedAt DateTime @default(now())
+  markedBy String
 
   @@unique([sessionId, learnerProfileId])
 }
 
 model Question {
-  id            String    @id @default(uuid())
-  scope         String    @default("INSTRUCTOR")
-  ownerId       String
-  type          String
-  question      String
-  options       Json?
-  correctAnswer Json?
+  id              String  @id @default(uuid())
+  scope           String  @default("INSTRUCTOR")
+  ownerId         String
+  type            String
+  question        String
+  options         Json?
+  correctAnswer   Json?
   suggestedAnswer String?
-  marks         Int       @default(1)
+  marks           Int     @default(1)
   // Deducted for a wrong answer; fractions allowed (e.g. 0.25).
-  negativeMarks Float     @default(0)
-  partialCredit Boolean   @default(false)
-  difficulty    String    @default("medium")
-  explanation   String?
+  negativeMarks   Float   @default(0)
+  partialCredit   Boolean @default(false)
+  difficulty      String  @default("medium")
+  explanation     String?
 
-  courseId      String
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([scope])
@@ -458,97 +459,121 @@ model Question {
 }
 
 model Exam {
-  id            String    @id @default(uuid())
+  id            String @id @default(uuid())
   courseId      String
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course        Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title         String
   type          String
   duration      Int
   passMark      Int
   totalMarks    Int
-  maxAttempts   Int       @default(3)
-  cooldownHours Int       @default(24)
+  maxAttempts   Int    @default(3)
+  cooldownHours Int    @default(24)
 
-  openDate      DateTime?
-  closeDate     DateTime?
-  randomizeQuestions Boolean @default(false)
-  randomizeOptions   Boolean @default(false)
-  revealAnswers      String  @default("after_pass")
+  openDate           DateTime?
+  closeDate          DateTime?
+  randomizeQuestions Boolean   @default(false)
+  randomizeOptions   Boolean   @default(false)
+  revealAnswers      String    @default("after_pass")
 
-  questions     Json
+  questions Json
 
-  attempts      ExamAttempt[]
+  attempts ExamAttempt[]
+  sessions ExamSession[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([courseId])
 }
 
 model ExamAttempt {
-  id              String    @id @default(uuid())
-  examId          String
-  exam            Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  examId           String
+  exam             Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
   learnerProfileId String
-  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  attemptNumber   Int
-  answers         Json
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  attemptNumber    Int
+  answers          Json
   // Float because negative marking can deduct fractions (rounded to 2 dp).
-  score           Float?
-  totalMarks      Int
-  passed          Boolean?
-  graded          Boolean   @default(false)
-  gradedBy        String?
+  score            Float?
+  totalMarks       Int
+  passed           Boolean?
+  graded           Boolean        @default(false)
+  gradedBy         String?
 
-  startedAt       DateTime  @default(now())
-  submittedAt     DateTime?
-  createdAt       DateTime  @default(now())
+  startedAt   DateTime     @default(now())
+  submittedAt DateTime?
+  createdAt   DateTime     @default(now())
+  session     ExamSession?
 
   @@unique([examId, learnerProfileId, attemptNumber])
   @@index([examId])
   @@index([learnerProfileId])
 }
 
+// An exam the learner has started but not yet submitted. Created by
+// POST /exams/:examId/start with the server's clock, so the time limit can't
+// be stretched by the learner's device. `questionSet` is the exact set served
+// (random for REGULAR exams), which submit grades against. A session left
+// unsubmitted past its deadline still uses up an attempt.
+model ExamSession {
+  id               String         @id @default(uuid())
+  examId           String
+  exam             Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  questionSet      Json
+  startedAt        DateTime       @default(now())
+  // startedAt + duration, capped at the exam's closeDate.
+  deadline         DateTime
+  // Set when submitted; null while in progress or abandoned.
+  attemptId        String?        @unique
+  attempt          ExamAttempt?   @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  @@index([examId, learnerProfileId])
+}
+
 model Certificate {
-  id                  String    @id @default(uuid())
+  id                  String          @id @default(uuid())
   learnerProfileId    String?
   learnerProfile      LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: SetNull)
   courseId            String?
   type                CertificateType
-  verificationCode    String    @unique
+  verificationCode    String          @unique
   learnerNameSnapshot String
   courseTitleSnapshot String
   issuerName          String?
-  issuedAt            DateTime  @default(now())
+  issuedAt            DateTime        @default(now())
   revokedAt           DateTime?
   revokeReason        String?
 
   // Optional link to the exam this certificate was issued for (EXAM type).
-  examId              String?
+  examId  String?
   // Extra snapshot data (e.g. progress status and last exam score).
-  details             Json?
+  details Json?
 
+  @@unique([learnerProfileId, courseId, type])
   @@index([verificationCode])
   @@index([learnerProfileId])
-  @@unique([learnerProfileId, courseId, type])
 }
 
 model Subscription {
-  id                    String             @id @default(uuid())
-  accountId             String
-  account               User               @relation(fields: [accountId], references: [id])
-  stripeSubscriptionId  String             @unique
-  status                SubscriptionStatus
-  seats                 Int                @default(1)
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-  cancelledAt           DateTime?
+  id                   String             @id @default(uuid())
+  accountId            String
+  account              User               @relation(fields: [accountId], references: [id])
+  stripeSubscriptionId String             @unique
+  status               SubscriptionStatus
+  seats                Int                @default(1)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelledAt          DateTime?
 
-  assignedSeats         Seat[]
-  requests              SubscriptionRequest[]
+  assignedSeats Seat[]
+  requests      SubscriptionRequest[]
 
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([accountId])
 }
@@ -565,35 +590,35 @@ model SubscriptionRequest {
   status           SubscriptionRequestStatus @default(PENDING)
 
   // Payment details entered by the account holder
-  paymentMethod    String
-  amount           Decimal                   @db.Decimal(10, 2)
-  currency         String
+  paymentMethod String
+  amount        Decimal  @db.Decimal(10, 2)
+  currency      String
   // Null when a 100% waiver covers the whole price
-  transactionId    String?
-  senderAccount    String?
-  paidAt           DateTime
-  note             String?
-  proofImageUrl    String?
+  transactionId String?
+  senderAccount String?
+  paidAt        DateTime
+  note          String?
+  proofImageUrl String?
 
   // Fee waiver applied to this request (used up when it's approved)
-  waiverId         String?
-  waiver           Waiver?                   @relation(fields: [waiverId], references: [id], onDelete: SetNull)
-  discountPercent  Int                       @default(0)
-  listPrice        Decimal?                  @db.Decimal(10, 2)
+  waiverId        String?
+  waiver          Waiver?  @relation(fields: [waiverId], references: [id], onDelete: SetNull)
+  discountPercent Int      @default(0)
+  listPrice       Decimal? @db.Decimal(10, 2)
 
   // Review
-  reviewedById     String?
-  reviewedAt       DateTime?
-  rejectionReason  String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
 
   // Set on approval: the subscription it created or extended
-  subscriptionId   String?
-  subscription     Subscription?             @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  periodStart      DateTime?
-  periodEnd        DateTime?
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  periodStart    DateTime?
+  periodEnd      DateTime?
 
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status, createdAt])
   @@index([accountId])
@@ -626,8 +651,8 @@ model Waiver {
 
   subscriptionRequests SubscriptionRequest[]
 
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([accountId])
   @@index([learnerProfileId, status])
@@ -635,14 +660,14 @@ model Waiver {
 }
 
 model AuditLog {
-  id            String    @id @default(uuid())
-  userId        String?
-  action        String
-  resource      String
-  resourceId    String?
-  details       Json?
-  ipAddress     String?
-  createdAt     DateTime  @default(now())
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([action])
@@ -650,36 +675,36 @@ model AuditLog {
 }
 
 model Seat {
-  id              String        @id @default(uuid())
-  subscriptionId  String
-  subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  subscriptionId   String
+  subscription     Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   learnerProfileId String
-  learnerProfile  LearnerProfile @relation(fields: [learnerProfileId], references: [id])
-  status          SeatStatus    @default(ACTIVE)
-  assignedAt      DateTime      @default(now())
-  cancelledAt     DateTime?
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id])
+  status           SeatStatus     @default(ACTIVE)
+  assignedAt       DateTime       @default(now())
+  cancelledAt      DateTime?
 
+  @@unique([subscriptionId, learnerProfileId])
   @@index([subscriptionId])
   @@index([learnerProfileId])
-  @@unique([subscriptionId, learnerProfileId])
 }
 
 model SafetyMessage {
-  id          String    @id @default(uuid())
-  messageKey  String    @unique
-  content     Json      // { en: "...", bn: "...", hi: "...", ur: "...", ar: "..." }
-  isHumanTranslated Boolean @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                String   @id @default(uuid())
+  messageKey        String   @unique
+  content           Json // { en: "...", bn: "...", hi: "...", ur: "...", ar: "..." }
+  isHumanTranslated Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model WishlistItem {
-  id                String    @id @default(uuid())
-  learnerProfileId  String
-  learnerProfile    LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  courseId          String
-  course            Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt         DateTime  @default(now())
+  id               String         @id @default(uuid())
+  learnerProfileId String
+  learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
 
   @@unique([learnerProfileId, courseId])
   @@index([learnerProfileId])
@@ -687,15 +712,15 @@ model WishlistItem {
 }
 
 model ChatMessage {
-  id               String    @id @default(uuid())
+  id               String   @id @default(uuid())
   courseId         String
   batchId          String?
   senderId         String
-  senderType       String    @default("ACCOUNT")
+  senderType       String   @default("ACCOUNT")
   displayName      String
   learnerProfileId String?
   message          String
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime @default(now())
 
   @@index([courseId])
   @@index([batchId])
@@ -714,8 +739,8 @@ model Assignment {
   status      String    @default("PUBLISHED")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  batchId String?
-  batch   Batch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batchId     String?
+  batch       Batch?    @relation(fields: [batchId], references: [id], onDelete: SetNull)
 
   submissions AssignmentSubmission[]
 
@@ -723,17 +748,17 @@ model Assignment {
 }
 
 model AssignmentSubmission {
-  id            String    @id @default(uuid())
-  assignmentId  String
-  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  assignmentId     String
+  assignment       Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   learnerProfileId String
   learnerProfile   LearnerProfile @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
-  content       String
-  fileUrl       String?
-  marksAwarded  Int?
-  feedback      String?
-  graded        Boolean   @default(false)
-  submittedAt   DateTime  @default(now())
+  content          String
+  fileUrl          String?
+  marksAwarded     Int?
+  feedback         String?
+  graded           Boolean        @default(false)
+  submittedAt      DateTime       @default(now())
 
   @@unique([assignmentId, learnerProfileId])
   @@index([assignmentId])
@@ -748,30 +773,30 @@ model AssignmentSubmission {
 // profile's account holder (userId) and scoped by learnerProfileId; account,
 // instructor and admin notifications have learnerProfileId = null.
 model Notification {
-  id               String    @id @default(uuid())
+  id               String          @id @default(uuid())
   userId           String
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   learnerProfileId String?
   learnerProfile   LearnerProfile? @relation(fields: [learnerProfileId], references: [id], onDelete: Cascade)
 
-  type             String    // event key, e.g. "exam.graded"
-  category         String    // learning, schedule, enrolment, billing, account, admin, course, chat
-  priority         String    @default("normal") // low | normal | high
-  title            String
-  body             String
-  data             Json?     // ids + deep link route
-  imageUrl         String?
+  type     String // event key, e.g. "exam.graded"
+  category String // learning, schedule, enrolment, billing, account, admin, course, chat
+  priority String  @default("normal") // low | normal | high
+  title    String
+  body     String
+  data     Json? // ids + deep link route
+  imageUrl String?
 
-  dedupeKey        String?   // idempotency per recipient
-  groupKey         String?   // collapse/resolve related notifications
+  dedupeKey String? // idempotency per recipient
+  groupKey  String? // collapse/resolve related notifications
 
-  readAt           DateTime?
-  archivedAt       DateTime?
-  expiresAt        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  readAt     DateTime?
+  archivedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  deliveries       NotificationDelivery[]
+  deliveries NotificationDelivery[]
 
   @@unique([userId, dedupeKey])
   @@index([userId, learnerProfileId, readAt])
@@ -804,7 +829,7 @@ model PushToken {
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   token         String    @unique
-  platform      String    // ios | android | web
+  platform      String // ios | android | web
   deviceId      String?
   appVersion    String?
   locale        String?
@@ -822,8 +847,8 @@ model NotificationBroadcast {
   id              String                @id @default(uuid())
   senderId        String
   sender          User                  @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  senderRole      String                // admin | instructor
-  audience        String                // INSTRUCTORS | LEARNERS | ALL | COURSE | BATCH
+  senderRole      String // admin | instructor
+  audience        String // INSTRUCTORS | LEARNERS | ALL | COURSE | BATCH
   courseId        String?
   courseTitle     String?
   batchId         String?
@@ -844,21 +869,21 @@ model NotificationBroadcast {
 // background, so status and counts update while it is in progress.
 // Attachments are not stored; only their names and sizes are kept.
 model AdminEmail {
-  id             String      @id @default(uuid())
+  id             String    @id @default(uuid())
   senderId       String
-  sender         User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  audience       String      // INSTRUCTORS | LEARNERS | ALL | USERS
+  sender         User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  audience       String // INSTRUCTORS | LEARNERS | ALL | USERS
   subject        String
-  body           String      // Markdown
-  attachments    Json        @default("[]") // [{ name, size, type }]
+  body           String // Markdown
+  attachments    Json      @default("[]") // [{ name, size, type }]
   // Snapshot of the chosen people when audience is USERS: [{ id, name, email }]
   recipients     Json?
-  recipientCount Int         @default(0)
-  sentCount      Int         @default(0)
-  failedCount    Int         @default(0)
-  status         String      @default("SENDING") // SENDING | SENT | PARTIAL | FAILED
+  recipientCount Int       @default(0)
+  sentCount      Int       @default(0)
+  failedCount    Int       @default(0)
+  status         String    @default("SENDING") // SENDING | SENT | PARTIAL | FAILED
   completedAt    DateTime?
-  createdAt      DateTime    @default(now())
+  createdAt      DateTime  @default(now())
 
   @@index([createdAt])
 }
@@ -890,17 +915,17 @@ model SitePage {
   publishedAt DateTime?
   updatedById String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model FaqItem {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   category  String
   question  String
   answer    String
-  order     Int      @default(0)
-  published Boolean  @default(true)
+  order     Int     @default(0)
+  published Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

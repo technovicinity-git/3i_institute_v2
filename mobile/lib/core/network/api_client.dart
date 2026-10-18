@@ -23,6 +23,8 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          // Lets the API answer in the user's language.
+          options.headers['Accept-Language'] = languageCode;
           handler.next(options);
         },
         onError: (error, handler) async {
@@ -75,6 +77,9 @@ class ApiClient {
   late final Dio dio;
   Future<String?>? _refreshFuture;
   FutureOr<void> Function()? onSessionExpired;
+
+  /// The app's interface language (kept in sync by LanguageController).
+  String languageCode = 'en';
 
   Future<void> saveTokens({
     required String accessToken,

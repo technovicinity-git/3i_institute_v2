@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { useTestimonials } from "@/hooks/use-site";
+import { useTranslations } from "next-intl";
 
 /**
  * Real written reviews from learners. Learners can be minors, so a review is
  * attributed to its course, never to a person.
  */
 export default function Testimonials() {
+  const tr = useTranslations("landing.testimonials");
   const { data: testimonials } = useTestimonials();
 
   if (!testimonials || testimonials.length === 0) return null;
@@ -18,10 +20,10 @@ export default function Testimonials() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <p className="text-xs font-semibold text-brand-gold uppercase tracking-widest mb-2">
-            Student Reviews
+            {tr("eyebrow")}
           </p>
           <h2 className="font-serif text-3xl md:text-4xl text-brand-navy">
-            What Our Learners Say
+            {tr("title")}
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -30,7 +32,7 @@ export default function Testimonials() {
               key={t.id}
               className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 flex flex-col"
             >
-              <div className="flex gap-0.5 mb-4" aria-label={`${t.rating} out of 5 stars`}>
+              <div className="flex gap-0.5 mb-4" aria-label={tr("stars", { rating: t.rating })}>
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
@@ -42,7 +44,7 @@ export default function Testimonials() {
                 &quot;{t.review}&quot;
               </p>
               <p className="text-xs text-gray-500">
-                Learner review ·{" "}
+                {tr("learnerReview")} ·{" "}
                 <Link
                   href={`/courses/${t.courseId}`}
                   className="font-semibold text-brand-navy hover:underline"

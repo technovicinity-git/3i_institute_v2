@@ -8,6 +8,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/assignment.dart';
 import '../assignments_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -53,7 +54,7 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Assignment submitted')));
+        ).showSnackBar(SnackBar(content: Text(context.l10n.assignSubmitted)));
       }
     } catch (error) {
       if (mounted) {
@@ -62,7 +63,7 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
             content: Text(
               apiErrorMessage(
                 error,
-                fallback: 'Could not submit this assignment.',
+                fallback: context.l10n.assignSubmitFailed,
               ),
             ),
           ),
@@ -77,8 +78,8 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view assignments.'),
+      return Center(
+        child: Text(context.l10n.assignSelectProfile),
       );
     }
     final key = '${widget.courseId}|${profile.id}';
@@ -87,11 +88,11 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
       loading: () =>
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _AssignmentState(
-        title: 'Could not load assignments',
-        message: 'Check your connection and try again.',
+        title: context.l10n.assignLoadFailed,
+        message: context.l10n.commonCheckConnection,
         action: TextButton(
           onPressed: () => ref.invalidate(courseAssignmentsProvider(key)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (assignments) => RefreshIndicator(
@@ -103,7 +104,7 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
             TextButton.icon(
               onPressed: () => context.go('/assignments'),
               icon: const Icon(Icons.arrow_back, size: 18),
-              label: const Text('Back to assignments'),
+              label: Text(context.l10n.assignBack),
               style: TextButton.styleFrom(
                 alignment: Alignment.centerLeft,
                 foregroundColor: const Color(0xFF64748B),
@@ -111,7 +112,7 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
             ),
             const SizedBox(height: 7),
             Text(
-              'Assignments',
+              context.l10n.assignTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontFamily: 'serif',
                 color: const Color(0xFF0C1F33),
@@ -119,14 +120,14 @@ class _CourseAssignmentsPageState extends ConsumerState<CourseAssignmentsPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              '${assignments.length} assignment${assignments.length == 1 ? '' : 's'} for this course',
+              context.l10n.assignCount(assignments.length),
               style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 17),
             if (assignments.isEmpty)
-              const _AssignmentState(
-                title: 'No assignments yet',
-                message: 'There are no assignments for this course yet.',
+              _AssignmentState(
+                title: context.l10n.assignNone,
+                message: context.l10n.assignNoneBody,
                 icon: Icons.assignment_outlined,
               )
             else
@@ -175,8 +176,8 @@ class _AssignmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final submission = assignment.submission;
     final due = assignment.dueDate == null
-        ? 'No deadline'
-        : DateFormat('MMM d, y').format(assignment.dueDate!);
+        ? context.l10n.assignNoDeadline
+        : DateFormat.yMMMd().format(assignment.dueDate!);
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 13),
@@ -223,10 +224,10 @@ class _AssignmentCard extends StatelessWidget {
               spacing: 15,
               runSpacing: 7,
               children: [
-                _Meta(icon: Icons.schedule, label: 'Due: $due'),
+                _Meta(icon: Icons.schedule, label: context.l10n.assignDue(due)),
                 _Meta(
                   icon: Icons.grade_outlined,
-                  label: '${assignment.totalMarks} marks',
+                  label: context.l10n.assignMarks(assignment.totalMarks),
                 ),
               ],
             ),
@@ -242,8 +243,8 @@ class _AssignmentCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'YOUR SUBMISSION',
+                    Text(
+                      context.l10n.assignYourSubmission,
                       style: TextStyle(
                         fontSize: 10,
                         letterSpacing: .5,
@@ -266,13 +267,13 @@ class _AssignmentCard extends StatelessWidget {
                         onPressed: () =>
                             _openSubmissionFile(context, submission.fileUrl!),
                         icon: const Icon(Icons.attach_file, size: 16),
-                        label: const Text('Open attached file'),
+                        label: Text(context.l10n.assignOpenFile),
                       ),
                     ],
                     if (submission.graded) ...[
                       const Divider(height: 20),
                       Text(
-                        'Marks: ${_number(submission.marksAwarded ?? 0)}/${assignment.totalMarks}',
+                        context.l10n.assignMarksAwarded(_number(submission.marksAwarded ?? 0), assignment.totalMarks),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           color: _green,
@@ -281,7 +282,7 @@ class _AssignmentCard extends StatelessWidget {
                       if (submission.feedback?.isNotEmpty == true) ...[
                         const SizedBox(height: 5),
                         Text(
-                          'Feedback: ${submission.feedback}',
+                          context.l10n.assignFeedback('${submission.feedback}'),
                           style: const TextStyle(
                             fontSize: 13,
                             height: 1.4,
@@ -300,7 +301,7 @@ class _AssignmentCard extends StatelessWidget {
                 maxLines: 8,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: 'Write your answer...',
+                  hintText: context.l10n.assignAnswerHint,
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -314,7 +315,7 @@ class _AssignmentCard extends StatelessWidget {
                 children: [
                   OutlinedButton(
                     onPressed: anySubmitting ? null : onCancel,
-                    child: const Text('Cancel'),
+                    child: Text(context.l10n.commonCancel),
                   ),
                   ValueListenableBuilder<TextEditingValue>(
                     valueListenable: answerController,
@@ -333,7 +334,7 @@ class _AssignmentCard extends StatelessWidget {
                             )
                           : const Icon(Icons.send_outlined, size: 17),
                       label: Text(
-                        isSubmitting ? 'Submitting…' : 'Submit assignment',
+                        isSubmitting ? context.l10n.assignSubmitting : context.l10n.assignSubmit,
                       ),
                       style: FilledButton.styleFrom(backgroundColor: _green),
                     ),
@@ -344,7 +345,7 @@ class _AssignmentCard extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onSelect,
                 icon: const Icon(Icons.edit_note, size: 18),
-                label: const Text('Submit assignment'),
+                label: Text(context.l10n.assignSubmit),
                 style: FilledButton.styleFrom(backgroundColor: _navy),
               ),
           ],
@@ -365,7 +366,7 @@ class _StatusChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
-      graded ? 'GRADED' : 'SUBMITTED',
+      graded ? context.l10n.assignGraded : context.l10n.assignSubmittedBadge,
       style: TextStyle(
         fontSize: 9,
         fontWeight: FontWeight.w700,
@@ -443,7 +444,7 @@ Future<void> _openSubmissionFile(BuildContext context, String value) async {
   }
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open the attached file.')),
+      SnackBar(content: Text(context.l10n.assignFileFailed)),
     );
   }
 }

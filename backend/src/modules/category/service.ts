@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { recordAudit } from "#/shared/audit";
 import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
 import type {
   CreateCategoryInput,
@@ -84,7 +85,7 @@ export class CategoryService {
     return updated;
   }
 
-  async delete(categoryId: string) {
+  async delete(categoryId: string, actorId: string) {
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
       include: {
@@ -106,6 +107,13 @@ export class CategoryService {
 
     await prisma.category.delete({
       where: { id: categoryId },
+    });
+    await recordAudit({
+      actorId,
+      action: "CATEGORY_DELETED",
+      resource: "category",
+      resourceId: categoryId,
+      details: { name: category.name },
     });
   }
 

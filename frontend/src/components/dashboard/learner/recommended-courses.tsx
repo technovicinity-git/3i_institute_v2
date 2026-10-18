@@ -4,19 +4,21 @@ import { BookOpen, Star } from "lucide-react";
 import type { RecommendedCourse } from "@/types/dashboard";
 import { SectionHeader } from "./section-header";
 import { card, serif } from "./utils";
+import { useTranslations } from "next-intl";
 
 export function RecommendedCourses({
   courses,
 }: {
   courses: RecommendedCourse[];
 }) {
+  const t = useTranslations("dashboardHome");
   if (courses.length === 0) return null;
   return (
     <div>
       <SectionHeader
-        title="Recommended for you"
+        title={t("recommended.title")}
         href="/courses"
-        linkLabel="Browse all"
+        linkLabel={t("browseAll")}
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {courses.map((course) => (
@@ -39,8 +41,8 @@ export function RecommendedCourses({
                 </div>
               )}
               {course.type === "ONLINE_CLASS" && (
-                <span className="absolute top-3 left-3 text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
-                  LIVE
+                <span className="absolute top-3 start-3 text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
+                  {t("recommended.live")}
                 </span>
               )}
             </div>
@@ -57,7 +59,7 @@ export function RecommendedCourses({
               <div className="flex items-center gap-1 mt-3 text-[12px]">
                 <Star className="w-3.5 h-3.5 text-[#B8912F] fill-[#B8912F]" />
                 <span className="font-semibold text-[#0C1F33]">
-                  {course.rating ?? "New"}
+                  {course.rating ?? t("recommended.new")}
                 </span>
                 {course.ratingCount > 0 && (
                   <span className="text-[#94A3B8]">({course.ratingCount})</span>

@@ -18,6 +18,7 @@ import {
   type ShareChannel,
   type ShareContent,
 } from "@/lib/share";
+import { useTranslations } from "next-intl";
 
 interface ShareDialogProps extends ShareContent {
   open: boolean;
@@ -105,6 +106,7 @@ export function ShareDialog({
   imageUrl,
   subtitle,
 }: ShareDialogProps) {
+  const t = useTranslations("share");
   const [copied, setCopied] = useState(false);
   const content: ShareContent = { url, title, text, campaign };
   const copyUrl = withShareTracking(url, "copy", campaign);
@@ -125,9 +127,9 @@ export function ShareDialog({
   const handleCopy = async () => {
     if (await copyToClipboard(copyUrl)) {
       setCopied(true);
-      toast.success("Link copied");
+      toast.success(t("linkCopied"));
     } else {
-      toast.error("Couldn't copy the link. Please copy it manually.");
+      toast.error(t("copyFailed"));
     }
   };
 
@@ -142,7 +144,7 @@ export function ShareDialog({
     } catch (error) {
       // AbortError = the user closed the share sheet.
       if ((error as Error)?.name !== "AbortError") {
-        toast.error("Sharing isn't available right now. Copy the link instead.");
+        toast.error(t("nativeFailed"));
       }
     }
   };
@@ -165,12 +167,12 @@ export function ShareDialog({
         <DialogHeader>
           <DialogTitle
             className="text-xl text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            Share this course
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-sm text-[#64748B]">
-            Invite friends and family to learn with you.
+            {t("subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -202,7 +204,7 @@ export function ShareDialog({
             className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4268]"
           >
             <Share2 className="w-4 h-4" />
-            Share via…
+            {t("via")}
           </button>
         )}
 
@@ -213,7 +215,9 @@ export function ShareDialog({
               type="button"
               onClick={() => openTarget(item.channel)}
               className="flex flex-col items-center gap-1.5 rounded-lg p-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22A146]/40"
-              aria-label={`Share on ${item.label}`}
+              aria-label={t("on", {
+                channel: item.channel === "email" ? t("email") : item.label,
+              })}
             >
               <span
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white"
@@ -221,7 +225,9 @@ export function ShareDialog({
               >
                 {item.icon}
               </span>
-              <span className="text-[11px] text-[#475569]">{item.label}</span>
+              <span className="text-[11px] text-[#475569]">
+                {item.channel === "email" ? t("email") : item.label}
+              </span>
             </button>
           ))}
         </div>
@@ -231,7 +237,7 @@ export function ShareDialog({
             htmlFor="share-link"
             className="block text-xs font-semibold text-[#64748B] mb-1.5"
           >
-            Course link
+            {t("link")}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -239,6 +245,7 @@ export function ShareDialog({
               readOnly
               value={url}
               onFocus={(event) => event.currentTarget.select()}
+              dir="ltr"
               className="flex-1 min-w-0 h-10 px-3 bg-white border border-[#E3E8EF] rounded-lg text-sm text-[#0C1F33]"
             />
             <button
@@ -251,7 +258,7 @@ export function ShareDialog({
               ) : (
                 <Copy className="w-4 h-4" />
               )}
-              {copied ? "Copied" : "Copy"}
+              {copied ? t("copied") : t("copy")}
             </button>
           </div>
         </div>

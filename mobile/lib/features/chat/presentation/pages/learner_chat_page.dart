@@ -11,6 +11,7 @@ import '../../../learning/presentation/learning_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../chat_providers.dart';
 import '../../data/chat_repository.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -69,8 +70,8 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
         setState(() {
           _loading = false;
           _error = widget.courseId.isEmpty
-              ? 'Course not specified.'
-              : 'Select a learner profile to join this class chat.';
+              ? context.l10n.chatNoCourse
+              : context.l10n.chatSelectProfile;
         });
       }
       return;
@@ -129,7 +130,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Unable to connect to class chat. Please try again.';
+          _error = context.l10n.chatConnectFailed;
         });
       }
     }
@@ -162,8 +163,8 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
     if (!_isInstructor && profileId == null) return;
     if (text.length > 2000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Messages can be up to 2,000 characters.'),
+        SnackBar(
+          content: Text(context.l10n.chatTooLong),
         ),
       );
       return;
@@ -178,19 +179,19 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
     final reason = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Report message'),
+        title: Text(context.l10n.chatReportTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Why should this message be reviewed?'),
+            Text(context.l10n.chatReportWhy),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Explain the issue...',
+              decoration: InputDecoration(
+                hintText: context.l10n.chatReportHint,
               ),
             ),
           ],
@@ -198,12 +199,12 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(context, reasonController.text.trim()),
-            child: const Text('Submit report'),
+            child: Text(context.l10n.chatSubmitReport),
           ),
         ],
       ),
@@ -214,14 +215,14 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
       await ref.read(chatRepositoryProvider).reportMessage(message.id, reason);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Message reported for review.')),
+          SnackBar(content: Text(context.l10n.chatReported)),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not report the message. Please try again.'),
+          SnackBar(
+            content: Text(context.l10n.chatReportFailed),
           ),
         );
       }
@@ -239,7 +240,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
       nextLiveSessionProvider(widget.batchId ?? ''),
     );
     final session = sessionAsync.asData?.value;
-    final currentName = profile?.displayName ?? account?.fullName ?? 'Learner';
+    final currentName = profile?.displayName ?? account?.fullName ?? context.l10n.commonLearner;
     return Column(
       children: [
         Container(
@@ -277,7 +278,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${widget.batchName} • Class chat',
+                      context.l10n.chatClassChat(widget.batchName),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF475569),
@@ -299,7 +300,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
             actions: [
               TextButton(
                 onPressed: () => setState(() => _error = null),
-                child: const Text('Dismiss'),
+                child: Text(context.l10n.chatDismiss),
               ),
             ],
           ),
@@ -333,7 +334,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
                             });
                             _initializeChat();
                           },
-                          child: const Text('Retry'),
+                          child: Text(context.l10n.chatRetry),
                         ),
                       ],
                     ),
@@ -403,8 +404,8 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
                     onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(
                       hintText: _connected
-                          ? 'Type a message...'
-                          : 'Connecting...',
+                          ? context.l10n.chatPlaceholder
+                          : context.l10n.chatConnecting,
                       filled: true,
                       fillColor: const Color(0xFFFBF9F4),
                       contentPadding: const EdgeInsets.symmetric(
@@ -425,7 +426,7 @@ class _LearnerChatPageState extends ConsumerState<LearnerChatPage> {
                 const SizedBox(width: 9),
                 IconButton.filled(
                   onPressed: _connected ? _sendMessage : null,
-                  tooltip: 'Send message',
+                  tooltip: context.l10n.chatSend,
                   style: IconButton.styleFrom(
                     backgroundColor: _green,
                     foregroundColor: _navy,
@@ -461,7 +462,7 @@ class _ConnectionBadge extends StatelessWidget {
         ),
         const SizedBox(width: 5),
         Text(
-          connected ? 'Live' : 'Offline',
+          connected ? context.l10n.chatLive : context.l10n.chatOffline,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -503,8 +504,8 @@ class _NextClassBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'NEXT LIVE CLASS',
+              Text(
+                context.l10n.chatNextClass.toUpperCase(),
                 style: TextStyle(
                   color: Color(0xFF157A34),
                   fontSize: 10,
@@ -523,7 +524,7 @@ class _NextClassBar extends StatelessWidget {
                 ),
               ),
               Text(
-                '${_time(session.scheduledAt)} • ${session.durationMinutes} min',
+                '${_time(context.l10n, session.scheduledAt)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
                 style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
               ),
             ],
@@ -538,7 +539,7 @@ class _NextClassBar extends StatelessWidget {
               }
             },
             icon: const Icon(Icons.open_in_new, color: _green),
-            tooltip: 'Join class',
+            tooltip: context.l10n.chatJoinClass,
           ),
       ],
     ),
@@ -548,7 +549,7 @@ class _NextClassBar extends StatelessWidget {
 class _ChatEmptyState extends StatelessWidget {
   const _ChatEmptyState();
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
       padding: EdgeInsets.all(28),
       child: Column(
@@ -561,7 +562,7 @@ class _ChatEmptyState extends StatelessWidget {
           ),
           SizedBox(height: 12),
           Text(
-            'No messages yet. Say hello to your classmates!',
+            context.l10n.chatEmpty,
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
           ),
@@ -586,7 +587,7 @@ class _DateDivider extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
-          DateFormat('EEEE, MMMM d, y').format(date),
+          DateFormat.yMMMMEEEEd().format(date),
           style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -645,7 +646,7 @@ class _MessageBubble extends StatelessWidget {
                       children: [
                         if (isSelf && time != null)
                           Text(
-                            DateFormat('h:mm a').format(time),
+                            DateFormat.jm().format(time),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF475569),
@@ -671,8 +672,8 @@ class _MessageBubble extends StatelessWidget {
                               color: _green,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'INSTRUCTOR',
+                            child: Text(
+                              context.l10n.chatInstructor,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 8,
@@ -684,7 +685,7 @@ class _MessageBubble extends StatelessWidget {
                         if (!isSelf && time != null) ...[
                           const SizedBox(width: 6),
                           Text(
-                            DateFormat('h:mm a').format(time),
+                            DateFormat.jm().format(time),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF475569),
@@ -700,7 +701,7 @@ class _MessageBubble extends StatelessWidget {
                   children: [
                     if (onReport != null)
                       PopupMenuButton<String>(
-                        tooltip: 'Message actions',
+                        tooltip: context.l10n.chatMessageActions,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 36),
                         iconSize: 17,
@@ -709,14 +710,14 @@ class _MessageBubble extends StatelessWidget {
                           color: Color(0xFF64748B),
                         ),
                         onSelected: (_) => onReport!(),
-                        itemBuilder: (_) => const [
+                        itemBuilder: (_) => [
                           PopupMenuItem(
                             value: 'report',
                             child: Row(
                               children: [
                                 Icon(Icons.flag_outlined, size: 18),
                                 SizedBox(width: 8),
-                                Text('Report message'),
+                                Text(context.l10n.chatReportTitle),
                               ],
                             ),
                           ),
@@ -819,9 +820,9 @@ class _Avatar extends StatelessWidget {
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
-String _time(String value) {
+String _time(AppLocalizations l10n, String value) {
   final date = DateTime.tryParse(value)?.toLocal();
   return date == null
-      ? 'Time to be announced'
-      : '${DateFormat('EEE, MMM d').format(date)} at ${DateFormat('h:mm a').format(date)}';
+      ? l10n.chatTimeTba
+      : l10n.chatDateAt(DateFormat.MMMEd().format(date), DateFormat.jm().format(date));
 }

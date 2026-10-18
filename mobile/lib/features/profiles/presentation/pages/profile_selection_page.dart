@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
 import '../widgets/learner_avatar.dart';
@@ -28,10 +29,10 @@ class ProfileSelectionPage extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Could not load learner profiles.'),
+                    Text(context.l10n.profilesLoadFailed),
                     TextButton(
                       onPressed: () => ref.invalidate(learnerProfilesProvider),
-                      child: const Text('Try again'),
+                      child: Text(context.l10n.commonTryAgain),
                     ),
                   ],
                 ),
@@ -54,16 +55,16 @@ class ProfileSelectionPage extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'International Islamic Institute',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.commonInstituteName,
+                      style: const TextStyle(
                         color: Color(0xFFB8912F),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Who’s learning today?',
+                      context.l10n.profilesWhoIsLearning,
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
                             fontFamily: 'serif',
@@ -72,8 +73,8 @@ class ProfileSelectionPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 26),
                     if (items.isEmpty)
-                      const Text(
-                        'Add a learner profile to get started.',
+                      Text(
+                        context.l10n.profilesEmpty,
                         textAlign: TextAlign.center,
                       ),
                     Wrap(
@@ -109,15 +110,15 @@ class ProfileSelectionPage extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 5),
                                     Text(
-                                      _ageLabel(profile.dateOfBirth),
+                                      _ageLabel(context.l10n, profile.dateOfBirth),
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Color(0xFF64748B),
                                       ),
                                     ),
                                     if (!profile.isActive)
-                                      const Text(
-                                        'Not subscribed',
+                                      Text(
+                                        context.l10n.commonNotSubscribed,
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: Colors.deepOrange,
@@ -135,18 +136,18 @@ class ProfileSelectionPage extends ConsumerWidget {
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () => context.push('/profiles/add'),
-                              child: const Column(
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.add_circle_outline,
                                     size: 42,
                                     color: Color(0xFF64748B),
                                   ),
-                                  SizedBox(height: 10),
+                                  const SizedBox(height: 10),
                                   Text(
-                                    'Add learner',
-                                    style: TextStyle(
+                                    context.l10n.profilesAddLearner,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -171,7 +172,7 @@ class ProfileSelectionPage extends ConsumerWidget {
                         if (context.mounted) context.go('/login');
                       },
                       icon: const Icon(Icons.logout),
-                      label: const Text('Log out'),
+                      label: Text(context.l10n.profilesLogOut),
                     ),
                   ],
                 ),
@@ -239,18 +240,18 @@ Future<PinCheckResult> _verifyPin(
   }
 }
 
-String _ageLabel(String dateOfBirth) {
+String _ageLabel(AppLocalizations l10n, String dateOfBirth) {
   final date = DateTime.tryParse(dateOfBirth);
-  if (date == null) return 'Learner';
+  if (date == null) return l10n.commonLearner;
   final now = DateTime.now();
   var age = now.year - date.year;
   if (now.month < date.month ||
       (now.month == date.month && now.day < date.day)) {
     age--;
   }
-  if (age >= 18) return 'Adult';
-  if (age >= 13) return 'Ages 13–17';
-  if (age >= 9) return 'Ages 9–12';
-  if (age >= 6) return 'Ages 6–8';
-  return 'Ages 5 and under';
+  if (age >= 18) return l10n.commonAdult;
+  if (age >= 13) return l10n.commonAgeRange('13', '17');
+  if (age >= 9) return l10n.commonAgeRange('9', '12');
+  if (age >= 6) return l10n.commonAgeRange('6', '8');
+  return l10n.commonAgeUnder('5');
 }

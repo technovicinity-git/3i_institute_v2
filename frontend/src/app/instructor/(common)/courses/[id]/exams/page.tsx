@@ -28,7 +28,7 @@ export default function ExamsPage() {
           <div>
             <h1
               className="text-3xl md:text-[36px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Exams
             </h1>
@@ -99,7 +99,7 @@ export default function ExamsPage() {
                     </div>
                     <h2
                       className="text-lg font-semibold text-[#0C1F33]"
-                      style={{ fontFamily: "'Marcellus', serif" }}
+                      style={{ fontFamily: "var(--font-display)" }}
                     >
                       {exam.title}
                     </h2>

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/auth/google_auth.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import 'auth_scaffold.dart';
@@ -50,7 +51,10 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
         setState(
           () => _error = error is GoogleAuthConfigException
               ? error.message
-              : apiErrorMessage(error, fallback: 'Google sign-in failed.'),
+              : apiErrorMessage(
+                  error,
+                  fallback: context.l10n.socialGoogleFailed,
+                ),
         );
       }
     } finally {
@@ -59,6 +63,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
   }
 
   Future<void> _appleSignIn() async {
+    final noTokenMessage = context.l10n.socialAppleNoToken;
     setState(() {
       _appleLoading = true;
       _error = null;
@@ -72,7 +77,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       );
       final identityToken = credential.identityToken;
       if (identityToken == null || identityToken.isEmpty) {
-        throw Exception('Apple did not return an identity token.');
+        throw Exception(noTokenMessage);
       }
       await _completeSocialLogin(
         provider: 'Apple',
@@ -93,7 +98,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
         setState(
           () => _error = apiErrorMessage(
             error,
-            fallback: 'Apple sign-in failed.',
+            fallback: context.l10n.socialAppleFailed,
           ),
         );
       }
@@ -116,8 +121,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       if (dateOfBirth == null) {
         if (mounted) {
           setState(
-            () => _error =
-                'Your date of birth is required to create an account with $provider.',
+            () => _error = context.l10n.socialDobRequired(provider),
           );
         }
         return;
@@ -129,29 +133,26 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
     }
   }
 
-  bool _needsDateOfBirth(Object error) => apiErrorMessage(
-    error,
-    fallback: '',
-  ).toLowerCase().contains('date of birth');
+  bool _needsDateOfBirth(Object error) =>
+      apiErrorCode(error) == 'DATE_OF_BIRTH_REQUIRED' ||
+      // Servers from before the error code was added
+      apiErrorMessage(error, fallback: '').toLowerCase().contains('date of birth');
 
   Future<String?> _askForDateOfBirth(String provider) async {
     final now = DateTime.now();
     final proceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create your account'),
-        content: Text(
-          "There's no 3i account for this $provider email yet. To create one, "
-          'enter your date of birth. You must be at least 13 years old.',
-        ),
+        title: Text(context.l10n.socialCreateTitle),
+        content: Text(context.l10n.socialCreateBody(provider)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Continue'),
+            child: Text(context.l10n.commonContinue),
           ),
         ],
       ),
@@ -163,7 +164,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       firstDate: DateTime(1900),
       lastDate: DateTime(now.year - 13, now.month, now.day),
       initialEntryMode: DatePickerEntryMode.calendarOnly,
-      helpText: 'Select your date of birth',
+      helpText: context.l10n.authSelectDob,
     );
     return selected == null ? null : DateFormat('yyyy-MM-dd').format(selected);
   }
@@ -182,7 +183,9 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
               )
             : const _GoogleLogo(size: 20),
         label: Text(
-          widget.isSignUp ? 'Sign up with Google' : 'Continue with Google',
+          widget.isSignUp
+              ? context.l10n.socialSignUpGoogle
+              : context.l10n.socialContinueGoogle,
         ),
         style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       ),
@@ -197,7 +200,9 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
                 )
               : const Icon(Icons.apple, size: 22),
           label: Text(
-            widget.isSignUp ? 'Sign up with Apple' : 'Continue with Apple',
+            widget.isSignUp
+                ? context.l10n.socialSignUpApple
+                : context.l10n.socialContinueApple,
           ),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),

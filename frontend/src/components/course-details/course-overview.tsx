@@ -1,15 +1,17 @@
 import { CheckCircle } from "lucide-react";
 import type { CourseDetails } from "@/types/course-details";
+import { useTranslations } from "next-intl";
 
 /** "What you'll learn", "Requirements" and "About this course". */
 export function CourseOverview({ course }: { course: CourseDetails }) {
+  const t = useTranslations("courseDetails");
   return (
     <>
       {/* What you'll learn */}
       {course.learningOutcomes.length > 0 && (
         <div className="border border-[#E3E8EF] rounded-xl p-8 bg-[#FBF9F4]">
           <h2 className="font-serif text-[22px] text-[#0C1F33] mb-6">
-            What you&apos;ll learn
+            {t("learn")}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
             {course.learningOutcomes.map((item, i) => (
@@ -29,7 +31,7 @@ export function CourseOverview({ course }: { course: CourseDetails }) {
       {course.requirements.length > 0 && (
         <div>
           <h2 className="font-serif text-[22px] text-[#0C1F33] mb-4">
-            Requirements
+            {t("requirements")}
           </h2>
           <ul className="space-y-2.5">
             {course.requirements.map((req, i) => (
@@ -52,7 +54,7 @@ export function CourseOverview({ course }: { course: CourseDetails }) {
       {course.aboutParagraphs.length > 0 && (
         <div>
           <h2 className="font-serif text-[28px] text-[#0C1F33] mb-5">
-            About this course
+            {t("about")}
           </h2>
           <div className="space-y-5">
             {course.aboutParagraphs.map((p, i) => (

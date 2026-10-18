@@ -34,14 +34,14 @@ export class AdminController {
 
   archiveLearnerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await adminService.archiveLearnerProfile(req.params["id"] as string);
+      const result = await adminService.archiveLearnerProfile(req.params["id"] as string, req.user!.sub);
       sendSuccess(res, result, 200);
     } catch (error) { next(error); }
   };
 
   restoreLearnerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await adminService.restoreLearnerProfile(req.params["id"] as string);
+      const result = await adminService.restoreLearnerProfile(req.params["id"] as string, req.user!.sub);
       sendSuccess(res, result, 200);
     } catch (error) { next(error); }
   };
@@ -83,7 +83,7 @@ export class AdminController {
   activateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.params["id"] as string;
-      const result = await adminService.activateUser(userId);
+      const result = await adminService.activateUser(userId, req.user!.sub);
       sendSuccess(res, result, 200, "User activated");
     } catch (error) {
       next(error);
@@ -159,7 +159,7 @@ export class AdminController {
   suspendCourse = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const courseId = req.params["id"] as string;
-      const result = await adminService.suspendCourse(courseId);
+      const result = await adminService.suspendCourse(courseId, req.user!.sub);
       sendSuccess(res, result, 200, "Course suspended");
     } catch (error) {
       next(error);
@@ -169,7 +169,7 @@ export class AdminController {
   activateCourse = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const courseId = req.params["id"] as string;
-      const result = await adminService.activateCourse(courseId);
+      const result = await adminService.activateCourse(courseId, req.user!.sub);
       sendSuccess(res, result, 200, "Course activated");
     } catch (error) {
       next(error);

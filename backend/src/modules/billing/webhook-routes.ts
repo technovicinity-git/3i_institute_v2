@@ -12,6 +12,8 @@ const router: Router = Router();
 
 router.post(
   "/stripe",
+  // Raw body, not JSON: the signature is computed over the exact bytes
+  // Stripe sent. This is why app.ts mounts webhooks before express.json().
   express.raw({ type: "application/json" }),
   async (req: Request, res: Response, _next: NextFunction) => {
     try {
@@ -39,6 +41,9 @@ router.post(
         return;
       }
 
+      // Acknowledged before processing so Stripe doesn't time out and resend.
+      // Trade-off: if a handler below throws, Stripe won't retry the event —
+      // the error is only logged.
       res.status(200).json({ received: true });
 
       await handleStripeWebhook(event.type, event.data.object);

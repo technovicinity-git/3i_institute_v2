@@ -167,7 +167,7 @@ function Editor({
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Page title"
         className="w-full text-2xl md:text-3xl text-[#0C1F33] bg-transparent border-b border-[#E3E8EF] pb-2 mb-6 focus:outline-none focus:border-[#12304E]"
-        style={{ fontFamily: "'Marcellus', serif" }}
+        style={{ fontFamily: "var(--font-display)" }}
       />
 
       <div className="flex items-center justify-between mb-2">

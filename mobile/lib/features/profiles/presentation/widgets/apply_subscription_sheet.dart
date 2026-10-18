@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _ink = Color(0xff0c1f33);
 const _muted = Color(0xff475569);
@@ -94,13 +95,14 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
   }
 
   Future<void> _pickImage() async {
+    final l10n = context.l10n;
     final image = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
     if (image == null) return;
     if (await image.length() > _maxImageBytes) {
-      _notify('Image must be 5 MB or smaller');
+      _notify(l10n.imageTooLarge);
       return;
     }
     final bytes = await image.readAsBytes();
@@ -116,13 +118,14 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
         });
       }
     } catch (error) {
-      _notify(apiErrorMessage(error, fallback: 'Failed to upload the image'));
+      _notify(apiErrorMessage(error, fallback: l10n.commonImageUploadFailed));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
@@ -148,7 +151,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       _notify(
-        apiErrorMessage(error, fallback: 'Failed to submit your payment'),
+        apiErrorMessage(error, fallback: l10n.applySubmitFailed),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -179,7 +182,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${profile.isSubscribed ? 'Renew' : 'Apply for'} ${profile.displayName}’s subscription',
+                  profile.isSubscribed ? context.l10n.applyRenewTitle(profile.displayName) : context.l10n.applyApplyTitle(profile.displayName),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontFamily: 'serif',
                     color: _ink,
@@ -188,14 +191,8 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                 const SizedBox(height: 6),
                 Text(
                   _fullyWaived
-                      ? '${profile.displayName}’s fee waiver covers the whole '
-                            'month, so no payment is needed. An admin will '
-                            'approve it and subscribe ${profile.displayName} '
-                            'for one month.'
-                      : 'Enter the details of your '
-                            '${formatMoney(_amountDue, payment.currency)} '
-                            'payment. An admin will check it and subscribe '
-                            '${profile.displayName} for one month.',
+                      ? context.l10n.applyFullyWaivedBody(profile.displayName)
+                      : context.l10n.applyPaymentBody(formatMoney(_amountDue, payment.currency), profile.displayName),
                   style: const TextStyle(color: _muted, fontSize: 13),
                 ),
                 if (_discount > 0) ...[
@@ -219,11 +216,11 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                         Expanded(
                           child: Text(
                             _fullyWaived
-                                ? '$_discount% fee waiver applied. Nothing to pay this month.'
-                                : '$_discount% fee waiver applied: '
+                                ? '${context.l10n.applyWaiverApplied(_discount)}. ${context.l10n.applyNothingToPay}'
+                                : '${context.l10n.applyWaiverApplied(_discount)}: '
                                       '${formatMoney(payment.monthlyPrice, payment.currency)} → '
                                       '${formatMoney(_amountDue, payment.currency)}. '
-                                      'It’s used once this subscription is approved.',
+                                      '${context.l10n.applyWaiverUsedNote}',
                             style: const TextStyle(fontSize: 13, color: _ink),
                           ),
                         ),
@@ -236,7 +233,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                   DropdownButtonFormField<String>(
                     initialValue: _method,
                     isExpanded: true,
-                    decoration: _decoration('Paid to'),
+                    decoration: _decoration(context.l10n.applyPaidTo),
                     items: [
                       for (final account in payment.accounts)
                         DropdownMenuItem(
@@ -246,9 +243,9 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                         value: _otherMethod,
-                        child: Text('Other'),
+                        child: Text(context.l10n.subTypeOther),
                       ),
                     ],
                     onChanged: (value) =>
@@ -265,12 +262,12 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                             decimal: true,
                           ),
                           decoration: _decoration(
-                            'Amount (${payment.currency})',
+                            context.l10n.applyAmount(payment.currency),
                           ),
                           validator: (value) {
                             final amount = double.tryParse(value?.trim() ?? '');
                             return amount == null || amount <= 0
-                                ? 'Enter the amount paid'
+                                ? context.l10n.applyAmountRequired
                                 : null;
                           },
                         ),
@@ -280,7 +277,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                         child: InkWell(
                           onTap: _pickDate,
                           child: InputDecorator(
-                            decoration: _decoration('Payment date'),
+                            decoration: _decoration(context.l10n.applyPaymentDate),
                             child: Text(DateFormat.yMMMd().format(_paidAt)),
                           ),
                         ),
@@ -293,11 +290,11 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                     maxLength: 100,
                     textCapitalization: TextCapitalization.characters,
                     decoration: _decoration(
-                      'Transaction ID / reference',
-                      hint: 'e.g. 9KD7X2LQ1P',
+                      context.l10n.applyTransactionId,
+                      hint: context.l10n.applyTransactionIdHint,
                     ),
                     validator: (value) => (value?.trim().length ?? 0) < 3
-                        ? 'Enter the transaction ID'
+                        ? context.l10n.applyTransactionIdRequired
                         : null,
                   ),
                   const SizedBox(height: 6),
@@ -305,8 +302,8 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                     controller: _sender,
                     maxLength: 100,
                     decoration: _decoration(
-                      'Paid from (optional)',
-                      hint: 'Your account or mobile number',
+                      '${context.l10n.applyPaidFrom} (${context.l10n.commonOptional})',
+                      hint: context.l10n.applyPaidFromHint,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -315,12 +312,12 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                   controller: _note,
                   maxLength: 1000,
                   maxLines: 2,
-                  decoration: _decoration('Note (optional)'),
+                  decoration: _decoration('${context.l10n.applyNote} (${context.l10n.commonOptional})'),
                 ),
                 if (!_fullyWaived) ...[
                   const SizedBox(height: 8),
-                  const Text(
-                    'Payment screenshot / receipt (optional)',
+                  Text(
+                    '${context.l10n.applyProof} (${context.l10n.commonOptional})',
                     style: TextStyle(fontWeight: FontWeight.w600, color: _ink),
                   ),
                   const SizedBox(height: 8),
@@ -342,7 +339,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                             top: -10,
                             right: -10,
                             child: IconButton.filledTonal(
-                              tooltip: 'Remove image',
+                              tooltip: context.l10n.commonRemoveImage,
                               iconSize: 16,
                               onPressed: () => setState(() {
                                 _proofPreview = null;
@@ -363,7 +360,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.add_photo_alternate_outlined),
-                      label: Text(_uploading ? 'Uploading...' : 'Add image'),
+                      label: Text(_uploading ? context.l10n.commonUploading : context.l10n.commonAddImage),
                     ),
                 ],
                 const SizedBox(height: 22),
@@ -380,7 +377,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                               color: Colors.white,
                             ),
                           )
-                        : Text(_fullyWaived ? 'Submit' : 'Submit payment'),
+                        : Text(_fullyWaived ? context.l10n.commonSubmit : context.l10n.applySubmitPayment),
                   ),
                 ),
               ],

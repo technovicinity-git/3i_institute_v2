@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/learner_profiles_providers.dart';
 import '../widgets/learner_avatar.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class ProfileManagementPage extends ConsumerWidget {
   const ProfileManagementPage({super.key});
@@ -19,10 +20,10 @@ class ProfileManagementPage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Failed to load profiles'),
+              Text(context.l10n.profilesLoadFailed),
               TextButton(
                 onPressed: () => ref.invalidate(learnerProfilesProvider),
-                child: const Text('Try again'),
+                child: Text(context.l10n.commonTryAgain),
               ),
             ],
           ),
@@ -34,7 +35,7 @@ class ProfileManagementPage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Your learner’s profiles',
+                    context.l10n.familyTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontFamily: 'serif',
                       color: const Color(0xff12304e),
@@ -43,16 +44,16 @@ class ProfileManagementPage extends ConsumerWidget {
                 ),
                 FilledButton(
                   onPressed: () => context.push('/profiles/add'),
-                  child: const Text('Add profile'),
+                  child: Text(context.l10n.familyAddProfile),
                 ),
               ],
             ),
             const SizedBox(height: 18),
             if (items.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'No learner profiles yet. Add a profile to get started.',
+                  context.l10n.familyEmpty,
                 ),
               ),
             for (final profile in items)
@@ -85,8 +86,8 @@ class ProfileManagementPage extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   profile.isActive
-                                      ? 'Subscribed'
-                                      : 'Not subscribed',
+                                      ? context.l10n.familySubscribed
+                                      : context.l10n.commonNotSubscribed,
                                   style: TextStyle(
                                     color: !profile.isActive
                                         ? Colors.blueGrey
@@ -112,7 +113,7 @@ class ProfileManagementPage extends ConsumerWidget {
                                   icon: const Icon(
                                     Icons.card_membership_outlined,
                                   ),
-                                  label: const Text('Subscription'),
+                                  label: Text(context.l10n.familySubscription),
                                 )
                               : FilledButton.icon(
                                   onPressed: () =>
@@ -123,13 +124,13 @@ class ProfileManagementPage extends ConsumerWidget {
                                   icon: const Icon(
                                     Icons.card_membership_outlined,
                                   ),
-                                  label: const Text('Subscribe'),
+                                  label: Text(context.l10n.familySubscribe),
                                 ),
                           OutlinedButton.icon(
                             onPressed: () =>
                                 context.push('/profiles/${profile.id}/edit'),
                             icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Edit'),
+                            label: Text(context.l10n.commonEdit),
                           ),
                           OutlinedButton.icon(
                             onPressed: () => context.push(
@@ -137,7 +138,7 @@ class ProfileManagementPage extends ConsumerWidget {
                             ),
                             icon: const Icon(Icons.pin_outlined),
                             label: Text(
-                              profile.hasPin ? 'Reset PIN' : 'Set PIN',
+                              profile.hasPin ? context.l10n.pinReset : context.l10n.pinSet,
                             ),
                           ),
                           TextButton.icon(
@@ -148,8 +149,8 @@ class ProfileManagementPage extends ConsumerWidget {
                               Icons.delete_outline,
                               color: Colors.red,
                             ),
-                            label: const Text(
-                              'Delete',
+                            label: Text(
+                              context.l10n.commonDelete,
                               style: TextStyle(color: Colors.red),
                             ),
                           ),

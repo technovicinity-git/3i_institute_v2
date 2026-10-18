@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import {
   enrolmentService,
   type EnrolInput,
@@ -16,6 +17,7 @@ export function useCourseBatches(courseId: string) {
 }
 
 export function useEnrolMutation() {
+  const tToast = useTranslations("enrol.toasts");
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -24,9 +26,9 @@ export function useEnrolMutation() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["enrolments"] });
       if (data.waitlisted) {
-        toast.success("Added to waitlist");
+        toast.success(tToast("waitlisted"));
       } else {
-        toast.success("Enrolled successfully");
+        toast.success(tToast("enrolled"));
       }
     },
     onError: (error: any) => {
@@ -34,13 +36,13 @@ export function useEnrolMutation() {
       if (apiError?.code === "SUBSCRIPTION_REQUIRED") {
         toast.error(apiError.message, {
           action: {
-            label: "Subscribe",
+            label: tToast("subscribe"),
             onClick: () => router.push("/subscription"),
           },
         });
         return;
       }
-      toast.error(apiError?.message ?? "Enrolment failed");
+      toast.error(apiError?.message ?? tToast("failed"));
     },
   });
 }

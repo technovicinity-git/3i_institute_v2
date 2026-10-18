@@ -6,6 +6,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/entities/course.dart';
 import '../providers/courses_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class CourseCard extends ConsumerStatefulWidget {
   const CourseCard({required this.course, super.key});
@@ -39,7 +40,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(error, fallback: 'Could not update wishlist.'))),
+          SnackBar(content: Text(apiErrorMessage(error, fallback: context.l10n.wishlistUpdateFailed))),
         );
       }
     } finally {
@@ -70,7 +71,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    _CourseImage(url: course.thumbnailUrl, label: 'Course preview'),
+                    _CourseImage(url: course.thumbnailUrl, label: context.l10n.courseCardPreview),
                     Positioned(
                       right: 10,
                       top: 10,
@@ -79,7 +80,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                         shape: const CircleBorder(),
                         child: IconButton(
                           onPressed: _saving ? null : _toggleWishlist,
-                          tooltip: _wishlisted ? 'Remove from wishlist' : 'Add to wishlist',
+                          tooltip: _wishlisted ? context.l10n.wishlistRemove : context.l10n.wishlistAdd,
                           icon: _saving
                               ? const SizedBox.square(dimension: 17, child: CircularProgressIndicator(strokeWidth: 2))
                               : Icon(_wishlisted ? Icons.favorite : Icons.favorite_border, color: _wishlisted ? const Color(0xFF2D6CDF) : const Color(0xFF0C1F33), size: 20),
@@ -111,7 +112,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                         Expanded(child: Text(course.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF475569), fontSize: 12))),
                         const Icon(Icons.star, size: 15, color: Color(0xFFB8912F)),
                         const SizedBox(width: 3),
-                        Text(course.averageRating?.toStringAsFixed(1) ?? 'New', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        Text(course.averageRating?.toStringAsFixed(1) ?? context.l10n.commonNewRating, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         if (course.ratingCount > 0) Text(' (${course.ratingCount})', style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
                       ],
                     ),
@@ -180,7 +181,7 @@ class _AgeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-        message: 'Recommended age group',
+        message: context.l10n.commonRecommendedAge,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(24)),

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _ink = Color(0xff0c1f33);
 const _muted = Color(0xff475569);
@@ -63,13 +64,14 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
   ).showSnackBar(SnackBar(content: Text(message)));
 
   Future<void> _pickImage() async {
+    final l10n = context.l10n;
     final image = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
     if (image == null) return;
     if (await image.length() > _maxImageBytes) {
-      _notify('Image must be 5 MB or smaller');
+      _notify(l10n.imageTooLarge);
       return;
     }
     final bytes = await image.readAsBytes();
@@ -80,13 +82,14 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
           .uploadProof(bytes, image.name, image.mimeType);
       if (mounted) setState(() => _images.add(_UploadedImage(bytes, url)));
     } catch (error) {
-      _notify(apiErrorMessage(error, fallback: 'Failed to upload the image'));
+      _notify(apiErrorMessage(error, fallback: l10n.commonImageUploadFailed));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
   }
 
   Future<void> _send() async {
+    final l10n = context.l10n;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
     try {
@@ -100,7 +103,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       _notify(
-        apiErrorMessage(error, fallback: 'Failed to send the waiver request'),
+        apiErrorMessage(error, fallback: l10n.waiverFailed),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -122,7 +125,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Request a fee waiver for ${profile.displayName}',
+                  context.l10n.waiverTitle(profile.displayName),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontFamily: 'serif',
                     color: _ink,
@@ -130,10 +133,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'If paying the full fee is difficult, tell us about your '
-                  'situation. If approved, you’ll get 25–100% off '
-                  '${profile.displayName}’s next one-month subscription, to '
-                  'use within 30 days.',
+                  context.l10n.waiverBody(profile.displayName),
                   style: const TextStyle(color: _muted, fontSize: 13),
                 ),
                 const SizedBox(height: 18),
@@ -141,12 +141,11 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                   controller: _explanation,
                   maxLines: 5,
                   maxLength: 3000,
-                  decoration: const InputDecoration(
-                    labelText: 'Your situation',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.waiverSituation,
                     alignLabelWithHint: true,
                     hintText:
-                        'e.g. family income, number of children studying, '
-                        'recent changes in circumstances…',
+                        context.l10n.waiverSituationHint,
                     border: OutlineInputBorder(),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: _border),
@@ -154,12 +153,12 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                   ),
                   validator: (value) =>
                       (value?.trim().length ?? 0) < _minExplanation
-                      ? 'Please write at least $_minExplanation characters'
+                      ? context.l10n.waiverMinChars('$_minExplanation')
                       : null,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Supporting documents (optional, up to $_maxImages images)',
+                Text(
+                  context.l10n.waiverDocuments('$_maxImages'),
                   style: TextStyle(fontWeight: FontWeight.w600, color: _ink),
                 ),
                 const SizedBox(height: 8),
@@ -184,7 +183,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                             top: -10,
                             right: -10,
                             child: IconButton.filledTonal(
-                              tooltip: 'Remove image',
+                              tooltip: context.l10n.commonRemoveImage,
                               iconSize: 14,
                               onPressed: () =>
                                   setState(() => _images.remove(image)),
@@ -219,8 +218,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'You can request $left more ${left == 1 ? 'time' : 'times'} '
-                  'for ${profile.displayName} in the next 12 months.',
+                  context.l10n.waiverRemaining(left, profile.displayName),
                   style: const TextStyle(fontSize: 12, color: _muted),
                 ),
                 const SizedBox(height: 18),
@@ -237,7 +235,7 @@ class _WaiverSheetState extends ConsumerState<_WaiverSheet> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Send request'),
+                        : Text(context.l10n.waiverSend),
                   ),
                 ),
               ],

@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client";
+import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
 export interface LoginInput {
   email: string;
@@ -97,8 +97,7 @@ export const authService = {
   },
 
   refreshToken: async (): Promise<{ accessToken: string }> => {
-    const response = await apiClient.post("/auth/refresh", {});
-    return response.data.data;
+    return { accessToken: await refreshAccessToken() };
   },
 
   googleLogin: async (

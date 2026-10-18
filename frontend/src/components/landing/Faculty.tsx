@@ -2,9 +2,12 @@
 
 import Image from "next/image";
 import { useFaculty } from "@/hooks/use-site";
+import { useTranslations } from "next-intl";
 
 /** Real instructors with published courses, most-enrolled first. */
 export default function Faculty() {
+  const t = useTranslations("landing.faculty");
+  const tPrograms = useTranslations("landing.programs");
   const { data: faculty, isLoading } = useFaculty();
 
   if (!isLoading && (faculty?.length ?? 0) === 0) return null;
@@ -14,10 +17,10 @@ export default function Faculty() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-12">
           <p className="text-xs font-semibold text-brand-gold uppercase tracking-widest mb-2">
-            Faculty of Distinction
+            {t("eyebrow")}
           </p>
           <h2 className="font-serif text-3xl md:text-4xl text-brand-navy">
-            Learn from Qualified Faculty
+            {t("title")}
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -67,8 +70,7 @@ export default function Faculty() {
                       </p>
                     )}
                     <p className="text-xs text-gray-400 mt-auto pt-3">
-                      {member.courseCount} course
-                      {member.courseCount === 1 ? "" : "s"}
+                      {tPrograms("courseCount", { count: member.courseCount })}
                     </p>
                   </div>
                 </div>

@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/network/api_error_message.dart';
 
 class AddLearnerPage extends ConsumerStatefulWidget {
   const AddLearnerPage({super.key});
@@ -32,6 +34,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
   }
 
   Future<void> _chooseAvatar() async {
+    final l10n = context.l10n;
     try {
       final image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -42,16 +45,16 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
       if (image == null || !mounted) return;
       final extension = image.name.split('.').last.toLowerCase();
       if (!const {'jpg', 'jpeg', 'png', 'webp', 'gif'}.contains(extension)) {
-        _showMessage('Choose a JPEG, PNG, WebP, or GIF image.');
+        _showMessage(l10n.imageInvalidType);
         return;
       }
       if (await image.length() > 5 * 1024 * 1024) {
-        _showMessage('Image size exceeds the 5 MB limit.');
+        _showMessage(l10n.imageTooLarge);
         return;
       }
       setState(() => _avatar = image);
     } catch (_) {
-      if (mounted) _showMessage('Could not open your photo library.');
+      if (mounted) _showMessage(l10n.imagePickerFailed);
     }
   }
 
@@ -100,7 +103,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
     if (!_formKey.currentState!.validate() || _birthDate == null) {
       if (_birthDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Choose a date of birth.')),
+          SnackBar(content: Text(context.l10n.learnerChooseDob)),
         );
       }
       return;
@@ -134,7 +137,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
       if (mounted) {
         if (avatarFailed) {
           _showMessage(
-            'Learner created, but the photo could not be uploaded. You can add it from profile management.',
+            context.l10n.learnerPhotoUploadFailed,
           );
         }
         context.go('/profiles');
@@ -142,7 +145,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not add learner: $error')),
+          SnackBar(content: Text(apiErrorMessage(error, fallback: context.l10n.learnerCreateFailed))),
         );
       }
     } finally {
@@ -162,7 +165,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Add learner',
+                context.l10n.learnerAddTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontFamily: 'serif',
                   color: const Color(0xFF12304E),
@@ -198,7 +201,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
                           right: 0,
                           bottom: 0,
                           child: IconButton.filled(
-                            tooltip: 'Add profile picture',
+                            tooltip: context.l10n.learnerAddPhoto,
                             onPressed: _saving ? null : _chooseAvatar,
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFF12304E),
@@ -218,16 +221,16 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
                             ? null
                             : () => setState(() => _avatar = null),
                         icon: const Icon(Icons.delete_outline, size: 16),
-                        label: const Text('Remove photo'),
+                        label: Text(context.l10n.learnerRemovePhoto),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
                       )
                     else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 7),
                         child: Text(
-                          'Add a profile photo (optional)',
+                          context.l10n.learnerAddPhotoOptional,
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
@@ -241,9 +244,9 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
               TextFormField(
                 controller: _name,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(labelText: 'Learner name'),
+                decoration: InputDecoration(labelText: context.l10n.learnerName),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Enter a name.'
+                    ? context.l10n.learnerNameRequired
                     : null,
               ),
               const SizedBox(height: 12),
@@ -261,7 +264,7 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
                 icon: const Icon(Icons.calendar_month),
                 label: Text(
                   _birthDate == null
-                      ? 'Date of birth'
+                      ? context.l10n.learnerDob
                       : MaterialLocalizations.of(
                           context,
                         ).formatMediumDate(_birthDate!),
@@ -273,15 +276,15 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
                 keyboardType: TextInputType.number,
                 obscureText: true,
                 maxLength: 4,
-                decoration: const InputDecoration(
-                  labelText: '4-digit PIN (optional)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.learnerPinOptional,
                   counterText: '',
                 ),
                 validator: (value) =>
                     value != null &&
                         value.isNotEmpty &&
                         !RegExp(r'^\d{4}$').hasMatch(value)
-                    ? 'Enter exactly four digits.'
+                    ? context.l10n.learnerPinFormat
                     : null,
               ),
               const SizedBox(height: 18),
@@ -292,11 +295,11 @@ class _AddLearnerPageState extends ConsumerState<AddLearnerPage> {
                         dimension: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Create learner'),
+                    : Text(context.l10n.learnerCreate),
               ),
               TextButton(
                 onPressed: () => context.go('/profiles'),
-                child: const Text('Cancel'),
+                child: Text(context.l10n.commonCancel),
               ),
             ],
           ),

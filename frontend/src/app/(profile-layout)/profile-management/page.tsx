@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useLearnerProfiles } from "@/hooks/use-learner-profiles";
 import type { LearnerProfile } from "@/services/learner.service";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 // ---- Icons (keep same) ----
 
@@ -110,12 +111,15 @@ function calculateAge(dateOfBirth: string): number {
   return age;
 }
 
-function getAgeBand(age: number): string {
-  if (age >= 16) return "16-17";
-  if (age >= 13) return "13-15";
-  if (age >= 9) return "9-12";
-  if (age >= 5) return "5-8";
-  return "Under 5";
+type CommonT = ReturnType<typeof useTranslations<"common">>;
+
+function getAgeBand(age: number, t: CommonT): string {
+  if (age >= 18) return t("ageAdult");
+  if (age >= 16) return t("ageRange", { min: 16, max: 17 });
+  if (age >= 13) return t("ageRange", { min: 13, max: 15 });
+  if (age >= 9) return t("ageRange", { min: 9, max: 12 });
+  if (age >= 5) return t("ageRange", { min: 5, max: 8 });
+  return t("ageUnder", { max: 4 });
 }
 
 function getProfileStatus(profile: LearnerProfile): ProfileStatus {
@@ -124,44 +128,38 @@ function getProfileStatus(profile: LearnerProfile): ProfileStatus {
   return "active";
 }
 
-function getStats(profile: LearnerProfile): string {
-  if (!profile.isActive) {
-    return "0 courses · 0% avg progress · 0 certificates";
-  }
-  // We don't have course stats in basic profile — show placeholder
-  return "Loading stats...";
-}
-
 // ---- Status Badge (keep same) ----
 
 function StatusBadge({ status }: { status: ProfileStatus }) {
+  const t = useTranslations("family");
+  const tCommon = useTranslations("common");
   switch (status) {
     case "active":
       return (
         <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-[#22A146] text-[11px] font-bold text-[#0C1F33]">
           <CheckCircleIcon />
-          ACTIVE
+          {t("statusSubscribed")}
         </span>
       );
     case "never_activated":
       return (
         <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-white border border-[#B8912F] text-[11px] font-bold text-[#0C1F33]">
           <ClockIcon />
-          NEVER ACTIVATED
+          {t("statusNeverSubscribed")}
         </span>
       );
     case "cancelled":
       return (
         <span className="inline-flex items-center gap-1 px-2 h-[22px] rounded-full bg-white border border-[#475569] text-[11px] font-bold text-[#475569]">
           <PauseCircleIcon />
-          CANCELLED
+          {t("statusEnded")}
         </span>
       );
     case "deleted":
       return (
         <span className="inline-flex items-center gap-1 text-[13px] text-[#475569]">
           <TrashIcon />
-          Deleted
+          {tCommon("delete")}
         </span>
       );
   }
@@ -218,13 +216,16 @@ function ProfileRow({
   onResetPin,
   onSubscription,
 }: ProfileRowProps) {
+  const t = useTranslations("family");
+  const tCommon = useTranslations("common");
+  const tForm = useTranslations("learnerForm");
   const age = calculateAge(profile.dateOfBirth);
   const status = getProfileStatus(profile);
 
   const actions: ActionButtonProps[] = [
-    { label: "Edit", variant: "outline", onClick: () => onEdit(profile) },
+    { label: tCommon("edit"), variant: "outline", onClick: () => onEdit(profile) },
     {
-      label: "Reset PIN",
+      label: tForm("resetPin"),
       variant: "outline",
       onClick: () => onResetPin(profile),
     },
@@ -232,8 +233,8 @@ function ProfileRow({
 
   actions.push(
     status === "active"
-      ? { label: "Subscription", variant: "ghost", onClick: onSubscription }
-      : { label: "Subscribe", variant: "green", onClick: onSubscription },
+      ? { label: t("subscription"), variant: "ghost", onClick: onSubscription }
+      : { label: t("subscribe"), variant: "green", onClick: onSubscription },
   );
 
   return (
@@ -259,21 +260,16 @@ function ProfileRow({
         <div className="flex flex-col gap-2">
           <h3
             className="text-lg text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             {profile.displayName}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge status={status} />
-            <AgeBadge label={getAgeBand(age)} />
+            <AgeBadge label={getAgeBand(age, tCommon)} />
           </div>
         </div>
       </div>
-
-      {/* Center: Stats */}
-      <p className="text-[13px] text-[#475569] lg:text-center shrink-0">
-        {getStats(profile)}
-      </p>
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3 flex-wrap shrink-0">
@@ -288,6 +284,9 @@ function ProfileRow({
 // ---- Main Component ----
 
 export default function FamilyProfilesPage() {
+  const t = useTranslations("family");
+  const tProfiles = useTranslations("profiles");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const { data: profiles, isLoading, isError } = useLearnerProfiles();
 
@@ -307,22 +306,22 @@ export default function FamilyProfilesPage() {
   return (
     <section
       className="w-full min-h-full bg-[#FBF9F4] px-6 sm:px-10 lg:px-[120px] pt-10 sm:pt-14 pb-16 sm:pb-[100px]"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
+      style={{ fontFamily: "var(--font-body)" }}
     >
       <div className="max-w-[1200px] mx-auto flex flex-col gap-6 sm:gap-9">
         {/* Header row */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1
             className="text-3xl sm:text-[40px] leading-tight text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            Your learner&apos;s profiles
+            {t("title")}
           </h1>
           <button
             onClick={handleAddProfile}
             className="px-5 py-2.5 bg-[#22A146] rounded-lg text-sm font-bold text-[#0C1F33] hover:bg-[#1E9040] transition-colors"
           >
-            Add profile
+            {t("addProfile")}
           </button>
         </div>
 
@@ -336,12 +335,14 @@ export default function FamilyProfilesPage() {
         {/* Error */}
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p className="text-red-600 font-medium">Failed to load profiles</p>
+            <p className="text-red-600 font-medium">
+              {tProfiles("loadFailed")}
+            </p>
             <button
               onClick={() => window.location.reload()}
               className="text-[#22A146] font-semibold hover:underline"
             >
-              Try again
+              {tCommon("tryAgain")}
             </button>
           </div>
         )}
@@ -349,12 +350,12 @@ export default function FamilyProfilesPage() {
         {/* Empty */}
         {!isLoading && !isError && profiles?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p className="text-[#475569]">No learner profiles yet.</p>
+            <p className="text-[#475569]">{t("empty")}</p>
             <button
               onClick={handleAddProfile}
               className="text-[#22A146] font-semibold hover:underline"
             >
-              Add your first profile
+              {t("addFirst")}
             </button>
           </div>
         )}

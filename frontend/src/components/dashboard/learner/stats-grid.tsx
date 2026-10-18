@@ -2,39 +2,45 @@ import Link from "next/link";
 import { Award, BookOpen, CheckCircle2, Flame } from "lucide-react";
 import type { DashboardStats } from "@/types/dashboard";
 import { card, serif } from "./utils";
+import { useTranslations } from "next-intl";
 
 export function StatsGrid({ stats }: { stats: DashboardStats }) {
+  const t = useTranslations("dashboardHome.stats");
   const statCards = [
     {
+      key: "inProgress",
       icon: BookOpen,
       value: stats.coursesInProgress,
-      label: "Courses in progress",
-      sub: `${stats.coursesCompleted} completed`,
+      label: t("inProgress"),
+      sub: t("completedCount", { count: stats.coursesCompleted }),
       tint: "bg-[#2563EB]/10 text-[#2563EB]",
     },
     {
+      key: "lessons",
       icon: CheckCircle2,
       value: stats.lessonsCompleted,
-      label: "Lessons completed",
-      sub: `${stats.lessonsThisWeek} this week`,
+      label: t("lessonsCompleted"),
+      sub: t("thisWeek", { count: stats.lessonsThisWeek }),
       tint: "bg-[#22A146]/10 text-[#22A146]",
     },
     {
+      key: "certificates",
       icon: Award,
       value: stats.certificatesEarned,
-      label: "Certificates earned",
-      sub: "View certificates",
+      label: t("certificates"),
+      sub: t("viewCertificates"),
       href: "/certificates",
       tint: "bg-[#B8912F]/10 text-[#B8912F]",
     },
     {
+      key: "streak",
       icon: Flame,
       value: stats.currentStreak,
-      label: `Day streak`,
+      label: t("streak"),
       sub:
         stats.currentStreak > 0 && !stats.studiedToday
-          ? "Study today to keep it going"
-          : `Best: ${stats.longestStreak} day${stats.longestStreak === 1 ? "" : "s"}`,
+          ? t("keepStreak")
+          : t("best", { count: stats.longestStreak }),
       tint: "bg-orange-50 text-orange-500",
     },
   ];
@@ -44,7 +50,7 @@ export function StatsGrid({ stats }: { stats: DashboardStats }) {
       {statCards.map((stat) => {
         const Icon = stat.icon;
         return (
-          <div key={stat.label} className={`${card} p-5 flex flex-col gap-3`}>
+          <div key={stat.key} className={`${card} p-5 flex flex-col gap-3`}>
             <div
               className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.tint}`}
             >

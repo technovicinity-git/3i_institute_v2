@@ -1,0 +1,1884 @@
+{
+  "@@locale": "en",
+  "commonCancel": "Cancel",
+  "commonContinue": "Continue",
+  "commonTryAgain": "Try again",
+  "commonSending": "Sending...",
+  "commonClose": "Close",
+  "commonSave": "Save",
+  "commonDelete": "Delete",
+  "commonOr": "or",
+  "commonLearner": "Learner",
+  "commonAdult": "Adult",
+  "commonAgeRange": "Ages {min}–{max}",
+  "@commonAgeRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "commonAgeUnder": "Ages {max} and under",
+  "@commonAgeUnder": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "commonNotSubscribed": "Not subscribed",
+  "commonConnectionError": "Unable to connect. Check your internet connection.",
+  "commonLogoLabel": "3i International Islamic Institute logo",
+  "commonInstituteName": "International Islamic Institute",
+  "languageLabel": "Language",
+  "languageSettingBody": "The language used on the website, in the app and in emails",
+  "languageSaveFailed": "Couldn't save your language on your account. It will reset the next time you sign in.",
+  "authEmailLabel": "Email address",
+  "authPasswordLabel": "Password",
+  "authShowPassword": "Show password",
+  "authHidePassword": "Hide password",
+  "authEmailInvalid": "Enter a valid email address",
+  "authPasswordRequired": "Password is required",
+  "authPasswordMin": "Password must be at least 10 characters",
+  "authPasswordMax": "Password must be 128 characters or fewer",
+  "authBackToLogin": "Back to log in",
+  "authGoToLogin": "Go to log in",
+  "authSelectDate": "Select date",
+  "authSelectDob": "Select your date of birth",
+  "loginTitle": "Welcome back",
+  "loginSubtitle": "Please enter your credentials to log in.",
+  "loginForgotPassword": "Forgot password?",
+  "loginSubmit": "Log in",
+  "loginFailed": "Login failed. Please try again.",
+  "loginNewHere": "New to 3i?",
+  "loginCreateAccount": "Create an account",
+  "loginInstructorPortal": "Instructor portal",
+  "registerTitle": "Start your journey",
+  "registerSubtitle": "One account. Add your children whenever you're ready.",
+  "registerFirstName": "First name",
+  "registerFirstNameHint": "e.g. Sarah",
+  "registerLastName": "Last name",
+  "registerLastNameHint": "e.g. Ahmed",
+  "registerFirstNameRequired": "First name is required",
+  "registerLastNameRequired": "Last name is required",
+  "registerNameTooLong": "Must be 100 characters or fewer",
+  "registerPasswordHint": "At least 10 characters",
+  "registerDateOfBirth": "Date of birth",
+  "registerDateOfBirthHint": "Must be 18 or older",
+  "registerDobRequired": "Select your date of birth. You must be at least 18.",
+  "registerLanguage": "Preferred language",
+  "registerLanguageHint": "The language the app uses. You can change it anytime.",
+  "registerSubmit": "Create account",
+  "registerFailed": "Registration failed. Please try again.",
+  "registerHaveAccount": "Already have an account?",
+  "registerLogIn": "Log in",
+  "forgotTitle": "Reset your password",
+  "forgotSubtitle": "Enter the email on your account and we'll send you a link.",
+  "forgotSubmit": "Send reset link",
+  "forgotSentTitle": "Check your email",
+  "forgotSentBody": "If an account with that email exists, we've sent a password reset link.",
+  "forgotFailed": "Failed to send reset link",
+  "resetTitle": "Choose a new password",
+  "resetSubtitle": "Choose a secure password with at least 10 characters.",
+  "resetNewPassword": "New password",
+  "resetConfirm": "Confirm new password",
+  "resetSubmit": "Update password",
+  "resetMismatch": "Passwords do not match",
+  "resetInvalidLink": "This password reset link is invalid or incomplete. Request a new link.",
+  "resetFailed": "Failed to reset password",
+  "resetDoneTitle": "Password updated",
+  "resetDoneBody": "Your password has been updated. Log in with your new password.",
+  "checkEmailTitle": "Check your email",
+  "checkEmailSentTo": "We've sent a verification link to {email}",
+  "@checkEmailSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "checkEmailResend": "Resend email",
+  "checkEmailCanResendNow": "You can resend now",
+  "checkEmailResendIn": "You can resend in {seconds} seconds",
+  "@checkEmailResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "checkEmailResendFailed": "Failed to resend email",
+  "checkEmailWrongEmail": "Wrong email? Go back",
+  "checkEmailBackInstructor": "Back to instructor sign in",
+  "verifyVerifying": "Verifying your email...",
+  "verifyPleaseWait": "Please wait while we verify your email.",
+  "verifyVerifiedTitle": "Email verified!",
+  "verifyVerifiedBody": "Your email is verified. You can now log in.",
+  "verifyExpiredTitle": "This link has expired",
+  "verifyExpiredBody": "Verification links are valid for 24 hours. We can send a new one to the same email address.",
+  "verifyFailedTitle": "Verification failed",
+  "verifyFailed": "Verification failed",
+  "verifyInvalidLink": "Invalid verification link",
+  "verifyNewLinkTitle": "New link sent",
+  "verifyNewLinkBody": "We've sent a new verification link to your email. Open it within 24 hours to finish setting up your account.",
+  "verifySendNewLink": "Send me a new link",
+  "verifyNewLinkFailed": "Failed to send a new link",
+  "unverifiedTitle": "Please verify your email first",
+  "unverifiedBody": "We sent a verification link to {email}. If it has expired or you can't find it, we can send a new one.",
+  "@unverifiedBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "unverifiedResend": "Resend verification email",
+  "socialContinueGoogle": "Continue with Google",
+  "socialContinueApple": "Continue with Apple",
+  "socialSignUpGoogle": "Sign up with Google",
+  "socialSignUpApple": "Sign up with Apple",
+  "socialGoogleFailed": "Google sign-in failed",
+  "socialAppleFailed": "Apple sign-in failed",
+  "socialAppleNoToken": "No identity token received from Apple",
+  "socialDobRequired": "Your date of birth is required to create an account with {provider}.",
+  "@socialDobRequired": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "socialCreateTitle": "Create your account",
+  "socialCreateBody": "There's no 3i account for this {provider} email yet. To create one, enter your date of birth. You must be at least 13 years old.",
+  "@socialCreateBody": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "profilesWhoIsLearning": "Who's learning today?",
+  "profilesEmpty": "Add a learner profile to get started.",
+  "profilesLoadFailed": "Failed to load profiles",
+  "profilesAddLearner": "Add learner",
+  "profilesLogOut": "Log out",
+  "pinEnter": "Enter your 4-digit PIN",
+  "pinIncorrect": "That PIN doesn't match. Try again.",
+  "pinTriesLeft": "Incorrect PIN. {count, plural, one {{count} try} other {{count} tries}} left.",
+  "@pinTriesLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pinCheckFailed": "Couldn't check the PIN. Check your connection.",
+  "pinTooMany": "Too many attempts. Try again in {seconds}s.",
+  "@pinTooMany": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "pinForgot": "Forgot your PIN? Ask the account holder to reset it from Manage profiles.",
+  "pinProgress": "PIN, {filled} of {length} digits entered",
+  "@pinProgress": {
+    "placeholders": {
+      "filled": {
+        "type": "int"
+      },
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Account settings",
+  "settingsFamilyTitle": "Family & profiles",
+  "settingsFamilyBody": "Manage learner profiles and PINs",
+  "settingsDevicesTitle": "Devices",
+  "settingsDevicesBody": "Device management is available on the website",
+  "settingsSubscriptionTitle": "Subscription & billing",
+  "settingsSubscriptionBody": "Pay for and renew each learner's subscription",
+  "settingsSecurityTitle": "Login & security",
+  "settingsSecurityBody": "Update your email and password",
+  "menuAccount": "User menu",
+  "menuSwitchLearner": "Switch learner profile",
+  "menuFamily": "Family & profiles",
+  "menuSubscription": "Subscription",
+  "menuManageAccount": "Manage account",
+  "menuLogOut": "Log out",
+  "menuCourses": "Courses",
+  "menuHelp": "Help & Support",
+  "menuLearnerProfile": "Learner profile",
+  "dashboardGreeting": "Assalamu alaikum, {name}",
+  "@dashboardGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardWelcomeBack": "Welcome back to your dashboard",
+  "dashboardSearchCourses": "Search courses",
+  "dashboardExploreCourses": "Explore courses",
+  "navDashboard": "Dashboard",
+  "navRegularCourses": "Regular Courses",
+  "navOnlineClasses": "Online Classes",
+  "navAssignments": "Assignments",
+  "navExams": "Exams",
+  "navCertificates": "Certificates",
+  "navWishlist": "Wishlist",
+  "coursesTitle": "Courses",
+  "coursesSearch": "Search courses, instructors, topics...",
+  "coursesClearSearch": "Clear search",
+  "coursesLoading": "Loading courses...",
+  "coursesLoadFailed": "Courses could not be loaded.",
+  "coursesCount": "{count, plural, one {{count} course} other {{count} courses}}",
+  "@coursesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coursesCategory": "Category",
+  "coursesAllCategories": "All categories",
+  "coursesType": "Type",
+  "coursesAllTypes": "All types",
+  "coursesTypeRegular": "Regular",
+  "coursesTypeLive": "Online Class",
+  "coursesTypeHybrid": "Hybrid",
+  "coursesLanguage": "Language",
+  "coursesAllLanguages": "All languages",
+  "coursesAge": "Age",
+  "coursesSort": "Sort",
+  "coursesSortPopularity": "Relevance",
+  "coursesSortNewest": "Newest",
+  "coursesSortRating": "Highest Rated",
+  "coursesSortTitle": "Title A-Z",
+  "coursesClearFilters": "Clear filters",
+  "coursesClearAllFilters": "Clear all filters",
+  "coursesNoResults": "No courses found matching your filters.",
+  "coursesPageOf": "Page {page} of {total}",
+  "@coursesPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "commonAllAges": "All ages",
+  "commonAgesFrom": "Ages {min}+",
+  "@commonAgesFrom": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "commonNewRating": "New",
+  "commonRecommendedAge": "Recommended age group",
+  "commonPrevious": "Previous",
+  "commonNext": "Next",
+  "courseCardPreview": "Course Preview",
+  "wishlistAdd": "Add to wishlist",
+  "wishlistRemove": "Remove from wishlist",
+  "wishlistUpdateFailed": "Could not update wishlist.",
+  "landingHomeLabel": "3i International Islamic Institute home",
+  "landingAccountMenu": "Account and learner menu",
+  "landingAccount": "Account",
+  "menuDashboard": "Dashboard",
+  "menuMyCourses": "My Courses",
+  "footerTagline": "Rigorous teaching. Global classrooms. One institute.",
+  "footerAbout": "Structured, accredited programs across the sciences, humanities, and professional fields, taught to students in 40 countries.",
+  "footerRights": "© {year} 3i International Islamic Institute. All rights reserved.",
+  "@footerRights": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "homeWelcome": "Welcome",
+  "homeWelcomeName": "Welcome, {name}",
+  "@homeWelcomeName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSignedIn": "You are signed in.",
+  "shareText": "Check out \"{title}\" at 3i International Islamic Institute",
+  "@shareText": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "shareDetailsCopied": "Course details copied",
+  "shareLinkCopied": "Link copied",
+  "levelBeginner": "Beginner",
+  "levelIntermediate": "Intermediate",
+  "levelAdvanced": "Advanced",
+  "levelAll": "All levels",
+  "commonMinutes": "{count} min",
+  "@commonMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonBackToCourses": "Back to courses",
+  "detailLearn": "What you'll learn",
+  "detailRequirements": "Requirements",
+  "detailAbout": "About this course",
+  "detailStudentsAlsoTook": "Students also took",
+  "detailBreadcrumb": "Courses  ›  {category}",
+  "@detailBreadcrumb": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "detailRatingMeta": "{rating} · {count, plural, one {{count} review} other {{count} reviews}}",
+  "@detailRatingMeta": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailInstructedBy": "Instructed by ",
+  "detailLoadFailed": "Failed to load course",
+  "enrolWaitlisted": "Added to waitlist. You'll be notified when a seat opens.",
+  "enrolSuccess": "Enrolled successfully",
+  "enrolFailed": "Enrolment failed",
+  "enrolSubscribe": "Subscribe",
+  "enrolNoBatches": "There are no available batches right now.",
+  "cardIncluded": "INCLUDED WITH MEMBERSHIP",
+  "cardEnrolledTitle": "You're enrolled",
+  "cardStartToday": "Start learning today",
+  "cardNotAvailable": "Not available for {name}. {message} ({name} is {age}).",
+  "@cardNotAvailable": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      },
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "cardEnrolNow": "Enrol Now",
+  "cardNeedsSubscription": "{name} needs a subscription to enrol in courses.",
+  "@cardNeedsSubscription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cardSubscribeToEnrol": "Subscribe to Enrol",
+  "cardChooseBatch": "Choose a class batch",
+  "cardManageSubscription": "Manage subscription",
+  "cardWhatsIncluded": "What's included",
+  "batchChoose": "Choose Your Batch",
+  "batchChooseBody": "Select a class group to continue with enrolment.",
+  "batchSubtitleBody": "View the schedule and sessions for each available batch.",
+  "batchSessions": "{count, plural, one {{count} session} other {{count} sessions}}",
+  "@batchSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchSeats": "{count, plural, one {{count} seat} other {{count} seats}}",
+  "@batchSeats": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchActive": "Active",
+  "batchUpcoming": "Upcoming",
+  "batchSessionNotes": "Session notes",
+  "detailSyllabus": "DETAILED SYLLABUS",
+  "detailCurriculum": "Curriculum",
+  "detailLessons": "{count, plural, one {{count} lesson} other {{count} lessons}}",
+  "@detailLessons": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailYourInstructor": "YOUR INSTRUCTOR",
+  "detailInstructorStats": "{courses, plural, one {{courses} course} other {{courses} courses}} · {learners, plural, one {{learners} learner} other {{learners} learners}}",
+  "@detailInstructorStats": {
+    "placeholders": {
+      "courses": {
+        "type": "int"
+      },
+      "learners": {
+        "type": "int"
+      }
+    }
+  },
+  "detailReviews": "Learner reviews",
+  "detailReviewCount": "{count, plural, one {{count} review} other {{count} reviews}}",
+  "@detailReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailEnrolledShare": "You're enrolled in this course. Share how it's going.",
+  "detailRateReview": "Rate & review",
+  "detailNoReviews": "No reviews yet.",
+  "reviewParent": "Parent",
+  "reviewThanks": "Thanks! Your review has been submitted.",
+  "reviewSelectRating": "Please select a rating.",
+  "reviewSubmitFailed": "Could not submit your review.",
+  "reviewTitle": "Rate this course",
+  "reviewSubmittingAs": "Submitting as {name}",
+  "@reviewSubmittingAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewYourRating": "Your rating",
+  "reviewStars": "{count, plural, one {{count} star} other {{count} stars}}",
+  "@reviewStars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewWrite": "Write a review (optional)",
+  "reviewHint": "Share your experience with this course...",
+  "reviewSubmit": "Submit review",
+  "cardReviewCourse": "Review Course",
+  "cardContinue": "Continue Learning",
+  "cardStart": "Start Learning",
+  "cardComingSoon": "Lessons coming soon",
+  "cardClassSchedule": "Class Schedule",
+  "cardChatRoom": "Chat Room",
+  "cardYourBatch": "Your Batch",
+  "cardDashboard": "Go to Dashboard",
+  "cardEnrolled": "Enrolled",
+  "detailFaq": "Common questions",
+  "membershipTitle": "One membership. Every course.",
+  "membershipAllCourses": "All courses",
+  "membershipAllCoursesBody": "Learn across Islamic studies, languages, sciences and more.",
+  "membershipLive": "Live classes included",
+  "membershipLiveBody": "Join interactive seminars and live Q&As.",
+  "membershipCertificates": "Certificates included",
+  "membershipCertificatesBody": "Earn certificates as you complete your learning.",
+  "detailShare": "Share this course",
+  "learnSelectProfileCourses": "Select a learner profile to view courses.",
+  "learnCoursesLoadFailed": "Could not load your courses",
+  "learnRegularTitle": "Regular Courses",
+  "learnRegularCount": "{count, plural, one {{count} self-paced course} other {{count} self-paced courses}}",
+  "@learnRegularCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learnSearch": "Search by course or instructor...",
+  "learnNoRegular": "No regular courses yet",
+  "learnNoRegularBody": "Browse the course catalogue to find your next lesson.",
+  "learnBrowse": "Browse courses",
+  "learnNoMatch": "No matching courses",
+  "learnNoMatchBody": "Try a different course or instructor name.",
+  "learnLessonsProgress": "{done}/{total} lessons",
+  "@learnLessonsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learnNoLessons": "No lessons",
+  "learnResume": "Resume",
+  "learnStart": "Start Learning",
+  "learnExams": "Exams",
+  "levelAllCaps": "ALL LEVELS",
+  "levelBeginnerCaps": "BEGINNER",
+  "levelIntermediateCaps": "INTERMEDIATE",
+  "levelAdvancedCaps": "ADVANCED",
+  "classesSelectProfile": "Select a learner profile to view your live classes.",
+  "classesLoadFailed": "Could not load online classes",
+  "classesTitle": "Online Classes",
+  "classesCount": "{count, plural, one {{count} live course} other {{count} live courses}}",
+  "@classesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "classesNone": "No live classes yet",
+  "classesNoneBody": "Browse the course catalogue to find a class.",
+  "classesNoMatch": "No matching classes",
+  "classesNoMatchBody": "Try another course or instructor name.",
+  "classesNoUpcoming": "No upcoming session",
+  "classesBatch": "Batch",
+  "classesChat": "Chat",
+  "classesMoreActions": "More actions",
+  "classesDetails": "Details",
+  "classesSessions": "Sessions",
+  "classesExams": "Exams",
+  "classesCertificate": "Certificate",
+  "classesDateTba": "Date to be announced",
+  "scheduleStatusLive": "Live now",
+  "scheduleStatusSoon": "Starting soon",
+  "scheduleStatusUpcoming": "Upcoming",
+  "scheduleStatusCompleted": "Completed",
+  "scheduleSectionUpcoming": "Upcoming sessions",
+  "scheduleSectionCompleted": "Previous sessions",
+  "scheduleSelectProfile": "Select a learner profile to view this class schedule.",
+  "scheduleTitle": "Class schedule",
+  "scheduleUnavailable": "Class schedule unavailable",
+  "scheduleUnavailableBody": "We could not load this batch. You may no longer be enrolled in this batch, or the batch may no longer be available.",
+  "scheduleScheduled": "{count, plural, one {{count} session scheduled} other {{count} sessions scheduled}}",
+  "@scheduleScheduled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleNone": "No sessions scheduled yet.",
+  "scheduleNoneHint": "Your instructor has not added any sessions to this batch.",
+  "scheduleBack": "Back to Online Classes",
+  "scheduleEnrolledOn": "Enrolled {date}",
+  "@scheduleEnrolledOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleSessionNumber": "Session {number}",
+  "@scheduleSessionNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleJoin": "Join class",
+  "scheduleJoinSoon": "Join soon",
+  "scheduleNoLink": "No link yet",
+  "scheduleCompleted": "Completed",
+  "scheduleNotStarted": "Not started",
+  "scheduleLinkFailed": "Could not open the meeting link.",
+  "lessonReloadFailed": "Could not reload. Check your connection.",
+  "lessonProgressSaveFailed": "Progress could not be saved. It will retry next time.",
+  "lessonNoteEmpty": "Note cannot be empty",
+  "lessonNoteSaveFailed": "Could not save note. Please try again.",
+  "lessonSelectProfile": "Select a learner profile to continue.",
+  "lessonTitle": "Lesson",
+  "lessonLoadFailed": "Could not load course lessons.",
+  "lessonNotInCourse": "This lesson is not part of the course.",
+  "lessonReload": "Reload",
+  "lessonCourseContent": "Course content",
+  "lessonPrevious": "Previous",
+  "lessonNext": "Next",
+  "lessonCourseName": "Course: {title}",
+  "@lessonCourseName": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "lessonOverview": "Overview",
+  "lessonNotes": "Notes",
+  "lessonDefaultOverview": "Continue through this lesson, then use the course content button to move between topics.",
+  "lessonNotesHint": "Write your notes for this lesson...",
+  "lessonSaved": "Saved",
+  "lessonSaveNote": "Save note",
+  "lessonDocUnavailable": "Document unavailable",
+  "lessonMarkedComplete": "Lesson marked complete",
+  "lessonReadOnlyKeepReading": "Read-only preview • Keep reading to complete this lesson",
+  "lessonReadOnlyPdf": "Read-only PDF preview",
+  "lessonMediaUnavailable": "Lesson media unavailable",
+  "lessonOpenLinkTitle": "Open the lesson link",
+  "lessonOpenLink": "Open link",
+  "lessonPdfFailed": "We couldn't load this document. Check your connection and try again.",
+  "lessonReloadPdf": "Reload PDF",
+  "videoCheckConnection": "Check your connection, then try again.",
+  "videoCouldNotPlay": "Video could not be played. {reason}",
+  "@videoCouldNotPlay": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "videoInterrupted": "Playback was interrupted. Please try again.",
+  "videoBack10": "Back 10 seconds",
+  "videoForward10": "Forward 10 seconds",
+  "videoSpeed": "Playback speed",
+  "videoNormal": "Normal",
+  "videoFullScreen": "Full screen",
+  "videoExitFullScreen": "Exit full screen",
+  "videoPause": "Pause",
+  "videoPlay": "Play",
+  "lessonCourseExam": "Course exam",
+  "lessonExamUnlocked": "You have completed 90% of the course — you can now sit the exam.",
+  "lessonExamLocked": "Complete 90% of the course to unlock the exam. You are at {progress}%.",
+  "@lessonExamLocked": {
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonCourseProgress": "Course progress",
+  "lessonExamUnlockedShort": "Exam unlocked — good luck!",
+  "lessonExamUnlockHint": "The exam unlocks automatically once you reach 90% course completion.",
+  "lessonTakeExam": "Take exam",
+  "lessonLocked": "Locked",
+  "lessonCertificateFailed": "We could not generate your certificate. Please try again.",
+  "lessonCourseCertificate": "Course certificate",
+  "lessonCertificateHint": "Generate a certificate showing your course progress and last exam score. This can only be done once.",
+  "lessonCertificateLocked": "Take the exam at least once to unlock your certificate.",
+  "lessonGenerating": "Generating...",
+  "lessonGenerateCertificate": "Generate certificate",
+  "lessonPending": "Pending",
+  "lessonCertificateGenerated": "Certificate generated",
+  "lessonIssuedOn": "Issued on {date}",
+  "@lessonIssuedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lessonLastExamScore": "Last exam score",
+  "lessonLatestAttempt": "Latest attempt: {title}",
+  "@lessonLatestAttempt": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "lessonAttemptNumber": "Attempt #{number}",
+  "@lessonAttemptNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonVerificationCode": "Verification code:",
+  "lessonDownloadPdf": "Download PDF",
+  "commonCheckConnection": "Check your connection and try again.",
+  "commonNoCoursesYet": "No courses enrolled yet",
+  "commonOnlineClassSuffix": " • Online class",
+  "assignSelectProfile": "Select a learner profile to view assignments.",
+  "assignTitle": "Assignments",
+  "assignSelectCourse": "Select a course to view its assignments.",
+  "assignNoCoursesBody": "Browse courses and enroll to see assignments here.",
+  "assignSubmitted": "Assignment submitted",
+  "assignSubmitFailed": "Failed to submit assignment",
+  "assignLoadFailed": "Could not load assignments",
+  "assignBack": "Back to assignments",
+  "assignCount": "{count, plural, one {{count} assignment for this course} other {{count} assignments for this course}}",
+  "@assignCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignNone": "No assignments yet",
+  "assignNoneBody": "No assignments for this course yet.",
+  "assignNoDeadline": "No deadline",
+  "assignDue": "Due: {date}",
+  "@assignDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "assignMarks": "{count, plural, one {{count} mark} other {{count} marks}}",
+  "@assignMarks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignYourSubmission": "YOUR SUBMISSION",
+  "assignOpenFile": "Open attached file",
+  "assignMarksAwarded": "Marks: {awarded}/{total}",
+  "@assignMarksAwarded": {
+    "placeholders": {
+      "awarded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "assignFeedback": "Feedback: {feedback}",
+  "@assignFeedback": {
+    "placeholders": {
+      "feedback": {
+        "type": "String"
+      }
+    }
+  },
+  "assignAnswerHint": "Write your answer...",
+  "assignSubmitting": "Submitting...",
+  "assignSubmit": "Submit assignment",
+  "assignFileFailed": "Could not open the attached file.",
+  "assignGraded": "GRADED",
+  "assignSubmittedBadge": "SUBMITTED",
+  "examsSelectProfile": "Select a learner profile to view exams.",
+  "examsSelectProfileFirst": "Select a learner profile first.",
+  "examsTitle": "Exams",
+  "examsSelectCourse": "Select a course to view and take its exams.",
+  "examsNoCoursesBody": "Browse courses and enroll to see course exams here.",
+  "examsLoadFailed": "Could not load exams",
+  "examsBackOnline": "Back to Online Classes",
+  "examsBackRegular": "Back to Regular Courses",
+  "examsAvailable": "{count, plural, one {{count} exam available} other {{count} exams available}}",
+  "@examsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "examsNone": "No exams available",
+  "examsNoneBody": "There are no exams for this course yet.",
+  "examsTypePractice": "PRACTICE",
+  "examsTypeFinal": "FINAL",
+  "examsPassed": "PASSED",
+  "examsInProgress": "IN PROGRESS",
+  "examsRandomQuestions": "Random questions",
+  "examsQuestions": "{count, plural, one {{count} question} other {{count} questions}}",
+  "@examsQuestions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "examsPassMark": "Pass: {mark}%",
+  "@examsPassMark": {
+    "placeholders": {
+      "mark": {
+        "type": "int"
+      }
+    }
+  },
+  "examsAttempts": "Attempts: {value}",
+  "@examsAttempts": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "examsBestScore": "Best score: {score}/{total}",
+  "@examsBestScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "examsTimeLeft": "Time left in your attempt",
+  "examsTimesUp": "Time's up",
+  "examsTimerRunning": "The timer keeps running — resume to continue.",
+  "examsOpenToSubmit": "Open the exam to submit your saved answers.",
+  "examsStartsIn": "Starts in",
+  "examsOpens": "Opens {date}",
+  "@examsOpens": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "examsWindowClosesIn": "Start window closes in",
+  "examsStartBefore": "Start before {date}",
+  "@examsStartBefore": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "examsViewResult": "View result",
+  "examsResume": "Resume exam",
+  "examsSubmitAnswers": "Submit answers",
+  "examsMaxAttempts": "Max attempts reached",
+  "examsNotStartedYet": "Not started yet",
+  "examsWindowClosed": "Start window closed",
+  "examsTake": "Take exam",
+  "examsBack": "Back to exams",
+  "examsCountdownDays": "{d}d {h}h {m}m",
+  "@examsCountdownDays": {
+    "placeholders": {
+      "d": {
+        "type": "int"
+      },
+      "h": {
+        "type": "String"
+      },
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "takeMinutesLeft": "{count} minutes left",
+  "@takeMinutesLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "takeOneMinuteLeft": "1 minute left — your exam will be submitted automatically",
+  "takeNotStartedToast": "This exam hasn't started yet",
+  "takeWindowClosedToast": "The start window for this exam has closed",
+  "takeSubmittedToast": "Exam submitted",
+  "takeSubmitError": "We couldn't submit your exam. Please try again.",
+  "takeStartFailed": "We couldn't start the exam. Please try again.",
+  "takeConfirmTitle": "Submit your exam?",
+  "takeConfirmUnanswered": "You have {count, plural, one {{count} unanswered question} other {{count} unanswered questions}}. You can't change your answers after submitting.",
+  "@takeConfirmUnanswered": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "takeConfirmAll": "You've answered every question. You can't change your answers after submitting.",
+  "takeAnswered": "Answered",
+  "takeUnanswered": "Unanswered",
+  "takeNotAnswered": "Not answered",
+  "takeFlagged": "Flagged",
+  "takeFlag": "Flag",
+  "takeKeepWorking": "Keep working",
+  "takeSubmitExam": "Submit exam",
+  "takeLeaveTitle": "Leave the exam?",
+  "takeLeaveBody": "Your answers are saved, but the timer keeps running. You can resume from the exam list.",
+  "takeStay": "Stay",
+  "takeLeave": "Leave",
+  "takeQuestions": "Questions",
+  "takeAnsweredOf": "{answered} of {total} answered",
+  "@takeAnsweredOf": {
+    "placeholders": {
+      "answered": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "takeFlaggedCount": "{count} flagged",
+  "@takeFlaggedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "takeSubmittedTitle": "Exam submitted",
+  "takeTakingToResult": "Taking you to your result…",
+  "takeLoadFailedTitle": "Couldn't load exam",
+  "takeNotStartedTitle": "Exam not started yet",
+  "takeNotStartedBody": "This exam starts on {date}. You can start it any time after the start time until 50% of the exam duration has elapsed.",
+  "@takeNotStartedBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "takeClosedTitle": "Start window closed",
+  "takeClosedBody": "This exam could be started until {date}. The start window has now passed.",
+  "@takeClosedBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "takeNoQuestionsTitle": "No questions available",
+  "takeNoQuestionsBody": "This exam doesn't have any questions yet.",
+  "takeAllQuestions": "Show all questions",
+  "takeQuestionOf": "Question {n} of {total}",
+  "@takeQuestionOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "takeMarks": "{count, plural, one {{count} mark} other {{count} marks}}",
+  "@takeMarks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "takeSubmitting": "Submitting...",
+  "takeReviewSubmit": "Review & submit",
+  "takeNext": "Next",
+  "takeAnswerHint": "Type your answer...",
+  "takeWords": "{count, plural, one {{count} word} other {{count} words}}",
+  "@takeWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "takeNoOptions": "No options available for this question.",
+  "takeSelectAll": "Select all that apply",
+  "takeTimesUp": "Time's up",
+  "takeSubmittingAnswers": "Submitting your answers…",
+  "takeSubmissionFailed": "Submission failed",
+  "takeSavedOnDevice": "Your answers are saved on this device. Check your connection and try again.",
+  "takeRetrySubmit": "Retry submit",
+  "takeDiscardLeave": "Discard & leave",
+  "takeTimeRemaining": "Time remaining {time}",
+  "@takeTimeRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "takeDuration": "Duration",
+  "takeTotalMarks": "Total marks",
+  "takePassMarkLabel": "Pass mark",
+  "takeRule1": "The timer starts as soon as you press Start and runs for {minutes} minutes — it keeps running even if you leave or close the app.",
+  "@takeRule1": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "takeRule2": "Your answers are saved automatically on this device. If you come back, you'll continue where you left off.",
+  "takeRule3": "Use the same device for the whole exam.",
+  "takeRule4": "When the time runs out, your answers are submitted automatically.",
+  "takeStartBeforeFull": "Start before {date}. Once started, you get the full duration.",
+  "@takeStartBeforeFull": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "takeBeforeYouBegin": "Before you begin",
+  "takeStart": "Start exam",
+  "resultPassed": "Congratulations! You passed.",
+  "resultGrading": "Your written answers are being graded.",
+  "resultFailed": "You did not pass. Review your answers and try again.",
+  "resultPassDuration": "Pass mark: {mark}% • Duration: {minutes} mins",
+  "@resultPassDuration": {
+    "placeholders": {
+      "mark": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "resultScore": "Score",
+  "resultAttempts": "Attempts",
+  "resultTimeTaken": "Time taken",
+  "resultMinutesShort": "{count}m",
+  "@resultMinutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultHistory": "Attempt history",
+  "resultReview": "Question review",
+  "resultReviewHint": "Review your answers and the correct answers.",
+  "resultNoAttempts": "No attempts found.",
+  "resultShowingAttempt": "Showing answers from attempt #{number}.",
+  "@resultShowingAttempt": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "resultRetake": "Retake exam",
+  "resultAwarded": "{awarded} of {total} awarded",
+  "@resultAwarded": {
+    "placeholders": {
+      "awarded": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "resultAwaitingGrading": "Awaiting grading",
+  "resultCorrect": "Correct",
+  "resultPartial": "Partially correct",
+  "resultIncorrect": "Incorrect",
+  "resultYourAnswer": "Your answer",
+  "resultSuggestedAnswer": "Suggested answer",
+  "resultCorrectAnswer": "Correct answer",
+  "resultExplanation": "Explanation",
+  "resultAttempt": "Attempt #{number}",
+  "@resultAttempt": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "resultLoadFailed": "Failed to load result.",
+  "resultPending": "PENDING",
+  "resultPassedBadge": "PASSED",
+  "resultFailedBadge": "FAILED",
+  "certSelectProfile": "Select a learner profile to view certificates.",
+  "certLoadFailed": "Could not load your certificates.",
+  "certEyebrow": "YOUR ACHIEVEMENTS",
+  "certTitle": "My Certificates",
+  "certSubtitle": "View, verify, and save certificates from your courses.",
+  "certSearch": "Search course, exam, or verification code...",
+  "certEmpty": "No certificates yet",
+  "certNoMatch": "No certificates match your search",
+  "certEmptyHint": "Certificates you earn will appear here.",
+  "certNoMatchHint": "Try a different search or certificate type.",
+  "certShowing": "Showing {shown} of {total} certificates",
+  "@certShowing": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "certDateUnavailable": "Date unavailable",
+  "certValid": "Valid",
+  "certIssued": "Issued {date}",
+  "@certIssued": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "certResult": "Result: {score} / {total}",
+  "@certResult": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "certPassed": "Passed",
+  "certNotPassed": "Not passed",
+  "certHide": "Hide",
+  "certPreview": "Preview",
+  "certSavePdf": "Save PDF",
+  "certAchievement": "CERTIFICATE OF ACHIEVEMENT",
+  "certPresentedTo": "Presented to",
+  "certFor": "For",
+  "certProgress": "Course progress {progress}%",
+  "@certProgress": {
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  "certId": "Certificate ID: {id}",
+  "@certId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "certCode": "Verification code: {code}",
+  "@certCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "certCodeCopied": "Verification code copied",
+  "certCopyCode": "Copy code",
+  "certPdfFailed": "Could not open PDF preview.",
+  "certAllTypes": "All types",
+  "certTypeAttendance": "Attendance",
+  "certTypeCompletion": "Completion",
+  "certTypeCourseCompletion": "Course Completion",
+  "certTypeExam": "Exam",
+  "wishlistRemoved": "Removed from wishlist",
+  "wishlistRemoveFailed": "Failed to remove from wishlist",
+  "wishlistSelectProfile": "Select a learner profile to view your wishlist.",
+  "wishlistLoadFailed": "Failed to load wishlist",
+  "wishlistTitle": "Wishlist",
+  "wishlistCount": "{count, plural, one {{count} course saved for later} other {{count} courses saved for later}}",
+  "@wishlistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wishlistEmpty": "Your wishlist is empty",
+  "wishlistEmptyBody": "Save courses you like and come back to them here.",
+  "wishlistCourse": "Course",
+  "wishlistViewDetails": "View course details",
+  "formatSelfPaced": "Self-paced",
+  "formatLive": "Live class",
+  "notifTitle": "Notifications",
+  "notifMarkReadFailed": "Could not mark as read",
+  "notifMarkAllRead": "Mark all read",
+  "notifUnread": "{count} unread",
+  "@notifUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifLoadFailed": "Could not load notifications.",
+  "notifTapRetry": "Tap to retry",
+  "notifCaughtUp": "You're all caught up.",
+  "notifRemoveFailed": "Could not remove notification",
+  "notifJustNow": "Just now",
+  "notifMinutesAgo": "{count}m ago",
+  "@notifMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifHoursAgo": "{count}h ago",
+  "@notifHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifDaysAgo": "{count}d ago",
+  "@notifDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifView": "View",
+  "notifBellUnread": "Notifications, {count} unread",
+  "@notifBellUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatNoCourse": "Course not specified.",
+  "chatSelectProfile": "Select a learner profile to join this class chat.",
+  "chatConnectFailed": "Unable to connect to class chat. Please try again.",
+  "chatTooLong": "Messages can be up to 2,000 characters.",
+  "chatReportTitle": "Report message",
+  "chatReportWhy": "Why should this message be reviewed?",
+  "chatReportHint": "Explain the issue...",
+  "chatSubmitReport": "Submit report",
+  "chatReported": "Message reported for review.",
+  "chatReportFailed": "Could not report the message. Please try again.",
+  "chatClassChat": "{batch} • Class chat",
+  "@chatClassChat": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      }
+    }
+  },
+  "chatDismiss": "Dismiss",
+  "chatRetry": "Retry",
+  "chatPlaceholder": "Type a message...",
+  "chatConnecting": "Connecting...",
+  "chatSend": "Send message",
+  "chatLive": "Live",
+  "chatOffline": "Offline",
+  "chatNextClass": "Next Live Class",
+  "chatJoinClass": "Join class",
+  "chatEmpty": "No messages yet. Say hello to your classmates!",
+  "chatInstructor": "INSTRUCTOR",
+  "chatMessageActions": "Message actions",
+  "chatTimeTba": "Time to be announced",
+  "chatDateAt": "{date} at {time}",
+  "@chatDateAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "familyTitle": "Your learners' profiles",
+  "familyAddProfile": "Add profile",
+  "familyEmpty": "No learner profiles yet. Add a profile to get started.",
+  "familySubscribed": "Subscribed",
+  "familySubscription": "Subscription",
+  "familySubscribe": "Subscribe",
+  "commonEdit": "Edit",
+  "pinReset": "Reset PIN",
+  "pinSet": "Set PIN",
+  "imageInvalidType": "Choose a JPEG, PNG, WebP, or GIF image.",
+  "imageTooLarge": "Image must be 5 MB or smaller",
+  "imagePickerFailed": "Could not open your photo library.",
+  "learnerChooseDob": "Choose a date of birth.",
+  "learnerPhotoUploadFailed": "Learner created, but the photo could not be uploaded. You can add it from profile management.",
+  "learnerCreateFailed": "Failed to create profile",
+  "learnerAddTitle": "Add a learner",
+  "learnerAddPhoto": "Add profile picture",
+  "learnerChangePhoto": "Change profile picture",
+  "learnerRemovePhoto": "Remove photo",
+  "learnerAddPhotoOptional": "Add a profile photo (optional)",
+  "learnerName": "Learner's name",
+  "learnerNameRequired": "Name is required",
+  "learnerNameTooLong": "Enter a name up to 100 characters.",
+  "learnerDob": "Date of birth",
+  "learnerPinOptional": "4-digit PIN (optional)",
+  "learnerPinFormat": "PIN must be exactly 4 digits",
+  "learnerPinMismatch": "PINs do not match",
+  "learnerCreate": "Add learner",
+  "learnerLoadFailed": "Could not load learner profile.",
+  "learnerUpdateFailed": "Failed to update profile",
+  "learnerNotFound": "Profile not found",
+  "learnerEditTitle": "Edit {name}'s profile",
+  "@learnerEditTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "learnerNameLocked": "Name is locked because a certificate has been issued.",
+  "learnerCancelPinChange": "Cancel PIN change",
+  "learnerNewPin": "New 4-digit PIN",
+  "learnerConfirmNewPin": "Confirm new PIN",
+  "commonSaving": "Saving...",
+  "learnerSaveChanges": "Save changes",
+  "deleteFailed": "Failed to delete profile",
+  "deleteTitle": "Delete {name}'s profile?",
+  "@deleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDestroyed": "This will be destroyed:",
+  "deleteDestroyedItems": "Progress, enrolments, exam results, and chat messages.",
+  "deleteSurvives": "This will be kept:",
+  "deleteSurvivesItems": "Certificates and moderation records.",
+  "deleteTypeName": "Type {name} to confirm",
+  "@deleteTypeName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDeleting": "Deleting…",
+  "deleteConfirm": "Delete profile",
+  "deleteGoBack": "No, go back",
+  "avatarLabel": "Learner avatar",
+  "secServerUnreachable": "Couldn't reach the server. Check your internet connection and try again.",
+  "secTooManyAttempts": "Too many attempts. Please wait a moment and try again.",
+  "secTitle": "Login & security",
+  "secEmailRequired": "Enter your new email address.",
+  "secEmailInvalid": "Enter a valid email address, like name@example.com.",
+  "secEmailSame": "This is already your email address.",
+  "secConfirmWithPassword": "Enter your current password to confirm.",
+  "secEmailUpdated": "Email updated. Check your new inbox for a verification link.",
+  "secEmailUpdateFailed": "We couldn't update your email. Please try again.",
+  "secEmail": "Email",
+  "secEmailLoadFailed": "Couldn't load your email.",
+  "secRetry": "Retry",
+  "secLoadingEmail": "Loading account email…",
+  "secUnverified": "Unverified — check your email for a verification link",
+  "secVerified": "Verified ✓",
+  "secChangeEmail": "Change email",
+  "secNewEmail": "New email",
+  "secCurrentPassword": "Current password",
+  "secPasswordConfirmHint": "We ask for your password to confirm it's you.",
+  "secSaveEmail": "Save email",
+  "secEmailChangeNote": "You'll need to verify your new email before it takes effect. Your account stays fully active in the meantime.",
+  "secCurrentRequired": "Enter your current password.",
+  "secNewRequired": "Enter a new password.",
+  "secTooShort": "Use at least {min} characters ({remaining} more).",
+  "@secTooShort": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "secTooLong": "Use {max} characters or fewer.",
+  "@secTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "secSameAsCurrent": "Choose a password different from your current one.",
+  "secConfirmRequired": "Re-enter your new password.",
+  "secMismatch": "Passwords don't match.",
+  "secPasswordUpdated": "Password updated. Use your new password the next time you log in.",
+  "secPasswordUpdateFailed": "We couldn't update your password. Please try again.",
+  "secPassword": "Password",
+  "secChangePassword": "Change password",
+  "secNewPassword": "New password",
+  "secReqLength": "At least {min} characters",
+  "@secReqLength": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "secReqDifferent": "Different from your current password",
+  "secConfirmPassword": "Confirm new password",
+  "secPasswordsMatch": "Passwords match",
+  "secPasswordsDontMatchYet": "Passwords don't match yet",
+  "secSavePassword": "Save password",
+  "commonOptional": "optional",
+  "commonCopied": "Copied",
+  "commonAge": "Age {age}",
+  "@commonAge": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "commonImageUploadFailed": "Failed to upload the image",
+  "commonRemoveImage": "Remove image",
+  "commonAddImage": "Add image",
+  "commonUploading": "Uploading...",
+  "commonSubmit": "Submit",
+  "subTitle": "Subscription",
+  "subIntro": "Each learner profile needs its own subscription to enrol in courses. A subscription lasts one month from approval.",
+  "subLoadFailed": "Failed to load your subscription",
+  "subHowToPay": "How to pay",
+  "subHowToPayBody": "Send the payment to one of these accounts, then apply for each profile with your transaction details.",
+  "subPerProfileMonth": "per profile · one month",
+  "subNoPaymentDetails": "Payment details haven't been added yet. Please contact support.",
+  "subCopyAccountNumber": "Copy account number",
+  "subTypeBank": "Bank transfer",
+  "subTypeMobile": "Mobile banking",
+  "subTypeOther": "Other",
+  "subBadgeSubscribed": "SUBSCRIBED",
+  "subBadgeUnderReview": "UNDER REVIEW",
+  "subBadgeNotSubscribed": "NOT SUBSCRIBED",
+  "subSubscribedUntil": "Subscribed until {date}",
+  "@subSubscribedUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subRenewalUnderReview": "Renewal payment under review",
+  "subPaymentUnderReview": "Payment under review — usually within a day",
+  "subSubscribeToEnrol": "Subscribe to enrol in courses",
+  "subLastRejected": "Last payment wasn't approved.",
+  "subLastRejectedReason": "Last payment wasn't approved: {reason}",
+  "@subLastRejectedReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "subWaiverReady": "{percent}% fee waiver ready",
+  "@subWaiverReady": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "subWaiverReadyUseBy": "{percent}% fee waiver ready — use by {date}",
+  "@subWaiverReadyUseBy": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subWaiverUnderReview": "Fee waiver request under review",
+  "subWaiverRejected": "Waiver not approved: {reason}.",
+  "@subWaiverRejected": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "subRequestWaiver": "Need help with the fee? Request a waiver",
+  "subWaiverLimit": "Waiver limit reached for this year",
+  "subWaiverLimitNext": "Waiver limit reached for this year (next on {date})",
+  "@subWaiverLimitNext": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subCancelRequest": "Cancel request",
+  "subRenew": "Renew",
+  "subApply": "Apply for subscription",
+  "subLearnerProfiles": "Learner profiles",
+  "subSubscribedCount": "{count} of {total} subscribed",
+  "@subSubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "subUnderReviewCount": "{count} under review",
+  "@subUnderReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subAddProfileToSubscribe": "Add a learner profile to subscribe.",
+  "subCancelTitle": "Cancel this request?",
+  "subCancelBody": "The payment for {name} won't be reviewed. You can submit it again later.",
+  "@subCancelBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subKeepIt": "Keep it",
+  "subCancelled": "Request cancelled",
+  "subCancelFailed": "Failed to cancel the request",
+  "subPaymentHistory": "Payment history",
+  "subFeeWaivers": "Fee waivers",
+  "subWaiverPercent": "{percent}% waiver",
+  "@subWaiverPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "subSubmittedOn": "Submitted {date}",
+  "@subSubmittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subUntil": "Until {date}",
+  "@subUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subReqUnderReview": "Under review",
+  "subReqApproved": "Approved",
+  "subReqRejected": "Rejected",
+  "subReqCancelled": "Cancelled",
+  "subWaiverOff": "{percent}% off one month",
+  "@subWaiverOff": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "subRequestedOn": "Requested {date}",
+  "@subRequestedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subUseBy": "Use by {date}",
+  "@subUseBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subUsedOn": "Used {date}",
+  "@subUsedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subWaiverReadyToUse": "Ready to use",
+  "subWaiverUsed": "Used",
+  "subWaiverNotApproved": "Not approved",
+  "subWaiverExpired": "Expired",
+  "subWaiverWithdrawn": "Withdrawn",
+  "subSubmittedPayment": "Payment submitted. We'll subscribe {name} once it's verified.",
+  "@subSubmittedPayment": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subWaiverSent": "Waiver request sent. We'll email you once it's reviewed.",
+  "applyRenewTitle": "Renew {name}'s subscription",
+  "@applyRenewTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "applyApplyTitle": "Apply for {name}'s subscription",
+  "@applyApplyTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "applyFullyWaivedBody": "{name}'s fee waiver covers the whole month, so no payment is needed. An admin will approve it and subscribe {name} for one month.",
+  "@applyFullyWaivedBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "applyPaymentBody": "Enter the details of your {amount} payment. An admin will check it and subscribe {name} for one month.",
+  "@applyPaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "applyWaiverApplied": "{percent}% fee waiver applied",
+  "@applyWaiverApplied": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "applyNothingToPay": "Nothing to pay this month.",
+  "applyWaiverUsedNote": "The waiver is used once this subscription is approved.",
+  "applyPaidTo": "Paid to",
+  "applyAmount": "Amount ({currency})",
+  "@applyAmount": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "applyAmountRequired": "Enter the amount paid",
+  "applyPaymentDate": "Payment date",
+  "applyTransactionId": "Transaction ID / reference",
+  "applyTransactionIdHint": "e.g. 9KD7X2LQ1P",
+  "applyTransactionIdRequired": "Enter the transaction ID",
+  "applyPaidFrom": "Paid from",
+  "applyPaidFromHint": "Your account or mobile number",
+  "applyNote": "Note",
+  "applyProof": "Payment screenshot / receipt",
+  "applySubmitPayment": "Submit payment",
+  "applySubmitFailed": "Failed to submit your payment",
+  "waiverTitle": "Request a fee waiver for {name}",
+  "@waiverTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "waiverBody": "If paying the full fee is difficult, tell us about your situation. If approved, you'll get 25–100% off {name}'s next one-month subscription, to use within 30 days.",
+  "@waiverBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "waiverSituation": "Your situation",
+  "waiverSituationHint": "e.g. family income, number of children studying, recent changes in circumstances…",
+  "waiverMinChars": "Please write at least {min} characters",
+  "@waiverMinChars": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "waiverDocuments": "Supporting documents (optional, up to {max} images)",
+  "@waiverDocuments": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "waiverRemaining": "You can request {count, plural, one {{count} more time} other {{count} more times}} for {name} in the next 12 months.",
+  "@waiverRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "waiverSend": "Send request",
+  "waiverFailed": "Failed to submit the waiver request",
+  "dashChooseProfile": "Choose a learner profile to view this dashboard.",
+  "dashChooseProfileButton": "Choose profile",
+  "dashLoadFailed": "Failed to load dashboard",
+  "dashGreetingMorning": "Good morning, {name}",
+  "@dashGreetingMorning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashGreetingAfternoon": "Good afternoon, {name}",
+  "@dashGreetingAfternoon": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashGreetingEvening": "Good evening, {name}",
+  "@dashGreetingEvening": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashFindFirstCourse": "Find your first course to start learning.",
+  "dashNiceWork": "Nice work today — keep the momentum going.",
+  "dashPickUp": "Pick up where you left off.",
+  "dashClassLiveNow": "Your class is live now",
+  "dashClassStartsAt": "Your class starts at {time}",
+  "@dashClassStartsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "dashJoin": "Join",
+  "dashView": "View",
+  "dashStatInProgress": "Courses in progress",
+  "dashStatCompletedCount": "{count} completed",
+  "@dashStatCompletedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashStatLessons": "Lessons completed",
+  "dashStatThisWeek": "{count} this week",
+  "@dashStatThisWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashStatCertificates": "Certificates earned",
+  "dashStatViewCertificates": "View certificates",
+  "dashStatStreak": "Day streak",
+  "dashStatKeepStreak": "Study today to keep it going",
+  "dashStatBest": "Best: {count, plural, one {{count} day} other {{count} days}}",
+  "@dashStatBest": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashContinueTitle": "Continue learning",
+  "dashViewAll": "View all",
+  "dashAllFinished": "You've finished all your courses!",
+  "dashNotStarted": "You haven't started a course yet",
+  "dashBrowseCourses": "Browse courses",
+  "dashNext": "Next: {title}",
+  "@dashNext": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "dashLiveOnline": "Live online class",
+  "dashNoLessons": "No lessons yet",
+  "dashSchedule": "Schedule",
+  "dashResume": "Resume",
+  "dashStart": "Start",
+  "dashLiveTitle": "Upcoming live classes",
+  "dashLiveNone": "No upcoming live classes.",
+  "dashLiveNow": "Live now",
+  "dashDeadlinesTitle": "Deadlines",
+  "dashDeadlinesNone": "Nothing due — you're all set.",
+  "dashDueToday": "Due today",
+  "dashDueTomorrow": "Due tomorrow",
+  "dashDueIn": "Due in {count, plural, one {{count} day} other {{count} days}}",
+  "@dashDueIn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashExam": "Exam",
+  "dashAssignment": "Assignment",
+  "dashActivityTitle": "Your activity",
+  "dashActivitySubtitle": "Lessons completed per week · {total} in the last {weeks} weeks",
+  "@dashActivitySubtitle": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "dashThisWeekShort": "This wk",
+  "dashResultsTitle": "Recent results",
+  "dashResultsNone": "Your exam and assignment results will appear here.",
+  "dashResultPassed": "Passed",
+  "dashResultFailed": "Not passed",
+  "dashResultGraded": "Graded",
+  "dashResultAwaiting": "Awaiting grade",
+  "dashNotesTitle": "Recent notes",
+  "dashRecommended": "Recommended for you",
+  "dashBrowseAll": "Browse all",
+  "dashLiveBadge": "LIVE",
+  "dashSwitchProfile": "Switch Profile",
+  "dashTimeTba": "Time TBA",
+  "helpTitle": "Help & Support",
+  "helpFaq": "Frequently asked questions",
+  "helpSearch": "Search questions…",
+  "helpNoMatch": "No questions match “{query}”.",
+  "@helpNoMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "helpNone": "No questions have been published yet.",
+  "helpContactUs": "Contact us",
+  "helpPolicies": "Policies",
+  "pageUnavailable": "This page isn't available right now.",
+  "pageUpdated": "Last updated {date}",
+  "@pageUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "languageChangeTo": "Change language"
+}

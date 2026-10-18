@@ -15,6 +15,12 @@ import { notFoundHandler } from "#/middleware/not-found";
 
 const app: Express = express();
 
+// Makes req.ip the real client IP behind a proxy (see TRUST_PROXY in env.ts);
+// rate limits are keyed on it.
+if (env.TRUST_PROXY !== undefined) {
+  app.set("trust proxy", env.TRUST_PROXY);
+}
+
 // Stripe webhook MUST be before express.json() for raw body
 app.use("/webhooks", stripeWebhookRoutes);
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../learning_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -27,8 +28,8 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view courses.'),
+      return Center(
+        child: Text(context.l10n.learnSelectProfileCourses),
       );
     }
     final coursesAsync = ref.watch(enrolledCoursesProvider(profile.id));
@@ -37,10 +38,10 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _MessageState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load your courses',
+        title: context.l10n.learnCoursesLoadFailed,
         action: TextButton(
           onPressed: () => ref.invalidate(enrolledCoursesProvider(profile.id)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (allCourses) {
@@ -62,7 +63,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [
               Text(
-                'Regular Courses',
+                context.l10n.learnRegularTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: const Color(0xFF0C1F33),
                   fontWeight: FontWeight.w600,
@@ -70,7 +71,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${courses.length} self-paced course${courses.length == 1 ? '' : 's'}',
+                context.l10n.learnRegularCount(courses.length),
                 style: const TextStyle(color: Color(0xFF64748B)),
               ),
               if (courses.isNotEmpty) ...[
@@ -79,7 +80,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                   controller: _search,
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
-                    hintText: 'Search by course or instructor...',
+                    hintText: context.l10n.learnSearch,
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.white,
@@ -98,19 +99,19 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
               if (courses.isEmpty)
                 _MessageState(
                   icon: Icons.menu_book_outlined,
-                  title: 'No regular courses yet',
+                  title: context.l10n.learnNoRegular,
                   description:
-                      'Browse the course catalogue to find your next lesson.',
+                      context.l10n.learnNoRegularBody,
                   action: FilledButton(
                     onPressed: () => context.go('/courses'),
-                    child: const Text('Browse courses'),
+                    child: Text(context.l10n.learnBrowse),
                   ),
                 )
               else if (filtered.isEmpty)
                 _MessageState(
                   icon: Icons.search_off,
-                  title: 'No matching courses',
-                  description: 'Try a different course or instructor name.',
+                  title: context.l10n.learnNoMatch,
+                  description: context.l10n.learnNoMatchBody,
                 )
               else
                 ...filtered.map(
@@ -170,7 +171,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                                       spacing: 6,
                                       runSpacing: 5,
                                       children: [
-                                        _Badge(text: _level(course.level)),
+                                        _Badge(text: _level(context.l10n, course.level)),
                                         if (course.isCompleted)
                                           const _Badge(
                                             text: 'COMPLETED',
@@ -208,7 +209,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                           Row(
                             children: [
                               Text(
-                                '${course.completedMaterials}/${course.totalMaterials} lessons',
+                                context.l10n.learnLessonsProgress(course.completedMaterials, course.totalMaterials),
                                 style: const TextStyle(
                                   color: _green,
                                   fontWeight: FontWeight.w600,
@@ -251,10 +252,10 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                                   ),
                                   label: Text(
                                     course.continueLessonId == null
-                                        ? 'No lessons'
+                                        ? context.l10n.learnNoLessons
                                         : course.progress > 0
-                                        ? 'Resume'
-                                        : 'Start learning',
+                                        ? context.l10n.learnResume
+                                        : context.l10n.learnStart,
                                   ),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: _navy,
@@ -273,7 +274,7 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
                                   '/my-courses/${course.courseId}/exams',
                                 ),
                                 icon: const Icon(Icons.quiz_outlined, size: 18),
-                                label: const Text('Exams'),
+                                label: Text(context.l10n.learnExams),
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 13,
@@ -296,11 +297,11 @@ class _RegularCoursesPageState extends ConsumerState<RegularCoursesPage> {
   }
 }
 
-String _level(String value) => switch (value.toLowerCase()) {
-  '1' || 'beginner' => 'BEGINNER',
-  '2' || 'intermediate' => 'INTERMEDIATE',
-  '3' || 'advanced' => 'ADVANCED',
-  _ => 'ALL LEVELS',
+String _level(AppLocalizations l10n, String value) => switch (value.toLowerCase()) {
+  '1' || 'beginner' => l10n.levelBeginnerCaps,
+  '2' || 'intermediate' => l10n.levelIntermediateCaps,
+  '3' || 'advanced' => l10n.levelAdvancedCaps,
+  _ => l10n.levelAllCaps,
 };
 
 class _Badge extends StatelessWidget {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import {
   subscriptionService,
   waiverService,
@@ -22,6 +23,7 @@ export function useSubscriptionOverview() {
 }
 
 export function useCreateSubscriptionRequestMutation() {
+  const tToast = useTranslations("subscription.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -31,12 +33,13 @@ export function useCreateSubscriptionRequestMutation() {
       queryClient.invalidateQueries({ queryKey: ["subscription-overview"] });
     },
     onError: (error: any) => {
-      toast.error(errorMessage(error, "Failed to submit your payment"));
+      toast.error(errorMessage(error, tToast("submitFailed")));
     },
   });
 }
 
 export function useCancelSubscriptionRequestMutation() {
+  const tToast = useTranslations("subscription.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -44,10 +47,10 @@ export function useCancelSubscriptionRequestMutation() {
       subscriptionService.cancelRequest(requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription-overview"] });
-      toast.success("Request cancelled");
+      toast.success(tToast("cancelled"));
     },
     onError: (error: any) => {
-      toast.error(errorMessage(error, "Failed to cancel the request"));
+      toast.error(errorMessage(error, tToast("cancelFailed")));
     },
   });
 }
@@ -131,6 +134,7 @@ export function useSavePaymentSettingsMutation() {
 // ─── Fee waivers ───
 
 export function useApplyWaiverMutation() {
+  const tToast = useTranslations("subscription.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -143,7 +147,7 @@ export function useApplyWaiverMutation() {
       queryClient.invalidateQueries({ queryKey: ["subscription-overview"] });
     },
     onError: (error: any) => {
-      toast.error(errorMessage(error, "Failed to submit the waiver request"));
+      toast.error(errorMessage(error, tToast("waiverFailed")));
     },
   });
 }

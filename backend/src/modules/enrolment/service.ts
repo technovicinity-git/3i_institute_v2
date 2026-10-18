@@ -26,7 +26,8 @@ export class EnrolmentService {
       throw new NotFoundError("Learner profile not found");
     }
 
-    // Verify course exists and is published
+    // Verify course exists and is published. Only UPCOMING batches are loaded:
+    // once a batch has started (ACTIVE) it no longer takes new enrolments.
     const course = await prisma.course.findUnique({
       where: { id: input.courseId },
       include: {
@@ -54,7 +55,8 @@ export class EnrolmentService {
       throw new ForbiddenError(ageCheck.message);
     }
 
-    // Only subscribed profiles can enrol
+    // Only subscribed profiles can enrol. The subscription is per learner
+    // profile (a seat), not per account — see SeatService.
     if (!(await seatService.isProfileSubscribed(profile.id))) {
       throw new AppError(
         403,
@@ -63,7 +65,8 @@ export class EnrolmentService {
       );
     }
 
-    // Check if already enrolled
+    // Check if already enrolled. One enrolment per profile per course, so a
+    // learner can't hold places in two batches of the same course.
     const existing = await prisma.enrolment.findFirst({
       where: {
         learnerProfileId: input.learnerProfileId,
@@ -75,7 +78,8 @@ export class EnrolmentService {
       throw new ConflictError("Already enrolled in this course");
     }
 
-    // For batch courses, validate batch
+    // REGULAR courses are self-paced and have no batch. ONLINE_CLASS and
+    // MIXED courses run live sessions, so the learner must pick a batch.
     let batchId: string | null = null;
     let waitlisted = false;
     let waitlistPosition: number | null = null;
@@ -91,7 +95,9 @@ export class EnrolmentService {
         throw new NotFoundError("Batch not found or no longer available");
       }
 
-      // Check capacity
+      // Check capacity. Count-then-create is not atomic, so two enrolments
+      // at the same moment can both take the last place and overfill the
+      // batch by one.
       const enrolmentCount = await prisma.enrolment.count({
         where: {
           batchId: batch.id,
@@ -121,6 +127,8 @@ export class EnrolmentService {
         batchId,
         waitlisted,
         waitlistPosition,
+        // The account holder (parent) can confirm a learner outside the
+        // course's age range; record who approved it.
         ageOverrideApplied: ageCheck.overrideApplied,
         ageOverrideApprovedBy: ageCheck.overrideApplied ? accountId : null,
       },
@@ -168,6 +176,8 @@ export class EnrolmentService {
     return enrolments;
   }
 
+  // Moves the first waitlisted learner into the batch when a place frees up.
+  // Promotes one learner per call, regardless of how many places opened.
   async promoteFromWaitlist(batchId: string) {
     // Find first waitlisted enrolment for this batch
     const waitlisted = await prisma.enrolment.findFirst({
@@ -191,7 +201,8 @@ export class EnrolmentService {
       },
     });
 
-    // Recalculate remaining waitlist positions
+    // Renumber the rest (1, 2, 3...) so positions shown to learners have no
+    // gaps after the promotion.
     const remaining = await prisma.enrolment.findMany({
       where: {
         batchId,
@@ -318,7 +329,8 @@ export class EnrolmentService {
             )
           : 0;
 
-      // Find the continue lesson
+      // "Continue" opens the first material not yet completed (in course
+      // order). A finished course goes back to the first material.
       let continueLessonId: string | null = null;
 
       if (courseMaterials.length > 0) {

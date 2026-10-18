@@ -10,6 +10,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/entities/dashboard_data.dart';
 import '../providers/dashboard_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -33,11 +34,11 @@ class LearnerDashboardPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Choose a learner profile to view this dashboard.'),
+            Text(context.l10n.dashChooseProfile),
             const SizedBox(height: 10),
             FilledButton(
               onPressed: () => context.go('/profiles'),
-              child: const Text('Choose profile'),
+              child: Text(context.l10n.dashChooseProfileButton),
             ),
           ],
         ),
@@ -48,7 +49,7 @@ class LearnerDashboardPage extends ConsumerWidget {
     return dashboard.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _DashboardError(
-        message: apiErrorMessage(error, fallback: 'Failed to load dashboard.'),
+        message: apiErrorMessage(error, fallback: context.l10n.dashLoadFailed),
         onRetry: () => ref.invalidate(learnerDashboardProvider(profile.id)),
         onSwitchProfile: () => context.go('/profiles'),
       ),
@@ -194,18 +195,19 @@ class _Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hour = DateTime.now().hour;
+    final l10n = context.l10n;
     final greeting = hour < 12
-        ? 'Good morning'
+        ? l10n.dashGreetingMorning(data.learnerName)
         : hour < 17
-        ? 'Good afternoon'
-        : 'Good evening';
+        ? l10n.dashGreetingAfternoon(data.learnerName)
+        : l10n.dashGreetingEvening(data.learnerName);
     final stats = data.stats;
     final hasCourses = stats.coursesInProgress + stats.coursesCompleted > 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$greeting, ${data.learnerName}',
+          greeting,
           style: const TextStyle(
             fontFamily: 'serif',
             fontSize: 26,
@@ -215,10 +217,10 @@ class _Greeting extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           !hasCourses
-              ? 'Find your first course to start learning.'
+              ? l10n.dashFindFirstCourse
               : stats.studiedToday
-              ? 'Nice work today — keep the momentum going.'
-              : 'Pick up where you left off.',
+              ? l10n.dashNiceWork
+              : l10n.dashPickUp,
           style: const TextStyle(color: _muted),
         ),
       ],
@@ -262,8 +264,8 @@ class _HappeningNowBanner extends StatelessWidget {
               children: [
                 Text(
                   live
-                      ? 'Your class is live now'
-                      : 'Your class starts at ${_time(liveClass.scheduledAt)}',
+                      ? context.l10n.dashClassLiveNow
+                      : context.l10n.dashClassStartsAt(_time(context.l10n, liveClass.scheduledAt)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -287,7 +289,7 @@ class _HappeningNowBanner extends StatelessWidget {
               backgroundColor: Colors.white,
               foregroundColor: _ink,
             ),
-            child: Text(link != null ? 'Join' : 'View'),
+            child: Text(link != null ? context.l10n.dashJoin : context.l10n.dashView),
           ),
         ],
       ),
@@ -308,32 +310,32 @@ class _StatsGrid extends StatelessWidget {
         icon: Icons.menu_book_outlined,
         color: _blue,
         value: stats.coursesInProgress,
-        label: 'Courses in progress',
-        sub: '${stats.coursesCompleted} completed',
+        label: context.l10n.dashStatInProgress,
+        sub: context.l10n.dashStatCompletedCount(stats.coursesCompleted),
       ),
       _StatItem(
         icon: Icons.check_circle_outline,
         color: _green,
         value: stats.lessonsCompleted,
-        label: 'Lessons completed',
-        sub: '${stats.lessonsThisWeek} this week',
+        label: context.l10n.dashStatLessons,
+        sub: context.l10n.dashStatThisWeek(stats.lessonsThisWeek),
       ),
       _StatItem(
         icon: Icons.workspace_premium_outlined,
         color: _gold,
         value: stats.certificatesEarned,
-        label: 'Certificates earned',
-        sub: 'View certificates',
+        label: context.l10n.dashStatCertificates,
+        sub: context.l10n.dashStatViewCertificates,
         route: '/certificates',
       ),
       _StatItem(
         icon: Icons.local_fire_department_outlined,
         color: const Color(0xFFF97316),
         value: stats.currentStreak,
-        label: 'Day streak',
+        label: context.l10n.dashStatStreak,
         sub: stats.currentStreak > 0 && !stats.studiedToday
-            ? 'Study today to keep it'
-            : 'Best: ${stats.longestStreak} day${stats.longestStreak == 1 ? '' : 's'}',
+            ? context.l10n.dashStatKeepStreak
+            : context.l10n.dashStatBest(stats.longestStreak),
       ),
     ];
     return LayoutBuilder(
@@ -442,16 +444,16 @@ class _ContinueLearning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
-    title: 'Continue learning',
-    actionLabel: 'View all',
+    title: context.l10n.dashContinueTitle,
+    actionLabel: context.l10n.dashViewAll,
     actionRoute: '/my-courses',
     child: courses.isEmpty
         ? _EmptyState(
             icon: Icons.school_outlined,
             message: hasCourses
-                ? "You've finished all your courses!"
-                : "You haven't started a course yet.",
-            actionLabel: 'Browse courses',
+                ? context.l10n.dashAllFinished
+                : context.l10n.dashNotStarted,
+            actionLabel: context.l10n.dashBrowseCourses,
             onActionRoute: '/courses',
           )
         : Column(
@@ -504,10 +506,10 @@ class _ContinueLearningRow extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 course.nextLessonTitle != null
-                    ? 'Next: ${course.nextLessonTitle}'
+                    ? context.l10n.dashNext('${course.nextLessonTitle}')
                     : course.isOnlineClass
-                    ? 'Live online class'
-                    : 'No lessons yet',
+                    ? context.l10n.dashLiveOnline
+                    : context.l10n.dashNoLessons,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11, color: _muted),
@@ -548,10 +550,10 @@ class _ContinueLearningRow extends StatelessWidget {
           ),
           child: Text(
             course.isOnlineClass
-                ? 'Schedule'
+                ? context.l10n.dashSchedule
                 : course.completedLessons > 0
-                ? 'Resume'
-                : 'Start',
+                ? context.l10n.dashResume
+                : context.l10n.dashStart,
             style: const TextStyle(fontSize: 12),
           ),
         ),
@@ -569,11 +571,11 @@ class _LiveClasses extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
-    title: 'Upcoming live classes',
-    actionLabel: 'View all',
+    title: context.l10n.dashLiveTitle,
+    actionLabel: context.l10n.dashViewAll,
     actionRoute: '/online-classes',
     child: classes.isEmpty
-        ? const _EmptyMessage('No upcoming live classes.')
+        ? _EmptyMessage(context.l10n.dashLiveNone)
         : Column(
             children: [
               for (final (i, c) in classes.indexed) ...[
@@ -610,7 +612,7 @@ class _LiveClassRow extends StatelessWidget {
               Text(
                 date == null
                     ? '--'
-                    : DateFormat('MMM').format(date).toUpperCase(),
+                    : DateFormat.MMM().format(date).toUpperCase(),
                 style: const TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -644,7 +646,7 @@ class _LiveClassRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${status == _ClassStatus.live ? 'Live now' : _time(date)} • ${liveClass.courseTitle}',
+                '${status == _ClassStatus.live ? context.l10n.dashLiveNow : _time(context.l10n, date)} • ${liveClass.courseTitle}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -666,7 +668,7 @@ class _LiveClassRow extends StatelessWidget {
                   backgroundColor: _green,
                   visualDensity: VisualDensity.compact,
                 ),
-                child: const Text('Join', style: TextStyle(fontSize: 12)),
+                child: Text(context.l10n.dashJoin, style: const TextStyle(fontSize: 12)),
               )
             : OutlinedButton(
                 onPressed: () =>
@@ -675,7 +677,7 @@ class _LiveClassRow extends StatelessWidget {
                   foregroundColor: _navy,
                   visualDensity: VisualDensity.compact,
                 ),
-                child: const Text('View', style: TextStyle(fontSize: 12)),
+                child: Text(context.l10n.dashView, style: const TextStyle(fontSize: 12)),
               ),
       ],
     );
@@ -690,9 +692,9 @@ class _Deadlines extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
-    title: 'Deadlines',
+    title: context.l10n.dashDeadlinesTitle,
     child: deadlines.isEmpty
-        ? const _EmptyMessage("Nothing due — you're all set.")
+        ? _EmptyMessage(context.l10n.dashDeadlinesNone)
         : Column(
             children: [for (final d in deadlines) _DeadlineRow(deadline: d)],
           ),
@@ -707,10 +709,10 @@ class _DeadlineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final urgent = deadline.daysRemaining <= 1;
     final due = deadline.daysRemaining <= 0
-        ? 'Due today'
+        ? context.l10n.dashDueToday
         : deadline.daysRemaining == 1
-        ? 'Due tomorrow'
-        : 'Due in ${deadline.daysRemaining} days';
+        ? context.l10n.dashDueTomorrow
+        : context.l10n.dashDueIn(deadline.daysRemaining);
     return _TapRow(
       route: deadline.isExam
           ? '/my-courses/${deadline.courseId}/exams'
@@ -742,7 +744,7 @@ class _DeadlineRow extends StatelessWidget {
           ),
           TextSpan(
             text:
-                ' • ${deadline.isExam ? 'Exam' : 'Assignment'} · ${deadline.courseTitle}',
+                ' • ${deadline.isExam ? context.l10n.dashExam : context.l10n.dashAssignment} · ${deadline.courseTitle}',
           ),
         ],
       ),
@@ -765,9 +767,9 @@ class _WeeklyActivityChart extends StatelessWidget {
     );
     final total = weeks.fold<int>(0, (sum, w) => sum + w.lessonsCompleted);
     return _DashboardPanel(
-      title: 'Your activity',
+      title: context.l10n.dashActivityTitle,
       subtitle:
-          'Lessons completed per week · $total in the last ${weeks.length} weeks',
+          context.l10n.dashActivitySubtitle(total, weeks.length),
       child: SizedBox(
         height: 150,
         child: Row(
@@ -809,10 +811,10 @@ class _WeeklyActivityChart extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         i == weeks.length - 1
-                            ? 'This wk'
+                            ? context.l10n.dashThisWeekShort
                             : week.weekStart == null
                             ? ''
-                            : DateFormat('MMM d').format(week.weekStart!),
+                            : DateFormat.MMMd().format(week.weekStart!),
                         maxLines: 1,
                         overflow: TextOverflow.clip,
                         style: TextStyle(
@@ -842,12 +844,12 @@ class _RecentResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
-    title: 'Recent results',
-    actionLabel: 'View all',
+    title: context.l10n.dashResultsTitle,
+    actionLabel: context.l10n.dashViewAll,
     actionRoute: '/exams',
     child: results.isEmpty
-        ? const _EmptyMessage(
-            'Your exam and assignment results will appear here.',
+        ? _EmptyMessage(
+            context.l10n.dashResultsNone,
           )
         : Column(children: [for (final r in results) _ResultRow(result: r)]),
   );
@@ -860,10 +862,10 @@ class _ResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, label, color) = switch (result.status) {
-      'PASSED' => (Icons.check_circle_outline, 'Passed', _green),
-      'FAILED' => (Icons.cancel_outlined, 'Not passed', _red),
-      'GRADED' => (Icons.check_circle_outline, 'Graded', _blue),
-      _ => (Icons.hourglass_bottom, 'Awaiting grade', const Color(0xFFA16207)),
+      'PASSED' => (Icons.check_circle_outline, context.l10n.dashResultPassed, _green),
+      'FAILED' => (Icons.cancel_outlined, context.l10n.dashResultFailed, _red),
+      'GRADED' => (Icons.check_circle_outline, context.l10n.dashResultGraded, _blue),
+      _ => (Icons.hourglass_bottom, context.l10n.dashResultAwaiting, const Color(0xFFA16207)),
     };
     final score = result.score;
     return _TapRow(
@@ -878,8 +880,8 @@ class _ResultRow extends StatelessWidget {
       title: result.title,
       subtitle: TextSpan(
         text:
-            '${result.isExam ? 'Exam' : 'Assignment'} · ${result.courseTitle}'
-            '${result.submittedAt == null ? '' : ' • ${_ago(result.submittedAt!)}'}',
+            '${result.isExam ? context.l10n.dashExam : context.l10n.dashAssignment} · ${result.courseTitle}'
+            '${result.submittedAt == null ? '' : ' • ${_ago(context.l10n, result.submittedAt!)}'}',
       ),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -915,7 +917,7 @@ class _RecentNotes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _DashboardPanel(
-    title: 'Recent notes',
+    title: context.l10n.dashNotesTitle,
     child: Column(
       children: [
         for (final (i, note) in notes.indexed) ...[
@@ -988,16 +990,16 @@ class _Recommendations extends StatelessWidget {
     children: [
       Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Recommended for you',
+              context.l10n.dashRecommended,
               style: TextStyle(fontFamily: 'serif', fontSize: 18, color: _ink),
             ),
           ),
           TextButton(
             onPressed: () => context.go('/courses'),
             style: TextButton.styleFrom(foregroundColor: _green),
-            child: const Text('Browse all'),
+            child: Text(context.l10n.dashBrowseAll),
           ),
         ],
       ),
@@ -1056,8 +1058,8 @@ class _RecommendedCourseCard extends StatelessWidget {
                         color: const Color(0xFF7C3AED),
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      child: const Text(
-                        'LIVE',
+                      child: Text(
+                        context.l10n.dashLiveBadge,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 9,
@@ -1097,7 +1099,7 @@ class _RecommendedCourseCard extends StatelessWidget {
                       const Icon(Icons.star, size: 14, color: _gold),
                       const SizedBox(width: 3),
                       Text(
-                        course.rating?.toStringAsFixed(1) ?? 'New',
+                        course.rating?.toStringAsFixed(1) ?? context.l10n.commonNewRating,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1343,11 +1345,11 @@ class _DashboardError extends StatelessWidget {
             children: [
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: const Text('Try again'),
+                child: Text(context.l10n.commonTryAgain),
               ),
               TextButton(
                 onPressed: onSwitchProfile,
-                child: const Text('Switch profile'),
+                child: Text(context.l10n.dashSwitchProfile),
               ),
             ],
           ),
@@ -1365,20 +1367,20 @@ Future<void> _openLink(BuildContext context, String link) async {
   }
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open the meeting link.')),
+      SnackBar(content: Text(context.l10n.scheduleLinkFailed)),
     );
   }
 }
 
-String _time(DateTime? date) =>
-    date == null ? 'Time TBA' : DateFormat('h:mm a').format(date);
+String _time(AppLocalizations l10n, DateTime? date) =>
+    date == null ? l10n.dashTimeTba : DateFormat.jm().format(date);
 
-String _ago(DateTime date) {
+String _ago(AppLocalizations l10n, DateTime date) {
   final diff = DateTime.now().difference(date);
-  if (diff.inHours < 1) return 'Just now';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return '${diff.inDays}d ago';
-  return DateFormat('MMM d').format(date);
+  if (diff.inHours < 1) return l10n.notifJustNow;
+  if (diff.inHours < 24) return l10n.notifHoursAgo(diff.inHours);
+  if (diff.inDays < 7) return l10n.notifDaysAgo(diff.inDays);
+  return DateFormat.MMMd().format(date);
 }
 
 String _number(num value) => value == value.roundToDouble()

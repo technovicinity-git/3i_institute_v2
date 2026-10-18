@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -28,7 +29,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Future<void> _submit() async {
     final email = _email.text.trim();
     if (!email.contains('@') || !email.contains('.')) {
-      setState(() => _error = 'Enter a valid email address');
+      setState(() => _error = context.l10n.authEmailInvalid);
       return;
     }
     setState(() {
@@ -39,25 +40,25 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       await ref.read(authControllerProvider.notifier).forgotPassword(email);
       if (mounted) setState(() => _submitted = true);
     } catch (error) {
-      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Failed to send reset link.'));
+      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: context.l10n.forgotFailed));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-        title: _submitted ? 'Check your email' : 'Reset your password',
-        description: _submitted
-            ? 'If an account with that email exists, we have sent a password reset link.'
-            : 'Enter the email on your account and we will send you a link.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AuthScaffold(
+        title: _submitted ? l10n.forgotSentTitle : l10n.forgotTitle,
+        description: _submitted ? l10n.forgotSentBody : l10n.forgotSubtitle,
         child: _submitted
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Icon(Icons.mark_email_read_outlined, size: 52, color: Color(0xFF287A50)),
                   const SizedBox(height: 16),
-                  AuthPrimaryButton(label: 'Back to log in', onPressed: () => context.go('/login')),
+                  AuthPrimaryButton(label: l10n.authBackToLogin, onPressed: () => context.go('/login')),
                 ],
               )
             : Column(
@@ -69,13 +70,14 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _submit(),
-                    decoration: const InputDecoration(labelText: 'Email address', hintText: 'sarah@example.com'),
+                    decoration: InputDecoration(labelText: l10n.authEmailLabel, hintText: 'sarah@example.com'),
                   ),
                   const SizedBox(height: 20),
-                  AuthPrimaryButton(label: 'Send reset link', onPressed: _submit, loading: _submitting),
+                  AuthPrimaryButton(label: l10n.forgotSubmit, onPressed: _submit, loading: _submitting),
                   const SizedBox(height: 12),
-                  TextButton(onPressed: () => context.go('/login'), child: const Text('Back to log in')),
+                  TextButton(onPressed: () => context.go('/login'), child: Text(l10n.authBackToLogin)),
                 ],
               ),
       );
+  }
 }

@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-notifications";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { useOpenNotification } from "@/components/notifications/use-open-notification";
+import { useTranslations } from "next-intl";
 
 interface NotificationBellProps {
   // Learner profile feed; omit for account-level feeds (instructor, admin).
@@ -38,6 +39,7 @@ export function NotificationBell({
     },
     [onOpenChange],
   );
+  const t = useTranslations("notifications");
   const close = useCallback(() => setOpenState(false), [setOpenState]);
 
   const openNotification = useOpenNotification(close);
@@ -71,25 +73,27 @@ export function NotificationBell({
         type="button"
         onClick={() => setOpenState(!open)}
         className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
-        aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={
+          unread > 0 ? t("ariaWithUnread", { count: unread }) : t("title")
+        }
         aria-expanded={open}
       >
         <Bell className="w-5 h-5 text-[#12304E]" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#22A146] text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#22A146] text-white text-[10px] font-bold flex items-center justify-center">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white border border-gray-100 rounded-xl shadow-lg z-40 overflow-hidden">
+        <div className="absolute end-0 mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white border border-gray-100 rounded-xl shadow-lg z-40 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 bg-[#FBF9F4] border-b border-gray-100">
             <p className="text-sm font-semibold text-[#12304E]">
-              Notifications
+              {t("title")}
               {unread > 0 && (
-                <span className="ml-1.5 text-xs font-medium text-[#64748B]">
-                  ({unread} unread)
+                <span className="ms-1.5 text-xs font-medium text-[#64748B]">
+                  ({t("unreadCount", { count: unread })})
                 </span>
               )}
             </p>
@@ -101,7 +105,7 @@ export function NotificationBell({
                 className="flex items-center gap-1 text-xs font-semibold text-[#22A146] hover:underline disabled:opacity-50"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
-                Mark all read
+                {t("markAllReadShort")}
               </button>
             )}
           </div>
@@ -114,7 +118,7 @@ export function NotificationBell({
             ) : !data?.notifications.length ? (
               <div className="px-4 py-10 text-center">
                 <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-[#64748B]">You&apos;re all caught up</p>
+                <p className="text-sm text-[#64748B]">{t("caughtUp")}</p>
               </div>
             ) : (
               data.notifications.map((notification) => (
@@ -137,7 +141,7 @@ export function NotificationBell({
               }}
               className="w-full text-center px-4 py-2.5 text-sm font-semibold text-[#22A146] hover:bg-gray-50"
             >
-              View all notifications
+              {t("viewAll")}
             </button>
           </div>
         </div>

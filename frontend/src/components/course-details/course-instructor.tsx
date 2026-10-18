@@ -1,8 +1,10 @@
 import Image from "next/image";
 import type { InstructorInfo } from "@/types/course-details";
+import { useTranslations } from "next-intl";
 import { initials } from "./utils";
 
 export function CourseInstructor({ instructor }: { instructor: InstructorInfo }) {
+  const t = useTranslations("courseDetails");
   return (
     <div className="flex flex-col sm:flex-row gap-8">
       <div className="shrink-0">
@@ -23,17 +25,17 @@ export function CourseInstructor({ instructor }: { instructor: InstructorInfo })
         )}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-bold text-[#0C1F33]">Your Instructor</p>
+        <p className="text-sm font-bold text-[#0C1F33]">{t("yourInstructor")}</p>
         <h3 className="font-serif text-[32px] text-[#0C1F33]">
           {instructor.name}
         </h3>
         <p className="text-base font-semibold text-[#64748B]">
-          Clinical Advisor & Lead Researcher
+          {t("instructorTitle")}
         </p>
         <div className="flex items-center gap-6 text-[15px] font-semibold text-[#0C1F33] flex-wrap">
-          <span>{instructor.rating} Instructor Rating</span>
-          <span>{instructor.courseCount} Courses</span>
-          <span>{instructor.studentCount.toLocaleString()} Students</span>
+          <span>{t("instructorRating", { rating: instructor.rating })}</span>
+          <span>{t("instructorCourses", { count: instructor.courseCount })}</span>
+          <span>{t("instructorStudents", { count: instructor.studentCount })}</span>
         </div>
         {instructor.bio && (
           <p className="text-[15px] leading-6 text-[#0C1F33] mt-1">

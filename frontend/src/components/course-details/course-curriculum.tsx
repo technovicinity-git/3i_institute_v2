@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Clock } from "lucide-react";
 import type { CurriculumModule } from "@/types/course-details";
+import { useTranslations } from "next-intl";
 
 export function CourseCurriculum({
   modules,
@@ -10,6 +11,7 @@ export function CourseCurriculum({
   modules: CurriculumModule[];
 }) {
   // Tracks the open module; lesson lists are hidden for now.
+  const t = useTranslations("courseDetails");
   const [openModule, setOpenModule] = useState<number>(0);
 
   return (
@@ -17,10 +19,10 @@ export function CourseCurriculum({
       <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
         <div>
           <p className="text-sm font-bold text-[#0C1F33] mb-3">
-            Detailed Syllabus
+            {t("syllabus")}
           </p>
           <h2 className="font-serif text-[40px] leading-[48px] text-[#0C1F33]">
-            Curriculum
+            {t("curriculum")}
           </h2>
         </div>
       </div>
@@ -38,7 +40,7 @@ export function CourseCurriculum({
             >
               <button
                 onClick={() => setOpenModule(openModule === idx ? -1 : idx)}
-                className="w-full flex items-start justify-between gap-4 px-5 py-3 text-left bg-white hover:bg-[#F5F0E8] transition-colors"
+                className="w-full flex items-start justify-between gap-4 px-5 py-3 text-start bg-white hover:bg-[#F5F0E8] transition-colors"
               >
                 <div className="flex items-start gap-5 min-w-0 flex-1">
                   <span className="font-serif text-[#B8912F] leading-6 shrink-0 min-w-[1.75rem]">
@@ -53,10 +55,10 @@ export function CourseCurriculum({
                     {videoLesson ? (
                       <>
                         <Clock className="h-4 w-4" />
-                        Video · {videoLesson.duration}
+                        {t("video", { duration: videoLesson.duration })}
                       </>
                     ) : (
-                      "Pdf"
+                      t("pdf")
                     )}
                   </span>
                 </div>

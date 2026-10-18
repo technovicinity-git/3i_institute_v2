@@ -12,6 +12,7 @@ import {
 import { useProfileStore } from "@/stores/profile-store";
 import type { LearnerProfile } from "@/services/learner.service";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 function calculateAge(dateOfBirth: string): number {
   const today = new Date();
@@ -24,12 +25,14 @@ function calculateAge(dateOfBirth: string): number {
   return age;
 }
 
-function getAgeLabel(age: number): string {
-  if (age >= 18) return "Adult";
-  if (age >= 13) return "Ages 13-17";
-  if (age >= 9) return "Ages 9-12";
-  if (age >= 6) return "Ages 6-8";
-  return "Ages 5 and under";
+type CommonT = ReturnType<typeof useTranslations<"common">>;
+
+function getAgeLabel(age: number, t: CommonT): string {
+  if (age >= 18) return t("ageAdult");
+  if (age >= 13) return t("ageRange", { min: 13, max: 17 });
+  if (age >= 9) return t("ageRange", { min: 9, max: 12 });
+  if (age >= 6) return t("ageRange", { min: 6, max: 8 });
+  return t("ageUnder", { max: 5 });
 }
 
 function getInitials(name: string): string {
@@ -42,6 +45,8 @@ function getInitials(name: string): string {
 }
 
 export default function ProfilesPage() {
+  const t = useTranslations("profiles");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const logoutMutation = useLogoutMutation();
   const { data: profiles, isLoading, error } = useLearnerProfiles();
@@ -80,12 +85,12 @@ export default function ProfilesPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center flex-col gap-4">
-        <p className="text-red-600 font-medium">Failed to load profiles</p>
+        <p className="text-red-600 font-medium">{t("loadFailed")}</p>
         <button
           onClick={() => window.location.reload()}
           className="text-green font-semibold hover:underline"
         >
-          Try again
+          {tCommon("tryAgain")}
         </button>
       </div>
     );
@@ -98,20 +103,20 @@ export default function ProfilesPage() {
         {!showPinScreen ? (
           <section className="mx-auto flex min-h-[calc(100vh-60px)] max-w-5xl flex-col items-center justify-center px-5 py-10">
             <div className="mb-10 text-center">
-              <Eyebrow className="mb-3">
-                International Islamic Institute
-              </Eyebrow>
+              <Eyebrow className="mb-3">{t("eyebrow")}</Eyebrow>
               <h1 className="font-serif text-[30px] md:text-[34px]">
-                Who&apos;s learning today?
+                {t("whoIsLearning")}
               </h1>
             </div>
 
-            <div className="grid w-full max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
+            {/* Wrapping row so any number of cards stays centred: 2 per row
+                on phones, up to 4 on larger screens. */}
+            <div className="flex w-full max-w-3xl flex-wrap justify-center gap-4">
               {profiles?.map((profile) => (
                 <button
                   key={profile.id}
                   onClick={() => handleProfileClick(profile)}
-                  className="group flex min-h-[190px] flex-col items-center justify-center rounded-xl border border-gray-300 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95"
+                  className="group flex min-h-[190px] w-[calc(50%-0.5rem)] flex-col items-center justify-center rounded-xl border border-gray-300 bg-white p-5 shadow-sm md:w-[calc(25%-0.75rem)] transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95"
                 >
                   <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-avatar-bg text-avatar-text transition group-hover:bg-[#c8e6c9]">
                     {profile.avatarUrl ? (
@@ -130,11 +135,11 @@ export default function ProfilesPage() {
                   </div>
                   <span className="font-semibold">{profile.displayName}</span>
                   <span className="mt-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-                    {getAgeLabel(calculateAge(profile.dateOfBirth))}
+                    {getAgeLabel(calculateAge(profile.dateOfBirth), tCommon)}
                   </span>
                   {!profile.isActive && (
                     <span className="mt-1 text-[10px] text-orange-500 font-medium">
-                      Not subscribed
+                      {t("notSubscribed")}
                     </span>
                   )}
                 </button>
@@ -143,12 +148,12 @@ export default function ProfilesPage() {
               {/* Add learner button */}
               <button
                 onClick={() => router.push("/profiles/add")}
-                className="group flex min-h-[190px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-transparent p-5 transition hover:border-primary hover:bg-white active:scale-95"
+                className="group flex min-h-[190px] w-[calc(50%-0.5rem)] flex-col items-center justify-center rounded-xl border-2 border-dashed md:w-[calc(25%-0.75rem)] border-gray-300 bg-transparent p-5 transition hover:border-primary hover:bg-white active:scale-95"
               >
                 <span className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-gray-300 bg-white">
                   <span className="text-3xl text-gray-400">+</span>
                 </span>
-                <span className="font-semibold">Add learner</span>
+                <span className="font-semibold">{t("addLearner")}</span>
               </button>
             </div>
           </section>
@@ -178,6 +183,9 @@ function PinEntryScreen({
   onCancel: () => void;
   onSuccess: () => void;
 }) {
+  const t = useTranslations("profiles");
+  const tCommon = useTranslations("common");
+  const tToast = useTranslations("learnerForm.toasts");
   const router = useRouter();
   const verifyPinMutation = useVerifyPinMutation();
   const { setActiveProfile } = useProfileStore();
@@ -212,7 +220,9 @@ function PinEntryScreen({
             onSuccess: () => {
               setActiveProfile(profile);
               setIsVerifying(false);
-              toast.success(`Welcome, ${profile.displayName}!`);
+              toast.success(
+                tToast("welcomeLearner", { name: profile.displayName }),
+              );
               router.push("/courses");
             },
             onError: () => {
@@ -234,6 +244,7 @@ function PinEntryScreen({
       setActiveProfile,
       router,
       inputRefs,
+      tToast,
     ],
   );
 
@@ -261,10 +272,10 @@ function PinEntryScreen({
           {profile.displayName}
         </h1>
 
-        <p className="mb-4 font-semibold text-primary">Enter your PIN</p>
+        <p className="mb-4 font-semibold text-primary">{t("enterPin")}</p>
 
-        {/* PIN Boxes */}
-        <div className="mb-6 flex justify-center gap-3">
+        {/* PIN Boxes: digits always read left to right */}
+        <div className="mb-6 flex justify-center gap-3" dir="ltr">
           {pinValues.map((value, index) => (
             <input
               key={index}
@@ -276,6 +287,7 @@ function PinEntryScreen({
               onChange={(e) => handlePinChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               autoFocus={index === 0}
+              aria-label={t("pinDigit", { n: index + 1 })}
               className={`h-14 w-14 rounded-xl border text-center text-2xl font-bold bg-white focus:outline-none ${
                 error
                   ? "border-red-500"
@@ -290,13 +302,13 @@ function PinEntryScreen({
         {/* Error */}
         {error && (
           <p className="mb-4 text-sm text-red-600">
-            That PIN doesn&apos;t match. Try again.
+            {t("wrongPin")}
           </p>
         )}
 
         {/* Help text */}
         <p className="mb-6 px-2 text-sm text-muted">
-          Forgot? Ask a parent to reset it from the dashboard
+          {t("forgotPin")}
         </p>
 
         {/* Cancel */}
@@ -304,7 +316,7 @@ function PinEntryScreen({
           onClick={onCancel}
           className="w-full rounded-xl border border-gray-300 px-4 py-3 font-semibold text-primary hover:bg-gray-50"
         >
-          Cancel
+          {tCommon("cancel")}
         </button>
       </div>
     </div>

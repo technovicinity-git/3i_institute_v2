@@ -1,28 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroStats from "@/components/landing/HeroStats";
+import { useTranslations } from "next-intl";
 
 export default function Hero() {
+  const t = useTranslations("landing.hero");
   return (
     <section className="relative w-full bg-white overflow-hidden h-[720px]">
       <div className="flex h-full">
         {/* Left Content */}
-        <div className="relative z-10 flex flex-col justify-center pl-24 pr-12 w-[55%]">
+        <div className="relative z-10 flex flex-col justify-center ps-24 pe-12 w-[55%]">
           {/* Subtitle */}
           <p className="text-[16px] font-bold tracking-wide text-[#c8a415] uppercase mb-5">
-            3i — International Islamic Institute
+            {t("eyebrow")}
           </p>
 
           {/* Heading */}
           <h1 className="font-serif text-[56px] leading-[1.14] text-[#12304E] mb-5 max-w-[624px]">
-            Study seriously, from anywhere.
+            {t("title")}
           </h1>
 
           {/* Description */}
           <p className="text-[18px] text-[#0C1F33] leading-[1.6] max-w-[624px] mb-8">
-            3i Institute is an accredited online institute offering structured
-            programs across the sciences, humanities, and professional fields —
-            taught by qualified faculty and assessed to a university standard.
+            {t("body")}
           </p>
 
           {/* Buttons */}
@@ -31,13 +31,13 @@ export default function Hero() {
               href="/#pathways"
               className="inline-flex items-center justify-center px-7 py-3 bg-[#22A146] text-white font-semibold text-[15px] rounded-full hover:bg-[#1d8c3b] transition-colors"
             >
-              Explore Programs
+              {t("explore")}
             </Link>
             <Link
               href="/courses"
               className="inline-flex items-center justify-center px-7 py-3 border-2 border-[#12304E] text-[#12304E] font-semibold text-[15px] rounded-full hover:bg-[#12304E] hover:text-white transition-colors"
             >
-              View Curriculum
+              {t("curriculum")}
             </Link>
           </div>
 
@@ -49,7 +49,7 @@ export default function Hero() {
         <div className="relative w-[45%] h-full">
           {/* Navy diagonal background */}
           <svg
-            className="absolute top-0 right-0 h-full"
+            className="absolute top-0 end-0 h-full"
             width="700"
             height="720"
             viewBox="0 0 700 720"
@@ -104,7 +104,7 @@ export default function Hero() {
               <div className="relative w-full h-[320px]">
                 <Image
                   src="/assets/images/landing_page/student-image.png"
-                  alt="Sarah Chen studying at her desk"
+                  alt={t("imageAlt")}
                   fill
                   className="object-cover"
                   sizes="380px"
@@ -118,14 +118,14 @@ export default function Hero() {
                     Sarah Chen
                   </h3>
                   <span className="text-[12px] font-semibold text-[#6B7280]">
-                    Graduate &apos;23
+                    {t("graduate")}
                   </span>
                 </div>
                 <p className="text-[12px] text-[#4B5563] mb-3">
-                  Program: Data Analysis &amp; Statistical Methods
+                  {t("program")}
                 </p>
                 <span className="inline-block px-3 py-1 bg-[#ECFDF5] text-[#059669] text-[11px] font-semibold rounded-full">
-                  Completed
+                  {t("completed")}
                 </span>
               </div>
             </div>

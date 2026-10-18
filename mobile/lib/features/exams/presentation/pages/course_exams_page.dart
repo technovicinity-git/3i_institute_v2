@@ -9,6 +9,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/exam_access.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -67,7 +68,7 @@ class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
     final onlineClass = widget.onlineClass;
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(child: Text('Select a learner profile first.'));
+      return Center(child: Text(context.l10n.examsSelectProfileFirst));
     }
     final key = '$courseId|${profile.id}';
     final asyncExams = ref.watch(courseExamsProvider(key));
@@ -80,11 +81,11 @@ class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _StateCard(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load exams',
-        message: 'Check your connection and try again.',
+        title: context.l10n.examsLoadFailed,
+        message: context.l10n.commonCheckConnection,
         action: TextButton(
           onPressed: () => ref.invalidate(courseExamsProvider(key)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (exams) => RefreshIndicator(
@@ -102,8 +103,8 @@ class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
               icon: const Icon(Icons.arrow_back, size: 18),
               label: Text(
                 onlineClass
-                    ? 'Back to Online Classes'
-                    : 'Back to Regular Courses',
+                    ? context.l10n.examsBackOnline
+                    : context.l10n.examsBackRegular,
               ),
               style: TextButton.styleFrom(
                 alignment: Alignment.centerLeft,
@@ -112,7 +113,7 @@ class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Exams',
+              context.l10n.examsTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: const Color(0xFF0C1F33),
                 fontWeight: FontWeight.w600,
@@ -120,15 +121,15 @@ class _CourseExamsPageState extends ConsumerState<CourseExamsPage>
             ),
             const SizedBox(height: 4),
             Text(
-              '${exams.length} exam${exams.length == 1 ? '' : 's'} available',
+              context.l10n.examsAvailable(exams.length),
               style: const TextStyle(color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 18),
             if (exams.isEmpty)
-              const _StateCard(
+              _StateCard(
                 icon: Icons.description_outlined,
-                title: 'No exams available',
-                message: 'There are no exams for this course yet.',
+                title: context.l10n.examsNone,
+                message: context.l10n.examsNoneBody,
               )
             else
               ...exams.map(
@@ -192,15 +193,19 @@ class _ExamCard extends StatelessWidget {
               runSpacing: 6,
               children: [
                 _Badge(
-                  text: exam.type.toUpperCase(),
+                  text: switch (exam.type.toLowerCase()) {
+                    'final' => context.l10n.examsTypeFinal,
+                    'practice' => context.l10n.examsTypePractice,
+                    _ => exam.type.toUpperCase(),
+                  },
                   color: exam.type == 'final'
                       ? const Color(0xFFB42318)
                       : const Color(0xFF2563EB),
                 ),
                 if (exam.passed == true)
-                  const _Badge(text: 'PASSED', color: _green),
+                  _Badge(text: context.l10n.examsPassed, color: _green),
                 if (inProgress)
-                  const _Badge(text: 'IN PROGRESS', color: _amber),
+                  _Badge(text: context.l10n.examsInProgress, color: _amber),
               ],
             ),
             const SizedBox(height: 10),
@@ -217,28 +222,28 @@ class _ExamCard extends StatelessWidget {
               spacing: 14,
               runSpacing: 8,
               children: [
-                _Meta(icon: Icons.schedule, text: '${exam.duration} min'),
+                _Meta(icon: Icons.schedule, text: context.l10n.commonMinutes(exam.duration)),
                 _Meta(
                   icon: Icons.quiz_outlined,
                   text: exam.maxAttempts == null
-                      ? 'Random questions'
-                      : '${exam.questions.length} questions',
+                      ? context.l10n.examsRandomQuestions
+                      : context.l10n.examsQuestions(exam.questions.length),
                 ),
                 _Meta(
                   icon: Icons.flag_outlined,
-                  text: 'Pass ${exam.passMark}%',
+                  text: context.l10n.examsPassMark(exam.passMark),
                 ),
                 _Meta(
                   icon: Icons.replay,
                   text:
-                      'Attempts ${exam.maxAttempts == null ? exam.attemptCount : '${exam.attemptCount}/${exam.maxAttempts}'}',
+                      context.l10n.examsAttempts(exam.maxAttempts == null ? '${exam.attemptCount}' : '${exam.attemptCount}/${exam.maxAttempts}'),
                 ),
               ],
             ),
             if (exam.bestScore != null) ...[
               const SizedBox(height: 9),
               Text(
-                'Best score: ${_number(exam.bestScore!)}/${exam.totalMarks}',
+                context.l10n.examsBestScore(_number(exam.bestScore!), exam.totalMarks),
                 style: const TextStyle(
                   color: _green,
                   fontWeight: FontWeight.w600,
@@ -251,20 +256,20 @@ class _ExamCard extends StatelessWidget {
                 color: attemptLeftSec <= _urgentSec ? _red : _amber,
                 icon: Icons.hourglass_bottom,
                 label: attemptLeftSec > 0
-                    ? 'Time left in your attempt'
-                    : "Time's up",
-                countdown: formatCountdown(attemptLeftSec),
+                    ? context.l10n.examsTimeLeft
+                    : context.l10n.examsTimesUp,
+                countdown: formatCountdown(attemptLeftSec, days: context.l10n.examsCountdownDays),
                 detail: attemptLeftSec > 0
-                    ? 'The timer keeps running — resume to continue.'
-                    : 'Open the exam to submit your saved answers.',
+                    ? context.l10n.examsTimerRunning
+                    : context.l10n.examsOpenToSubmit,
               )
             else if (!maxReached && access.status == ExamAccessStatus.upcoming)
               _CountdownBanner(
                 color: _yellow,
                 icon: Icons.event_outlined,
-                label: 'Starts in',
-                countdown: formatCountdown(secondsUntil(access.start, now)),
-                detail: 'Opens ${_formatDate(access.start!)}',
+                label: context.l10n.examsStartsIn,
+                countdown: formatCountdown(secondsUntil(access.start, now), days: context.l10n.examsCountdownDays),
+                detail: context.l10n.examsOpens(_formatDate(access.start!)),
               )
             else if (!maxReached &&
                 access.status == ExamAccessStatus.open &&
@@ -272,9 +277,9 @@ class _ExamCard extends StatelessWidget {
               _CountdownBanner(
                 color: windowLeftSec <= _urgentSec ? _red : _green,
                 icon: Icons.hourglass_bottom,
-                label: 'Start window closes in',
-                countdown: formatCountdown(windowLeftSec),
-                detail: 'Start before ${_formatDate(access.windowEnd!)}',
+                label: context.l10n.examsWindowClosesIn,
+                countdown: formatCountdown(windowLeftSec, days: context.l10n.examsCountdownDays),
+                detail: context.l10n.examsStartBefore(_formatDate(access.windowEnd!)),
               ),
             const SizedBox(height: 14),
             Wrap(
@@ -287,37 +292,37 @@ class _ExamCard extends StatelessWidget {
                       '/my-courses/$courseId/exams/${exam.id}/result$_onlineQuery',
                     ),
                     icon: const Icon(Icons.bar_chart, size: 18),
-                    label: const Text('View result'),
+                    label: Text(context.l10n.examsViewResult),
                   ),
                 if (inProgress)
                   FilledButton.icon(
                     onPressed: () => context.push(takePath),
                     icon: const Icon(Icons.play_circle_outline, size: 18),
                     label: Text(
-                      attemptLeftSec > 0 ? 'Resume exam' : 'Submit answers',
+                      attemptLeftSec > 0 ? context.l10n.examsResume : context.l10n.examsSubmitAnswers,
                     ),
                     style: FilledButton.styleFrom(backgroundColor: _navy),
                   )
                 else if (maxReached)
-                  const Chip(
+                  Chip(
                     avatar: Icon(Icons.block, size: 17),
-                    label: Text('Max attempts reached'),
+                    label: Text(context.l10n.examsMaxAttempts),
                   )
                 else if (access.status == ExamAccessStatus.upcoming)
-                  const Chip(
+                  Chip(
                     avatar: Icon(Icons.schedule, size: 17),
-                    label: Text('Not started yet'),
+                    label: Text(context.l10n.examsNotStartedYet),
                   )
                 else if (access.status == ExamAccessStatus.closed)
-                  const Chip(
+                  Chip(
                     avatar: Icon(Icons.lock_outline, size: 17),
-                    label: Text('Start window closed'),
+                    label: Text(context.l10n.examsWindowClosed),
                   )
                 else
                   FilledButton.icon(
                     onPressed: () => context.push(takePath),
                     icon: const Icon(Icons.arrow_forward, size: 18),
-                    label: const Text('Take exam'),
+                    label: Text(context.l10n.examsTake),
                     style: FilledButton.styleFrom(backgroundColor: _green),
                   ),
               ],
@@ -471,7 +476,7 @@ class _StateCard extends StatelessWidget {
 }
 
 String _formatDate(DateTime value) =>
-    DateFormat('MMM d, y • h:mm a').format(value);
+    DateFormat.yMMMd().add_jm().format(value);
 String _number(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);

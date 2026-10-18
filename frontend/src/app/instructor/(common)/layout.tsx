@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import InstructorSidebar from "@/components/instructor/sidebar";
 import InstructorNavbar from "@/components/instructor/navbar";
 import { useAuthStore } from "@/stores/auth-store";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
 export default function InstructorCommonLayout({
   children,
@@ -27,9 +27,7 @@ export default function InstructorCommonLayout({
 
       try {
         // Try refresh token
-        const refreshResponse = await apiClient.post("/auth/refresh", {});
-        const { accessToken } = refreshResponse.data.data;
-        setAccessToken(accessToken);
+        await refreshAccessToken();
 
         // Get user profile
         const userResponse = await apiClient.get("/users/me");

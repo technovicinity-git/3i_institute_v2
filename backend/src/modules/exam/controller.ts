@@ -3,6 +3,7 @@ import { examService } from "#/modules/exam/service";
 import {
   createQuestionSchema,
   createExamSchema,
+  startExamSchema,
   submitExamSchema,
   gradeWrittenAnswersSchema,
 } from "#/modules/exam/schema";
@@ -207,15 +208,26 @@ export class ExamController {
     }
   };
 
-  getExamQuestions = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  getExamIntro = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const examId = req.params["examId"] as string;
-      const questions = await examService.getExamQuestionsForLearner(examId);
-      sendSuccess(res, questions, 200);
+      const intro = await examService.getExamIntro(examId);
+      sendSuccess(res, intro, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  startExam = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const accountId = req.user?.sub!;
+      const { learnerProfileId } = startExamSchema.parse(req.body);
+      const session = await examService.startExam(
+        accountId,
+        req.params["examId"] as string,
+        learnerProfileId,
+      );
+      sendSuccess(res, session, 200);
     } catch (error) {
       next(error);
     }

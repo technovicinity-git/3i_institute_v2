@@ -14,17 +14,12 @@ import {
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useEnrolledCourses } from "@/hooks/use-learner-courses";
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { useTranslations } from "next-intl";
 
 export default function ExamsPage() {
+  const t = useTranslations("exams");
+  const tAssignments = useTranslations("assignments");
+  const tCourses = useTranslations("myCourses");
   const router = useRouter();
   const { activeProfile } = useProfileStore();
   const { data: courses, isLoading } = useEnrolledCourses(
@@ -37,13 +32,11 @@ export default function ExamsPage() {
       <div className="mb-8">
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Exams
+          {t("title")}
         </h1>
-        <p className="text-base text-[#64748B]">
-          Select a course to view and take its exams.
-        </p>
+        <p className="text-base text-[#64748B]">{t("selectCourse")}</p>
       </div>
 
       {/* Loading */}
@@ -57,12 +50,12 @@ export default function ExamsPage() {
       {!isLoading && courses?.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-[#64748B] mb-4">No courses enrolled yet.</p>
+          <p className="text-[#64748B] mb-4">{tAssignments("noCourses")}</p>
           <Link
             href="/my-courses"
             className="text-[#22A146] font-semibold hover:underline"
           >
-            Browse Courses
+            {tCourses("browse")}
           </Link>
         </div>
       )}

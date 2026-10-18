@@ -1,22 +1,13 @@
-const columns = [
-  {
-    title: "International",
-    description:
-      "Students in 40 countries, faculty drawn from universities across four continents.",
-  },
-  {
-    title: "Islamic",
-    description:
-      "Founded on a scholarly tradition that has valued learning, inquiry, and careful teaching for centuries.",
-  },
-  {
-    title: "Institute",
-    description:
-      "Structured programs, real assessment, and certificates that are verified and recognised.",
-  },
-];
+import { useTranslations } from "next-intl";
+
+const COLUMNS = ["c1", "c2", "c3"] as const;
 
 export default function BrandExplainer() {
+  const t = useTranslations("landing.brand");
+  const columns = COLUMNS.map((key) => ({
+    title: t(`${key}Title`),
+    description: t(`${key}Text`),
+  }));
   return (
     <section
       id="about"
@@ -25,12 +16,12 @@ export default function BrandExplainer() {
       <div className="max-w-[1180px] mx-auto flex flex-col items-center gap-12">
         {/* Label */}
         <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#B8912F]">
-          The Name
+          {t("eyebrow")}
         </p>
 
         {/* Title */}
         <h2 className="font-serif text-3xl md:text-[40px] text-[#12304E] text-center">
-          Three commitments in one mark
+          {t("title")}
         </h2>
 
         {/* Three Columns */}

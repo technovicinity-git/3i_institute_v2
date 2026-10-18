@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../content_providers.dart';
 import '../widgets/simple_markdown.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// A published info/legal page, e.g. the privacy policy.
 class SitePageView extends ConsumerWidget {
@@ -35,10 +36,10 @@ class SitePageView extends ConsumerWidget {
                   color: Color(0xFF94A3B8),
                 ),
                 const SizedBox(height: 12),
-                const Text("This page isn't available right now."),
+                Text(context.l10n.pageUnavailable),
                 TextButton(
                   onPressed: () => ref.invalidate(sitePageProvider(slug)),
-                  child: const Text('Try again'),
+                  child: Text(context.l10n.commonTryAgain),
                 ),
               ],
             ),
@@ -58,7 +59,7 @@ class SitePageView extends ConsumerWidget {
             if (content.updatedAt != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Last updated ${DateFormat.yMMMMd().format(content.updatedAt!)}',
+                context.l10n.pageUpdated(DateFormat.yMMMMd().format(content.updatedAt!)),
                 style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
             ],

@@ -11,6 +11,7 @@ import '../../domain/entities/course_details.dart';
 import '../providers/courses_providers.dart';
 import '../widgets/course_card.dart';
 import '../widgets/landing_layout.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class CourseDetailsPage extends ConsumerWidget {
   const CourseDetailsPage({required this.courseId, super.key});
@@ -54,7 +55,7 @@ class _CourseDetailBody extends StatelessWidget {
                       if (course.learningOutcomes.isNotEmpty) ...[
                         const SizedBox(height: 28),
                         _SectionCard(
-                          title: 'What you’ll learn',
+                          title: context.l10n.detailLearn,
                           child: Column(
                             children: course.learningOutcomes.map((item) => _CheckRow(text: item)).toList(),
                           ),
@@ -62,12 +63,12 @@ class _CourseDetailBody extends StatelessWidget {
                       ],
                       if (course.requirements.isNotEmpty) ...[
                         const SizedBox(height: 28),
-                        _SectionTitle(title: 'Requirements'),
+                        _SectionTitle(title: context.l10n.detailRequirements),
                         ...course.requirements.map((item) => _BulletRow(text: item)),
                       ],
                       if (course.aboutParagraphs.isNotEmpty) ...[
                         const SizedBox(height: 28),
-                        _SectionTitle(title: 'About this course'),
+                        _SectionTitle(title: context.l10n.detailAbout),
                         ...course.aboutParagraphs.map((paragraph) => Padding(
                               padding: const EdgeInsets.only(bottom: 14),
                               child: Text(paragraph, style: const TextStyle(fontSize: 15, height: 1.65, color: Color(0xFF0C1F33))),
@@ -93,7 +94,7 @@ class _CourseDetailBody extends StatelessWidget {
                       _MembershipBand(),
                       if (course.relatedCourses.isNotEmpty) ...[
                         const SizedBox(height: 32),
-                        _SectionTitle(title: 'Students also took'),
+                        _SectionTitle(title: context.l10n.detailStudentsAlsoTook),
                         SizedBox(
                           height: 390,
                           child: ListView.separated(
@@ -148,9 +149,9 @@ class _CourseHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Courses  ›  ${course.categoryName}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFDCB958), fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(context.l10n.detailBreadcrumb(course.categoryName), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFDCB958), fontSize: 13, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
-                    _CourseLabel(label: _levelName(course.level)),
+                    _CourseLabel(label: _levelName(context.l10n, course.level)),
                     const SizedBox(height: 12),
                     Text(course.title, style: const TextStyle(fontFamily: 'serif', color: Colors.white, fontSize: 32, height: 1.16, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 12),
@@ -160,7 +161,7 @@ class _CourseHero extends StatelessWidget {
                       spacing: 16,
                       runSpacing: 8,
                       children: [
-                        _HeroMeta(icon: Icons.star, label: '${course.averageRating?.toStringAsFixed(1) ?? '0.0'} · ${course.ratingCount} reviews', gold: true),
+                        _HeroMeta(icon: Icons.star, label: context.l10n.detailRatingMeta(course.averageRating?.toStringAsFixed(1) ?? '0.0', course.ratingCount), gold: true),
                         // _HeroMeta(icon: Icons.menu_book_outlined, label: '${course.totalLessons} lessons'),
                         // _HeroMeta(icon: Icons.access_time, label: '${course.durationWeeks} weeks'),
                       ],
@@ -170,7 +171,7 @@ class _CourseHero extends StatelessWidget {
                       children: [
                         _InstructorAvatar(url: course.instructorAvatarUrl, name: course.instructorName, size: 38),
                         const SizedBox(width: 10),
-                        Expanded(child: Text.rich(TextSpan(style: const TextStyle(color: Colors.white, fontSize: 13), children: [const TextSpan(text: 'Instructed by '), TextSpan(text: course.instructorName, style: const TextStyle(fontWeight: FontWeight.w700))]))),
+                        Expanded(child: Text.rich(TextSpan(style: const TextStyle(color: Colors.white, fontSize: 13), children: [TextSpan(text: context.l10n.detailInstructedBy), TextSpan(text: course.instructorName, style: const TextStyle(fontWeight: FontWeight.w700))]))),
                       ],
                     ),
                   ],
@@ -211,7 +212,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
       ref.invalidate(coursesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(waitlisted ? 'Added to waitlist.' : 'Enrolled successfully.')),
+          SnackBar(content: Text(waitlisted ? context.l10n.enrolWaitlisted : context.l10n.enrolSuccess)),
         );
         if (!waitlisted && batchId != null) context.go('/online-classes/$batchId');
       }
@@ -220,9 +221,9 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
         final needsSubscription = apiErrorCode(error) == 'SUBSCRIPTION_REQUIRED';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(apiErrorMessage(error, fallback: 'Enrolment failed.')),
+            content: Text(apiErrorMessage(error, fallback: context.l10n.enrolFailed)),
             action: needsSubscription
-                ? SnackBarAction(label: 'Subscribe', onPressed: () => context.push('/subscription'))
+                ? SnackBarAction(label: context.l10n.enrolSubscribe, onPressed: () => context.push('/subscription'))
                 : null,
           ),
         );
@@ -234,7 +235,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
 
   Future<void> _chooseBatch() async {
     if (widget.course.batches.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('There are no available batches right now.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.enrolNoBatches)));
       return;
     }
     final batch = await showModalBottomSheet<CourseBatch>(
@@ -261,9 +262,9 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('INCLUDED WITH MEMBERSHIP', style: TextStyle(color: Color(0xFFB8912F), fontWeight: FontWeight.w700, letterSpacing: .8, fontSize: 11)),
+          Text(context.l10n.cardIncluded, style: const TextStyle(color: Color(0xFFB8912F), fontWeight: FontWeight.w700, letterSpacing: .8, fontSize: 11)),
           const SizedBox(height: 8),
-          Text(course.enrolled ? 'You’re enrolled' : 'Start learning today', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: const Color(0xFF0C1F33))),
+          Text(course.enrolled ? context.l10n.cardEnrolledTitle : context.l10n.cardStartToday, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: const Color(0xFF0C1F33))),
           const SizedBox(height: 14),
           if (course.enrolled)
             _EnrolledActions(course: course)
@@ -277,19 +278,19 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
                 border: Border.all(color: const Color(0xFFFED7AA)),
               ),
               child: Text(
-                'Not available for ${profile!.displayName}. ${eligibility.ageMessage ?? ''} (${profile.displayName} is ${eligibility.age}).',
+                context.l10n.cardNotAvailable(profile!.displayName, eligibility.ageMessage ?? '', '${eligibility.age}'),
                 style: const TextStyle(color: Color(0xFF9A3412), fontSize: 13),
               ),
             ),
             const SizedBox(height: 10),
-            const SizedBox(
+            SizedBox(
               width: double.infinity,
               height: 50,
-              child: FilledButton(onPressed: null, child: Text('Enrol now')),
+              child: FilledButton(onPressed: null, child: Text(context.l10n.cardEnrolNow)),
             ),
           ] else if (needsSubscription) ...[
             Text(
-              '${profile!.displayName} needs a subscription to enrol in courses.',
+              context.l10n.cardNeedsSubscription(profile!.displayName),
               style: const TextStyle(color: Color(0xFF475569), fontSize: 13),
             ),
             const SizedBox(height: 10),
@@ -299,7 +300,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
               child: FilledButton(
                 onPressed: () => context.push('/subscription'),
                 style: FilledButton.styleFrom(backgroundColor: const Color(0xFF22A146)),
-                child: const Text('Subscribe to enrol'),
+                child: Text(context.l10n.cardSubscribeToEnrol),
               ),
             ),
           ] else
@@ -311,7 +312,7 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
                 style: FilledButton.styleFrom(backgroundColor: const Color(0xFF22A146)),
                 child: _enrolling
                     ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(course.type == 'REGULAR' ? 'Enrol now' : 'Choose a class batch'),
+                    : Text(course.type == 'REGULAR' ? context.l10n.cardEnrolNow : context.l10n.cardChooseBatch),
               ),
             ),
           if (!course.enrolled) ...[
@@ -324,12 +325,12 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
           Center(
             child: TextButton(
               onPressed: () => context.push('/subscription'),
-              child: const Text('Manage subscription', style: TextStyle(color: Color(0xFF12304E), fontSize: 13, decoration: TextDecoration.underline)),
+              child: Text(context.l10n.cardManageSubscription, style: const TextStyle(color: Color(0xFF12304E), fontSize: 13, decoration: TextDecoration.underline)),
             ),
           ),
           const Divider(height: 28),
           if (course.whatIncluded.isNotEmpty) ...[
-            const Text('What’s included', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0C1F33))),
+            Text(context.l10n.cardWhatsIncluded, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0C1F33))),
             const SizedBox(height: 8),
             ...course.whatIncluded.map((item) => _CheckRow(text: item, compact: true)),
             const Divider(height: 24),
@@ -339,8 +340,8 @@ class _EnrollmentCardState extends ConsumerState<_EnrollmentCard> {
             runSpacing: 10,
             children: [
               // _SmallMeta(icon: Icons.calendar_month_outlined, label: '${course.durationWeeks} weeks'),
-              _SmallMeta(icon: Icons.workspace_premium_outlined, label: _levelName(course.level)),
-              _SmallMeta(icon: Icons.language, label: _languageName(course.language)),
+              _SmallMeta(icon: Icons.workspace_premium_outlined, label: _levelName(context.l10n, course.level)),
+              _SmallMeta(icon: Icons.language, label: languageNames[course.language] ?? course.language.toUpperCase()),
             ],
           ),
         ],
@@ -374,7 +375,7 @@ class _WishlistButtonState extends ConsumerState<_WishlistButton> {
       ref.invalidate(wishlistedCourseIdsProvider(profile.id));
       ref.invalidate(coursesProvider);
     } catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorMessage(error, fallback: 'Could not update wishlist.'))));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorMessage(error, fallback: context.l10n.wishlistUpdateFailed))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -389,7 +390,7 @@ class _WishlistButtonState extends ConsumerState<_WishlistButton> {
       child: OutlinedButton.icon(
         onPressed: _saving ? null : _toggle,
         icon: _saving ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(liked ? Icons.favorite : Icons.favorite_border),
-        label: Text(liked ? 'Remove from wishlist' : 'Add to wishlist'),
+        label: Text(liked ? context.l10n.wishlistRemove : context.l10n.wishlistAdd),
       ),
     );
   }
@@ -407,9 +408,9 @@ class _BatchPicker extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Choose your batch', style: Theme.of(context).textTheme.headlineSmall),
+              Text(context.l10n.batchChoose, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
-              const Text('Select a class group to continue with enrolment.', style: TextStyle(color: Color(0xFF64748B))),
+              Text(context.l10n.batchChooseBody, style: const TextStyle(color: Color(0xFF64748B))),
               const SizedBox(height: 14),
               Flexible(
                 child: ListView.separated(
@@ -423,7 +424,7 @@ class _BatchPicker extends StatelessWidget {
                       child: ListTile(
                         leading: const CircleAvatar(backgroundColor: Color(0xFFF8F3E8), child: Icon(Icons.calendar_month, color: Color(0xFFB8912F))),
                         title: Text(batch.name),
-                        subtitle: Text('${batch.sessions.length} ${batch.sessions.length == 1 ? 'session' : 'sessions'} · ${batch.capacity} seats · ${batch.status == 'ACTIVE' ? 'Active' : 'Upcoming'}'),
+                        subtitle: Text('${context.l10n.batchSessions(batch.sessions.length)} · ${context.l10n.batchSeats(batch.capacity)} · ${batch.status == 'ACTIVE' ? context.l10n.batchActive : context.l10n.batchUpcoming}'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => Navigator.of(context).pop(batch),
                       ),
@@ -445,8 +446,8 @@ class _BatchesSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Choose your batch'),
-          const Padding(padding: EdgeInsets.only(bottom: 12), child: Text('View the schedule and sessions for each available batch.', style: TextStyle(color: Color(0xFF64748B)))),
+          _SectionTitle(title: context.l10n.batchChoose),
+          Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(context.l10n.batchSubtitleBody, style: const TextStyle(color: Color(0xFF64748B)))),
           ...batches.map((batch) => Card(
                 color: Colors.white,
                 elevation: 0,
@@ -454,15 +455,15 @@ class _BatchesSection extends StatelessWidget {
                 child: ExpansionTile(
                   leading: const Icon(Icons.calendar_month_outlined, color: Color(0xFFB8912F)),
                   title: Text(batch.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text('${batch.sessions.length} sessions · ${batch.status == 'ACTIVE' ? 'Active' : 'Upcoming'}'),
+                  subtitle: Text('${context.l10n.batchSessions(batch.sessions.length)} · ${batch.status == 'ACTIVE' ? context.l10n.batchActive : context.l10n.batchUpcoming}'),
                   children: batch.sessions.map((session) => ListTile(
                         leading: const CircleAvatar(radius: 16, child: Icon(Icons.play_lesson_outlined, size: 17)),
                         title: Text(session.title),
-                        subtitle: Text(_formatSession(session.scheduledAt, session.durationMinutes)),
+                        subtitle: Text(_formatSession(context.l10n, session.scheduledAt, session.durationMinutes)),
                         trailing: session.notes == null ? null : IconButton(
-                          tooltip: 'Session notes',
+                          tooltip: context.l10n.batchSessionNotes,
                           icon: const Icon(Icons.info_outline),
-                          onPressed: () => showDialog<void>(context: context, builder: (context) => AlertDialog(title: Text(session.title), content: Text(session.notes!), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))])),
+                          onPressed: () => showDialog<void>(context: context, builder: (context) => AlertDialog(title: Text(session.title), content: Text(session.notes!), actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.commonClose))])),
                         ),
                       )).toList(),
                 ),
@@ -479,16 +480,16 @@ class _CurriculumSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('DETAILED SYLLABUS', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: .8, color: Color(0xFF0C1F33), fontSize: 12)),
+          Text(context.l10n.detailSyllabus, style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: .8, color: Color(0xFF0C1F33), fontSize: 12)),
           const SizedBox(height: 4),
-          const _SectionTitle(title: 'Curriculum'),
+          _SectionTitle(title: context.l10n.detailCurriculum),
           ...course.curriculum.map((module) => Card(
                 color: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(side: const BorderSide(color: Color(0xFFE3E8EF)), borderRadius: BorderRadius.circular(10)),
                 child: ExpansionTile(
                   title: Text('${module.number}  ${module.title}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text('${module.lessons.length} ${module.lessons.length == 1 ? 'lesson' : 'lessons'} · ${module.duration}'),
+                  subtitle: Text('${context.l10n.detailLessons(module.lessons.length)} · ${module.duration}'),
                   children: module.lessons.map((lesson) => ListTile(
                         leading: const Icon(Icons.play_circle_outline, color: Color(0xFF64748B)),
                         title: Text(lesson.title),
@@ -509,10 +510,10 @@ class _CurriculumSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('YOUR INSTRUCTOR', style: TextStyle(color: Color(0xFFB8912F), fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: .7)),
+                      Text(context.l10n.detailYourInstructor, style: const TextStyle(color: Color(0xFFB8912F), fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: .7)),
                       Text(course.instructorName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: Color(0xFF0C1F33))),
                       if (course.instructorBio.isNotEmpty) Text(course.instructorBio, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.4)),
-                      Text('${course.instructorCourseCount} courses · ${course.instructorStudentCount} learners', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                      Text(context.l10n.detailInstructorStats(course.instructorCourseCount, course.instructorStudentCount), style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                     ],
                   ),
                 ),
@@ -532,7 +533,7 @@ class _ReviewsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Learner reviews'),
+          _SectionTitle(title: context.l10n.detailReviews),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -540,7 +541,7 @@ class _ReviewsSection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [const Icon(Icons.star, color: Color(0xFFB8912F)), const SizedBox(width: 5), Text(course.averageRating?.toStringAsFixed(1) ?? 'New', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)), const SizedBox(width: 8), Text('${course.ratingCount} reviews', style: const TextStyle(color: Color(0xFF64748B)))]),
+                Row(children: [const Icon(Icons.star, color: Color(0xFFB8912F)), const SizedBox(width: 5), Text(course.averageRating?.toStringAsFixed(1) ?? context.l10n.commonNewRating, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)), const SizedBox(width: 8), Text(context.l10n.detailReviewCount(course.ratingCount), style: const TextStyle(color: Color(0xFF64748B)))]),
                 if (course.enrolled) ...[
                   const SizedBox(height: 14),
                   Container(
@@ -548,21 +549,21 @@ class _ReviewsSection extends ConsumerWidget {
                     decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(10)),
                     child: Row(
                       children: [
-                        const Expanded(
-                          child: Text('You’re enrolled in this course. Share how it’s going.', style: TextStyle(fontSize: 13, color: Color(0xFF0C1F33))),
+                        Expanded(
+                          child: Text(context.l10n.detailEnrolledShare, style: TextStyle(fontSize: 13, color: Color(0xFF0C1F33))),
                         ),
                         const SizedBox(width: 10),
                         FilledButton.icon(
                           onPressed: () => _openRateSheet(context, ref),
                           style: FilledButton.styleFrom(backgroundColor: const Color(0xFF12304E), visualDensity: VisualDensity.compact),
                           icon: const Icon(Icons.star_outline, size: 18),
-                          label: const Text('Rate & review'),
+                          label: Text(context.l10n.detailRateReview),
                         ),
                       ],
                     ),
                   ),
                 ],
-                if (course.reviews.isEmpty) const Padding(padding: EdgeInsets.only(top: 10), child: Text('No reviews yet.', style: TextStyle(color: Color(0xFF64748B)))),
+                if (course.reviews.isEmpty) Padding(padding: const EdgeInsets.only(top: 10), child: Text(context.l10n.detailNoReviews, style: const TextStyle(color: Color(0xFF64748B)))),
                 ...course.reviews.map((review) => Padding(
                       padding: const EdgeInsets.only(top: 16),
                       child: Column(
@@ -597,14 +598,14 @@ class _ReviewsSection extends ConsumerWidget {
         courseTitle: course.title,
         learnerProfileId: profile.id,
         learnerName: profile.displayName,
-        accountName: account?.fullName.isNotEmpty == true ? account!.fullName : 'Parent',
+        accountName: account?.fullName.isNotEmpty == true ? account!.fullName : context.l10n.reviewParent,
       ),
     );
     if (submitted == true) {
       ref.invalidate(courseDetailsProvider(detailKey));
       ref.invalidate(coursesProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks! Your review has been submitted.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.reviewThanks)));
       }
     }
   }
@@ -638,7 +639,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
 
   Future<void> _submit() async {
     if (_rating == 0) {
-      setState(() => _error = 'Please select a rating.');
+      setState(() => _error = context.l10n.reviewSelectRating);
       return;
     }
     setState(() {
@@ -657,7 +658,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
       if (mounted) {
         setState(() {
           _submitting = false;
-          _error = apiErrorMessage(error, fallback: 'Could not submit your review.');
+          _error = apiErrorMessage(error, fallback: context.l10n.reviewSubmitFailed);
         });
       }
     }
@@ -671,17 +672,17 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Rate this course', style: TextStyle(fontFamily: 'serif', fontSize: 26, color: Color(0xFF0C1F33))),
+              Text(context.l10n.reviewTitle, style: const TextStyle(fontFamily: 'serif', fontSize: 26, color: Color(0xFF0C1F33))),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(10)),
-                child: Text('Submitting as ${widget.learnerName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF0C1F33))),
+                child: Text(context.l10n.reviewSubmittingAs(widget.learnerName), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF0C1F33))),
               ),
               const SizedBox(height: 12),
               Text(widget.courseTitle, style: const TextStyle(color: Color(0xFF475569))),
               const SizedBox(height: 16),
-              const Text('Your rating', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
+              Text(context.l10n.reviewYourRating, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -693,7 +694,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
                                 _rating = star;
                                 _error = null;
                               }),
-                      tooltip: '$star star${star == 1 ? '' : 's'}',
+                      tooltip: context.l10n.reviewStars(star),
                       icon: Icon(
                         star <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
                         size: 36,
@@ -703,7 +704,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Text('Write a review (optional)', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
+              Text(context.l10n.reviewWrite, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0C1F33))),
               const SizedBox(height: 6),
               TextField(
                 controller: _review,
@@ -711,7 +712,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
                 maxLines: 4,
                 maxLength: 2000,
                 decoration: InputDecoration(
-                  hintText: 'Share your experience with this course...',
+                  hintText: context.l10n.reviewHint,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -726,7 +727,7 @@ class _RateReviewSheetState extends ConsumerState<_RateReviewSheet> {
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF22A146)),
                   child: _submitting
                       ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Submit review'),
+                      : Text(context.l10n.reviewSubmit),
                 ),
               ),
             ],
@@ -770,31 +771,31 @@ class _EnrolledActions extends StatelessWidget {
           lessonId != null
               ? primary(
                   course.isCompleted
-                      ? 'Review Course'
+                      ? context.l10n.cardReviewCourse
                       : course.lastWatchedLessonId != null
-                          ? 'Continue Learning'
-                          : 'Start Learning',
+                          ? context.l10n.cardContinue
+                          : context.l10n.cardStart,
                   course.isCompleted ? Icons.replay : Icons.play_arrow_rounded,
                   () => context.push('/my-courses/${course.id}/lessons/$lessonId'),
                 )
-              : const SizedBox(
+              : SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: FilledButton(onPressed: null, child: Text('Lessons coming soon')),
+                  child: FilledButton(onPressed: null, child: Text(context.l10n.cardComingSoon)),
                 )
         else ...[
           if (batchId != null) ...[
-            primary('Class Schedule', Icons.calendar_month_outlined, () => context.push('/online-classes/$batchId')),
+            primary(context.l10n.cardClassSchedule, Icons.calendar_month_outlined, () => context.push('/online-classes/$batchId')),
             const SizedBox(height: 10),
           ],
           primary(
-            'Chat Room',
+            context.l10n.cardChatRoom,
             Icons.chat_bubble_outline,
             () => context.push(Uri(path: '/chat', queryParameters: {
               'courseId': course.id,
               'courseTitle': course.title,
               'batchId': ?batchId,
-              'batchName': 'Your Batch',
+              'batchName': context.l10n.cardYourBatch,
             }).toString()),
             color: _navy,
           ),
@@ -806,16 +807,16 @@ class _EnrolledActions extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => context.go('/dashboard'),
             style: OutlinedButton.styleFrom(foregroundColor: _navy, side: const BorderSide(color: _navy)),
-            child: const Text('Go to Dashboard'),
+            child: Text(context.l10n.cardDashboard),
           ),
         ),
         const SizedBox(height: 12),
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.check_circle, size: 18, color: _green),
             SizedBox(width: 6),
-            Text('Enrolled', style: TextStyle(color: Color(0xFF1D8F3D), fontWeight: FontWeight.w700)),
+            Text(context.l10n.cardEnrolled, style: TextStyle(color: Color(0xFF1D8F3D), fontWeight: FontWeight.w700)),
           ],
         ),
       ],
@@ -831,7 +832,7 @@ class _FaqSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Common questions'),
+          _SectionTitle(title: context.l10n.detailFaq),
           ...faq.map((item) => Card(
                 color: Colors.white,
                 elevation: 0,
@@ -853,11 +854,11 @@ class _MembershipBand extends StatelessWidget {
           children: [
             const Text('MEMBERSHIP', style: TextStyle(fontSize: 11, letterSpacing: .8, fontWeight: FontWeight.w700, color: Color(0xFFB8912F))),
             const SizedBox(height: 6),
-            Text('One membership. Every course.', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontFamily: 'serif', color: const Color(0xFF0C1F33))),
+            Text(context.l10n.membershipTitle, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontFamily: 'serif', color: const Color(0xFF0C1F33))),
             const SizedBox(height: 18),
-            const _MembershipBenefit(icon: Icons.menu_book_outlined, title: 'All courses', body: 'Learn across Islamic studies, languages, sciences and more.'),
-            const _MembershipBenefit(icon: Icons.groups_outlined, title: 'Live classes included', body: 'Join interactive seminars and live Q&As.'),
-            const _MembershipBenefit(icon: Icons.school_outlined, title: 'Certificates included', body: 'Earn certificates as you complete your learning.'),
+            _MembershipBenefit(icon: Icons.menu_book_outlined, title: context.l10n.membershipAllCourses, body: context.l10n.membershipAllCoursesBody),
+            _MembershipBenefit(icon: Icons.groups_outlined, title: context.l10n.membershipLive, body: context.l10n.membershipLiveBody),
+            _MembershipBenefit(icon: Icons.school_outlined, title: context.l10n.membershipCertificates, body: context.l10n.membershipCertificatesBody),
           ],
         ),
       );
@@ -902,7 +903,7 @@ class _ShareCourseButton extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.share_outlined, size: 18),
-          label: const Text('Share this course'),
+          label: Text(context.l10n.detailShare),
         ),
       );
 }
@@ -912,7 +913,7 @@ class _CourseDetailsError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('Failed to load course.'), const SizedBox(height: 10), OutlinedButton(onPressed: onRetry, child: const Text('Try again')), TextButton(onPressed: () => context.go('/courses'), child: const Text('Back to courses'))])));
+  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [Text(context.l10n.detailLoadFailed), const SizedBox(height: 10), OutlinedButton(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)), TextButton(onPressed: () => context.go('/courses'), child: Text(context.l10n.commonBackToCourses))])));
 }
 
 class _SectionCard extends StatelessWidget {
@@ -994,17 +995,17 @@ class _SmallMeta extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 15, color: const Color(0xFF64748B)), const SizedBox(width: 5), Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)))]);
 }
 
-String _levelName(String level) => switch (level.toLowerCase()) {
-      '1' || 'beginner' => 'Beginner',
-      '2' || 'intermediate' => 'Intermediate',
-      '3' || 'advanced' => 'Advanced',
-      _ => level.isEmpty ? 'All levels' : level,
+String _levelName(AppLocalizations l10n, String level) => switch (level.toLowerCase()) {
+      '1' || 'beginner' => l10n.levelBeginner,
+      '2' || 'intermediate' => l10n.levelIntermediate,
+      '3' || 'advanced' => l10n.levelAdvanced,
+      _ => level.isEmpty ? l10n.levelAll : level,
     };
 
-String _languageName(String code) => const {'en': 'English', 'bn': 'Bangla', 'hi': 'Hindi', 'ur': 'Urdu', 'ar': 'Arabic'}[code] ?? code.toUpperCase();
+// Teaching language, named in its own script (see languageNames).
 
-String _formatSession(DateTime? date, int minutes) => date == null
-    ? '$minutes min'
-    : '${DateFormat('EEE, MMM d, y · h:mm a').format(date)} · $minutes min';
+String _formatSession(AppLocalizations l10n, DateTime? date, int minutes) => date == null
+    ? l10n.commonMinutes(minutes)
+    : '${DateFormat.yMMMEd().add_jm().format(date)} · ${l10n.commonMinutes(minutes)}';
 
 String _formatReviewDate(DateTime? date) => date == null ? '' : DateFormat.yMMMd().format(date);

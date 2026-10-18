@@ -11,21 +11,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { CourseLessonPage } from "@/services/lesson.service";
+import { useTranslations } from "next-intl";
 
-const LESSON_TYPES: Record<string, { icon: LucideIcon; label: string }> = {
-  video: { icon: Play, label: "Video" },
-  document: { icon: FileText, label: "PDF" },
-  audio: { icon: Headphones, label: "Audio" },
-  link: { icon: Link2, label: "Link" },
+const LESSON_TYPES: Record<
+  string,
+  { icon: LucideIcon; key: "video" | "pdf" | "audio" | "link" }
+> = {
+  video: { icon: Play, key: "video" },
+  document: { icon: FileText, key: "pdf" },
+  audio: { icon: Headphones, key: "audio" },
+  link: { icon: Link2, key: "link" },
 };
 
 function getLessonType(type?: string | null) {
-  return (
-    LESSON_TYPES[type?.toLowerCase() ?? ""] ?? {
-      icon: FileText,
-      label: type ? type.charAt(0).toUpperCase() + type.slice(1) : "Lesson",
-    }
-  );
+  return LESSON_TYPES[type?.toLowerCase() ?? ""] ?? null;
 }
 
 interface CourseContentSidebarProps {
@@ -39,6 +38,7 @@ export function CourseContentSidebar({
   currentLessonId,
   courseContent,
 }: CourseContentSidebarProps) {
+  const t = useTranslations("lesson");
   const router = useRouter();
   const lessons = [...(courseContent?.modules ?? [])]
     .sort((a, b) => a.order - b.order)
@@ -59,28 +59,32 @@ export function CourseContentSidebar({
       <div className="shrink-0 border-b border-[#E3E8EF] px-5 py-4">
         <h2
           className="text-lg text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Course Content
+          {t("sidebar.title")}
         </h2>
         <p className="mt-2 text-xs text-[#64748B]">
-          {courseContent?.totalLessons ?? lessons.length} lessons
+          {t("sidebar.lessons", {
+            count: courseContent?.totalLessons ?? lessons.length,
+          })}
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {lessons.length === 0 ? (
           <div className="px-5 py-8 text-center text-xs text-[#64748B]">
-            No lessons available yet.
+            {t("sidebar.none")}
           </div>
         ) : (
           <div className="divide-y divide-[#E3E8EF]">
             {lessons.map((lesson, index) => {
               const isCompleted = lesson.completed;
               const isCurrent = lesson.id === currentLessonId;
-              const { icon: TypeIcon, label: typeLabel } = getLessonType(
-                lesson.type,
-              );
+              const lessonType = getLessonType(lesson.type);
+              const TypeIcon = lessonType?.icon ?? FileText;
+              const typeLabel = lessonType
+                ? t(`sidebar.${lessonType.key}`)
+                : t("lesson");
               // Video's play icon is filled; outline icons read better unfilled.
               const isVideo = TypeIcon === Play;
 
@@ -92,10 +96,10 @@ export function CourseContentSidebar({
                     router.push(`/my-courses/${courseId}/lessons/${lesson.id}`)
                   }
                   aria-current={isCurrent ? "page" : undefined}
-                  className={`flex w-full items-center gap-3 border-l-[3px] px-5 py-3 text-left transition-colors ${
+                  className={`flex w-full items-center gap-3 border-s-[3px] px-5 py-3 text-start transition-colors ${
                     isCurrent
-                      ? "border-l-[#22A146] bg-[#F2FBF4]"
-                      : "border-l-transparent hover:bg-[#FAFAF8]"
+                      ? "border-s-[#22A146] bg-[#F2FBF4]"
+                      : "border-s-transparent hover:bg-[#FAFAF8]"
                   }`}
                 >
                   <span className="w-7 shrink-0 text-right text-xs font-semibold text-[#64748B]">

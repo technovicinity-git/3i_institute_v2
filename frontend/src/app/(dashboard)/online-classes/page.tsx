@@ -26,35 +26,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { levelKey } from "@/lib/course-level";
+import { useFormatter, useTranslations } from "next-intl";
 
-function getLevelBadge(level: string): string {
-  const levels: Record<string, string> = {
-    "1": "BEGINNER",
-    "2": "INTERMEDIATE",
-    "3": "ADVANCED",
-    Beginner: "BEGINNER",
-    Intermediate: "INTERMEDIATE",
-    Advanced: "ADVANCED",
+
+/** "Thu, Oct 16 • 3:00 PM" in the user's language */
+function useSessionFormat() {
+  const format = useFormatter();
+  return (dateStr: string) => {
+    const date = new Date(dateStr);
+    const day = format.dateTime(date, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+    const time = format.dateTime(date, { hour: "numeric", minute: "2-digit" });
+    return `${day} • ${time}`;
   };
-  return levels[level] ?? "ALL LEVELS";
-}
-
-function formatSessionDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatSessionTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 type EnrolledCourse = NonNullable<
@@ -71,12 +59,13 @@ function CourseActionsMenu({
   course: EnrolledCourse;
   completionCertificate?: LearnerCertificate;
 }) {
+  const t = useTranslations("classes");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="More actions"
+          aria-label={t("moreActions")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E3E8EF] text-[#64748B] hover:bg-gray-100 transition-colors"
         >
           <MoreVertical className="h-4 w-4" />
@@ -86,21 +75,21 @@ function CourseActionsMenu({
         <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
           <Link href={`/courses/${course.courseId}`}>
             <ExternalLink className="text-[#12304E]" />
-            Details
+            {t("details")}
           </Link>
         </DropdownMenuItem>
         {course.batchId && (
           <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
             <Link href={`/online-classes/${course.batchId}`}>
               <CalendarDays className="text-[#B8912F]" />
-              Sessions
+              {t("sessions")}
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-[#0C1F33]">
           <Link href={`/my-courses/${course.courseId}/exams`}>
             <FileText className="text-[#12304E]" />
-            Exams
+            {t("exams")}
           </Link>
         </DropdownMenuItem>
         {completionCertificate && (
@@ -109,7 +98,7 @@ function CourseActionsMenu({
             className="cursor-pointer px-3 py-2 text-[#22A146]"
           >
             <Download className="text-[#22A146]" />
-            Certificate
+            {t("certificate")}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
@@ -118,6 +107,10 @@ function CourseActionsMenu({
 }
 
 export default function OnlineClassesPage() {
+  const t = useTranslations("classes");
+  const tCourses = useTranslations("myCourses");
+  const tLevel = useTranslations("courseLevel");
+  const sessionWhen = useSessionFormat();
   const router = useRouter();
   const { activeProfile } = useProfileStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,13 +144,12 @@ export default function OnlineClassesPage() {
       <div className="mb-6">
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Online Classes
+          {t("title")}
         </h1>
         <p className="text-base text-[#64748B]">
-          {onlineCourses.length} live course
-          {onlineCourses.length !== 1 ? "s" : ""}
+          {t("count", { count: onlineCourses.length })}
         </p>
       </div>
 
@@ -167,7 +159,7 @@ export default function OnlineClassesPage() {
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search by course or instructor..."
+            placeholder={tCourses("search")}
           />
         </div>
       )}
@@ -182,7 +174,7 @@ export default function OnlineClassesPage() {
       {/* Error */}
       {isError && (
         <div className="flex items-center justify-center py-20">
-          <p className="text-red-600 font-medium">Failed to load courses.</p>
+          <p className="text-red-600 font-medium">{tCourses("loadFailed")}</p>
         </div>
       )}
 
@@ -190,14 +182,12 @@ export default function OnlineClassesPage() {
       {!isLoading && !isError && onlineCourses.length === 0 && (
         <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
           <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-[#64748B]">
-            You haven&apos;t joined any live classes yet.
-          </p>
+          <p className="text-[#64748B]">{t("empty")}</p>
           <Link
             href="/courses"
             className="inline-block mt-4 text-[#22A146] font-semibold hover:underline"
           >
-            Browse Courses
+            {tCourses("browse")}
           </Link>
         </div>
       )}
@@ -209,7 +199,7 @@ export default function OnlineClassesPage() {
         filteredCourses.length === 0 && (
           <div className="bg-white border border-dashed border-[#E3E8EF] rounded-xl p-10 text-center">
             <p className="text-[#64748B]">
-              No courses match &ldquo;{searchQuery}&rdquo;
+              {tCourses("noMatch", { query: searchQuery })}
             </p>
           </div>
         )}
@@ -219,10 +209,10 @@ export default function OnlineClassesPage() {
         <div className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden">
           {/* Desktop header */}
           <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(180px,220px)_100px_36px] items-center gap-6 px-5 py-3 bg-[#F8FAFC] border-b border-[#E3E8EF] text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-            <div>Course</div>
-            <div>Next Session</div>
-            <div>Chat</div>
-            <div className="sr-only">Actions</div>
+            <div>{tCourses("colCourse")}</div>
+            <div>{t("colNextSession")}</div>
+            <div>{t("colChat")}</div>
+            <div className="sr-only">{tCourses("colActions")}</div>
           </div>
 
           {/* Rows */}
@@ -261,15 +251,15 @@ export default function OnlineClassesPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
-                          {getLevelBadge(course.level)}
+                          {tLevel(levelKey(course.level))}
                         </span>
                         <span className="text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
-                          LIVE
+                          {t("live")}
                         </span>
                       </div>
                       <h3
                         className="text-base text-[#0C1F33] leading-5 truncate"
-                        style={{ fontFamily: "'Marcellus', serif" }}
+                        style={{ fontFamily: "var(--font-display)" }}
                       >
                         {course.title}
                       </h3>
@@ -289,15 +279,13 @@ export default function OnlineClassesPage() {
                             {course.nextSession.title}
                           </p>
                           <p className="text-xs text-[#64748B] mt-1">
-                            {formatSessionDate(course.nextSession.scheduledAt)}{" "}
-                            •{" "}
-                            {formatSessionTime(course.nextSession.scheduledAt)}
+                            {sessionWhen(course.nextSession.scheduledAt)}
                           </p>
                         </div>
                       </div>
                     ) : (
                       <span className="text-sm text-[#94A3B8]">
-                        No upcoming session
+                        {t("noUpcoming")}
                       </span>
                     )}
                   </div>
@@ -307,13 +295,13 @@ export default function OnlineClassesPage() {
                     <button
                       onClick={() => {
                         router.push(
-                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.batchId}&batchName=${encodeURIComponent("Batch")}`,
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course.batchId}&batchName=${encodeURIComponent(t("batch"))}`,
                         );
                       }}
                       className="flex items-center gap-1.5 px-4 py-2 bg-[#12304E] text-white text-xs font-semibold rounded-lg hover:bg-[#1a4268] transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      Chat
+                      {t("chat")}
                     </button>
                   </div>
 
@@ -347,15 +335,15 @@ export default function OnlineClassesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <span className="text-[9px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
-                          {getLevelBadge(course.level)}
+                          {tLevel(levelKey(course.level))}
                         </span>
                         <span className="text-[9px] font-bold text-white bg-[#7C3AED] px-2 py-0.5 rounded">
-                          LIVE
+                          {t("live")}
                         </span>
                       </div>
                       <h3
                         className="text-base text-[#0C1F33] leading-5 line-clamp-2"
-                        style={{ fontFamily: "'Marcellus', serif" }}
+                        style={{ fontFamily: "var(--font-display)" }}
                       >
                         {course.title}
                       </h3>
@@ -374,8 +362,7 @@ export default function OnlineClassesPage() {
                           {course.nextSession.title}
                         </p>
                         <p className="text-[11px] text-[#64748B] mt-0.5">
-                          {formatSessionDate(course.nextSession.scheduledAt)} •{" "}
-                          {formatSessionTime(course.nextSession.scheduledAt)}
+                          {sessionWhen(course.nextSession.scheduledAt)}
                         </p>
                       </div>
                     </div>
@@ -386,13 +373,13 @@ export default function OnlineClassesPage() {
                     <button
                       onClick={() => {
                         router.push(
-                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course?.batchId}&batchName=${encodeURIComponent("Batch")}`,
+                          `/chat?courseId=${course.courseId}&courseTitle=${encodeURIComponent(course.title)}&batchId=${course?.batchId}&batchName=${encodeURIComponent(t("batch"))}`,
                         );
                       }}
                       className="flex-1 py-2.5 bg-[#12304E] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2"
                     >
                       <MessageSquare className="w-4 h-4" />
-                      Chat
+                      {t("chat")}
                     </button>
                     <CourseActionsMenu
                       course={course}

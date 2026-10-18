@@ -3,7 +3,8 @@ import type {
   LearnerExam,
   ExamAttemptResult,
   ExamQuestionResult,
-  ExamTakeData,
+  ExamIntroData,
+  ExamStartData,
 } from "@/types/learner-exam";
 
 export const learnerExamService = {
@@ -17,24 +18,29 @@ export const learnerExamService = {
     return response.data.data;
   },
 
-  getExamQuestions: async (examId: string): Promise<ExamTakeData> => {
-    const response = await apiClient.get(`/exams/${examId}/questions`);
+  getExamIntro: async (examId: string): Promise<ExamIntroData> => {
+    const response = await apiClient.get(`/exams/${examId}/intro`);
+    return response.data.data;
+  },
+
+  /** Starts the attempt on the server, or resumes the one already running. */
+  startExam: async (
+    examId: string,
+    learnerProfileId: string,
+  ): Promise<ExamStartData> => {
+    const response = await apiClient.post(`/exams/${examId}/start`, {
+      learnerProfileId,
+    });
     return response.data.data;
   },
 
   submitExam: async (
-    examId: string,
-    learnerProfileId: string,
+    sessionId: string,
     answers: Record<string, string | string[]>,
-    startedAt?: string,
-    questionSet?: Array<{ questionId: string }>,
   ): Promise<ExamAttemptResult> => {
     const response = await apiClient.post("/exams/submit", {
-      examId,
-      learnerProfileId,
+      sessionId,
       answers,
-      startedAt,
-      questionSet,
     });
     return response.data.data;
   },

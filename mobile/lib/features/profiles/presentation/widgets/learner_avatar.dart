@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Displays a learner photo when available and initials when it is missing or
 /// cannot be loaded.
@@ -22,7 +23,7 @@ class LearnerAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = imageUrl?.trim();
     return Semantics(
-      label: 'Learner avatar${initials.isEmpty ? '' : ', $initials'}',
+      label: '${context.l10n.avatarLabel}${initials.isEmpty ? '' : ', $initials'}',
       image: true,
       child: CircleAvatar(
         radius: radius,

@@ -2,40 +2,28 @@ import Link from "next/link";
 import { CheckCircle2, Hourglass, XCircle, type LucideIcon } from "lucide-react";
 import type { RecentResult } from "@/types/dashboard";
 import { EmptyText, SectionHeader } from "./section-header";
-import { card, resultHref, timeAgo } from "./utils";
+import { card, resultHref } from "./utils";
+import { useTranslations } from "next-intl";
+import { useDashboardFormat } from "./use-dashboard-format";
 
 const STATUS_META: Record<
   RecentResult["status"],
-  { icon: LucideIcon; label: string; className: string }
+  { icon: LucideIcon; className: string }
 > = {
-  PASSED: {
-    icon: CheckCircle2,
-    label: "Passed",
-    className: "text-[#22A146] bg-[#22A146]/10",
-  },
-  FAILED: {
-    icon: XCircle,
-    label: "Not passed",
-    className: "text-red-600 bg-red-50",
-  },
-  GRADED: {
-    icon: CheckCircle2,
-    label: "Graded",
-    className: "text-[#2563EB] bg-[#2563EB]/10",
-  },
-  AWAITING_GRADE: {
-    icon: Hourglass,
-    label: "Awaiting grade",
-    className: "text-yellow-700 bg-yellow-50",
-  },
+  PASSED: { icon: CheckCircle2, className: "text-[#22A146] bg-[#22A146]/10" },
+  FAILED: { icon: XCircle, className: "text-red-600 bg-red-50" },
+  GRADED: { icon: CheckCircle2, className: "text-[#2563EB] bg-[#2563EB]/10" },
+  AWAITING_GRADE: { icon: Hourglass, className: "text-yellow-700 bg-yellow-50" },
 };
 
 export function RecentResultsCard({ results }: { results: RecentResult[] }) {
+  const t = useTranslations("dashboardHome");
+  const fmt = useDashboardFormat();
   return (
     <div className={`${card} p-6`}>
-      <SectionHeader title="Recent results" href="/exams" />
+      <SectionHeader title={t("results.title")} href="/exams" />
       {results.length === 0 ? (
-        <EmptyText>Your exam and assignment results will appear here.</EmptyText>
+        <EmptyText>{t("results.none")}</EmptyText>
       ) : (
         <div className="space-y-1">
           {results.map((result) => {
@@ -57,8 +45,10 @@ export function RecentResultsCard({ results }: { results: RecentResult[] }) {
                     {result.title}
                   </p>
                   <p className="text-[11px] text-[#64748B] truncate">
-                    {result.kind === "EXAM" ? "Exam" : "Assignment"} ·{" "}
-                    {result.courseTitle} • {timeAgo(result.submittedAt)}
+                    {result.kind === "EXAM"
+                      ? t("deadlines.exam")
+                      : t("deadlines.assignment")}{" "}
+                    · {result.courseTitle} • {fmt.timeAgo(result.submittedAt)}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -70,7 +60,7 @@ export function RecentResultsCard({ results }: { results: RecentResult[] }) {
                   <p
                     className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${meta.className}`}
                   >
-                    {meta.label}
+                    {t(`results.${result.status}`)}
                   </p>
                 </div>
               </Link>

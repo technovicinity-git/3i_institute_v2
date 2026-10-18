@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/app_notification.dart';
 import '../notifications_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// App bar bell with an unread badge. Also shows an in-app banner when a new
 /// notification for the current feed arrives.
@@ -42,7 +43,7 @@ class NotificationBell extends ConsumerWidget {
               ],
             ),
             action: SnackBarAction(
-              label: 'View',
+              label: context.l10n.notifView,
               onPressed: () {
                 ref
                     .read(
@@ -62,7 +63,7 @@ class NotificationBell extends ConsumerWidget {
     });
 
     return IconButton(
-      tooltip: unread > 0 ? 'Notifications, $unread unread' : 'Notifications',
+      tooltip: unread > 0 ? context.l10n.notifBellUnread(unread) : context.l10n.notifTitle,
       onPressed: () => context.push(notificationsRoute),
       icon: Badge(
         isLabelVisible: unread > 0,

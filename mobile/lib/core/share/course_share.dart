@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../config/app_config.dart';
+import '../l10n/l10n.dart';
 
 /// Public web link for a course, tagged so app shares can be measured in
 /// analytics. Null when [AppConfig.webBaseUrl] isn't configured.
@@ -32,7 +33,7 @@ Future<void> shareCourse(
 }) async {
   final uri = courseShareUri(courseId);
   final message = [
-    'Check out "$title" at 3i International Islamic Institute',
+    context.l10n.shareText(title),
     ?uri?.toString(),
   ].join('\n');
 
@@ -46,7 +47,7 @@ Future<void> shareCourse(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            uri == null ? 'Course details copied' : 'Course link copied',
+            uri == null ? context.l10n.shareDetailsCopied : context.l10n.shareLinkCopied,
           ),
         ),
       );

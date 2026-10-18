@@ -17,8 +17,10 @@ import { EnrolmentCard } from "@/components/course-details/enrolment-card";
 import { MembershipBand } from "@/components/course-details/membership-band";
 import { CourseFaq } from "@/components/course-details/course-faq";
 import { RelatedCourses } from "@/components/course-details/related-courses";
+import { useTranslations } from "next-intl";
 
 export default function CourseDetailsPage() {
+  const t = useTranslations("courseDetails");
   const [showRateModal, setShowRateModal] = useState(false);
 
   const { user } = useAuthStore();
@@ -42,12 +44,12 @@ export default function CourseDetailsPage() {
   if (isError || !course) {
     return (
       <div className="min-h-screen bg-[#FBF9F4] flex items-center justify-center flex-col gap-4">
-        <p className="text-red-600 font-medium">Failed to load course</p>
+        <p className="text-red-600 font-medium">{t("loadFailed")}</p>
         <Link
           href="/courses"
           className="text-[#22A146] font-semibold hover:underline"
         >
-          Back to courses
+          {t("backToCourses")}
         </Link>
       </div>
     );

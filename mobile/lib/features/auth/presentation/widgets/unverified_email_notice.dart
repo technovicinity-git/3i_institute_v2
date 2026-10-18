@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 
@@ -44,7 +45,7 @@ class _UnverifiedEmailNoticeState extends ConsumerState<UnverifiedEmailNotice> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            apiErrorMessage(error, fallback: 'Could not send the email.'),
+            apiErrorMessage(error, fallback: context.l10n.checkEmailResendFailed),
           ),
         ),
       );
@@ -65,9 +66,9 @@ class _UnverifiedEmailNoticeState extends ConsumerState<UnverifiedEmailNotice> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Please verify your email first',
-          style: TextStyle(
+        Text(
+          context.l10n.unverifiedTitle,
+          style: const TextStyle(
             color: Color(0xFF78350F),
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -75,8 +76,7 @@ class _UnverifiedEmailNoticeState extends ConsumerState<UnverifiedEmailNotice> {
         ),
         const SizedBox(height: 4),
         Text(
-          'We sent a verification link to ${widget.email}. If it has '
-          "expired or you can't find it, we can send a new one.",
+          context.l10n.unverifiedBody(widget.email),
           style: const TextStyle(color: Color(0xFF78350F), fontSize: 13),
         ),
         TextButton(
@@ -85,7 +85,9 @@ class _UnverifiedEmailNoticeState extends ConsumerState<UnverifiedEmailNotice> {
             padding: EdgeInsets.zero,
             foregroundColor: const Color(0xFF157A34),
           ),
-          child: Text(_sending ? 'Sending...' : 'Resend verification email'),
+          child: Text(
+            _sending ? context.l10n.commonSending : context.l10n.unverifiedResend,
+          ),
         ),
       ],
     ),

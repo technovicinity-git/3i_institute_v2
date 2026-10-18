@@ -62,7 +62,9 @@ export class RegistrationService {
     const dateOfBirth = new Date(input.dateOfBirth);
     const age = calculateAge(dateOfBirth);
 
-    // Account holder must be 13+ to have their own account
+    // Account holder must be 13+ to have their own account. The message is
+    // deliberately vague so it doesn't coach a child into entering an older
+    // birth date. Younger children use a profile under a parent's account.
     if (age < 13) {
       throw new ValidationError("Unable to process registration");
     }
@@ -127,6 +129,8 @@ export class RegistrationService {
       // Create learner profile
       const learnerDateOfBirth = new Date(input.learnerDateOfBirth);
       const learnerAge = calculateAge(learnerDateOfBirth);
+      // The optional PIN stops other people on a shared account from
+      // switching into this profile; hashed like a password.
       const pinHash = input.learnerPin ? await hash(input.learnerPin) : null;
 
       await tx.learnerProfile.create({
@@ -136,7 +140,9 @@ export class RegistrationService {
           dateOfBirth: learnerDateOfBirth,
           avatarUrl: input.learnerAvatarUrl ?? null,
           pinHash,
-          chatEnabled: learnerAge >= 13 ? false : false, // Under 13 always off
+          // Both branches are false: chat starts off for every new profile
+          // and the account holder turns it on later.
+          chatEnabled: learnerAge >= 13 ? false : false,
         },
       });
 

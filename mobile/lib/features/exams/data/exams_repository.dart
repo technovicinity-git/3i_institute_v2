@@ -21,29 +21,31 @@ class ExamsRepository {
         .toList(growable: false);
   }
 
-  Future<ExamTakeData> getExamQuestions(String examId) async {
+  Future<ExamIntroData> getExamIntro(String examId) async {
     final response = await _api.dio.get<Map<String, dynamic>>(
-      '/exams/$examId/questions',
+      '/exams/$examId/intro',
     );
-    return ExamTakeData.fromJson(_data(response.data));
+    return ExamIntroData.fromJson(_data(response.data));
   }
 
+  /// Starts the attempt on the server, or resumes the one already running.
+  Future<ExamStartData> startExam(String examId, String profileId) async {
+    final response = await _api.dio.post<Map<String, dynamic>>(
+      '/exams/$examId/start',
+      data: {'learnerProfileId': profileId},
+    );
+    return ExamStartData.fromJson(_data(response.data));
+  }
+
+  /// The question set, start time and deadline belong to the server
+  /// session, so only the answers are sent.
   Future<ExamAttempt> submitExam({
-    required String examId,
-    required String profileId,
+    required String sessionId,
     required Map<String, Object> answers,
-    required DateTime startedAt,
-    required List<ExamQuestion> questions,
   }) async {
     final response = await _api.dio.post<Map<String, dynamic>>(
       '/exams/submit',
-      data: {
-        'examId': examId,
-        'learnerProfileId': profileId,
-        'answers': answers,
-        'startedAt': startedAt.toUtc().toIso8601String(),
-        'questionSet': questions.map((q) => {'questionId': q.id}).toList(),
-      },
+      data: {'sessionId': sessionId, 'answers': answers},
     );
     return ExamAttempt.fromJson(_data(response.data));
   }

@@ -98,7 +98,7 @@ export default function InstructorDashboardPage() {
       <div>
         <h1
           className="text-3xl md:text-[36px] text-[#0C1F33] mb-2"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           Instructor Dashboard
         </h1>

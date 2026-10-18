@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { MailWarning } from "lucide-react";
 import { useResendVerificationMutation } from "@/hooks/use-email-verification";
+import { useTranslations } from "next-intl";
 
 interface UnverifiedEmailNoticeProps {
   email: string;
@@ -18,6 +19,8 @@ export function UnverifiedEmailNotice({
   email,
   checkEmailPath,
 }: UnverifiedEmailNoticeProps) {
+  const t = useTranslations("auth.notices");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const resendMutation = useResendVerificationMutation();
 
@@ -36,11 +39,14 @@ export function UnverifiedEmailNotice({
       <div className="flex items-start gap-2">
         <MailWarning className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
-          <p className="font-semibold">Please verify your email first</p>
+          <p className="font-semibold">{t("unverifiedTitle")}</p>
           <p className="mt-1">
-            We sent a verification link to{" "}
-            <span className="font-semibold">{email}</span>. If it has expired
-            or you can&apos;t find it, we can send a new one.
+            {t.rich("unverifiedBody", {
+              email,
+              strong: (chunks) => (
+                <bdi className="font-semibold">{chunks}</bdi>
+              ),
+            })}
           </p>
           <button
             type="button"
@@ -49,8 +55,8 @@ export function UnverifiedEmailNotice({
             className="mt-2 font-semibold text-green hover:text-green-dark underline disabled:opacity-50 cursor-pointer"
           >
             {resendMutation.isPending
-              ? "Sending..."
-              : "Resend verification email"}
+              ? tCommon("sending")
+              : t("resendVerification")}
           </button>
         </div>
       </div>

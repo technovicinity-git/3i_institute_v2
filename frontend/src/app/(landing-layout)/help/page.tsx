@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, LifeBuoy, Search } from "lucide-react";
 import { usePublicFaq } from "@/hooks/use-content";
+import { useTranslations } from "next-intl";
 
 export default function HelpPage() {
+  const t = useTranslations("help");
   const { data: faq, isLoading } = usePublicFaq();
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -29,19 +31,19 @@ export default function HelpPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
       <p className="text-xs font-semibold text-[#B8912F] uppercase tracking-widest mb-2">
-        Help Center
+        {t("eyebrow")}
       </p>
       <h1 className="font-serif text-3xl md:text-[44px] leading-tight text-[#0C1F33]">
-        Frequently asked questions
+        {t("title")}
       </h1>
 
       <div className="relative mt-8 mb-10">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+        <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search questions…"
-          className="w-full h-12 pl-11 pr-4 rounded-xl border border-[#E3E8EF] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#12304E]/20"
+          placeholder={t("search")}
+          className="w-full h-12 ps-11 pe-4 rounded-xl border border-[#E3E8EF] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#12304E]/20"
         />
       </div>
 
@@ -53,9 +55,7 @@ export default function HelpPage() {
         </div>
       ) : groups.length === 0 ? (
         <p className="text-sm text-[#64748B]">
-          {query
-            ? `No questions match “${query}”.`
-            : "No questions have been published yet."}
+          {query ? t("noMatch", { query }) : t("none")}
         </p>
       ) : (
         <div className="space-y-10">
@@ -73,7 +73,7 @@ export default function HelpPage() {
                         type="button"
                         onClick={() => setOpenId(open ? null : item.id)}
                         aria-expanded={open}
-                        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+                        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-start"
                       >
                         <span className="text-sm font-semibold text-[#0C1F33]">
                           {item.question}
@@ -99,14 +99,14 @@ export default function HelpPage() {
       <div className="mt-14 rounded-xl bg-[#FBF9F4] p-6 flex flex-wrap items-center gap-4">
         <LifeBuoy className="w-8 h-8 text-[#B8912F]" />
         <div className="flex-1 min-w-[200px]">
-          <p className="font-semibold text-[#0C1F33]">Still need help?</p>
-          <p className="text-sm text-[#64748B]">Our team is happy to help.</p>
+          <p className="font-semibold text-[#0C1F33]">{t("stillNeed")}</p>
+          <p className="text-sm text-[#64748B]">{t("happy")}</p>
         </div>
         <Link
           href="/contact"
           className="px-5 py-2.5 rounded-lg bg-[#12304E] text-white text-sm font-semibold hover:bg-[#1a4268]"
         >
-          Contact us
+          {t("contactUs")}
         </Link>
       </div>
     </div>

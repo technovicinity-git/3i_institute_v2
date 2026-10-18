@@ -4,10 +4,20 @@ import { NotFoundError, ValidationError } from "#/shared/errors";
 import { notificationEvents } from "#/modules/notification/events";
 import { canManageCourse } from "#/shared/course-access";
 
+// Printed on the certificate and checked on the public verify page, so it
+// must be unguessable: 128 random bits, not a sequential id.
 function generateVerificationCode(): string {
   return crypto.randomBytes(16).toString("hex").toUpperCase();
 }
 
+// Certificate types:
+//   ATTENDANCE — enrolled (not waitlisted) in the course
+//   COMPLETION — passed the course's final exam
+//   EXAM       — REGULAR courses: took the exam at least once; records the
+//                score and progress at that moment
+// Issuing is idempotent: asking again returns the existing certificate.
+// Name and course title are copied onto the certificate (snapshots) so later
+// renames don't change what was issued.
 export class CertificateService {
   async issueAttendanceCertificate(learnerProfileId: string, courseId: string) {
     // Verify enrolment exists
@@ -105,7 +115,8 @@ export class CertificateService {
       throw new NotFoundError("Profile or course not found");
     }
 
-    // Lock the name (FR-FAM-05)
+    // Lock the name (FR-FAM-05): the profile name can't be changed after a
+    // completion certificate is issued in it.
     await prisma.learnerProfile.update({
       where: { id: learnerProfileId },
       data: { nameLocked: true },
@@ -183,6 +194,8 @@ export class CertificateService {
         graded: true,
       },
     });
+    // All-or-nothing: wait until every attempt is graded, so nobody is left
+    // out because their written answers hadn't been marked yet.
     const ungradedCount = attempts.filter((attempt) => !attempt.graded).length;
     if (ungradedCount > 0) {
       throw new ValidationError(
@@ -452,6 +465,8 @@ export class CertificateService {
     return certificate;
   }
 
+  // Revoked certificates are kept (not deleted) so the public verify page can
+  // say "revoked" instead of "not found".
   async revokeCertificate(
     adminId: string,
     certificateId: string,

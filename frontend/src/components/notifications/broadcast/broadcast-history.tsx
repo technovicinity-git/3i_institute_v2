@@ -48,7 +48,7 @@ export function BroadcastHistory({
     <section className="mt-10">
       <h2
         className="mb-4 flex items-center gap-2 text-xl text-[#0C1F33]"
-        style={{ fontFamily: "'Marcellus', serif" }}
+        style={{ fontFamily: "var(--font-display)" }}
       >
         <History className="h-5 w-5 text-[#B8912F]" />
         Sent notifications

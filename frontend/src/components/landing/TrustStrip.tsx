@@ -1,4 +1,5 @@
 import { Award, BookOpen, Globe, Shield, Network } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const partners = [
   { name: "Accreditation Council", icon: Award },
@@ -9,12 +10,13 @@ const partners = [
 ];
 
 export default function TrustStrip() {
+  const t = useTranslations("landing");
   return (
     <section className="w-full bg-[#FBF9F4] py-10">
       <div className="max-w-[1200px] mx-auto px-8">
         {/* Heading */}
         <p className="text-center text-[11px] font-semibold tracking-[0.15em] uppercase text-[#64748B] mb-6">
-          Partnered &amp; Recognized By
+          {t("trust")}
         </p>
 
         {/* Partner Logos */}

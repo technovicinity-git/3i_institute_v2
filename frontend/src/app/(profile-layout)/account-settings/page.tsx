@@ -1,5 +1,8 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { localeNames } from "@/i18n/config";
 import Link from "next/link";
 
 function UsersIcon() {
@@ -154,7 +157,7 @@ function SettingsRow({ icon, title, description, href }: SettingsRowProps) {
         <div className="flex flex-col gap-1">
           <h3
             className="text-lg font-normal text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             {title}
           </h3>
@@ -165,57 +168,62 @@ function SettingsRow({ icon, title, description, href }: SettingsRowProps) {
       </div>
 
       {/* Chevron */}
-      <div className="shrink-0 ml-4 group-hover:translate-x-0.5 transition-transform">
+      <div className="shrink-0 ms-4 group-hover:translate-x-0.5.5 transition-transform">
         <ChevronRightIcon />
       </div>
     </Link>
   );
 }
 
-const settingsItems: SettingsRowProps[] = [
-  {
-    icon: <UsersIcon />,
-    title: "Family & profiles",
-    description: "Manage learner profiles, PINs, and seats",
-    href: "/profile-management",
-  },
-  {
-    icon: <SmartphoneIcon />,
-    title: "Devices",
-    description: "See and remove devices signed into your account",
-    href: "/device-management",
-  },
-  {
-    icon: <CreditCardIcon />,
-    title: "Subscription & billing",
-    description: "Subscribe or unsubscribe each learner profile",
-    href: "/subscription",
-  },
-  {
-    icon: <LockIcon />,
-    title: "Login & security",
-    description: "Update your email and password",
-    href: "/login-security",
-  },
-];
+const settingsItems = [
+  { key: "family", icon: <UsersIcon />, href: "/profile-management" },
+  { key: "devices", icon: <SmartphoneIcon />, href: "/device-management" },
+  { key: "subscription", icon: <CreditCardIcon />, href: "/subscription" },
+  { key: "security", icon: <LockIcon />, href: "/login-security" },
+] as const;
 
 // ---- Page ----
 
 export default function AccountSettingsPage() {
+  const t = useTranslations("settings");
+  const locale = useLocale();
+
   return (
-    <div style={{ fontFamily: "'Figtree', sans-serif" }}>
+    <div style={{ fontFamily: "var(--font-body)" }}>
       <main className="w-full max-w-[1200px] mx-auto px-6 sm:px-10 lg:px-[120px] xl:px-0 py-10 sm:py-14">
         <h1
           className="text-3xl sm:text-[40px] leading-tight text-[#0C1F33] mb-6 sm:mb-9"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Account settings
+          {t("title")}
         </h1>
 
         <div className="flex flex-col gap-4">
           {settingsItems.map((item) => (
-            <SettingsRow key={item.title} {...item} />
+            <SettingsRow
+              key={item.key}
+              icon={item.icon}
+              href={item.href}
+              title={t(`${item.key}Title`)}
+              description={t(`${item.key}Body`)}
+            />
           ))}
+
+          {/* Language: saved on the account, used on web, app and emails */}
+          <div className="flex items-center justify-between gap-4 p-6 bg-white border border-[#E3E8EF] rounded-xl shadow-sm">
+            <div className="flex flex-col gap-1">
+              <h3
+                className="text-lg font-normal text-[#0C1F33]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {t("languageTitle")}
+              </h3>
+              <p className="text-[15px] text-[#475569] leading-snug">
+                {t("languageBody")} · {localeNames[locale]}
+              </p>
+            </div>
+            <LanguageSwitcher />
+          </div>
         </div>
       </main>
     </div>

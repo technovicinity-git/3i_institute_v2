@@ -260,7 +260,8 @@ export class BulkImportService {
       }
     }
 
-    // Bulk insert valid questions
+    // Partial import: valid rows are saved even when other rows failed; the
+    // failures come back in `errors` (with CSV row numbers) to fix and re-upload.
     let imported = 0;
     if (questionsToInsert.length > 0) {
       const result = await prisma.question.createMany({

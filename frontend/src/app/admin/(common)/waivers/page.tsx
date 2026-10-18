@@ -118,7 +118,7 @@ export default function AdminWaiversPage() {
         <div>
           <h1
             className="text-3xl md:text-[36px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             Fee Waivers
           </h1>
@@ -444,7 +444,7 @@ function ReviewContent({
       <div className="flex flex-col gap-1.5 pr-6">
         <DialogTitle
           className="text-2xl text-[#0C1F33] font-normal"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {waiver.learnerProfile?.displayName ?? "No learner profile"}
         </DialogTitle>

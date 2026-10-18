@@ -43,7 +43,7 @@ function VerifyTokenContent({ token }: { token: string }) {
             </div>
             <h2
               className="mt-7 text-[32px] leading-[40px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               {linkExpired ? "Link expired" : "Invalid link"}
             </h2>
@@ -78,7 +78,7 @@ function VerifyTokenContent({ token }: { token: string }) {
             <div className="w-16 h-16 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin mt-1" />
             <h2
               className="mt-7 text-[32px] leading-[40px] text-[#0C1F33]"
-              style={{ fontFamily: "'Marcellus', serif" }}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               Verifying your email…
             </h2>
@@ -134,7 +134,7 @@ function CheckEmailContent({ email }: { email: string }) {
         <div className="mt-7 text-center w-full max-w-[408px]">
           <h2
             className="text-[40px] leading-[48px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             Check your email
           </h2>

@@ -1,9 +1,13 @@
 import Image from "next/image";
 import { BookOpen, Clock, Star } from "lucide-react";
 import type { CourseDetails } from "@/types/course-details";
-import { initials, levelLabel } from "./utils";
+import { useTranslations } from "next-intl";
+import { levelKey } from "@/lib/course-level";
+import { initials } from "./utils";
 
 export function CourseHero({ course }: { course: CourseDetails }) {
+  const t = useTranslations("courseDetails");
+  const tLevel = useTranslations("courseLevel");
   return (
     <section className="relative bg-[#12304E] overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08]">
@@ -14,14 +18,14 @@ export function CourseHero({ course }: { course: CourseDetails }) {
         <div className="max-w-[760px] flex flex-col gap-6">
           {/* Breadcrumbs */}
           <p className="text-[#B8912F] text-sm font-semibold">
-            Courses &gt; {course.category?.name ?? "General"} &gt;{" "}
-            {course.title}
+            {t("breadcrumbCourses")} &gt; {course.category?.name ?? t("general")}{" "}
+            &gt; {course.title}
           </p>
 
           {/* Badges */}
           <div className="flex items-center gap-3">
             <span className="text-[11px] font-bold text-[#B8912F] bg-[#B8912F]/[0.08] px-2 py-1 rounded">
-              {levelLabel(course.level)}
+              {tLevel(levelKey(course.level))}
             </span>
           </div>
 
@@ -40,8 +44,10 @@ export function CourseHero({ course }: { course: CourseDetails }) {
             <span className="flex items-center gap-1.5 text-white text-sm">
               <Star className="w-3.5 h-3.5 text-[#B8912F]" strokeWidth={2} />
               <span className="font-semibold">
-                {course.ratingSummary.average} Rating (
-                {course.ratingSummary.total} reviews)
+                {t("rating", {
+                  average: course.ratingSummary.average,
+                  count: course.ratingSummary.total,
+                })}
               </span>
             </span>
             {/* <span className="flex items-center gap-1.5 text-white text-sm">
@@ -70,8 +76,12 @@ export function CourseHero({ course }: { course: CourseDetails }) {
               </div>
             )}
             <span className="text-white text-sm">
-              Instructed by{" "}
-              <span className="font-semibold">{course.instructor.name}</span>
+              {t.rich("instructedBy", {
+                name: course.instructor.name,
+                strong: (chunks) => (
+                  <span className="font-semibold">{chunks}</span>
+                ),
+              })}
             </span>
           </div>
         </div>

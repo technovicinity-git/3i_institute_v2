@@ -6,6 +6,7 @@ import { validate } from "#/middleware/validate";
 import {
   createQuestionSchema,
   createExamSchema,
+  startExamSchema,
   submitExamSchema,
 } from "#/modules/exam/schema";
 import multer from "multer";
@@ -288,20 +289,26 @@ router.get("/course/:courseId", examController.getCourseExams);
  *   post:
  *     tags: [Exams]
  *     summary: Submit an exam attempt
+ *     description: >
+ *       Submits the attempt started with POST /exams/{examId}/start. Accepted
+ *       until the session deadline plus a 2-minute grace period (server time).
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [examId, learnerProfileId, answers]
+ *             required: [sessionId, answers]
  *             properties:
- *               examId: { type: string, format: uuid }
- *               learnerProfileId: { type: string, format: uuid }
+ *               sessionId: { type: string, format: uuid }
  *               answers: { type: object }
  *     responses:
  *       201:
  *         description: Exam submitted
+ *       409:
+ *         description: This attempt has already been submitted
+ *       422:
+ *         description: Time is up for this attempt
  */
 router.post(
   "/submit",
@@ -352,10 +359,11 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/exams/{examId}/questions:
+ * /api/v1/exams/{examId}/intro:
  *   get:
  *     tags: [Exams]
- *     summary: Get exam questions for learner (without answers)
+ *     summary: Exam details for the learner's start screen
+ *     description: Exam settings and the number of questions. No question content.
  *     parameters:
  *       - in: path
  *         name: examId
@@ -363,13 +371,51 @@ router.post(
  *         schema: { type: string, format: uuid }
  *     responses:
  *       200:
- *         description: Exam questions
+ *         description: Exam details and questionCount
  */
 router.get(
-  "/:examId/questions",
+  "/:examId/intro",
   authenticate,
   authorize("exams.attempt"),
-  examController.getExamQuestions,
+  examController.getExamIntro,
+);
+
+/**
+ * @swagger
+ * /api/v1/exams/{examId}/start:
+ *   post:
+ *     tags: [Exams]
+ *     summary: Start (or resume) an exam attempt
+ *     description: >
+ *       Checks the opening rules, attempt limit and cooldown against the
+ *       server clock, then records the start time and question set. Calling it
+ *       again while the attempt is running returns the same session.
+ *     parameters:
+ *       - in: path
+ *         name: examId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [learnerProfileId]
+ *             properties:
+ *               learnerProfileId: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: >
+ *           sessionId, startedAt, deadline, serverNow, exam and the questions
+ *           (without answers)
+ */
+router.post(
+  "/:examId/start",
+  authenticate,
+  authorize("exams.attempt"),
+  validate(startExamSchema),
+  examController.startExam,
 );
 
 router.get(

@@ -8,7 +8,12 @@ import {
   resetPasswordSchema,
   changePasswordSchema,
 } from "#/modules/auth/schema";
-import { ValidationError } from "#/shared/errors";
+import {
+  AccountInactiveError,
+  UnauthorizedError,
+  ValidationError,
+} from "#/shared/errors";
+import { clearRefreshCookie, setRefreshCookie } from "#/lib/refresh-cookie";
 import { sendSuccess } from "#/shared/response";
 import { resendVerificationSchema } from "#/modules/auth/resend-verification-schema";
 
@@ -37,13 +42,7 @@ export class AuthController {
       const input = loginSchema.parse(req.body);
       const result = await authService.login(input);
 
-      res.cookie("refreshToken", result.tokens.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
+      setRefreshCookie(res, result.tokens.refreshToken);
 
       sendSuccess(
         res,
@@ -69,13 +68,7 @@ export class AuthController {
 
       const tokens = await authService.refreshTokens(refreshToken);
 
-      res.cookie("refreshToken", tokens.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
+      setRefreshCookie(res, tokens.refreshToken);
 
       sendSuccess(
         res,
@@ -84,6 +77,16 @@ export class AuthController {
         "Token refreshed",
       );
     } catch (error) {
+      // The token is unusable, so drop the cookie. Otherwise the browser
+      // keeps sending it and the frontend middleware still treats the
+      // visitor as logged in, bouncing /login → /dashboard → /login.
+      if (
+        error instanceof UnauthorizedError ||
+        error instanceof AccountInactiveError ||
+        error instanceof ValidationError
+      ) {
+        clearRefreshCookie(res);
+      }
       next(error);
     }
   };
@@ -96,7 +99,7 @@ export class AuthController {
         await authService.logout(userId);
       }
 
-      res.clearCookie("refreshToken", { path: "/" });
+      clearRefreshCookie(res);
       sendSuccess(res, null, 200, "Logged out successfully");
     } catch (error) {
       next(error);

@@ -4,19 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/exam_models.dart';
 
-// Submit a little before a hard close date so the request lands in time.
-const _closeDateBuffer = Duration(seconds: 10);
-
-/// An exam attempt in progress, persisted on the device so closing the app,
-/// a crash or navigating away does not reset the timer, reshuffle a random
-/// question set or lose the learner's answers.
+/// An exam attempt in progress, saved on the device so closing the app or a
+/// crash keeps the learner's answers and place. The timer and question set
+/// come from the server (POST /exams/:examId/start), which also enforces the
+/// deadline; this copy is only for display and resuming.
 class ExamSession {
   ExamSession({
+    required this.sessionId,
     required this.examId,
     required this.profileId,
     required this.title,
-    required this.closeDate,
     required this.startedAt,
+    required this.deadline,
     required this.durationMinutes,
     required this.questions,
     Map<String, Object>? answers,
@@ -25,40 +24,55 @@ class ExamSession {
   }) : answers = answers ?? {},
        flagged = flagged ?? {};
 
+  /// Builds the session from the server's start response. The device clock
+  /// may be wrong, so server times are shifted by the difference between the
+  /// server's "now" and the device's (network delay ignored — it only makes
+  /// the timer end slightly early, and submit has a grace period).
+  factory ExamSession.fromStart(ExamStartData start, String profileId) {
+    final offset = start.serverNow.difference(DateTime.now());
+    return ExamSession(
+      sessionId: start.sessionId,
+      examId: start.exam.id,
+      profileId: profileId,
+      title: start.exam.title,
+      startedAt: start.startedAt.subtract(offset),
+      deadline: start.deadline.subtract(offset),
+      durationMinutes: start.exam.duration,
+      questions: start.questions,
+    );
+  }
+
+  /// Server session id, sent back on submit.
+  final String sessionId;
   final String examId, profileId, title;
 
-  /// Hard close date of the exam, if any — the server rejects later submits.
-  final DateTime? closeDate;
-
-  /// When the learner pressed "Start exam". Anchors the timer.
+  /// When the attempt started on the server, on the device clock.
   final DateTime startedAt;
+
+  /// When time runs out (server deadline, already capped at the exam's close
+  /// date), on the device clock.
+  final DateTime deadline;
 
   /// Duration frozen at start so a later edit can't shift it.
   final int durationMinutes;
 
-  /// The exact questions shown (random set for REGULAR dynamic exams).
+  /// The exact questions served (random set for REGULAR dynamic exams).
   final List<ExamQuestion> questions;
   final Map<String, Object> answers;
   final Set<String> flagged;
   int current;
 
-  /// When time runs out: end of the duration, or just before the close date.
-  DateTime get deadline {
-    final durationEnd = startedAt.add(Duration(minutes: durationMinutes));
-    final close = closeDate?.subtract(_closeDateBuffer);
-    return close != null && close.isBefore(durationEnd) ? close : durationEnd;
-  }
-
   int get answeredCount =>
       questions.where((q) => isExamAnswered(answers[q.id])).length;
 
   Map<String, dynamic> toJson() => {
-    'version': 1,
+    'version': 2,
+    'sessionId': sessionId,
     'examId': examId,
     'profileId': profileId,
     'title': title,
-    'closeDate': closeDate?.toUtc().toIso8601String(),
     'startedAt': startedAt.toUtc().toIso8601String(),
+    'deadline': deadline.toUtc().toIso8601String(),
     'durationMinutes': durationMinutes,
     'questions': questions.map((q) => q.toJson()).toList(),
     'answers': answers,
@@ -69,13 +83,22 @@ class ExamSession {
   static ExamSession? tryParse(String raw) {
     try {
       final json = jsonDecode(raw);
-      if (json is! Map || json['version'] != 1) return null;
+      // Version 1 sessions were timed by the device only; they're dropped
+      // and the learner resumes through the server (same deadline).
+      if (json is! Map || json['version'] != 2) return null;
+      final sessionId = json['sessionId'];
       final startedAt = DateTime.tryParse('${json['startedAt']}')?.toLocal();
+      final deadline = DateTime.tryParse('${json['deadline']}')?.toLocal();
       final questions = ((json['questions'] as List?) ?? const [])
           .whereType<Map>()
           .map((q) => ExamQuestion.fromJson(Map<String, dynamic>.from(q)))
           .toList(growable: false);
-      if (startedAt == null || questions.isEmpty) return null;
+      if (sessionId is! String ||
+          startedAt == null ||
+          deadline == null ||
+          questions.isEmpty) {
+        return null;
+      }
       final answers = <String, Object>{};
       final rawAnswers = json['answers'];
       if (rawAnswers is Map) {
@@ -86,13 +109,12 @@ class ExamSession {
       }
       final current = (json['current'] as num?)?.toInt() ?? 0;
       return ExamSession(
+        sessionId: sessionId,
         examId: '${json['examId']}',
         profileId: '${json['profileId']}',
         title: json['title'] as String? ?? 'Exam',
-        closeDate: json['closeDate'] == null
-            ? null
-            : DateTime.tryParse('${json['closeDate']}')?.toLocal(),
         startedAt: startedAt,
+        deadline: deadline,
         durationMinutes: (json['durationMinutes'] as num?)?.toInt() ?? 0,
         questions: questions,
         answers: answers,

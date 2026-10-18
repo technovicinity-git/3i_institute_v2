@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { useCategories } from "@/hooks/use-categories";
+import { useTranslations } from "next-intl";
 
 /** Real course categories with published courses, largest first. */
 export default function Programs() {
+  const t = useTranslations("landing.programs");
   const { data: categories, isLoading } = useCategories();
 
   const pathways = (categories ?? [])
@@ -24,17 +26,17 @@ export default function Programs() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
           <div className="flex flex-col gap-3">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-[#B8912F]">
-              Curriculum Pathways
+              {t("eyebrow")}
             </p>
             <h2 className="font-serif text-3xl md:text-[40px] text-[#12304E]">
-              Choose Your Pathway
+              {t("title")}
             </h2>
           </div>
           <Link
             href="/courses"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#12304E] hover:underline"
           >
-            All courses <ArrowRight className="w-4 h-4" />
+            {t("all")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -74,8 +76,7 @@ export default function Programs() {
                   </div>
                   <div className="flex items-center justify-between pt-3 border-t border-[#E3E8EF]">
                     <span className="text-[13px] text-[#64748B]">
-                      {pathway.courseCount} course
-                      {pathway.courseCount === 1 ? "" : "s"}
+                      {t("courseCount", { count: pathway.courseCount })}
                     </span>
                     <ArrowRight className="w-4 h-4 text-[#B8912F] transition-transform group-hover:translate-x-1" />
                   </div>

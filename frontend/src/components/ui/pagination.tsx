@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFormatter, useTranslations } from "next-intl";
 
 type PageItem = number | "gap-start" | "gap-end";
 
@@ -43,9 +44,11 @@ export function Pagination({
   total,
   pageSize,
   onPageChange,
-  itemLabel = "results",
+  itemLabel,
   className,
 }: PaginationProps) {
+  const t = useTranslations("pagination");
+  const format = useFormatter();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) return null;
 
@@ -61,22 +64,22 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t("label")}
       className={cn(
         "mt-6 flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-between",
         className,
       )}
     >
       <p className="text-sm text-[#64748B]">
-        Showing{" "}
-        <span className="font-semibold text-[#0C1F33]">
-          {from.toLocaleString()}–{to.toLocaleString()}
-        </span>{" "}
-        of{" "}
-        <span className="font-semibold text-[#0C1F33]">
-          {total.toLocaleString()}
-        </span>{" "}
-        {itemLabel}
+        {t.rich("showing", {
+          from: format.number(from),
+          to: format.number(to),
+          total: format.number(total),
+          label: itemLabel ?? t("results"),
+          strong: (chunks) => (
+            <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+          ),
+        })}
       </p>
 
       <div className="flex items-center gap-1.5">
@@ -85,10 +88,10 @@ export function Pagination({
           onClick={() => go(current - 1)}
           disabled={current === 1}
           className={navButton}
-          aria-label="Previous page"
+          aria-label={t("previousPage")}
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Previous</span>
+          <span className="hidden sm:inline">{t("previous")}</span>
         </button>
 
         {/* Page numbers on wider screens, "Page x of y" on phones. */}
@@ -100,7 +103,7 @@ export function Pagination({
                 type="button"
                 onClick={() => go(item)}
                 aria-current={item === current ? "page" : undefined}
-                aria-label={`Page ${item}`}
+                aria-label={t("page", { page: item })}
                 className={cn(
                   "h-9 min-w-9 rounded-lg px-2 text-sm font-semibold transition-colors",
                   item === current
@@ -122,9 +125,13 @@ export function Pagination({
           )}
         </div>
         <span className="px-2 text-sm text-[#64748B] sm:hidden">
-          Page{" "}
-          <span className="font-semibold text-[#0C1F33]">{current}</span> of{" "}
-          {totalPages}
+          {t.rich("pageOf", {
+            page: current,
+            total: totalPages,
+            strong: (chunks) => (
+              <span className="font-semibold text-[#0C1F33]">{chunks}</span>
+            ),
+          })}
         </span>
 
         <button
@@ -132,9 +139,9 @@ export function Pagination({
           onClick={() => go(current + 1)}
           disabled={current === totalPages}
           className={navButton}
-          aria-label="Next page"
+          aria-label={t("nextPage")}
         >
-          <span className="hidden sm:inline">Next</span>
+          <span className="hidden sm:inline">{t("next")}</span>
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

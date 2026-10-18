@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { lessonService } from "@/services/lesson.service";
 
 export function useCourseContent(courseId: string, learnerProfileId?: string) {
@@ -20,6 +21,7 @@ export function useLessonNotes(learnerProfileId: string, materialId: string) {
 }
 
 export function useSaveNoteMutation() {
+  const tToast = useTranslations("lesson.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -34,7 +36,7 @@ export function useSaveNoteMutation() {
     }) => lessonService.saveLessonNote(learnerProfileId, materialId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-notes"] });
-      toast.success("Note saved");
+      toast.success(tToast("noteSaved"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

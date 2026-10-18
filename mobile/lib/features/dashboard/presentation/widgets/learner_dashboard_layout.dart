@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
@@ -50,7 +52,8 @@ class LearnerDashboardLayout extends ConsumerWidget {
   }) {
     final learner = ref.watch(activeLearnerProfileProvider);
     final account = ref.watch(authControllerProvider).asData?.value;
-    final name = learner?.displayName ?? account?.firstName ?? 'Learner';
+    final l10n = context.l10n;
+    final name = learner?.displayName ?? account?.firstName ?? l10n.commonLearner;
 
     return AppBar(
       toolbarHeight: 72,
@@ -62,7 +65,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Assalamu alaikum, $name',
+            l10n.dashboardGreeting(name),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -71,21 +74,22 @@ class LearnerDashboardLayout extends ConsumerWidget {
               color: Color(0xFF12304E),
             ),
           ),
-          const Text(
-            'Welcome back to your dashboard',
-            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          Text(
+            l10n.dashboardWelcomeBack,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
           ),
         ],
       ),
       actions: [
+        const LanguageButton(color: Color(0xFF12304E)),
         IconButton(
-          tooltip: 'Search courses',
+          tooltip: l10n.dashboardSearchCourses,
           onPressed: () => context.go('/courses'),
           icon: const Icon(Icons.search, color: Color(0xFF12304E)),
         ),
         const NotificationBell(notificationsRoute: '/notifications'),
         PopupMenuButton<String>(
-          tooltip: 'Learner profile',
+          tooltip: l10n.menuLearnerProfile,
           onSelected: (value) {
             if (value == 'switch') {
               ref.read(activeLearnerProfileProvider.notifier).select(null);
@@ -115,16 +119,16 @@ class LearnerDashboardLayout extends ConsumerWidget {
                 ],
               ),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'switch',
-              child: Text('Switch learner profile'),
+              child: Text(l10n.menuSwitchLearner),
             ),
-            const PopupMenuItem(value: 'courses', child: Text('Courses')),
-            const PopupMenuItem(
+            PopupMenuItem(value: 'courses', child: Text(l10n.menuCourses)),
+            PopupMenuItem(
               value: 'online-classes',
-              child: Text('Online Classes'),
+              child: Text(l10n.navOnlineClasses),
             ),
-            const PopupMenuItem(value: 'help', child: Text('Help & support')),
+            PopupMenuItem(value: 'help', child: Text(l10n.menuHelp)),
           ],
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -153,30 +157,38 @@ class LearnerDashboardLayout extends ConsumerWidget {
 class DashboardSidebar extends StatelessWidget {
   const DashboardSidebar({super.key});
 
-  static const _items = <_DashboardNavItem>[
-    _DashboardNavItem('Dashboard', Icons.dashboard_outlined, '/dashboard'),
-    _DashboardNavItem(
-      'Regular Courses',
-      Icons.menu_book_outlined,
-      '/my-courses',
-    ),
-    _DashboardNavItem(
-      'Online Classes',
-      Icons.video_library_outlined,
-      '/online-classes',
-    ),
-    _DashboardNavItem('Assignments', Icons.assignment_outlined, '/assignments'),
-    _DashboardNavItem('Exams', Icons.description_outlined, '/exams'),
-    _DashboardNavItem(
-      'Certificates',
-      Icons.workspace_premium_outlined,
-      '/certificates',
-    ),
-    _DashboardNavItem('Wishlist', Icons.favorite_border, '/wishlist'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final items = <_DashboardNavItem>[
+      _DashboardNavItem(
+        l10n.navDashboard,
+        Icons.dashboard_outlined,
+        '/dashboard',
+      ),
+      _DashboardNavItem(
+        l10n.navRegularCourses,
+        Icons.menu_book_outlined,
+        '/my-courses',
+      ),
+      _DashboardNavItem(
+        l10n.navOnlineClasses,
+        Icons.video_library_outlined,
+        '/online-classes',
+      ),
+      _DashboardNavItem(
+        l10n.navAssignments,
+        Icons.assignment_outlined,
+        '/assignments',
+      ),
+      _DashboardNavItem(l10n.navExams, Icons.description_outlined, '/exams'),
+      _DashboardNavItem(
+        l10n.navCertificates,
+        Icons.workspace_premium_outlined,
+        '/certificates',
+      ),
+      _DashboardNavItem(l10n.navWishlist, Icons.favorite_border, '/wishlist'),
+    ];
     final currentLocation = GoRouterState.of(context).uri.path;
     return ColoredBox(
       color: const Color(0xFF12304E),
@@ -206,7 +218,7 @@ class DashboardSidebar extends StatelessWidget {
                 ],
               ),
             ),
-            for (final item in _items)
+            for (final item in items)
               _DashboardNavigationTile(
                 item: item,
                 selected:
@@ -223,7 +235,7 @@ class DashboardSidebar extends StatelessWidget {
                   context.go('/courses');
                 },
                 icon: const Icon(Icons.explore_outlined),
-                label: const Text('Explore courses'),
+                label: Text(l10n.dashboardExploreCourses),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.white,
                   alignment: Alignment.centerLeft,

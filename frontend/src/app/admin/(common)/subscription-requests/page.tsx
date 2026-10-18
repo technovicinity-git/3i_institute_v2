@@ -149,7 +149,7 @@ export default function AdminSubscriptionRequestsPage() {
         <div>
           <h1
             className="text-3xl md:text-[36px] text-[#0C1F33]"
-            style={{ fontFamily: "'Marcellus', serif" }}
+            style={{ fontFamily: "var(--font-display)" }}
           >
             Subscription Requests
           </h1>
@@ -422,7 +422,7 @@ function ReviewDialog({
             <div className="flex flex-col gap-1.5 pr-6">
               <DialogTitle
                 className="text-2xl text-[#0C1F33] font-normal"
-                style={{ fontFamily: "'Marcellus', serif" }}
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 {request.learnerProfile.displayName}
               </DialogTitle>

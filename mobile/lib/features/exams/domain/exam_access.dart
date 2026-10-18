@@ -48,14 +48,21 @@ int secondsUntil(DateTime? target, DateTime now) {
 }
 
 /// 93784 → "1d 02h 03m", 3754 → "01:02:34", 754 → "12:34".
-String formatCountdown(int totalSeconds) {
+String formatCountdown(
+  int totalSeconds, {
+  /// Multi-day wording, e.g. `context.l10n.examsCountdownDays`.
+  String Function(int days, String hours, String minutes)? days,
+}) {
   final s = totalSeconds < 0 ? 0 : totalSeconds;
-  final days = s ~/ 86400;
+  final dayCount = s ~/ 86400;
   final hours = (s % 86400) ~/ 3600;
   final mins = (s % 3600) ~/ 60;
   final secs = s % 60;
   String pad(int n) => n.toString().padLeft(2, '0');
-  if (days > 0) return '${days}d ${pad(hours)}h ${pad(mins)}m';
+  if (dayCount > 0) {
+    return days?.call(dayCount, pad(hours), pad(mins)) ??
+        '${dayCount}d ${pad(hours)}h ${pad(mins)}m';
+  }
   if (hours > 0) return '${pad(hours)}:${pad(mins)}:${pad(secs)}';
   return '${pad(mins)}:${pad(secs)}';
 }

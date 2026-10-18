@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class AccountSettingsPage extends StatelessWidget {
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_controller.dart';
+import '../../../../core/l10n/language_picker.dart';
+
+class AccountSettingsPage extends ConsumerWidget {
   const AccountSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context, WidgetRef ref) => ListView(
     padding: const EdgeInsets.fromLTRB(20, 28, 20, 36),
     children: [
       Text(
-        'Account settings',
+        context.l10n.settingsTitle,
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           color: const Color(0xff12304e),
           fontFamily: 'serif',
@@ -18,27 +23,35 @@ class AccountSettingsPage extends StatelessWidget {
       const SizedBox(height: 20),
       _SettingRow(
         icon: Icons.people_outline,
-        title: 'Family & profiles',
-        description: 'Manage learner profiles, PINs, and seats',
+        title: context.l10n.settingsFamilyTitle,
+        description: context.l10n.settingsFamilyBody,
         onTap: () => context.push('/profile-management'),
       ),
       _SettingRow(
         icon: Icons.devices_outlined,
-        title: 'Devices',
-        description: 'Device management is available on the website',
+        title: context.l10n.settingsDevicesTitle,
+        description: context.l10n.settingsDevicesBody,
         disabled: true,
       ),
       _SettingRow(
         icon: Icons.credit_card_outlined,
-        title: 'Subscription & billing',
-        description: 'Subscribe or unsubscribe each learner profile',
+        title: context.l10n.settingsSubscriptionTitle,
+        description: context.l10n.settingsSubscriptionBody,
         onTap: () => context.push('/subscription'),
       ),
       _SettingRow(
         icon: Icons.lock_outline,
-        title: 'Login & security',
-        description: 'Update your email and password',
+        title: context.l10n.settingsSecurityTitle,
+        description: context.l10n.settingsSecurityBody,
         onTap: () => context.push('/login-security'),
+      ),
+      _SettingRow(
+        icon: Icons.translate,
+        title: context.l10n.languageLabel,
+        description:
+            '${languageNames[ref.watch(languageProvider)]} · '
+            '${context.l10n.languageSettingBody}',
+        onTap: () => showLanguageSheet(context, ref),
       ),
     ],
   );

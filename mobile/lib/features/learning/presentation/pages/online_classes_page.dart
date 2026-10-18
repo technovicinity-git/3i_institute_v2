@@ -9,6 +9,7 @@ import '../../../certificates/presentation/pages/certificates_page.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -33,8 +34,8 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view your live classes.'),
+      return Center(
+        child: Text(context.l10n.classesSelectProfile),
       );
     }
     final classesAsync = ref.watch(enrolledCoursesProvider(profile.id));
@@ -43,10 +44,10 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _EmptyState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load online classes',
+        title: context.l10n.classesLoadFailed,
         action: TextButton(
           onPressed: () => ref.invalidate(enrolledCoursesProvider(profile.id)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (allCourses) {
@@ -68,7 +69,7 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [
               Text(
-                'Online Classes',
+                context.l10n.classesTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: const Color(0xFF0C1F33),
                   fontWeight: FontWeight.w600,
@@ -76,7 +77,7 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${classes.length} live course${classes.length == 1 ? '' : 's'}',
+                context.l10n.classesCount(classes.length),
                 style: const TextStyle(color: Color(0xFF64748B)),
               ),
               if (classes.isNotEmpty) ...[
@@ -85,7 +86,7 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
                   controller: _search,
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
-                    hintText: 'Search by course or instructor...',
+                    hintText: context.l10n.learnSearch,
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.white,
@@ -104,18 +105,18 @@ class _OnlineClassesPageState extends ConsumerState<OnlineClassesPage> {
               if (classes.isEmpty)
                 _EmptyState(
                   icon: Icons.video_library_outlined,
-                  title: 'No live classes yet',
-                  description: 'Browse the course catalogue to find a class.',
+                  title: context.l10n.classesNone,
+                  description: context.l10n.classesNoneBody,
                   action: FilledButton(
                     onPressed: () => context.go('/courses'),
-                    child: const Text('Browse courses'),
+                    child: Text(context.l10n.learnBrowse),
                   ),
                 )
               else if (filtered.isEmpty)
                 _EmptyState(
                   icon: Icons.search_off,
-                  title: 'No matching classes',
-                  description: 'Try another course or instructor name.',
+                  title: context.l10n.classesNoMatch,
+                  description: context.l10n.classesNoMatchBody,
                 )
               else
                 ...filtered.map((course) => _OnlineClassCard(course: course)),
@@ -196,7 +197,7 @@ class _OnlineClassCard extends ConsumerWidget {
                         spacing: 6,
                         runSpacing: 5,
                         children: [
-                          _Badge(text: _level(course.level)),
+                          _Badge(text: _level(context.l10n, course.level)),
                           const _Badge(text: 'LIVE', live: true),
                         ],
                       ),
@@ -258,7 +259,7 @@ class _OnlineClassCard extends ConsumerWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            _formatDateTime(course.nextSession!.scheduledAt),
+                            _formatDateTime(context.l10n, course.nextSession!.scheduledAt),
                             style: const TextStyle(
                               color: Color(0xFF64748B),
                               fontSize: 12,
@@ -271,10 +272,10 @@ class _OnlineClassCard extends ConsumerWidget {
                 ),
               )
             else
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 6),
                 child: Text(
-                  'No upcoming session',
+                  context.l10n.classesNoUpcoming,
                   style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                 ),
               ),
@@ -296,12 +297,12 @@ class _OnlineClassCard extends ConsumerWidget {
                             'courseTitle': course.title,
                             if (course.batchId?.isNotEmpty == true)
                               'batchId': course.batchId!,
-                            'batchName': course.batchName ?? 'Batch',
+                            'batchName': course.batchName ?? context.l10n.classesBatch,
                           },
                         ).toString(),
                       ),
                       icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                      label: const Text('Chat'),
+                      label: Text(context.l10n.classesChat),
                       style: FilledButton.styleFrom(backgroundColor: _navy),
                     ),
                   ),
@@ -327,7 +328,7 @@ class _CourseActionsMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: 'More actions',
+    tooltip: context.l10n.classesMoreActions,
     color: Colors.white,
     position: PopupMenuPosition.under,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -341,33 +342,33 @@ class _CourseActionsMenu extends StatelessWidget {
       _ => null,
     },
     itemBuilder: (_) => [
-      const PopupMenuItem(
+      PopupMenuItem(
         value: 'details',
-        child: _MenuRow(icon: Icons.open_in_new, label: 'Details', color: _navy),
+        child: _MenuRow(icon: Icons.open_in_new, label: context.l10n.classesDetails, color: _navy),
       ),
       if (course.batchId?.isNotEmpty == true)
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'sessions',
           child: _MenuRow(
             icon: Icons.calendar_month_outlined,
-            label: 'Sessions',
+            label: context.l10n.classesSessions,
             color: _gold,
           ),
         ),
-      const PopupMenuItem(
+      PopupMenuItem(
         value: 'exams',
         child: _MenuRow(
           icon: Icons.description_outlined,
-          label: 'Exams',
+          label: context.l10n.classesExams,
           color: _navy,
         ),
       ),
       if (completionCertificate != null)
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'certificate',
           child: _MenuRow(
             icon: Icons.download_outlined,
-            label: 'Certificate',
+            label: context.l10n.classesCertificate,
             color: _green,
             labelColor: _green,
           ),
@@ -471,14 +472,14 @@ class _EmptyState extends StatelessWidget {
   );
 }
 
-String _level(String value) => switch (value.toLowerCase()) {
-  '1' || 'beginner' => 'BEGINNER',
-  '2' || 'intermediate' => 'INTERMEDIATE',
-  '3' || 'advanced' => 'ADVANCED',
-  _ => 'ALL LEVELS',
+String _level(AppLocalizations l10n, String value) => switch (value.toLowerCase()) {
+  '1' || 'beginner' => l10n.levelBeginnerCaps,
+  '2' || 'intermediate' => l10n.levelIntermediateCaps,
+  '3' || 'advanced' => l10n.levelAdvancedCaps,
+  _ => l10n.levelAllCaps,
 };
-String _formatDateTime(String value) {
+String _formatDateTime(AppLocalizations l10n, String value) {
   final date = DateTime.tryParse(value)?.toLocal();
-  if (date == null) return 'Date to be announced';
-  return '${DateFormat('EEE, MMM d').format(date)} • ${DateFormat('h:mm a').format(date)}';
+  if (date == null) return l10n.classesDateTba;
+  return '${DateFormat.MMMEd().format(date)} • ${DateFormat.jm().format(date)}';
 }

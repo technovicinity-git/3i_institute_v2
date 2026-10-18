@@ -10,25 +10,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useResetPasswordMutation } from "@/hooks/use-password-reset";
+import { useTranslations } from "next-intl";
 
-const resetPasswordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(10, "Password must be at least 10 characters")
-      .max(128),
-    confirmPassword: z
-      .string()
-      .min(10, "Password must be at least 10 characters"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const createSchema = (messages: { min: string; mismatch: string }) =>
+  z
+    .object({
+      password: z.string().min(10, messages.min).max(128),
+      confirmPassword: z.string().min(10, messages.min),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: messages.mismatch,
+      path: ["confirmPassword"],
+    });
 
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type ResetPasswordFormData = z.infer<ReturnType<typeof createSchema>>;
 
 function ResetPasswordContent() {
+  const t = useTranslations("auth.resetPassword");
+  const tCommon = useTranslations("common");
+  const tValidation = useTranslations("auth.validation");
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
@@ -42,7 +42,12 @@ function ResetPasswordContent() {
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(
+      createSchema({
+        min: tValidation("passwordMin"),
+        mismatch: t("mismatch"),
+      }),
+    ),
   });
 
   const onSubmit = (data: ResetPasswordFormData) => {
@@ -73,10 +78,10 @@ function ResetPasswordContent() {
           {/* Heading */}
           <div className="mb-8 sm:mb-9">
             <h1 className="font-serif text-primary text-[30px] leading-[1.2] sm:text-[32px] lg:text-[36px]">
-              Choose a new password
+              {t("title")}
             </h1>
             <p className="mt-2 text-sm sm:text-[15px] leading-6 text-muted">
-              At least 10 characters.
+              {t("subtitle")}
             </p>
           </div>
 
@@ -92,22 +97,23 @@ function ResetPasswordContent() {
                 htmlFor="password"
                 className="block mb-2 text-sm font-semibold text-primary"
               >
-                New password
+                {t("newPassword")}
               </Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showNewPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder={t("newPasswordPlaceholder")}
                   {...register("password")}
-                  className="h-12 sm:h-[52px] pr-20"
+                  dir="ltr"
+                  className="h-12 sm:h-[52px] pe-20"
                   aria-invalid={!!errors.password}
                   autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-1 text-sm font-medium text-muted hover:text-primary"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-1 text-sm font-medium text-muted hover:text-primary"
                   tabIndex={-1}
                 >
                   <svg
@@ -128,7 +134,7 @@ function ResetPasswordContent() {
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  {showNewPassword ? "Hide" : "Show"}
+                  {showNewPassword ? tCommon("hide") : tCommon("show")}
                 </button>
               </div>
               {errors.password && (
@@ -144,22 +150,23 @@ function ResetPasswordContent() {
                 htmlFor="confirmPassword"
                 className="block mb-2 text-sm font-semibold text-primary"
               >
-                Confirm new password
+                {t("confirm")}
               </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Re-enter your password"
+                  placeholder={t("confirmPlaceholder")}
                   {...register("confirmPassword")}
-                  className="h-12 sm:h-[52px] pr-20"
+                  dir="ltr"
+                  className="h-12 sm:h-[52px] pe-20"
                   aria-invalid={!!errors.confirmPassword}
                   autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-1 text-sm font-medium text-muted hover:text-primary"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-1 text-sm font-medium text-muted hover:text-primary"
                   tabIndex={-1}
                 >
                   <svg
@@ -180,7 +187,7 @@ function ResetPasswordContent() {
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  {showConfirmPassword ? "Hide" : "Show"}
+                  {showConfirmPassword ? tCommon("hide") : tCommon("show")}
                 </button>
               </div>
               {errors.confirmPassword && (
@@ -198,8 +205,8 @@ function ResetPasswordContent() {
                 disabled={resetPasswordMutation.isPending}
               >
                 {resetPasswordMutation.isPending
-                  ? "Updating..."
-                  : "Update password"}
+                  ? t("submitting")
+                  : t("submit")}
               </Button>
             </div>
           </form>
@@ -214,14 +221,19 @@ function ResetPasswordContent() {
   );
 }
 
+function LoadingFallback() {
+  const t = useTranslations("common");
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <p className="text-muted">{t("loading")}</p>
+    </div>
+  );
+}
+
 export default function ResetPasswordPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-surface">
-          <p className="text-muted">Loading...</p>
-        </div>
-      }
+      fallback={<LoadingFallback />}
     >
       <ResetPasswordContent />
     </Suspense>

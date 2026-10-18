@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 export const card = "bg-white rounded-xl border border-[#E3E8EF]";
-export const serif = { fontFamily: "'Marcellus', serif" };
+export const serif = { fontFamily: "var(--font-display)" };
 
 export function formatShortDate(value: string): string {
   return new Date(value).toLocaleDateString("en-US", {

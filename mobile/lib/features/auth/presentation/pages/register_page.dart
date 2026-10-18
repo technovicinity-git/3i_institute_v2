@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_controller.dart';
+import '../../../../core/l10n/language_picker.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -22,7 +25,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   DateTime? _dateOfBirth;
-  String _locale = 'en';
   bool _showPassword = false;
   bool _submitting = false;
   String? _error;
@@ -48,7 +50,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       initialDate: _dateOfBirth ?? _latestAllowedBirthDate,
       firstDate: DateTime(1900),
       lastDate: _latestAllowedBirthDate,
-      helpText: 'Select your date of birth',
+      helpText: context.l10n.authSelectDob,
       currentDate: DateTime(now.year, now.month, now.day),
     );
     if (date != null) setState(() => _dateOfBirth = date);
@@ -57,7 +59,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateOfBirth == null) {
-      setState(() => _error = 'Select your date of birth. You must be at least 18.');
+      setState(() => _error = context.l10n.registerDobRequired);
       return;
     }
     setState(() {
@@ -71,20 +73,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             email: _email.text,
             password: _password.text,
             dateOfBirth: DateFormat('yyyy-MM-dd').format(_dateOfBirth!),
-            locale: _locale,
+            locale: ref.read(languageProvider),
           );
       if (mounted) context.go('/check-email?email=${Uri.encodeQueryComponent(email)}');
     } catch (error) {
-      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Registration failed. Please try again.'));
+      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: context.l10n.registerFailed));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-        title: 'Start your journey',
-        description: 'One account. Add your children whenever you are ready.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AuthScaffold(
+        title: l10n.registerTitle,
+        description: l10n.registerSubtitle,
         child: Form(
           key: _formKey,
           child: Column(
@@ -96,8 +100,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.givenName],
-                decoration: const InputDecoration(labelText: 'First name', hintText: 'e.g. Sarah'),
-                validator: (value) => _requiredName(value, 'First name'),
+                decoration: InputDecoration(labelText: l10n.registerFirstName, hintText: l10n.registerFirstNameHint),
+                validator: (value) => _requiredName(value, l10n.registerFirstNameRequired),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -105,8 +109,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.familyName],
-                decoration: const InputDecoration(labelText: 'Last name', hintText: 'e.g. Ahmed'),
-                validator: (value) => _requiredName(value, 'Last name'),
+                decoration: InputDecoration(labelText: l10n.registerLastName, hintText: l10n.registerLastNameHint),
+                validator: (value) => _requiredName(value, l10n.registerLastNameRequired),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -115,7 +119,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
                 autofillHints: const [AutofillHints.email],
-                decoration: const InputDecoration(labelText: 'Email address', hintText: 'sarah@example.com'),
+                decoration: InputDecoration(labelText: l10n.authEmailLabel, hintText: 'sarah@example.com'),
                 validator: _validateEmail,
               ),
               const SizedBox(height: 14),
@@ -125,17 +129,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.newPassword],
                 decoration: InputDecoration(
-                  labelText: 'Password',
-                  helperText: 'At least 10 characters',
+                  labelText: l10n.authPasswordLabel,
+                  helperText: l10n.registerPasswordHint,
                   suffixIcon: IconButton(
-                    tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    tooltip: _showPassword ? l10n.authHidePassword : l10n.authShowPassword,
                     onPressed: () => setState(() => _showPassword = !_showPassword),
                     icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                   ),
                 ),
                 validator: (value) {
-                  if ((value ?? '').length < 10) return 'Password must be at least 10 characters';
-                  if (value!.length > 128) return 'Password must be 128 characters or fewer';
+                  if ((value ?? '').length < 10) return l10n.authPasswordMin;
+                  if (value!.length > 128) return l10n.authPasswordMax;
                   return null;
                 },
               ),
@@ -144,39 +148,28 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 onTap: _selectDate,
                 borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Date of birth',
-                    helperText: 'You must be 18 or older',
-                    suffixIcon: Icon(Icons.calendar_today_outlined, size: 19),
+                  decoration: InputDecoration(
+                    labelText: l10n.registerDateOfBirth,
+                    helperText: l10n.registerDateOfBirthHint,
+                    suffixIcon: const Icon(Icons.calendar_today_outlined, size: 19),
                   ),
                   child: Text(
-                    _dateOfBirth == null ? 'Select date' : DateFormat.yMMMd().format(_dateOfBirth!),
+                    _dateOfBirth == null ? l10n.authSelectDate : DateFormat.yMMMd().format(_dateOfBirth!),
                     style: TextStyle(color: _dateOfBirth == null ? Theme.of(context).hintColor : null),
                   ),
                 ),
               ),
               const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                initialValue: _locale,
-                decoration: const InputDecoration(labelText: 'Preferred language'),
-                items: const [
-                  DropdownMenuItem(value: 'en', child: Text('English')),
-                  DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
-                  DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
-                  DropdownMenuItem(value: 'ur', child: Text('اردو')),
-                  DropdownMenuItem(value: 'ar', child: Text('العربية')),
-                ],
-                onChanged: (value) => setState(() => _locale = value ?? 'en'),
-              ),
+              const LanguageDropdownField(),
               const SizedBox(height: 22),
-              AuthPrimaryButton(label: 'Create account', onPressed: _submit, loading: _submitting),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
+              AuthPrimaryButton(label: l10n.registerSubmit, onPressed: _submit, loading: _submitting),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
                   children: [
-                    Expanded(child: Divider()),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('or')),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(l10n.commonOr)),
+                    const Expanded(child: Divider()),
                   ],
                 ),
               ),
@@ -186,11 +179,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Wrap(
                   alignment: WrapAlignment.center,
                   children: [
-                    const Text('Already have an account? '),
+                    Text('${l10n.registerHaveAccount} '),
                     TextButton(
                       onPressed: () => context.go('/login'),
                       style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                      child: const Text('Log in'),
+                      child: Text(l10n.registerLogIn),
                     ),
                   ],
                 ),
@@ -199,17 +192,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           ),
         ),
       );
+  }
 
-  String? _requiredName(String? value, String label) {
+  String? _requiredName(String? value, String requiredMessage) {
     final name = value?.trim() ?? '';
-    if (name.isEmpty) return '$label is required';
-    if (name.length > 100) return '$label must be 100 characters or fewer';
+    if (name.isEmpty) return requiredMessage;
+    if (name.length > 100) return context.l10n.registerNameTooLong;
     return null;
   }
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
-    if (email.isEmpty || !email.contains('@') || !email.contains('.')) return 'Enter a valid email address';
+    if (email.isEmpty || !email.contains('@') || !email.contains('.')) return context.l10n.authEmailInvalid;
     return null;
   }
 }

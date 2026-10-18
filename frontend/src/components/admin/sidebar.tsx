@@ -11,6 +11,7 @@ import {
   FileText,
   Award,
   CreditCard,
+  History,
   Receipt,
   AlertTriangle,
   MessageSquare,
@@ -45,6 +46,7 @@ const navItems = [
   { label: "Reports", icon: BarChart3, href: "/admin/reports" },
   { label: "Categories", icon: Tags, href: "/admin/categories" },
   { label: "Content", icon: Newspaper, href: "/admin/content" },
+  { label: "Activity Log", icon: History, href: "/admin/activity-log" },
   { label: "Settings", icon: Settings, href: "/admin/settings" },
 ];
 

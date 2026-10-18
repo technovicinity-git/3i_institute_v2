@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { learnerCertificateService } from "@/services/learner-certificate.service";
 
 export function useExamCertificate(
@@ -25,6 +26,7 @@ export function useLearnerCertificates(learnerProfileId: string) {
 }
 
 export function useIssueExamCertificateMutation() {
+  const tToast = useTranslations("lesson.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -41,7 +43,7 @@ export function useIssueExamCertificateMutation() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exam-certificate"] });
-      toast.success("Certificate generated successfully");
+      toast.success(tToast("certificateGenerated"));
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;

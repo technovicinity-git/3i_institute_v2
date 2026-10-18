@@ -1,7 +1,9 @@
 import { ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { VerifyForm } from "@/components/certificate/verify-form";
 
-export default function VerifyCertificatePage() {
+export default async function VerifyCertificatePage() {
+  const t = await getTranslations("verify");
   return (
     <div className="bg-[#FBF9F4] min-h-[70vh]">
       <div className="max-w-2xl mx-auto px-6 py-16 md:py-24">
@@ -9,16 +11,12 @@ export default function VerifyCertificatePage() {
           <ShieldCheck className="w-7 h-7 text-[#B8912F]" />
         </div>
         <p className="text-xs font-semibold text-[#B8912F] uppercase tracking-widest mb-2">
-          Certificate verification
+          {t("eyebrow")}
         </p>
         <h1 className="font-serif text-3xl md:text-[44px] leading-tight text-[#0C1F33]">
-          Verify a certificate
+          {t("title")}
         </h1>
-        <p className="mt-3 mb-8 text-[#64748B] leading-relaxed">
-          Every certificate issued by 3i International Islamic Institute
-          carries a unique verification code. Enter it below to confirm the
-          certificate is genuine and still valid.
-        </p>
+        <p className="mt-3 mb-8 text-[#64748B] leading-relaxed">{t("intro")}</p>
         <VerifyForm />
       </div>
     </div>

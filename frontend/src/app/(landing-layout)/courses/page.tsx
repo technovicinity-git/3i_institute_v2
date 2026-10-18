@@ -21,32 +21,14 @@ import {
 } from "@/hooks/use-wishlist";
 import type { Course, CourseFilters, SortOption } from "@/types/course";
 import { Pagination } from "@/components/ui/pagination";
+import { useTranslations } from "next-intl";
+import { levelKey } from "@/lib/course-level";
+import { localeNames, locales } from "@/i18n/config";
 
+// Filter values sent to the API; "All ages" is the backend's own band name.
 const AGE_BANDS = ["5-8", "9-12", "13-15", "16-17", "18+", "All ages"];
 
-const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "popularity", label: "Relevance" },
-  { value: "newest", label: "Newest" },
-  { value: "rating", label: "Highest Rated" },
-  { value: "title", label: "Title A-Z" },
-];
-
-function getAgeBadge(minimumAge: number, maximumAge: number | null): string {
-  if (maximumAge == null || maximumAge >= 99) return `Ages ${minimumAge}+`;
-  return `Ages ${minimumAge}–${maximumAge}`;
-}
-
-function getLevelBadge(level: string): string {
-  const levels: Record<string, string> = {
-    "1": "BEGINNER",
-    "2": "INTERMEDIATE",
-    "3": "ADVANCED",
-    Beginner: "BEGINNER",
-    Intermediate: "INTERMEDIATE",
-    Advanced: "ADVANCED",
-  };
-  return levels[level] ?? "ALL LEVELS";
-}
+const SORT_OPTIONS: SortOption[] = ["popularity", "newest", "rating", "title"];
 
 function Checkbox({
   checked,
@@ -77,6 +59,14 @@ function Checkbox({
 }
 
 function CourseCard({ course }: { course: Course }) {
+  const t = useTranslations("courses");
+  const tCommon = useTranslations("common");
+  const tLevel = useTranslations("courseLevel");
+  const tWishlist = useTranslations("wishlist");
+  const ageBadge =
+    course.maximumAge == null || course.maximumAge >= 99
+      ? tCommon("agesFrom", { min: course.minimumAge })
+      : tCommon("ageRange", { min: course.minimumAge, max: course.maximumAge });
   const router = useRouter();
   const { wishlisted: liked, toggle, pending } = useWishlistToggle(course.id);
 
@@ -109,9 +99,9 @@ function CourseCard({ course }: { course: Course }) {
         <button
           onClick={handleWishlist}
           disabled={pending}
-          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+          aria-label={liked ? tWishlist("remove") : tWishlist("add")}
           aria-pressed={liked}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm transition-opacity ${
+          className={`absolute top-3 end-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm transition-opacity ${
             liked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
         >
@@ -125,8 +115,8 @@ function CourseCard({ course }: { course: Course }) {
 
         {/* Enrolled badge */}
         {course.enrolled && (
-          <span className="absolute top-3 left-3 text-[10px] font-bold text-white bg-[#22A146] px-2 py-1 rounded">
-            ENROLLED
+          <span className="absolute top-3 start-3 text-[10px] font-bold text-white bg-[#22A146] px-2 py-1 rounded">
+            {t("enrolled")}
           </span>
         )}
       </div>
@@ -136,14 +126,14 @@ function CourseCard({ course }: { course: Course }) {
         {/* Level badge */}
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-[#0C1F33] bg-white border border-[#E3E8EF] px-2 py-0.5 rounded">
-            {getLevelBadge(course.level)}
+            {tLevel(levelKey(course.level))}
           </span>
         </div>
 
         {/* Title — max 2 lines */}
         <h3
           className="text-lg text-[#0C1F33] leading-6 line-clamp-2 min-h-[48px]"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {course.title}
         </h3>
@@ -156,12 +146,12 @@ function CourseCard({ course }: { course: Course }) {
         {/* Category + Rating row */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           <span className="text-[13px] text-[#475569] truncate">
-            {course.category?.name ?? "Uncategorized"}
+            {course.category?.name ?? t("uncategorized")}
           </span>
           <span className="flex items-center gap-1 text-[13px] shrink-0">
             <Star className="w-3 h-3 text-[#B8912F] fill-[#B8912F]" />
             <span className="text-[#0C1F33] font-medium">
-              {course.averageRating ?? "New"}
+              {course.averageRating ?? tCommon("newRating")}
             </span>
             {course.ratingCount > 0 && (
               <span className="text-[#94A3B8]">({course.ratingCount})</span>
@@ -171,11 +161,11 @@ function CourseCard({ course }: { course: Course }) {
 
         {/* Age badge */}
         <span
-          title="Recommended age group"
+          title={tCommon("recommendedAge")}
           className="self-start inline-flex items-center gap-1 text-[11px] font-semibold text-[#9A7624] bg-[#F9F6F0] px-2 py-0.5 rounded-full"
         >
           <Users className="w-3 h-3" />
-          {getAgeBadge(course.minimumAge, course.maximumAge)}
+          {ageBadge}
         </span>
       </div>
     </div>
@@ -204,6 +194,8 @@ function CoursesFromUrl() {
 }
 
 function CoursesContent({ initialCategory }: { initialCategory: string }) {
+  const t = useTranslations("courses");
+  const tCommon = useTranslations("common");
   const { activeProfile } = useProfileStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -282,16 +274,13 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#FBF9F4]"
-      style={{ fontFamily: "'Figtree', sans-serif" }}
-    >
+    <div className="min-h-screen bg-[#FBF9F4] font-sans">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-9 pb-12">
         <h1
           className="text-[32px] sm:text-[40px] text-[#0C1F33] mb-6"
-          style={{ fontFamily: "'Marcellus', serif" }}
+          style={{ fontFamily: "var(--font-display)" }}
         >
-          Courses
+          {t("title")}
         </h1>
 
         {/* Search */}
@@ -299,7 +288,7 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
           <Search className="w-[18px] h-[18px] text-[#475569] shrink-0" />
           <input
             type="text"
-            placeholder="Search courses, instructors, topics..."
+            placeholder={t("search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent text-base text-[#0C1F33] placeholder:text-[#475569] outline-none"
@@ -313,14 +302,16 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <span className="text-base text-[#475569]">
-              {isLoading ? "Loading..." : `${data?.total ?? 0} courses`}
+              {isLoading
+                ? tCommon("loading")
+                : t("count", { count: data?.total ?? 0 })}
             </span>
             <button
               onClick={() => setMobileFiltersOpen(true)}
               className="lg:hidden flex items-center gap-1.5 text-sm font-semibold text-[#0C1F33] border border-[#E3E8EF] rounded-lg px-3 py-1.5"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              {t("filters")}
             </button>
           </div>
 
@@ -329,29 +320,29 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
               onClick={() => setShowSortDropdown(!showSortDropdown)}
               className="flex items-center gap-1.5 text-sm text-[#475569]"
             >
-              Sort by:{" "}
+              {t("sortBy")}{" "}
               <span className="font-semibold text-[#0C1F33]">
-                {sortOptions.find((s) => s.value === sortBy)?.label}
+                {t(`sort.${sortBy}`)}
               </span>
               <ChevronDown className="w-4 h-4 text-[#0C1F33]" />
             </button>
             {showSortDropdown && (
-              <div className="absolute right-0 mt-1 bg-white border border-[#E3E8EF] rounded-lg shadow-lg z-20 min-w-[180px]">
-                {sortOptions.map((option) => (
+              <div className="absolute end-0 mt-1 bg-white border border-[#E3E8EF] rounded-lg shadow-lg z-20 min-w-[180px]">
+                {SORT_OPTIONS.map((option) => (
                   <button
-                    key={option.value}
+                    key={option}
                     onClick={() => {
-                      setSortBy(option.value);
+                      setSortBy(option);
                       setShowSortDropdown(false);
                       setCurrentPage(1);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 ${
-                      sortBy === option.value
+                    className={`w-full text-start px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                      sortBy === option
                         ? "text-[#2D6CDF] font-semibold"
                         : "text-[#0C1F33]"
                     }`}
                   >
-                    {option.label}
+                    {t(`sort.${option}`)}
                   </button>
                 ))}
               </div>
@@ -386,7 +377,7 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
                 className="absolute inset-0 bg-black/40"
                 onClick={() => setMobileFiltersOpen(false)}
               />
-              <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] overflow-y-auto bg-[#FBF9F4] p-4">
+              <div className="absolute inset-y-0 start-0 w-[320px] max-w-[85vw] overflow-y-auto bg-[#FBF9F4] p-4">
                 <FilterPanel
                   categories={categories ?? []}
                   categoriesLoading={categoriesLoading}
@@ -420,13 +411,13 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
             ) : data?.courses.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-lg text-[#475569]">
-                  No courses found matching your filters.
+                  {t("noResults")}
                 </p>
                 <button
                   onClick={clearAllFilters}
                   className="mt-4 text-[#157A34] font-semibold hover:underline"
                 >
-                  Clear all filters
+                  {t("clearAllFilters")}
                 </button>
               </div>
             ) : (
@@ -442,7 +433,7 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
               pageSize={12}
               total={data?.total ?? 0}
               onPageChange={setCurrentPage}
-              itemLabel="courses"
+              itemLabel={t("itemLabel")}
             />
           </div>
         </div>
@@ -488,29 +479,36 @@ function FilterPanel({
   clearAllFilters,
   onClose,
 }: FilterPanelProps) {
+  const t = useTranslations("courses");
+  const tCommon = useTranslations("common");
   const courseTypes = ["self-paced", "live"];
-  const languages = ["en", "bn", "hi", "ur", "ar"];
-  const languageLabels: Record<string, string> = {
-    en: "English",
-    bn: "Bangla",
-    hi: "Hindi",
-    ur: "Urdu",
-    ar: "Arabic",
-  };
+  const ageBandLabel = (band: string) =>
+    band === "All ages"
+      ? tCommon("allAges")
+      : band.endsWith("+")
+        ? tCommon("agesFrom", { min: band.slice(0, -1) })
+        : tCommon("ageRange", {
+            min: band.split("-")[0],
+            max: band.split("-")[1],
+          });
 
   return (
     <div className="bg-white border border-[#E3E8EF] rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-base font-semibold text-[#0C1F33]">Filters</span>
+        <span className="text-base font-semibold text-[#0C1F33]">{t("filters")}</span>
         <div className="flex items-center gap-3">
           <button
             onClick={clearAllFilters}
             className="text-sm font-semibold text-[#157A34]"
           >
-            Clear all
+            {t("clearAll")}
           </button>
           {onClose && (
-            <button onClick={onClose} className="lg:hidden">
+            <button
+              onClick={onClose}
+              className="lg:hidden"
+              aria-label={t("closeFilters")}
+            >
               <X className="w-5 h-5 text-[#475569]" />
             </button>
           )}
@@ -521,7 +519,7 @@ function FilterPanel({
         {/* Category — dynamic */}
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
-            Category
+            {t("category")}
           </span>
           {categoriesLoading ? (
             <div className="space-y-2">
@@ -563,7 +561,7 @@ function FilterPanel({
 
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
-            Course Type
+            {t("courseType")}
           </span>
           {courseTypes.map((ct) => (
             <label
@@ -577,7 +575,7 @@ function FilterPanel({
                 }
               />
               <span className="text-[15px] text-[#0C1F33]">
-                {ct === "self-paced" ? "Regular" : "Online Class"}
+                {ct === "self-paced" ? t("typeRegular") : t("typeLive")}
               </span>
             </label>
           ))}
@@ -587,7 +585,7 @@ function FilterPanel({
 
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
-            Age Band
+            {t("ageBand")}
           </span>
           <div className="flex flex-wrap gap-1.5">
             {AGE_BANDS.map((age) => (
@@ -602,7 +600,7 @@ function FilterPanel({
                     : "text-[#0C1F33] bg-white border-[#E3E8EF] hover:bg-[#F5F0E8]"
                 }`}
               >
-                {age}
+                {ageBandLabel(age)}
               </button>
             ))}
           </div>
@@ -612,9 +610,9 @@ function FilterPanel({
 
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold text-[#475569] uppercase">
-            Language
+            {t("language")}
           </span>
-          {languages.map((lang) => (
+          {locales.map((lang) => (
             <label
               key={lang}
               className="flex items-center gap-2.5 py-1 cursor-pointer"
@@ -626,7 +624,7 @@ function FilterPanel({
                 }
               />
               <span className="text-[15px] text-[#0C1F33]">
-                {languageLabels[lang]}
+                {localeNames[lang]}
               </span>
             </label>
           ))}

@@ -1,6 +1,5 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import {
   Award,
   Bell,
@@ -15,6 +14,8 @@ import {
   Megaphone,
 } from "lucide-react";
 import type { AppNotification } from "@/services/notification.service";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 const CATEGORY_STYLE: Record<
   string,
@@ -49,13 +50,6 @@ export function NotificationIcon({ category }: { category: string }) {
   );
 }
 
-export function timeAgo(date: string): string {
-  try {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
-  } catch {
-    return "";
-  }
-}
 
 interface NotificationItemProps {
   notification: AppNotification;
@@ -70,6 +64,9 @@ export function NotificationItem({
   onRemove,
   compact = false,
 }: NotificationItemProps) {
+  const t = useTranslations("notifications");
+  const tCommon = useTranslations("common");
+  const format = useDateFormat();
   const unread = !notification.read;
   return (
     <div
@@ -80,7 +77,7 @@ export function NotificationItem({
       <button
         type="button"
         onClick={() => onOpen(notification)}
-        className="flex flex-1 items-start gap-3 text-left min-w-0"
+        className="flex flex-1 items-start gap-3 text-start min-w-0"
       >
         <NotificationIcon category={notification.category} />
         <span className="flex-1 min-w-0">
@@ -95,7 +92,7 @@ export function NotificationItem({
             {unread && (
               <span
                 className="w-2 h-2 rounded-full bg-[#22A146] shrink-0"
-                aria-label="Unread"
+                aria-label={t("unread")}
               />
             )}
           </span>
@@ -107,7 +104,7 @@ export function NotificationItem({
             {notification.body}
           </span>
           <span className="block text-[10px] text-[#94A3B8] mt-1">
-            {timeAgo(notification.createdAt)}
+            {format.relative(notification.createdAt)}
           </span>
         </span>
       </button>
@@ -116,8 +113,8 @@ export function NotificationItem({
           type="button"
           onClick={() => onRemove(notification)}
           className="p-1 rounded text-[#94A3B8] hover:text-[#0C1F33] hover:bg-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-          aria-label="Remove notification"
-          title="Remove"
+          aria-label={t("remove")}
+          title={tCommon("remove")}
         >
           <X className="w-4 h-4" />
         </button>

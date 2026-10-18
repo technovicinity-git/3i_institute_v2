@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,46 +14,47 @@ import { GoogleButton } from "@/components/social/google-button";
 import { AppleButton } from "@/components/social/apple-button";
 import { LandingLogo } from "@/components/landing/logo";
 import { Eye, EyeClosed } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useChangeLocale } from "@/hooks/use-change-locale";
+import { localeNames, locales, type Locale } from "@/i18n/config";
 
-const registerSchema = z.object({
-  firstName: z.string().min(1, "First name is required").max(100),
-  lastName: z.string().min(1, "Last name is required").max(100),
-  email: z.string().email("Invalid email address").toLowerCase().trim(),
-  password: z
-    .string()
-    .min(10, "Password must be at least 10 characters")
-    .max(128),
-  dateOfBirth: z.string().refine(
-    (value) => {
-      const date = new Date(value);
-      if (isNaN(date.getTime())) return false;
-      const today = new Date();
-      const eighteenYearsAgo = new Date(
-        today.getFullYear() - 18,
-        today.getMonth(),
-        today.getDate(),
-      );
-      return date <= eighteenYearsAgo;
-    },
-    { message: "You must be at least 18 years old" },
-  ),
-  locale: z.enum(["en", "bn", "hi", "ur", "ar"]),
-});
+type Translate = ReturnType<typeof useTranslations<"auth.validation">>;
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+// Built per render so validation messages use the current language
+const createRegisterSchema = (t: Translate) =>
+  z.object({
+    firstName: z.string().min(1, t("firstNameRequired")).max(100),
+    lastName: z.string().min(1, t("lastNameRequired")).max(100),
+    email: z.string().email(t("emailInvalid")).toLowerCase().trim(),
+    password: z.string().min(10, t("passwordMin")).max(128),
+    dateOfBirth: z.string().refine(
+      (value) => {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return false;
+        const today = new Date();
+        const eighteenYearsAgo = new Date(
+          today.getFullYear() - 18,
+          today.getMonth(),
+          today.getDate(),
+        );
+        return date <= eighteenYearsAgo;
+      },
+      { message: t("mustBe18") },
+    ),
+    locale: z.enum(locales),
+  });
 
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "bn", label: "বাংলা" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "ur", label: "اردو" },
-  { code: "ar", label: "العربية" },
-] as const;
+type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>;
 
 export default function RegisterPage() {
+  const t = useTranslations("auth.register");
+  const tAuth = useTranslations("auth");
+  const tValidation = useTranslations("auth.validation");
+  const currentLocale = useLocale();
+  const { changeLocale } = useChangeLocale();
   const registerMutation = useRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedLocale, setSelectedLocale] = useState<string>("en");
 
   const {
     register,
@@ -61,15 +62,24 @@ export default function RegisterPage() {
     setValue,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(createRegisterSchema(tValidation)),
     defaultValues: {
-      locale: "en",
+      // The language the page is shown in becomes the account's default
+      locale: currentLocale,
     },
   });
 
-  const handleLocaleChange = (locale: string) => {
-    setSelectedLocale(locale);
-    setValue("locale", locale as RegisterFormData["locale"]);
+  // Keep the saved language in step with the page language, including
+  // when it's changed from the header picker
+  useEffect(() => {
+    setValue("locale", currentLocale);
+  }, [currentLocale, setValue]);
+
+  // Choosing a language switches the page right away, and it's saved as
+  // the account's language when the account is created.
+  const handleLocaleChange = (locale: Locale) => {
+    setValue("locale", locale);
+    if (locale !== currentLocale) void changeLocale(locale);
   };
 
   const onSubmit = (data: RegisterFormData) => {
@@ -78,8 +88,9 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col relative">
-      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10">
+      <header className="w-full px-6 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10 flex items-center justify-between">
         <LandingLogo size="md" />
+        <LanguageSwitcher />
       </header>
 
       {/* Main */}
@@ -87,13 +98,11 @@ export default function RegisterPage() {
         <AuthCard maxWidth="max-w-[500px]">
           {/* Card Header */}
           <div className="mb-8">
-            <Eyebrow className="mb-2">Create your account</Eyebrow>
+            <Eyebrow className="mb-2">{t("eyebrow")}</Eyebrow>
             <h1 className="text-3xl font-serif text-primary mb-2">
-              Start your journey
+              {t("title")}
             </h1>
-            <p className="text-sm text-muted">
-              One account. Add your children whenever you&apos;re ready.
-            </p>
+            <p className="text-sm text-muted">{t("subtitle")}</p>
           </div>
 
           {/* Form */}
@@ -105,11 +114,11 @@ export default function RegisterPage() {
             {/* First Name */}
             <div className="space-y-2">
               <Label htmlFor="firstName" className="text-sm font-medium">
-                First name
+                {t("firstName")}
               </Label>
               <Input
                 id="firstName"
-                placeholder="e.g. Sarah"
+                placeholder={t("firstNamePlaceholder")}
                 {...register("firstName")}
                 className="py-2.5"
                 aria-invalid={!!errors.firstName}
@@ -124,11 +133,11 @@ export default function RegisterPage() {
             {/* Last Name */}
             <div className="space-y-2">
               <Label htmlFor="lastName" className="text-sm font-medium">
-                Last name
+                {t("lastName")}
               </Label>
               <Input
                 id="lastName"
-                placeholder="e.g. Ahmed"
+                placeholder={t("lastNamePlaceholder")}
                 {...register("lastName")}
                 className="py-2.5"
                 aria-invalid={!!errors.lastName}
@@ -143,11 +152,12 @@ export default function RegisterPage() {
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email address
+                {tAuth("emailLabel")}
               </Label>
               <Input
                 id="email"
                 type="email"
+                dir="ltr"
                 placeholder="sarah@example.com"
                 {...register("email")}
                 className="py-2.5"
@@ -163,7 +173,7 @@ export default function RegisterPage() {
             {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                Password
+                {tAuth("passwordLabel")}
               </Label>
               <div className="relative">
                 <Input
@@ -171,20 +181,24 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
                   {...register("password")}
-                  className="py-2.5 pr-16 font-mono"
+                  dir="ltr"
+                  className="py-2.5 pe-16 font-mono"
                   aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-muted hover:text-primary font-medium cursor-pointer transition-colors"
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-xs text-muted hover:text-primary font-medium cursor-pointer transition-colors"
                   tabIndex={-1}
+                  aria-label={
+                    showPassword ? tAuth("hidePassword") : tAuth("showPassword")
+                  }
                 >
                   {showPassword ? <Eye size={20} /> : <EyeClosed size={20} />}
                 </button>
               </div>
               <p className="mt-1.5 text-[11px] text-muted">
-                At least 10 characters
+                {t("passwordHint")}
               </p>
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600">
@@ -196,7 +210,7 @@ export default function RegisterPage() {
             {/* Date of Birth */}
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth" className="text-sm font-medium">
-                Date of birth
+                {t("dateOfBirth")}
               </Label>
               <Input
                 id="dateOfBirth"
@@ -215,7 +229,7 @@ export default function RegisterPage() {
                 }
               />
               <p className="mt-1.5 text-[11px] text-muted">
-                Must be 18 or older
+                {t("dateOfBirthHint")}
               </p>
               {errors.dateOfBirth && (
                 <p className="mt-1 text-xs text-red-600">
@@ -226,40 +240,40 @@ export default function RegisterPage() {
 
             {/* Language */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Preferred Language / ভাষা / भाषा / اردو
-              </Label>
+              <Label className="text-sm font-medium">{t("language")}</Label>
               <div
                 className="flex flex-wrap gap-2"
                 role="radiogroup"
-                aria-label="Language selection"
+                aria-label={t("language")}
               >
-                {LANGUAGES.map((lang) => (
+                {locales.map((code) => (
                   <button
-                    key={lang.code}
+                    key={code}
                     type="button"
                     role="radio"
-                    aria-checked={selectedLocale === lang.code}
-                    onClick={() => handleLocaleChange(lang.code)}
+                    lang={code}
+                    aria-checked={currentLocale === code}
+                    onClick={() => handleLocaleChange(code)}
                     className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                      selectedLocale === lang.code
+                      currentLocale === code
                         ? "bg-primary text-white border-primary"
                         : "bg-white text-primary border-outline-variant hover:border-gray-300"
                     }`}
                   >
-                    {lang.label}
+                    {localeNames[code]}
                   </button>
                 ))}
               </div>
+              <p className="mt-1.5 text-[11px] text-muted">
+                {t("languageHint")}
+              </p>
               <input type="hidden" {...register("locale")} />
             </div>
 
             {/* Submit */}
             <div className="pt-2">
               <Button type="submit" disabled={registerMutation.isPending}>
-                {registerMutation.isPending
-                  ? "Creating account..."
-                  : "Create account"}
+                {registerMutation.isPending ? t("submitting") : t("submit")}
               </Button>
             </div>
           </form>
@@ -268,7 +282,7 @@ export default function RegisterPage() {
           <div className="flex items-center justify-center gap-3 my-6">
             <div className="flex-1 h-px bg-outline-variant" />
             <span className="text-[11px] text-muted font-medium uppercase tracking-wider">
-              or
+              {tAuth("or")}
             </span>
             <div className="flex-1 h-px bg-outline-variant" />
           </div>
@@ -282,12 +296,12 @@ export default function RegisterPage() {
           {/* Login Link */}
           <div className="mt-8 text-center">
             <p className="text-[13px] text-muted">
-              Already have an account?{" "}
+              {t("haveAccount")}{" "}
               <a
                 href="/login"
                 className="text-green font-semibold hover:underline"
               >
-                Log in
+                {t("logIn")}
               </a>
             </p>
           </div>
