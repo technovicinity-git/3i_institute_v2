@@ -208,14 +208,14 @@ export default function MyCoursesPage() {
                         {t("upcoming")}
                       </button>
                     )}
-
+ {/*
                     <Link
                       href={`/my-courses/${course.courseId}/exams`}
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#12304E] text-[#12304E] text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       {t("exams")}
-                    </Link>
+                    </Link>*/}
                   </div>
                 </div>
 
