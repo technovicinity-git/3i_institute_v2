@@ -43,7 +43,7 @@ export default function AdminExamAttemptsPage() {
   const failedCount = attempts?.filter((a) => a.passed === false).length ?? 0;
 
   return (
-    <div className="p-6 md:p-10 max-w-[900px] mx-auto">
+    <div className="p-6 md:p-10">
       {/* Header */}
       <div className="mb-8">
         <button

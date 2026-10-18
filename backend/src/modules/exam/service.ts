@@ -12,6 +12,11 @@ import type {
   SubmitExamInput,
 } from "#/modules/exam/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import {
+  getQuestionUsage,
+  isQuestionUsed,
+  usageReason,
+} from "#/modules/exam/question-usage";
 import { canManageCourse, isAdmin } from "#/shared/course-access";
 
 // Scores can be fractional because of negative marking (e.g. -0.25).
@@ -143,6 +148,7 @@ export class ExamService {
         where: {
           scope: "INSTRUCTOR",
           course: { instructorId: ownerId },
+          archivedAt: null,
         },
         include: { course: { select: { id: true, title: true } } },
         orderBy: { createdAt: "desc" },
@@ -168,6 +174,7 @@ export class ExamService {
       where: {
         scope: "INSTRUCTOR",
         courseId,
+        archivedAt: null,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -175,7 +182,7 @@ export class ExamService {
 
   async getAdminQuestions() {
     return prisma.question.findMany({
-      where: { scope: "ADMIN" },
+      where: { scope: "ADMIN", archivedAt: null },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -258,6 +265,15 @@ export class ExamService {
       throw new NotFoundError("Question not found");
     }
 
+    // Exams and results reference questions from JSON, so deleting a used
+    // one would leave them pointing at nothing.
+    const usage = (await getQuestionUsage([questionId])).get(questionId)!;
+    if (isQuestionUsed(usage)) {
+      throw new ValidationError(
+        usageReason(usage, "Ask an admin to archive it instead."),
+      );
+    }
+
     await prisma.question.delete({
       where: { id: questionId },
     });
@@ -311,12 +327,15 @@ export class ExamService {
         where: {
           id: { in: questionIds },
           courseId: input.courseId,
+          archivedAt: null,
         },
         select: { id: true },
       });
 
       if (questions.length !== questionIds.length) {
-        throw new ValidationError("All questions must belong to this course");
+        throw new ValidationError(
+          "All questions must belong to this course and not be archived",
+        );
       }
     }
 
@@ -389,12 +408,23 @@ export class ExamService {
       if (new Set(questionIds).size !== questionIds.length) {
         throw new ValidationError("A question can only be added once to an exam");
       }
+      // An archived question the exam already had may stay; new ones can't
+      // be archived.
+      const alreadyInExam = (
+        existingExam.questions as Array<{ questionId: string }>
+      ).map((q) => q.questionId);
       const questions = await prisma.question.findMany({
-        where: { id: { in: questionIds }, courseId: existingExam.courseId },
+        where: {
+          id: { in: questionIds },
+          courseId: existingExam.courseId,
+          OR: [{ archivedAt: null }, { id: { in: alreadyInExam } }],
+        },
         select: { id: true },
       });
       if (questions.length !== questionIds.length) {
-        throw new ValidationError("All questions must belong to this course");
+        throw new ValidationError(
+          "All questions must belong to this course and not be archived",
+        );
       }
     }
 
@@ -524,7 +554,7 @@ export class ExamService {
     targetMarks: number,
   ): Promise<Array<{ questionId: string; marks: number }>> {
     const bank = await prisma.question.findMany({
-      where: { courseId },
+      where: { courseId, archivedAt: null },
       select: { id: true, marks: true },
     });
 

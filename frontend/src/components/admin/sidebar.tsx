@@ -23,6 +23,7 @@ import {
   Megaphone,
   Newspaper,
   Mail,
+  ListChecks,
 } from "lucide-react";
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { label: "Instructors", icon: GraduationCap, href: "/admin/instructors" },
   { label: "Courses", icon: BookOpen, href: "/admin/courses" },
   { label: "Exams", icon: FileText, href: "/admin/exams" },
+  { label: "Question Bank", icon: ListChecks, href: "/admin/questions" },
   { label: "Certificates", icon: Award, href: "/admin/certificates" },
   { label: "Subscriptions", icon: CreditCard, href: "/admin/subscriptions" },
   {

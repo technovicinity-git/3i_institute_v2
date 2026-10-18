@@ -2,7 +2,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminService } from "@/services/admin.service";
-import type { ModerationAction } from "@/services/admin.service";
+import type {
+  AdminQuestionBulkAction,
+  AdminQuestionFilters,
+  ModerationAction,
+} from "@/services/admin.service";
 
 export function useAdminUsers(
   page: number,
@@ -42,6 +46,84 @@ function useLearnerProfileAction(action: "archive" | "restore") {
       toast.success(action === "archive" ? "Learner profile archived" : "Learner profile restored");
     },
     onError: (error: any) => toast.error(error.response?.data?.error?.message ?? `Failed to ${action} learner profile`),
+  });
+}
+
+// ── Question Bank ──
+
+export function useAdminQuestions(page: number, filters: AdminQuestionFilters) {
+  return useQuery({
+    queryKey: ["admin-questions", page, filters],
+    queryFn: () => adminService.getQuestions(page, filters),
+  });
+}
+
+export function useAdminQuestionFilterOptions() {
+  return useQuery({
+    queryKey: ["admin-question-filters"],
+    queryFn: () => adminService.getQuestionFilterOptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useAdminQuestion(id: string | null) {
+  return useQuery({
+    queryKey: ["admin-question", id],
+    queryFn: () => adminService.getQuestion(id!),
+    enabled: Boolean(id),
+  });
+}
+
+const QUESTION_ACTION_TEXT = {
+  archive: { done: "Question archived", failed: "Failed to archive question" },
+  restore: { done: "Question restored", failed: "Failed to restore question" },
+  delete: { done: "Question deleted", failed: "Failed to delete question" },
+} as const;
+
+/** Archive, restore or delete one question. */
+export function useAdminQuestionAction(action: AdminQuestionBulkAction) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      action === "archive"
+        ? adminService.archiveQuestion(id)
+        : action === "restore"
+          ? adminService.restoreQuestion(id)
+          : adminService.deleteQuestion(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-question"] });
+      toast.success(QUESTION_ACTION_TEXT[action].done);
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.error?.message ?? QUESTION_ACTION_TEXT[action].failed,
+      );
+    },
+  });
+}
+
+/** One action on many questions; reports the ones that couldn't be done. */
+export function useAdminQuestionBulkAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, action }: { ids: string[]; action: AdminQuestionBulkAction }) =>
+      adminService.bulkQuestions(ids, action),
+    onSuccess: (result, { action }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-questions"] });
+      const verb = action === "archive" ? "archived" : action === "restore" ? "restored" : "deleted";
+      if (result.succeeded > 0) {
+        toast.success(`${result.succeeded} question${result.succeeded === 1 ? "" : "s"} ${verb}`);
+      }
+      if (result.failed.length > 0) {
+        toast.error(
+          `${result.failed.length} couldn't be ${verb}: ${result.failed[0]!.reason}`,
+        );
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message ?? "Bulk action failed");
+    },
   });
 }
 
