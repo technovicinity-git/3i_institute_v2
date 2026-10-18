@@ -109,12 +109,14 @@ export default function ProfilesPage() {
               </h1>
             </div>
 
-            <div className="grid w-full max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
+            {/* Wrapping row so any number of cards stays centred: 2 per row
+                on phones, up to 4 on larger screens. */}
+            <div className="flex w-full max-w-3xl flex-wrap justify-center gap-4">
               {profiles?.map((profile) => (
                 <button
                   key={profile.id}
                   onClick={() => handleProfileClick(profile)}
-                  className="group flex min-h-[190px] flex-col items-center justify-center rounded-xl border border-gray-300 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95"
+                  className="group flex min-h-[190px] w-[calc(50%-0.5rem)] flex-col items-center justify-center rounded-xl border border-gray-300 bg-white p-5 shadow-sm md:w-[calc(25%-0.75rem)] transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md active:scale-95"
                 >
                   <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-avatar-bg text-avatar-text transition group-hover:bg-[#c8e6c9]">
                     {profile.avatarUrl ? (
@@ -146,7 +148,7 @@ export default function ProfilesPage() {
               {/* Add learner button */}
               <button
                 onClick={() => router.push("/profiles/add")}
-                className="group flex min-h-[190px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-transparent p-5 transition hover:border-primary hover:bg-white active:scale-95"
+                className="group flex min-h-[190px] w-[calc(50%-0.5rem)] flex-col items-center justify-center rounded-xl border-2 border-dashed md:w-[calc(25%-0.75rem)] border-gray-300 bg-transparent p-5 transition hover:border-primary hover:bg-white active:scale-95"
               >
                 <span className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-gray-300 bg-white">
                   <span className="text-3xl text-gray-400">+</span>
