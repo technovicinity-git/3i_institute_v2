@@ -6,23 +6,27 @@ interface ProfileState {
   profiles: LearnerProfile[];
   setActiveProfile: (profile: LearnerProfile | null) => void;
   setProfiles: (profiles: LearnerProfile[]) => void;
+  /** Loads the profile saved on this device. Call once, after hydration. */
+  restoreFromStorage: () => void;
 }
 
-// Load from localStorage on initial store creation
-const loadStoredProfile = (): LearnerProfile | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const stored = localStorage.getItem("activeProfile");
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-};
-
-export const useProfileStore = create<ProfileState>((set) => ({
-  activeProfile: loadStoredProfile(),
+// Starts empty on the server AND in the browser. Reading localStorage here
+// would give the browser's first render a profile the server-rendered HTML
+// didn't have (server: loading spinner, browser: full dashboard), which
+// breaks hydration. ProfileStoreHydrator restores it right after hydrating.
+export const useProfileStore = create<ProfileState>((set, get) => ({
+  activeProfile: null,
   profiles: [],
+
+  restoreFromStorage: () => {
+    if (get().activeProfile) return;
+    try {
+      const stored = localStorage.getItem("activeProfile");
+      if (stored) set({ activeProfile: JSON.parse(stored) });
+    } catch {
+      // Storage blocked or bad JSON — the user picks a profile again.
+    }
+  },
 
   setActiveProfile: (profile) => {
     // Persist to localStorage
