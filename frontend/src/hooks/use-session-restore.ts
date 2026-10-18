@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
 export function useSessionRestore() {
   const { user, setUser, setAccessToken, setLoading } = useAuthStore();
@@ -17,9 +17,7 @@ export function useSessionRestore() {
     const restoreSession = async () => {
       try {
         // Try to refresh token using cookie
-        const refreshResponse = await apiClient.post("/auth/refresh", {});
-        const { accessToken } = refreshResponse.data.data;
-        setAccessToken(accessToken);
+        await refreshAccessToken();
 
         // Fetch user profile
         const userResponse = await apiClient.get("/users/me");

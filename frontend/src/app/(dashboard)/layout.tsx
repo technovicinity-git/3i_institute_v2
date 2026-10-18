@@ -7,6 +7,7 @@ import DashboardNavbar from "@/components/dashboard/navbar";
 import { useProfileStore } from "@/stores/profile-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLearnerProfiles } from "@/hooks/use-learner-profiles";
+import { useSessionRestore } from "@/hooks/use-session-restore";
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,10 @@ export default function DashboardLayout({
   const { user } = useAuthStore();
   const { data: profiles, isLoading: profilesLoading } = useLearnerProfiles();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // The access token lives in memory only, so a full page load starts with
+  // no user; restore it from the refresh cookie.
+  useSessionRestore();
 
   // Restore or auto-select active profile
   useEffect(() => {

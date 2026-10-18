@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminNavbar from "@/components/admin/navbar";
 import { useAuthStore } from "@/stores/auth-store";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
 export default function AdminCommonLayout({
   children,
@@ -25,9 +25,7 @@ export default function AdminCommonLayout({
       }
 
       try {
-        const refreshResponse = await apiClient.post("/auth/refresh", {});
-        const { accessToken } = refreshResponse.data.data;
-        setAccessToken(accessToken);
+        await refreshAccessToken();
 
         const userResponse = await apiClient.get("/users/me");
         const userData = userResponse.data.data;

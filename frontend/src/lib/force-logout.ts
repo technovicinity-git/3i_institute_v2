@@ -15,7 +15,7 @@ export const FORCED_LOGOUT_MESSAGES: Record<ForcedLogoutReason, string> = {
 
 let inProgress = false;
 
-function loginPathFor(pathname: string): string {
+export function loginPathFor(pathname: string): string {
   if (pathname.startsWith("/admin")) return "/admin/login";
   if (pathname.startsWith("/instructor")) return "/instructor/login";
   return "/login";
