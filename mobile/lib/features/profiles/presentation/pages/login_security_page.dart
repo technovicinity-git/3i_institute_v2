@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _ink = Color(0xff0c1f33);
 const _navy = Color(0xff12304e);
@@ -27,20 +28,16 @@ class _FormError {
 /// "Current password is incorrect" → the current password input).
 _FormError _parseError(
   Object error, {
+  required AppLocalizations l10n,
   required Map<String, String> messageToField,
   required String fallback,
 }) {
   if (error is DioException) {
     if (error.response == null) {
-      return const _FormError(
-        message:
-            "Couldn't reach the server. Check your internet connection and try again.",
-      );
+      return _FormError(message: l10n.secServerUnreachable);
     }
     if (error.response?.statusCode == 429) {
-      return const _FormError(
-        message: 'Too many attempts. Please wait a moment and try again.',
-      );
+      return _FormError(message: l10n.secTooManyAttempts);
     }
   }
   final message = apiErrorMessage(error, fallback: fallback);
@@ -97,7 +94,7 @@ class _LoginSecurityPageState extends ConsumerState<LoginSecurityPage> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
         Text(
-          'Login & security',
+          context.l10n.secTitle,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'serif',
@@ -183,19 +180,19 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
   String? _validateEmail(String? value) {
     if (_emailServerError != null) return _emailServerError;
     final email = (value ?? '').trim().toLowerCase();
-    if (email.isEmpty) return 'Enter your new email address.';
+    if (email.isEmpty) return context.l10n.secEmailRequired;
     if (!_emailPattern.hasMatch(email)) {
-      return 'Enter a valid email address, like name@example.com.';
+      return context.l10n.secEmailInvalid;
     }
     if (email == widget.email?.toLowerCase()) {
-      return 'This is already your email address.';
+      return context.l10n.secEmailSame;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (_passwordServerError != null) return _passwordServerError;
-    if ((value ?? '').isEmpty) return 'Enter your current password to confirm.';
+    if ((value ?? '').isEmpty) return context.l10n.secConfirmWithPassword;
     return null;
   }
 
@@ -230,18 +227,19 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
       setState(() {
         _editing = false;
         _success =
-            'Email updated. Check your new inbox for a verification link.';
+            context.l10n.secEmailUpdated;
       });
     } catch (error) {
       if (!mounted) return;
       final parsed = _parseError(
         error,
+        l10n: context.l10n,
         messageToField: const {
           'current password': 'password',
           'already in use': 'email',
           'email': 'email',
         },
-        fallback: "We couldn't update your email. Please try again.",
+        fallback: context.l10n.secEmailUpdateFailed,
       );
       setState(() {
         if (parsed.field == 'password') {
@@ -270,7 +268,7 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
 
   @override
   Widget build(BuildContext context) => _SectionCard(
-    title: 'Email',
+    title: context.l10n.secEmail,
     child: Form(
       key: _formKey,
       autovalidateMode: _autovalidate,
@@ -286,28 +284,28 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
                     if (widget.loadFailed && widget.email == null)
                       Row(
                         children: [
-                          const Flexible(
+                          Flexible(
                             child: Text(
-                              "Couldn't load your email.",
+                              context.l10n.secEmailLoadFailed,
                               style: TextStyle(color: _muted),
                             ),
                           ),
                           TextButton(
                             onPressed: widget.onRetryLoad,
-                            child: const Text('Retry'),
+                            child: Text(context.l10n.secRetry),
                           ),
                         ],
                       )
                     else
                       Text(
-                        widget.email ?? 'Loading account email…',
+                        widget.email ?? context.l10n.secLoadingEmail,
                         style: const TextStyle(fontSize: 15, color: _ink),
                       ),
                     if (widget.emailVerified == false)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Text(
-                          'Unverified — check your email for a verification link',
+                          context.l10n.secUnverified,
                           style: TextStyle(
                             color: Colors.deepOrange,
                             fontSize: 12,
@@ -315,10 +313,10 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
                         ),
                       ),
                     if (widget.emailVerified == true)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Text(
-                          'Verified ✓',
+                          context.l10n.secVerified,
                           style: TextStyle(color: _green, fontSize: 12),
                         ),
                       ),
@@ -328,7 +326,7 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
               const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: _busy ? null : _toggle,
-                child: Text(_editing ? 'Cancel' : 'Change email'),
+                child: Text(_editing ? context.l10n.commonCancel : context.l10n.secChangeEmail),
               ),
             ],
           ),
@@ -360,8 +358,8 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
                 }
               },
               onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-              decoration: const InputDecoration(
-                labelText: 'New email',
+              decoration: InputDecoration(
+                labelText: context.l10n.secNewEmail,
                 border: OutlineInputBorder(),
                 errorMaxLines: 3,
               ),
@@ -370,8 +368,8 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
             _PasswordField(
               controller: _password,
               focusNode: _passwordFocus,
-              label: 'Current password',
-              helperText: "We ask for your password to confirm it's you.",
+              label: context.l10n.secCurrentPassword,
+              helperText: context.l10n.secPasswordConfirmHint,
               enabled: !_busy,
               validator: _validatePassword,
               autofillHints: const [AutofillHints.password],
@@ -384,11 +382,10 @@ class _EmailCardState extends ConsumerState<_EmailCard> {
               },
             ),
             const SizedBox(height: 16),
-            _SubmitButton(busy: _busy, label: 'Save email', onPressed: _submit),
+            _SubmitButton(busy: _busy, label: context.l10n.secSaveEmail, onPressed: _submit),
             const SizedBox(height: 10),
-            const Text(
-              'You’ll need to verify your new email before it takes effect. '
-              'Your account stays fully active in the meantime.',
+            Text(
+              context.l10n.secEmailChangeNote,
               style: TextStyle(color: _muted, fontSize: 13, height: 1.4),
             ),
           ],
@@ -455,29 +452,29 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
 
   String? _validateCurrent(String? value) {
     if (_currentServerError != null) return _currentServerError;
-    if ((value ?? '').isEmpty) return 'Enter your current password.';
+    if ((value ?? '').isEmpty) return context.l10n.secCurrentRequired;
     return null;
   }
 
   String? _validateNew(String? value) {
     if (_newServerError != null) return _newServerError;
     final password = value ?? '';
-    if (password.isEmpty) return 'Enter a new password.';
+    if (password.isEmpty) return context.l10n.secNewRequired;
     if (password.length < _minPassword) {
-      return 'Use at least $_minPassword characters (${_minPassword - password.length} more).';
+      return context.l10n.secTooShort('$_minPassword', _minPassword - password.length);
     }
     if (password.length > _maxPassword) {
-      return 'Use $_maxPassword characters or fewer.';
+      return context.l10n.secTooLong('$_maxPassword');
     }
     if (password == _current.text) {
-      return 'Choose a password different from your current one.';
+      return context.l10n.secSameAsCurrent;
     }
     return null;
   }
 
   String? _validateConfirm(String? value) {
-    if ((value ?? '').isEmpty) return 'Re-enter your new password.';
-    if (value != _new.text) return "Passwords don't match.";
+    if ((value ?? '').isEmpty) return context.l10n.secConfirmRequired;
+    if (value != _new.text) return context.l10n.secMismatch;
     return null;
   }
 
@@ -510,17 +507,18 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
       setState(() {
         _editing = false;
         _success =
-            'Password updated. Use your new password the next time you log in.';
+            context.l10n.secPasswordUpdated;
       });
     } catch (error) {
       if (!mounted) return;
       final parsed = _parseError(
         error,
+        l10n: context.l10n,
         messageToField: const {
           'current password': 'current',
           'password': 'new',
         },
-        fallback: "We couldn't update your password. Please try again.",
+        fallback: context.l10n.secPasswordUpdateFailed,
       );
       setState(() {
         if (parsed.field == 'current') {
@@ -556,7 +554,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
     final matches = _confirm.text.isNotEmpty && _confirm.text == _new.text;
 
     return _SectionCard(
-      title: 'Password',
+      title: context.l10n.secPassword,
       child: Form(
         key: _formKey,
         autovalidateMode: _autovalidate,
@@ -574,7 +572,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                   ),
                   OutlinedButton(
                     onPressed: _busy ? null : _toggle,
-                    child: Text(_editing ? 'Cancel' : 'Change password'),
+                    child: Text(_editing ? context.l10n.commonCancel : context.l10n.secChangePassword),
                   ),
                 ],
               ),
@@ -594,7 +592,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                 _PasswordField(
                   controller: _current,
                   focusNode: _currentFocus,
-                  label: 'Current password',
+                  label: context.l10n.secCurrentPassword,
                   enabled: !_busy,
                   validator: _validateCurrent,
                   autofillHints: const [AutofillHints.password],
@@ -606,7 +604,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                 _PasswordField(
                   controller: _new,
                   focusNode: _newFocus,
-                  label: 'New password',
+                  label: context.l10n.secNewPassword,
                   enabled: !_busy,
                   validator: _validateNew,
                   autofillHints: const [AutofillHints.newPassword],
@@ -617,17 +615,17 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                 const SizedBox(height: 8),
                 _Requirement(
                   met: longEnough,
-                  label: 'At least $_minPassword characters',
+                  label: context.l10n.secReqLength('$_minPassword'),
                 ),
                 _Requirement(
                   met: differs,
-                  label: 'Different from your current password',
+                  label: context.l10n.secReqDifferent,
                 ),
                 const SizedBox(height: 14),
                 _PasswordField(
                   controller: _confirm,
                   focusNode: _confirmFocus,
-                  label: 'Confirm new password',
+                  label: context.l10n.secConfirmPassword,
                   enabled: !_busy,
                   validator: _validateConfirm,
                   autofillHints: const [AutofillHints.newPassword],
@@ -640,14 +638,14 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                   _Requirement(
                     met: matches,
                     label: matches
-                        ? 'Passwords match'
-                        : "Passwords don't match yet",
+                        ? context.l10n.secPasswordsMatch
+                        : context.l10n.secPasswordsDontMatchYet,
                   ),
                 ],
                 const SizedBox(height: 16),
                 _SubmitButton(
                   busy: _busy,
-                  label: 'Save password',
+                  label: context.l10n.secSavePassword,
                   onPressed: _submit,
                 ),
               ],
@@ -745,7 +743,7 @@ class _PasswordFieldState extends State<_PasswordField> {
       errorMaxLines: 3,
       border: const OutlineInputBorder(),
       suffixIcon: IconButton(
-        tooltip: _obscured ? 'Show password' : 'Hide password',
+        tooltip: _obscured ? context.l10n.authShowPassword : context.l10n.authHidePassword,
         onPressed: () => setState(() => _obscured = !_obscured),
         icon: Icon(
           _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -854,7 +852,7 @@ class _SubmitButton extends StatelessWidget {
     child: FilledButton(
       onPressed: busy ? null : onPressed,
       child: busy
-          ? const Row(
+          ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox.square(
@@ -865,7 +863,7 @@ class _SubmitButton extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 10),
-                Text('Saving…'),
+                Text(context.l10n.commonSaving),
               ],
             )
           : Text(label),

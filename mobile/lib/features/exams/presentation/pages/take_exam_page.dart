@@ -11,6 +11,7 @@ import '../../data/exam_session_store.dart';
 import '../../domain/exam_access.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -116,8 +117,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         if (previous > threshold && remaining <= threshold) {
           _showSnack(
             threshold >= 120
-                ? '${threshold ~/ 60} minutes left'
-                : '1 minute left — your exam will be submitted automatically',
+                ? context.l10n.takeMinutesLeft(threshold ~/ 60)
+                : context.l10n.takeOneMinuteLeft,
           );
         }
       }
@@ -172,8 +173,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     if (access.status != ExamAccessStatus.open) {
       _showSnack(
         access.status == ExamAccessStatus.upcoming
-            ? "This exam hasn't started yet"
-            : 'The start window for this exam has closed',
+            ? context.l10n.takeNotStartedToast
+            : context.l10n.takeWindowClosedToast,
       );
       return;
     }
@@ -240,13 +241,13 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         ..invalidate(activeExamSessionsProvider(session.profileId));
       if (!mounted) return;
       setState(() => _submitting = false);
-      _showSnack('Exam submitted');
+      _showSnack(context.l10n.takeSubmittedToast);
       context.go(widget._resultPath);
     } catch (error) {
       if (!mounted) return;
       final message = apiErrorMessage(
         error,
-        fallback: "We couldn't submit your exam. Please try again.",
+        fallback: context.l10n.takeSubmitError,
       );
       setState(() {
         _submitting = false;
@@ -266,30 +267,30 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Submit your exam?'),
+        title: Text(context.l10n.takeConfirmTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               unanswered > 0
-                  ? 'You have $unanswered unanswered question${unanswered == 1 ? '' : 's'}. You can\'t change your answers after submitting.'
-                  : "You've answered every question. You can't change your answers after submitting.",
+                  ? context.l10n.takeConfirmUnanswered(unanswered)
+                  : context.l10n.takeConfirmAll,
               style: const TextStyle(color: _muted, height: 1.4),
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                _SummaryStat(label: 'Answered', value: answered, color: _green),
+                _SummaryStat(label: context.l10n.takeAnswered, value: answered, color: _green),
                 const SizedBox(width: 8),
                 _SummaryStat(
-                  label: 'Unanswered',
+                  label: context.l10n.takeUnanswered,
                   value: unanswered,
                   color: unanswered > 0 ? _red : _muted,
                 ),
                 const SizedBox(width: 8),
                 _SummaryStat(
-                  label: 'Flagged',
+                  label: context.l10n.takeFlagged,
                   value: flagged,
                   color: flagged > 0 ? _amber : _muted,
                 ),
@@ -300,12 +301,12 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep working'),
+            child: Text(context.l10n.takeKeepWorking),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: _green),
-            child: const Text('Submit exam'),
+            child: Text(context.l10n.takeSubmitExam),
           ),
         ],
       ),
@@ -316,19 +317,17 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     final leave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Leave the exam?'),
-        content: const Text(
-          'Your answers are saved, but the timer keeps running. You can resume from the exam list.',
-        ),
+        title: Text(context.l10n.takeLeaveTitle),
+        content: Text(context.l10n.takeLeaveBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Stay'),
+            child: Text(context.l10n.takeStay),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: _navy),
-            child: const Text('Leave'),
+            child: Text(context.l10n.takeLeave),
           ),
         ],
       ),
@@ -419,8 +418,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'Questions',
+                Text(
+                  context.l10n.takeQuestions,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -428,7 +427,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                   ),
                 ),
                 Text(
-                  '${session.answeredCount} of ${session.questions.length} answered',
+                  context.l10n.takeAnsweredOf(session.answeredCount, session.questions.length),
                   style: const TextStyle(color: _muted, fontSize: 13),
                 ),
                 const SizedBox(height: 14),
@@ -455,7 +454,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                             _submit();
                           },
                     icon: const Icon(Icons.send_outlined, size: 18),
-                    label: const Text('Submit exam'),
+                    label: Text(context.l10n.takeSubmitExam),
                     style: FilledButton.styleFrom(backgroundColor: _green),
                   ),
                 ),
@@ -471,14 +470,14 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(child: Text('Select a learner profile first.'));
+      return Center(child: Text(context.l10n.examsSelectProfileFirst));
     }
     if (_submitted && !_submitting && _submitError == null) {
-      return const _CenteredStatus(
+      return _CenteredStatus(
         icon: Icons.check_circle_outline,
         iconColor: _green,
-        title: 'Exam submitted',
-        text: 'Taking you to your result…',
+        title: context.l10n.takeSubmittedTitle,
+        text: context.l10n.takeTakingToResult,
         loading: true,
       );
     }
@@ -510,18 +509,18 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       error: (error, _) => _CenteredStatus(
         icon: Icons.cloud_off_outlined,
         iconColor: const Color(0xFF94A3B8),
-        title: "Couldn't load this exam",
-        text: 'Check your connection and try again.',
+        title: context.l10n.takeLoadFailedTitle,
+        text: context.l10n.commonCheckConnection,
         actions: [
           OutlinedButton(
             onPressed: () => context.go(widget._examsPath),
-            child: const Text('Back to exams'),
+            child: Text(context.l10n.examsBack),
           ),
           FilledButton(
             onPressed: () =>
                 ref.invalidate(examQuestionsProvider(widget.examId)),
             style: FilledButton.styleFrom(backgroundColor: _navy),
-            child: const Text('Try again'),
+            child: Text(context.l10n.commonTryAgain),
           ),
         ],
       ),
@@ -533,17 +532,17 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         );
         final back = OutlinedButton(
           onPressed: () => context.go(widget._examsPath),
-          child: const Text('Back to exams'),
+          child: Text(context.l10n.examsBack),
         );
         if (access.status == ExamAccessStatus.upcoming) {
           return _CenteredStatus(
             icon: Icons.lock_clock_outlined,
             iconColor: const Color(0xFFB8912F),
-            title: 'Exam not started yet',
+            title: context.l10n.takeNotStartedTitle,
             text:
-                'This exam starts ${_formatDate(access.start!)}. You can start it any time after the start time until 50% of the exam duration has elapsed.',
-            countdownLabel: 'Starts in',
-            countdown: formatCountdown(secondsUntil(access.start, _now)),
+                context.l10n.takeNotStartedBody(_formatDate(access.start!)),
+            countdownLabel: context.l10n.examsStartsIn,
+            countdown: formatCountdown(secondsUntil(access.start, _now), days: context.l10n.examsCountdownDays),
             actions: [back],
           );
         }
@@ -551,9 +550,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           return _CenteredStatus(
             icon: Icons.lock_outline,
             iconColor: _muted,
-            title: 'Start window closed',
+            title: context.l10n.takeClosedTitle,
             text:
-                'This exam could be started until ${_formatDate(access.windowEnd!)}. The start window has now passed.',
+                context.l10n.takeClosedBody(_formatDate(access.windowEnd!)),
             actions: [back],
           );
         }
@@ -561,8 +560,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           return _CenteredStatus(
             icon: Icons.description_outlined,
             iconColor: const Color(0xFF94A3B8),
-            title: 'No questions available',
-            text: "This exam doesn't have any questions yet.",
+            title: context.l10n.takeNoQuestionsTitle,
+            text: context.l10n.takeNoQuestionsBody,
             actions: [back],
           );
         }
@@ -617,11 +616,11 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                       const SizedBox(height: 2),
                       Text.rich(
                         TextSpan(
-                          text: '$answered of ${questions.length} answered',
+                          text: context.l10n.takeAnsweredOf(answered, questions.length),
                           children: [
                             if (flaggedCount > 0)
                               TextSpan(
-                                text: ' · $flaggedCount flagged',
+                                text: ' · ${context.l10n.takeFlaggedCount(flaggedCount)}',
                                 style: const TextStyle(color: _amber),
                               ),
                           ],
@@ -634,7 +633,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                 const SizedBox(width: 8),
                 _TimerPill(remainingSec: _remainingSec),
                 IconButton(
-                  tooltip: 'All questions',
+                  tooltip: context.l10n.takeAllQuestions,
                   onPressed: () => _openNavigator(session),
                   icon: const Icon(Icons.grid_view_rounded, color: _ink),
                 ),
@@ -672,7 +671,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                'QUESTION ${index + 1} OF ${questions.length}',
+                                context.l10n.takeQuestionOf(index + 1, questions.length).toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 12,
                                   letterSpacing: .4,
@@ -682,7 +681,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                               ),
                               _Chip(
                                 text:
-                                    '${question.marks} ${question.marks == 1 ? 'mark' : 'marks'}',
+                                    context.l10n.takeMarks(question.marks),
                                 color: _navy,
                               ),
                             ],
@@ -696,7 +695,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                             isFlagged ? Icons.flag : Icons.outlined_flag,
                             size: 18,
                           ),
-                          label: Text(isFlagged ? 'Flagged' : 'Flag'),
+                          label: Text(isFlagged ? context.l10n.takeFlagged : context.l10n.takeFlag),
                           style: TextButton.styleFrom(
                             foregroundColor: isFlagged ? _amber : _muted,
                             visualDensity: VisualDensity.compact,
@@ -757,7 +756,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                                   )
                                 : const Icon(Icons.send_outlined, size: 18),
                             label: Text(
-                              _submitting ? 'Submitting…' : 'Review & submit',
+                              _submitting ? context.l10n.takeSubmitting : context.l10n.takeReviewSubmit,
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: _green,
@@ -767,7 +766,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                             onPressed: () => _goTo(index + 1),
                             iconAlignment: IconAlignment.end,
                             icon: const Icon(Icons.chevron_right),
-                            label: const Text('Next'),
+                            label: Text(context.l10n.takeNext),
                             style: FilledButton.styleFrom(
                               backgroundColor: _navy,
                             ),
@@ -798,7 +797,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             maxLines: question.type == 'essay' ? 14 : 6,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              hintText: 'Type your answer...',
+              hintText: context.l10n.takeAnswerHint,
               alignLabelWithHint: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -807,7 +806,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           ),
           const SizedBox(height: 4),
           Text(
-            '${_wordCount(controller.text)} words',
+            context.l10n.takeWords(_wordCount(controller.text)),
             style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
           ),
         ],
@@ -815,8 +814,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     }
 
     if (question.options.isEmpty) {
-      return const Text(
-        'No options available for this question.',
+      return Text(
+        context.l10n.takeNoOptions,
         style: TextStyle(color: _muted),
       );
     }
@@ -831,10 +830,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isMulti)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(bottom: 10),
             child: Text(
-              'Select all that apply',
+              context.l10n.takeSelectAll,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -878,13 +877,13 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
               borderRadius: BorderRadius.circular(18),
             ),
             child: _submitError == null
-                ? const Column(
+                ? Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.timer_off_outlined, size: 46, color: _navy),
                       SizedBox(height: 12),
                       Text(
-                        "Time's up",
+                        context.l10n.takeTimesUp,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -893,7 +892,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                       ),
                       SizedBox(height: 6),
                       Text(
-                        'Submitting your answers…',
+                        context.l10n.takeSubmittingAnswers,
                         style: TextStyle(color: _muted),
                       ),
                       SizedBox(height: 18),
@@ -905,8 +904,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                     children: [
                       const Icon(Icons.error_outline, size: 46, color: _red),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Submission failed',
+                      Text(
+                        context.l10n.takeSubmissionFailed,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -920,8 +919,8 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                         style: const TextStyle(color: _muted),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Your answers are saved on this device. Check your connection and try again.',
+                      Text(
+                        context.l10n.takeSavedOnDevice,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
@@ -946,14 +945,14 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                                   ),
                                 )
                               : const Icon(Icons.refresh),
-                          label: const Text('Retry submit'),
+                          label: Text(context.l10n.takeRetrySubmit),
                           style: FilledButton.styleFrom(backgroundColor: _navy),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _submitting ? null : _discardAndLeave,
-                        child: const Text('Discard & leave'),
+                        child: Text(context.l10n.takeDiscardLeave),
                       ),
                     ],
                   ),
@@ -967,7 +966,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
 // ─── Pieces ──────────────────────────────────────────────────
 
 String _formatDate(DateTime value) =>
-    DateFormat('MMM d, y • h:mm a').format(value);
+    DateFormat.yMMMd().add_jm().format(value);
 
 int _wordCount(String text) {
   final trimmed = text.trim();
@@ -984,7 +983,7 @@ class _TimerPill extends StatelessWidget {
     final warning = remainingSec <= 5 * 60;
     final color = critical ? _red : (warning ? _amber : _navy);
     return Semantics(
-      label: 'Time remaining ${formatCountdown(remainingSec)}',
+      label: context.l10n.takeTimeRemaining(formatCountdown(remainingSec, days: context.l10n.examsCountdownDays)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
@@ -1002,7 +1001,7 @@ class _TimerPill extends StatelessWidget {
             Icon(Icons.timer_outlined, size: 18, color: color),
             const SizedBox(width: 5),
             Text(
-              formatCountdown(remainingSec),
+              formatCountdown(remainingSec, days: context.l10n.examsCountdownDays),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -1186,7 +1185,7 @@ class _GridLegend extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          'Answered',
+          context.l10n.takeAnswered,
         ),
         item(
           Container(
@@ -1197,7 +1196,7 @@ class _GridLegend extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          'Not answered',
+          context.l10n.takeNotAnswered,
         ),
         item(
           Container(
@@ -1208,7 +1207,7 @@ class _GridLegend extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          'Flagged',
+          context.l10n.takeFlagged,
         ),
       ],
     );
@@ -1233,16 +1232,16 @@ class _ExamIntro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      (Icons.schedule, 'Duration', '${exam.duration} min'),
-      (Icons.quiz_outlined, 'Questions', '$questionCount'),
-      (Icons.workspace_premium_outlined, 'Total marks', '${exam.totalMarks}'),
-      (Icons.flag_outlined, 'Pass mark', '${exam.passMark}%'),
+      (Icons.schedule, context.l10n.takeDuration, context.l10n.commonMinutes(exam.duration)),
+      (Icons.quiz_outlined, context.l10n.takeQuestions, '$questionCount'),
+      (Icons.workspace_premium_outlined, context.l10n.takeTotalMarks, '${exam.totalMarks}'),
+      (Icons.flag_outlined, context.l10n.takePassMarkLabel, '${exam.passMark}%'),
     ];
     final rules = [
-      'The timer starts as soon as you press Start and runs for ${exam.duration} minutes — it keeps running even if you leave or close the app.',
-      "Your answers are saved automatically on this device. If you come back, you'll continue where you left off.",
-      'Use the same device for the whole exam.',
-      'When the time runs out, your answers are submitted automatically.',
+      context.l10n.takeRule1(exam.duration),
+      context.l10n.takeRule2,
+      context.l10n.takeRule3,
+      context.l10n.takeRule4,
     ];
     return SafeArea(
       child: Column(
@@ -1256,7 +1255,7 @@ class _ExamIntro extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onBack,
                     icon: const Icon(Icons.arrow_back, size: 18),
-                    label: const Text('Back to exams'),
+                    label: Text(context.l10n.examsBack),
                     style: TextButton.styleFrom(foregroundColor: _muted),
                   ),
                 ),
@@ -1337,15 +1336,15 @@ class _ExamIntro extends StatelessWidget {
                         _CountdownBanner(
                           color: windowLeftSec! <= 5 * 60 ? _red : _amber,
                           icon: Icons.hourglass_bottom,
-                          label: 'Start window closes in',
-                          countdown: formatCountdown(windowLeftSec!),
+                          label: context.l10n.examsWindowClosesIn,
+                          countdown: formatCountdown(windowLeftSec!, days: context.l10n.examsCountdownDays),
                           detail:
-                              'Start before ${_formatDate(windowEnd!)}. Once started, you get the full duration.',
+                              context.l10n.takeStartBeforeFull(_formatDate(windowEnd!)),
                         ),
                       ],
                       const SizedBox(height: 18),
-                      const Text(
-                        'Before you begin',
+                      Text(
+                        context.l10n.takeBeforeYouBegin,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: _ink,
@@ -1398,7 +1397,7 @@ class _ExamIntro extends StatelessWidget {
                 onPressed: onStart,
                 iconAlignment: IconAlignment.end,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Start exam'),
+                label: Text(context.l10n.takeStart),
                 style: FilledButton.styleFrom(backgroundColor: _green),
               ),
             ),

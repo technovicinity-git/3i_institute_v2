@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
+
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     required this.title,
@@ -28,9 +30,9 @@ class AuthScaffold extends StatelessWidget {
                   Center(
                     child: Column(
                       children: [
-                        Image.asset('assets/images/logo-icon.png', width: 76, height: 76, semanticLabel: '3i International Islamic Institute logo'),
+                        Image.asset('assets/images/logo-icon.png', width: 76, height: 76, semanticLabel: context.l10n.commonLogoLabel),
                         const SizedBox(height: 8),
-                        Text('International Islamic Institute', style: theme.textTheme.labelLarge?.copyWith(color: const Color(0xFF12304E), fontWeight: FontWeight.w600)),
+                        Text(context.l10n.commonInstituteName, style: theme.textTheme.labelLarge?.copyWith(color: const Color(0xFF12304E), fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),

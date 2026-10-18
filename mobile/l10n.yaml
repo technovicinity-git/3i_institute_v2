@@ -1,0 +1,8 @@
+# App translations: lib/l10n/app_<language>.arb -> AppLocalizations.
+# English (app_en.arb) is the source; check the others with
+#   dart run tool/check_l10n.dart
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

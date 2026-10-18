@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -51,7 +52,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (apiErrorCode(error) == 'EMAIL_NOT_VERIFIED') {
           _unverifiedEmail = _emailController.text.trim().toLowerCase();
         } else {
-          _error = apiErrorMessage(error, fallback: 'Login failed. Please try again.');
+          _error = apiErrorMessage(error, fallback: context.l10n.loginFailed);
         }
       });
     } finally {
@@ -60,9 +61,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-        title: 'Welcome back',
-        description: 'Please enter your credentials to log in.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AuthScaffold(
+        title: l10n.loginTitle,
+        description: l10n.loginSubtitle,
         child: Form(
           key: _formKey,
           child: Column(
@@ -76,10 +79,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.username, AutofillHints.email],
                 autocorrect: false,
-                decoration: const InputDecoration(labelText: 'Email address', hintText: 'sarah@example.com'),
+                decoration: InputDecoration(labelText: l10n.authEmailLabel, hintText: 'sarah@example.com'),
                 validator: (value) {
                   final email = value?.trim() ?? '';
-                  if (email.isEmpty || !email.contains('@') || !email.contains('.')) return 'Enter a valid email address';
+                  if (email.isEmpty || !email.contains('@') || !email.contains('.')) return l10n.authEmailInvalid;
                   return null;
                 },
               ),
@@ -91,30 +94,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 autofillHints: const [AutofillHints.password],
                 onFieldSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: l10n.authPasswordLabel,
                   suffixIcon: IconButton(
-                    tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                    tooltip: _obscurePassword ? l10n.authShowPassword : l10n.authHidePassword,
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                   ),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Password is required' : null,
+                validator: (value) => value == null || value.isEmpty ? l10n.authPasswordRequired : null,
               ),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => context.push('/forgot-password'),
-                  child: const Text('Forgot password?'),
+                  child: Text(l10n.loginForgotPassword),
                 ),
               ),
-              AuthPrimaryButton(label: 'Log in', onPressed: _submit, loading: _submitting),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
+              AuthPrimaryButton(label: l10n.loginSubmit, onPressed: _submit, loading: _submitting),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
                   children: [
-                    Expanded(child: Divider()),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('or')),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(l10n.commonOr)),
+                    const Expanded(child: Divider()),
                   ],
                 ),
               ),
@@ -124,11 +127,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Wrap(
                   alignment: WrapAlignment.center,
                   children: [
-                    const Text('New to 3i? '),
+                    Text('${l10n.loginNewHere} '),
                     TextButton(
                       onPressed: () => context.push('/register'),
                       style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                      child: const Text('Create an account'),
+                      child: Text(l10n.loginCreateAccount),
                     ),
                   ],
                 ),
@@ -137,11 +140,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               Center(
                 child: TextButton(
                   onPressed: () => context.push('/instructor/login'),
-                  child: const Text('Instructor portal'),
+                  child: Text(l10n.loginInstructorPortal),
                 ),
               ),
             ],
           ),
         ),
       );
+  }
 }

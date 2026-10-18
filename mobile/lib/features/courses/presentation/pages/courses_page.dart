@@ -8,14 +8,21 @@ import '../providers/courses_providers.dart';
 import '../widgets/course_card.dart';
 import '../widgets/landing_layout.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
+// Values the API filters on; "All ages" is the backend's own band name.
 const _ageBands = ['5-8', '9-12', '13-15', '16-17', '18+', 'All ages'];
-const _languageOptions = {'en': 'English', 'bn': 'Bangla', 'hi': 'Hindi', 'ur': 'Urdu', 'ar': 'Arabic'};
-const _sortOptions = {
-  'popularity': 'Relevance',
-  'newest': 'Newest',
-  'rating': 'Highest Rated',
-  'title': 'Title A-Z',
+String _ageBandLabel(AppLocalizations l10n, String band) {
+  if (band == 'All ages') return l10n.commonAllAges;
+  if (band.endsWith('+')) return l10n.commonAgesFrom(band.substring(0, band.length - 1));
+  final parts = band.split('-');
+  return l10n.commonAgeRange(parts.first, parts.last);
+}
+Map<String, String> _sortOptions(AppLocalizations l10n) => {
+  'popularity': l10n.coursesSortPopularity,
+  'newest': l10n.coursesSortNewest,
+  'rating': l10n.coursesSortRating,
+  'title': l10n.coursesSortTitle,
 };
 
 class CoursesPage extends ConsumerStatefulWidget {
@@ -98,7 +105,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Courses', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontFamily: 'serif', color: const Color(0xFF0C1F33))),
+                        Text(context.l10n.coursesTitle, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontFamily: 'serif', color: const Color(0xFF0C1F33))),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _search,
@@ -114,11 +121,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                           },
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.search, color: Color(0xFF475569)),
-                            hintText: 'Search courses, instructors, topics...',
+                            hintText: context.l10n.coursesSearch,
                             suffixIcon: _search.text.isEmpty
                                 ? null
                                 : IconButton(
-                                    tooltip: 'Clear search',
+                                    tooltip: context.l10n.coursesClearSearch,
                                     onPressed: () {
                                       _debounce?.cancel();
                                       _search.clear();
@@ -148,9 +155,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                         ),
                         const SizedBox(height: 10),
                         coursesAsync.when(
-                          loading: () => const Text('Loading courses...', style: TextStyle(color: Color(0xFF475569))),
-                          error: (_, __) => const Text('Courses could not be loaded.', style: TextStyle(color: Color(0xFFB42318))),
-                          data: (data) => Text('${data.total} courses', style: const TextStyle(color: Color(0xFF475569))),
+                          loading: () => Text(context.l10n.coursesLoading, style: const TextStyle(color: Color(0xFF475569))),
+                          error: (_, __) => Text(context.l10n.coursesLoadFailed, style: const TextStyle(color: Color(0xFFB42318))),
+                          data: (data) => Text(context.l10n.coursesCount(data.total), style: const TextStyle(color: Color(0xFF475569))),
                         ),
                       ],
                     ),
@@ -246,33 +253,33 @@ class _FilterControls extends StatelessWidget {
             runSpacing: 8,
             children: [
               _filterDropDown<String>(
-                label: 'Category',
+                label: context.l10n.coursesCategory,
                 value: categoryId,
-                items: [const DropdownMenuItem(value: '', child: Text('All categories')), ...categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)))],
+                items: [DropdownMenuItem(value: '', child: Text(context.l10n.coursesAllCategories)), ...categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)))],
                 onChanged: onCategory,
               ),
               _filterDropDown<String>(
-                label: 'Type',
+                label: context.l10n.coursesType,
                 value: format,
-                items: const [DropdownMenuItem(value: '', child: Text('All types')), DropdownMenuItem(value: 'self-paced', child: Text('Regular')), DropdownMenuItem(value: 'live', child: Text('Online class')), DropdownMenuItem(value: 'hybrid', child: Text('Hybrid'))],
+                items: [DropdownMenuItem(value: '', child: Text(context.l10n.coursesAllTypes)), DropdownMenuItem(value: 'self-paced', child: Text(context.l10n.coursesTypeRegular)), DropdownMenuItem(value: 'live', child: Text(context.l10n.coursesTypeLive)), DropdownMenuItem(value: 'hybrid', child: Text(context.l10n.coursesTypeHybrid))],
                 onChanged: onFormat,
               ),
               _filterDropDown<String>(
-                label: 'Language',
+                label: context.l10n.coursesLanguage,
                 value: language,
-                items: [const DropdownMenuItem(value: '', child: Text('All languages')), ..._languageOptions.entries.map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))],
+                items: [DropdownMenuItem(value: '', child: Text(context.l10n.coursesAllLanguages)), ...supportedLanguageCodes.map((code) => DropdownMenuItem(value: code, child: Text(languageNames[code]!)))],
                 onChanged: onLanguage,
               ),
               _filterDropDown<String>(
-                label: 'Age',
+                label: context.l10n.coursesAge,
                 value: ageBand,
-                items: [const DropdownMenuItem(value: '', child: Text('All ages')), ..._ageBands.map((age) => DropdownMenuItem(value: age, child: Text(age)))],
+                items: [DropdownMenuItem(value: '', child: Text(context.l10n.commonAllAges)), ..._ageBands.map((age) => DropdownMenuItem(value: age, child: Text(_ageBandLabel(context.l10n, age))))],
                 onChanged: onAgeBand,
               ),
               _filterDropDown<String>(
-                label: 'Sort',
+                label: context.l10n.coursesSort,
                 value: sortBy,
-                items: _sortOptions.entries.map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value))).toList(),
+                items: _sortOptions(context.l10n).entries.map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value))).toList(),
                 onChanged: onSort,
               ),
             ],
@@ -280,7 +287,7 @@ class _FilterControls extends StatelessWidget {
           TextButton.icon(
             onPressed: onClear,
             icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
-            label: const Text('Clear filters'),
+            label: Text(context.l10n.coursesClearFilters),
             style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
           ),
         ],
@@ -312,7 +319,7 @@ class _Pagination extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(onPressed: page > 1 ? () => onPage(page - 1) : null, icon: const Icon(Icons.chevron_left)),
-            Text('Page $page of $totalPages', style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(context.l10n.coursesPageOf(page, totalPages), style: const TextStyle(fontWeight: FontWeight.w600)),
             IconButton(onPressed: page < totalPages ? () => onPage(page + 1) : null, icon: const Icon(Icons.chevron_right)),
           ],
         ),
@@ -332,8 +339,8 @@ class _EmptyCourses extends StatelessWidget {
             children: [
               const Icon(Icons.search_off, size: 44, color: Color(0xFF94A3B8)),
               const SizedBox(height: 12),
-              const Text('No courses found matching your filters.', textAlign: TextAlign.center),
-              TextButton(onPressed: onClear, child: const Text('Clear all filters')),
+              Text(context.l10n.coursesNoResults, textAlign: TextAlign.center),
+              TextButton(onPressed: onClear, child: Text(context.l10n.coursesClearAllFilters)),
             ],
           ),
         ),
@@ -349,9 +356,9 @@ class _CourseError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Could not load courses.'),
+            Text(context.l10n.coursesLoadFailed),
             const SizedBox(height: 8),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Try again')),
+            FilledButton.tonal(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)),
           ],
         ),
       );

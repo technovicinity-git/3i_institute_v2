@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../core/network/api_error_message.dart';
 
 class DeleteLearnerPage extends ConsumerStatefulWidget {
   const DeleteLearnerPage({required this.profileId, super.key});
@@ -64,7 +66,7 @@ class _DeleteLearnerPageState extends ConsumerState<DeleteLearnerPage> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not delete profile: $error')),
+          SnackBar(content: Text(apiErrorMessage(error, fallback: context.l10n.deleteFailed))),
         );
       }
     } finally {
@@ -84,7 +86,7 @@ class _DeleteLearnerPageState extends ConsumerState<DeleteLearnerPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : profile == null
-          ? const Center(child: Text('Profile not found'))
+          ? Center(child: Text(context.l10n.learnerNotFound))
           : Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -97,7 +99,7 @@ class _DeleteLearnerPageState extends ConsumerState<DeleteLearnerPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Delete ${profile.displayName}’s profile?',
+                            context.l10n.deleteTitle(profile.displayName),
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   fontFamily: 'serif',
@@ -105,28 +107,28 @@ class _DeleteLearnerPageState extends ConsumerState<DeleteLearnerPage> {
                                 ),
                           ),
                           const SizedBox(height: 22),
-                          const Text(
-                            'This will be destroyed:',
+                          Text(
+                            context.l10n.deleteDestroyed,
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Progress, enrolments, exam results, and chat messages.',
+                          Text(
+                            context.l10n.deleteDestroyedItems,
                           ),
                           const Divider(height: 30),
-                          const Text(
-                            'This will survive:',
+                          Text(
+                            context.l10n.deleteSurvives,
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 6),
-                          const Text('Certificates and moderation records.'),
+                          Text(context.l10n.deleteSurvivesItems),
                           const SizedBox(height: 22),
                           TextField(
                             controller: _confirmation,
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               labelText:
-                                  'Type ${profile.displayName} to confirm',
+                                  context.l10n.deleteTypeName(profile.displayName),
                               border: const OutlineInputBorder(),
                             ),
                           ),
@@ -137,12 +139,12 @@ class _DeleteLearnerPageState extends ConsumerState<DeleteLearnerPage> {
                             ),
                             onPressed: !confirmed || _deleting ? null : _delete,
                             child: Text(
-                              _deleting ? 'Deleting…' : 'Delete profile',
+                              _deleting ? context.l10n.deleteDeleting : context.l10n.deleteConfirm,
                             ),
                           ),
                           TextButton(
                             onPressed: () => context.go('/profile-management'),
-                            child: const Text('No, go back'),
+                            child: Text(context.l10n.deleteGoBack),
                           ),
                         ],
                       ),

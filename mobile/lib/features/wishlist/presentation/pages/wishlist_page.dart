@@ -7,6 +7,7 @@ import '../../../courses/presentation/providers/courses_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/wishlist_item.dart';
 import '../wishlist_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _gold = Color(0xFFB8912F);
@@ -31,14 +32,14 @@ class _WishlistPageState extends ConsumerState<WishlistPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Removed from wishlist')));
+        ).showSnackBar(SnackBar(content: Text(context.l10n.wishlistRemoved)));
       }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              apiErrorMessage(error, fallback: 'Could not remove this course.'),
+              apiErrorMessage(error, fallback: context.l10n.wishlistRemoveFailed),
             ),
           ),
         );
@@ -52,8 +53,8 @@ class _WishlistPageState extends ConsumerState<WishlistPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view your wishlist.'),
+      return Center(
+        child: Text(context.l10n.wishlistSelectProfile),
       );
     }
     final key = profile.id;
@@ -65,11 +66,11 @@ class _WishlistPageState extends ConsumerState<WishlistPage> {
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _WishlistState(
         icon: Icons.cloud_off_outlined,
-        title: 'Failed to load wishlist',
-        message: 'Check your connection and try again.',
+        title: context.l10n.wishlistLoadFailed,
+        message: context.l10n.commonCheckConnection,
         action: TextButton(
           onPressed: () => ref.invalidate(wishlistProvider(key)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (wishlist) => RefreshIndicator(
@@ -79,7 +80,7 @@ class _WishlistPageState extends ConsumerState<WishlistPage> {
           padding: const EdgeInsets.fromLTRB(18, 22, 18, 32),
           children: [
             Text(
-              'Wishlist',
+              context.l10n.wishlistTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontFamily: 'serif',
                 color: const Color(0xFF0C1F33),
@@ -87,18 +88,18 @@ class _WishlistPageState extends ConsumerState<WishlistPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              '${wishlist.total} ${wishlist.total == 1 ? 'course' : 'courses'} saved for later',
+              context.l10n.wishlistCount(wishlist.total),
               style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             if (wishlist.items.isEmpty)
               _WishlistState(
                 icon: Icons.favorite_border,
-                title: 'Your wishlist is empty',
-                message: 'Save courses you like and come back to them here.',
+                title: context.l10n.wishlistEmpty,
+                message: context.l10n.wishlistEmptyBody,
                 action: FilledButton.icon(
                   onPressed: () => context.go('/courses'),
                   icon: const Icon(Icons.explore_outlined),
-                  label: const Text('Browse courses'),
+                  label: Text(context.l10n.learnBrowse),
                   style: FilledButton.styleFrom(backgroundColor: _navy),
                 ),
               )
@@ -175,7 +176,7 @@ class _WishlistCourseCard extends StatelessWidget {
                       color: Colors.white,
                       shape: const CircleBorder(),
                       child: IconButton(
-                        tooltip: 'Remove from wishlist',
+                        tooltip: context.l10n.wishlistRemove,
                         onPressed: removing ? null : onRemove,
                         icon: removing
                             ? const SizedBox(
@@ -208,7 +209,7 @@ class _WishlistCourseCard extends StatelessWidget {
                       Icon(Icons.star, size: 16, color: _gold),
                       const SizedBox(width: 3),
                       Text(
-                        course.averageRating?.toStringAsFixed(1) ?? 'New',
+                        course.averageRating?.toStringAsFixed(1) ?? context.l10n.commonNewRating,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -254,8 +255,8 @@ class _WishlistCourseCard extends StatelessWidget {
                         child: Text(
                           category ??
                               (course.format.isEmpty
-                                  ? 'Course'
-                                  : _formatLabel(course.format)),
+                                  ? context.l10n.wishlistCourse
+                                  : _formatLabel(context.l10n, course.format)),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -281,10 +282,10 @@ class _WishlistCourseCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 10),
-                  const Row(
+                  Row(
                     children: [
                       Text(
-                        'View course details',
+                        context.l10n.wishlistViewDetails,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -381,10 +382,10 @@ class _WishlistState extends StatelessWidget {
   );
 }
 
-String _formatLabel(String value) => switch (value) {
-  'self-paced' => 'Self-paced',
-  'live' => 'Live class',
-  'hybrid' => 'Hybrid',
+String _formatLabel(AppLocalizations l10n, String value) => switch (value) {
+  'self-paced' => l10n.formatSelfPaced,
+  'live' => l10n.formatLive,
+  'hybrid' => l10n.coursesTypeHybrid,
   _ => value,
 };
 
@@ -395,7 +396,7 @@ class _AgeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-        message: 'Recommended age group',
+        message: context.l10n.commonRecommendedAge,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(color: const Color(0xFFF9F6F0), borderRadius: BorderRadius.circular(24)),

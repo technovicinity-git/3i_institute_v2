@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../providers/learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 import 'learner_avatar.dart';
 
 const _navy = Color(0xFF12304E);
@@ -117,8 +118,8 @@ class _PinEntrySheetState extends State<PinEntrySheet>
             _message = null;
           } else {
             _message = remaining <= 2
-                ? 'Incorrect PIN. $remaining ${remaining == 1 ? 'try' : 'tries'} left.'
-                : 'Incorrect PIN. Try again.';
+                ? context.l10n.pinTriesLeft(remaining)
+                : context.l10n.pinIncorrect;
           }
         });
         _shake.forward(from: 0);
@@ -126,7 +127,7 @@ class _PinEntrySheetState extends State<PinEntrySheet>
         setState(() {
           _verifying = false;
           _pin = '';
-          _message = "Couldn't check the PIN. Check your connection.";
+          _message = context.l10n.pinCheckFailed;
         });
     }
   }
@@ -166,7 +167,7 @@ class _PinEntrySheetState extends State<PinEntrySheet>
   Widget build(BuildContext context) {
     final profile = widget.profile;
     final status = _locked
-        ? 'Too many attempts. Try again in ${_secondsLeft}s.'
+        ? context.l10n.pinTooMany(_secondsLeft)
         : _message;
     final statusIsError = _locked || (_message != null);
 
@@ -196,9 +197,9 @@ class _PinEntrySheetState extends State<PinEntrySheet>
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Enter your 4-digit PIN',
-              style: TextStyle(color: _muted),
+            Text(
+              context.l10n.pinEnter,
+              style: const TextStyle(color: _muted),
             ),
             const SizedBox(height: 24),
             AnimatedBuilder(
@@ -255,18 +256,17 @@ class _PinEntrySheetState extends State<PinEntrySheet>
               onClear: () => _backspace(clear: true),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Forgot your PIN? Ask the account holder to reset it from '
-              'Manage profiles.',
+            Text(
+              context.l10n.pinForgot,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: _muted),
+              style: const TextStyle(fontSize: 12, color: _muted),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: _verifying
                   ? null
                   : () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
           ],
         ),
@@ -282,7 +282,7 @@ class _PinDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'PIN, $filled of $_pinLength digits entered',
+    label: context.l10n.pinProgress(filled, _pinLength),
     child: ExcludeSemantics(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

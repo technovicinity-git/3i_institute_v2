@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../learning/presentation/learning_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class LearnerAssignmentsPage extends ConsumerWidget {
   const LearnerAssignmentsPage({super.key});
@@ -11,8 +12,8 @@ class LearnerAssignmentsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view assignments.'),
+      return Center(
+        child: Text(context.l10n.assignSelectProfile),
       );
     }
     final key = profile.id;
@@ -23,11 +24,11 @@ class LearnerAssignmentsPage extends ConsumerWidget {
       ),
       error: (error, _) => _AssignmentsState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load your courses',
-        message: 'Check your connection and try again.',
+        title: context.l10n.learnCoursesLoadFailed,
+        message: context.l10n.commonCheckConnection,
         action: TextButton(
           onPressed: () => ref.invalidate(enrolledCoursesProvider(key)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (courses) => RefreshIndicator(
@@ -37,27 +38,27 @@ class LearnerAssignmentsPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           children: [
             Text(
-              'Assignments',
+              context.l10n.assignTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontFamily: 'serif',
                 color: const Color(0xFF0C1F33),
               ),
             ),
             const SizedBox(height: 5),
-            const Text(
-              'Select a course to view its assignments.',
+            Text(
+              context.l10n.assignSelectCourse,
               style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 18),
             if (courses.isEmpty)
               _AssignmentsState(
                 icon: Icons.menu_book_outlined,
-                title: 'No courses enrolled yet',
-                message: 'Browse courses and enroll to see assignments here.',
+                title: context.l10n.commonNoCoursesYet,
+                message: context.l10n.assignNoCoursesBody,
                 action: FilledButton.icon(
                   onPressed: () => context.go('/courses'),
                   icon: const Icon(Icons.explore_outlined),
-                  label: const Text('Browse courses'),
+                  label: Text(context.l10n.learnBrowse),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF12304E),
                   ),
@@ -125,7 +126,7 @@ class _AssignmentCourseChoice extends StatelessWidget {
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(
-          '$instructor${online ? ' • Online class' : ''}',
+          '$instructor${online ? context.l10n.commonOnlineClassSuffix : ''}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),

@@ -29,6 +29,7 @@ export function useGoogleLoginMutation() {
       const message = error.response?.data?.error?.message;
       // Don't show error toast if DOB is required (modal will be shown instead)
       if (
+        error.response?.data?.error?.code === "DATE_OF_BIRTH_REQUIRED" ||
         message?.includes("date of birth") ||
         message?.includes("Date of birth")
       ) {

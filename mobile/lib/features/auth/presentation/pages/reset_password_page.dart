@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -33,7 +34,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (widget.token.isEmpty) {
-      setState(() => _error = 'This password reset link is invalid or incomplete. Request a new link.');
+      setState(() => _error = context.l10n.resetInvalidLink);
       return;
     }
     setState(() {
@@ -47,20 +48,20 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
           );
       if (mounted) setState(() => _completed = true);
     } catch (error) {
-      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: 'Failed to reset password.'));
+      if (mounted) setState(() => _error = apiErrorMessage(error, fallback: context.l10n.resetFailed));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-        title: _completed ? 'Password updated' : 'Choose a new password',
-        description: _completed
-            ? 'Your password has been updated. Log in with your new password.'
-            : 'Choose a secure password with at least 10 characters.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AuthScaffold(
+        title: _completed ? l10n.resetDoneTitle : l10n.resetTitle,
+        description: _completed ? l10n.resetDoneBody : l10n.resetSubtitle,
         child: _completed
-            ? AuthPrimaryButton(label: 'Go to log in', onPressed: () => context.go('/login'))
+            ? AuthPrimaryButton(label: l10n.authGoToLogin, onPressed: () => context.go('/login'))
             : Form(
                 key: _formKey,
                 child: Column(
@@ -71,10 +72,10 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                       controller: _password,
                       obscureText: true,
                       autofillHints: const [AutofillHints.newPassword],
-                      decoration: const InputDecoration(labelText: 'New password'),
+                      decoration: InputDecoration(labelText: l10n.resetNewPassword),
                       validator: (value) {
-                        if ((value ?? '').length < 10) return 'Password must be at least 10 characters';
-                        if (value!.length > 128) return 'Password must be 128 characters or fewer';
+                        if ((value ?? '').length < 10) return l10n.authPasswordMin;
+                        if (value!.length > 128) return l10n.authPasswordMax;
                         return null;
                       },
                     ),
@@ -84,13 +85,14 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(labelText: 'Confirm new password'),
-                      validator: (value) => value != _password.text ? 'Passwords do not match' : null,
+                      decoration: InputDecoration(labelText: l10n.resetConfirm),
+                      validator: (value) => value != _password.text ? l10n.resetMismatch : null,
                     ),
                     const SizedBox(height: 20),
-                    AuthPrimaryButton(label: 'Update password', onPressed: _submit, loading: _submitting),
+                    AuthPrimaryButton(label: l10n.resetSubmit, onPressed: _submit, loading: _submitting),
                   ],
                 ),
               ),
       );
+  }
 }

@@ -58,6 +58,7 @@ export function GoogleButton() {
         onError: (error: any) => {
           const message = error.response?.data?.error?.message;
           if (
+            error.response?.data?.error?.code === "DATE_OF_BIRTH_REQUIRED" ||
             message?.includes("date of birth") ||
             message?.includes("Date of birth") ||
             error.response?.status === 422

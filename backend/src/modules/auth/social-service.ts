@@ -5,6 +5,7 @@ import { generateTokenPair } from "#/lib/jwt";
 import { verifyGoogleToken, verifyAppleToken } from "#/lib/social-auth";
 import {
   AccountInactiveError,
+  AppError,
   UnauthorizedError,
   ValidationError,
 } from "#/shared/errors";
@@ -65,7 +66,10 @@ export class SocialAuthService {
 
     if (!user) {
       if (!input.dateOfBirth) {
-        throw new ValidationError(
+        // Clients ask for the date of birth when they see this code.
+        throw new AppError(
+          422,
+          "DATE_OF_BIRTH_REQUIRED",
           "Date of birth is required for first-time social login",
         );
       }
@@ -148,7 +152,10 @@ export class SocialAuthService {
 
     if (!user) {
       if (!input.dateOfBirth) {
-        throw new ValidationError(
+        // Clients ask for the date of birth when they see this code.
+        throw new AppError(
+          422,
+          "DATE_OF_BIRTH_REQUIRED",
           "Date of birth is required for first-time social login",
         );
       }

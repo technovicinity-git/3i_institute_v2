@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -67,7 +68,7 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
         setState(
           () => _error = apiErrorMessage(
             error,
-            fallback: 'Could not resend the email.',
+            fallback: context.l10n.checkEmailResendFailed,
           ),
         );
       }
@@ -80,9 +81,11 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-    title: 'Check your email',
-    description: 'We have sent a verification link to ${widget.email}.',
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AuthScaffold(
+    title: l10n.checkEmailTitle,
+    description: l10n.checkEmailSentTo(widget.email),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -94,15 +97,15 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
         const SizedBox(height: 20),
         AuthInlineError(_error),
         AuthPrimaryButton(
-          label: _sending ? 'Sending...' : 'Resend email',
+          label: _sending ? l10n.commonSending : l10n.checkEmailResend,
           onPressed: _secondsRemaining == 0 && !_sending ? _resend : null,
           loading: _sending,
         ),
         const SizedBox(height: 8),
         Text(
           _secondsRemaining == 0
-              ? 'You can resend now'
-              : 'You can resend in $_secondsRemaining seconds',
+              ? l10n.checkEmailCanResendNow
+              : l10n.checkEmailResendIn(_secondsRemaining),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -111,16 +114,17 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
           onPressed: () => context.go(
             widget.instructor ? '/instructor/register' : '/register',
           ),
-          child: const Text('Wrong email? Go back'),
+          child: Text(l10n.checkEmailWrongEmail),
         ),
         TextButton(
           onPressed: () =>
               context.go(widget.instructor ? '/instructor/login' : '/login'),
           child: Text(
-            widget.instructor ? 'Back to instructor sign in' : 'Back to log in',
+            widget.instructor ? l10n.checkEmailBackInstructor : l10n.authBackToLogin,
           ),
         ),
       ],
     ),
   );
+  }
 }

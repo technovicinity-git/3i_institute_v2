@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
+import '../../../../core/l10n/l10n.dart';
 
 class LandingLayout extends ConsumerWidget {
   const LandingLayout({required this.child, super.key});
@@ -32,14 +33,14 @@ class LandingLayout extends ConsumerWidget {
             'assets/images/logo-icon.png',
             width: 42,
             height: 42,
-            semanticLabel: '3i International Islamic Institute home',
+            semanticLabel: context.l10n.landingHomeLabel,
           ),
         ),
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/courses'),
             icon: const Icon(Icons.menu_book_outlined, size: 19),
-            label: const Text('Courses'),
+            label: Text(context.l10n.menuCourses),
           ),
           if (account != null)
             NotificationBell(
@@ -48,7 +49,7 @@ class LandingLayout extends ConsumerWidget {
                   : '/notifications',
             ),
           PopupMenuButton<String>(
-            tooltip: 'Account and learner menu',
+            tooltip: context.l10n.landingAccountMenu,
             onSelected: (value) async {
               if (value == 'switch') {
                 ref.read(activeLearnerProfileProvider.notifier).select(null);
@@ -82,7 +83,7 @@ class LandingLayout extends ConsumerWidget {
                     Text(
                       profile?.displayName ??
                           (account == null || account.fullName.isEmpty
-                              ? 'Account'
+                              ? context.l10n.landingAccount
                               : account.fullName),
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
@@ -120,19 +121,19 @@ class LandingLayout extends ConsumerWidget {
                   ],
                 ),
               ),
-              const PopupMenuItem(value: 'dashboard', child: Text('Dashboard')),
-              if (!isInstructor) ...const [
-                PopupMenuItem(value: 'my-courses', child: Text('My Courses')),
+              PopupMenuItem(value: 'dashboard', child: Text(context.l10n.menuDashboard)),
+              if (!isInstructor) ...[
+                PopupMenuItem(value: 'my-courses', child: Text(context.l10n.menuMyCourses)),
                 PopupMenuItem(
                   value: 'subscription',
-                  child: Text('Subscription'),
+                  child: Text(context.l10n.menuSubscription),
                 ),
                 PopupMenuItem(
                   value: 'switch',
-                  child: Text('Switch learner profile'),
+                  child: Text(context.l10n.menuSwitchLearner),
                 ),
               ],
-              const PopupMenuItem(value: 'logout', child: Text('Log out')),
+              PopupMenuItem(value: 'logout', child: Text(context.l10n.menuLogOut)),
             ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -175,23 +176,23 @@ class LandingFooter extends StatelessWidget {
           'assets/images/logo-icon.png',
           width: 58,
           height: 58,
-          semanticLabel: '3i International Islamic Institute logo',
+          semanticLabel: context.l10n.commonLogoLabel,
         ),
         const SizedBox(height: 10),
-        const Text(
-          'Rigorous teaching. Global classrooms. One institute.',
+        Text(
+          context.l10n.footerTagline,
           style: TextStyle(color: Color(0xFFB8912F), fontFamily: 'serif'),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Structured, accredited programs across the sciences, humanities, and professional fields, taught to students in 40 countries.',
+        Text(
+          context.l10n.footerAbout,
           style: TextStyle(color: Color(0xFFCBD5E1), height: 1.5, fontSize: 13),
         ),
         const SizedBox(height: 28),
         const Divider(color: Color(0xFF2B4560)),
         const SizedBox(height: 10),
         Text(
-          '© ${DateTime.now().year} 3i International Islamic Institute. All rights reserved.',
+          context.l10n.footerRights('${DateTime.now().year}'),
           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
         ),
       ],

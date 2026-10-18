@@ -9,6 +9,7 @@ import '../providers/subscription_providers.dart';
 import '../widgets/apply_subscription_sheet.dart';
 import '../widgets/waiver_request_sheet.dart';
 import '../widgets/learner_avatar.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xff12304e);
 const _ink = Color(0xff0c1f33);
@@ -37,7 +38,7 @@ class SubscriptionPage extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Payment submitted. We’ll subscribe ${profile.displayName} once it’s verified.',
+            context.l10n.subSubmittedPayment(profile.displayName),
           ),
         ),
       );
@@ -51,9 +52,9 @@ class SubscriptionPage extends ConsumerWidget {
     final sent = await showWaiverRequestSheet(context, profile: profile);
     if (sent && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Waiver request sent. We’ll email you once it’s reviewed.',
+            context.l10n.subWaiverSent,
           ),
         ),
       );
@@ -67,23 +68,23 @@ class SubscriptionPage extends ConsumerWidget {
   ) async {
     final requestId = profile.pendingRequestId;
     if (requestId == null) return;
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel this request?'),
+        title: Text(context.l10n.subCancelTitle),
         content: Text(
-          'The payment for ${profile.displayName} won’t be reviewed. You can '
-          'submit it again later.',
+          context.l10n.subCancelBody(profile.displayName),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep it'),
+            child: Text(context.l10n.subKeepIt),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.deepOrange),
-            child: const Text('Cancel request'),
+            child: Text(context.l10n.subCancelRequest),
           ),
         ],
       ),
@@ -93,13 +94,13 @@ class SubscriptionPage extends ConsumerWidget {
     try {
       await ref.read(subscriptionActionsProvider).cancel(requestId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Request cancelled')),
+        SnackBar(content: Text(l10n.subCancelled)),
       );
     } catch (error) {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            apiErrorMessage(error, fallback: 'Failed to cancel the request'),
+            apiErrorMessage(error, fallback: l10n.subCancelFailed),
           ),
         ),
       );
@@ -122,10 +123,10 @@ class SubscriptionPage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Failed to load your subscription'),
+              Text(context.l10n.subLoadFailed),
               TextButton(
                 onPressed: () => ref.invalidate(subscriptionOverviewProvider),
-                child: const Text('Try again'),
+                child: Text(context.l10n.commonTryAgain),
               ),
             ],
           ),
@@ -138,16 +139,15 @@ class SubscriptionPage extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 Text(
-                  'Subscription',
+                  context.l10n.subTitle,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontFamily: 'serif',
                     color: _navy,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Each learner profile needs its own subscription to enrol in '
-                  'courses. A subscription lasts one month from approval.',
+                Text(
+                  context.l10n.subIntro,
                   style: TextStyle(color: _muted),
                 ),
                 const SizedBox(height: 18),
@@ -157,14 +157,14 @@ class SubscriptionPage extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Learner profiles',
+                        context.l10n.subLearnerProfiles,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontFamily: 'serif', color: _ink),
                       ),
                     ),
                     Text(
-                      '${data.subscribedCount} of ${data.profiles.length} subscribed'
-                      '${pending > 0 ? ' · $pending under review' : ''}',
+                      context.l10n.subSubscribedCount(data.subscribedCount, data.profiles.length) +
+                      (pending > 0 ? ' · ${context.l10n.subUnderReviewCount(pending)}' : ''),
                       style: const TextStyle(fontSize: 12, color: _muted),
                     ),
                   ],
@@ -176,15 +176,15 @@ class SubscriptionPage extends ConsumerWidget {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          const Text(
-                            'Add a learner profile to subscribe.',
+                          Text(
+                            context.l10n.subAddProfileToSubscribe,
                             style: TextStyle(color: _muted),
                           ),
                           const SizedBox(height: 12),
                           FilledButton.icon(
                             onPressed: () => context.push('/profiles/add'),
                             icon: const Icon(Icons.person_add_alt_1_outlined),
-                            label: const Text('Add profile'),
+                            label: Text(context.l10n.familyAddProfile),
                           ),
                         ],
                       ),
@@ -201,7 +201,7 @@ class SubscriptionPage extends ConsumerWidget {
                 if (data.requests.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Payment history',
+                    context.l10n.subPaymentHistory,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontFamily: 'serif',
                       color: _ink,
@@ -223,7 +223,7 @@ class SubscriptionPage extends ConsumerWidget {
                 if (data.waivers.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Fee waivers',
+                    context.l10n.subFeeWaivers,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontFamily: 'serif',
                       color: _ink,
@@ -268,9 +268,9 @@ class _PaymentDetails extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'How to pay',
+                context.l10n.subHowToPay,
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 19,
@@ -289,8 +289,8 @@ class _PaymentDetails extends StatelessWidget {
                     color: _ink,
                   ),
                 ),
-                const Text(
-                  'per profile · one month',
+                Text(
+                  context.l10n.subPerProfileMonth,
                   style: TextStyle(fontSize: 11, color: _muted),
                 ),
               ],
@@ -298,9 +298,8 @@ class _PaymentDetails extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Send the payment to one of these accounts, then apply for each '
-          'profile with your transaction details.',
+        Text(
+          context.l10n.subHowToPayBody,
           style: TextStyle(fontSize: 13, color: _muted),
         ),
         if (payment.instructions.isNotEmpty) ...[
@@ -321,8 +320,8 @@ class _PaymentDetails extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         if (payment.accounts.isEmpty)
-          const Text(
-            'Payment details haven’t been added yet. Please contact support.',
+          Text(
+            context.l10n.subNoPaymentDetails,
             style: TextStyle(fontSize: 13, color: _muted),
           ),
         for (final account in payment.accounts) _AccountTile(account: account),
@@ -363,7 +362,7 @@ class _AccountTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                account.typeLabel.toUpperCase(),
+                account.typeLabel(context.l10n).toUpperCase(),
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -393,7 +392,7 @@ class _AccountTile extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Copy account number',
+                    tooltip: context.l10n.subCopyAccountNumber,
                     visualDensity: VisualDensity.compact,
                     iconSize: 16,
                     onPressed: () async {
@@ -403,7 +402,7 @@ class _AccountTile extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(
                           context,
-                        ).showSnackBar(const SnackBar(content: Text('Copied')));
+                        ).showSnackBar(SnackBar(content: Text(context.l10n.commonCopied)));
                       }
                     },
                     icon: const Icon(Icons.copy, color: _muted),
@@ -438,22 +437,22 @@ class _ProfileCard extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onRequestWaiver;
 
-  Widget _waiverLine() {
+  Widget _waiverLine(AppLocalizations l10n) {
     final expires = profile.waiverExpiresAt;
     if (profile.hasUsableWaiver) {
       return _IconLine(
         icon: Icons.discount_outlined,
         color: const Color(0xff157a34),
-        text:
-            '${profile.waiverPercent}% fee waiver ready'
-            '${expires != null ? ' — use by ${DateFormat.yMMMd().format(expires)}' : ''}',
+        text: expires != null
+            ? l10n.subWaiverReadyUseBy(profile.waiverPercent ?? 0, DateFormat.yMMMd().format(expires))
+            : l10n.subWaiverReady(profile.waiverPercent ?? 0),
       );
     }
     if (profile.waiverPending) {
-      return const _IconLine(
+      return _IconLine(
         icon: Icons.discount_outlined,
         color: _blue,
-        text: 'Fee waiver request under review',
+        text: l10n.subWaiverUnderReview,
       );
     }
     final next = profile.nextWaiverApplicationAt;
@@ -462,7 +461,7 @@ class _ProfileCard extends StatelessWidget {
       children: [
         if (profile.waiverRejectionReason != null)
           Text(
-            'Waiver not approved: ${profile.waiverRejectionReason}',
+            l10n.subWaiverRejected('${profile.waiverRejectionReason}'),
             style: const TextStyle(fontSize: 13, color: Colors.red),
           ),
         if (profile.waiverApplicationsLeft > 0)
@@ -472,31 +471,32 @@ class _ProfileCard extends StatelessWidget {
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
             ),
-            child: const Text(
-              'Need help with the fee? Request a waiver',
-              style: TextStyle(decoration: TextDecoration.underline),
+            child: Text(
+              l10n.subRequestWaiver,
+              style: const TextStyle(decoration: TextDecoration.underline),
             ),
           )
         else
           Text(
-            'Waiver limit reached for this year'
-            '${next != null ? ' (next on ${DateFormat.yMMMd().format(next)})' : ''}',
+            next != null
+                ? l10n.subWaiverLimitNext(DateFormat.yMMMd().format(next))
+                : l10n.subWaiverLimit,
             style: const TextStyle(fontSize: 12, color: _muted),
           ),
       ],
     );
   }
 
-  String get _statusLine {
+  String _statusLine(AppLocalizations l10n) {
     final until = profile.subscribedUntil;
     final parts = <String>[
-      if (until != null) 'Subscribed until ${_dateTime(until)}',
+      if (until != null) l10n.subSubscribedUntil(_dateTime(until)),
       if (profile.isPending)
         profile.isSubscribed
-            ? 'Renewal payment under review'
-            : 'Payment under review — usually within a day',
+            ? l10n.subRenewalUnderReview
+            : l10n.subPaymentUnderReview,
     ];
-    return parts.isEmpty ? 'Subscribe to enrol in courses' : parts.join(' · ');
+    return parts.isEmpty ? l10n.subSubscribeToEnrol : parts.join(' · ');
   }
 
   @override
@@ -532,7 +532,7 @@ class _ProfileCard extends StatelessWidget {
                       runSpacing: 4,
                       children: [
                         _StatusBadge(profile: profile),
-                        _Pill(label: 'Age ${profile.age}'),
+                        _Pill(label: context.l10n.commonAge('${profile.age}')),
                       ],
                     ),
                   ],
@@ -542,26 +542,27 @@ class _ProfileCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            _statusLine,
+            _statusLine(context.l10n),
             style: const TextStyle(fontSize: 13, color: _muted),
           ),
           if (!profile.isPending && profile.lastRejected) ...[
             const SizedBox(height: 4),
             Text(
-              'Last payment wasn’t approved'
-              '${profile.lastRejectionReason != null ? ': ${profile.lastRejectionReason}' : '.'}',
+              profile.lastRejectionReason != null
+                  ? context.l10n.subLastRejectedReason(profile.lastRejectionReason!)
+                  : context.l10n.subLastRejected,
               style: const TextStyle(fontSize: 13, color: Colors.red),
             ),
           ],
           const SizedBox(height: 6),
-          _waiverLine(),
+          _waiverLine(context.l10n),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: profile.isPending
                 ? OutlinedButton(
                     onPressed: onCancel,
-                    child: const Text('Cancel request'),
+                    child: Text(context.l10n.subCancelRequest),
                   )
                 : profile.isSubscribed
                 ? OutlinedButton(
@@ -570,12 +571,12 @@ class _ProfileCard extends StatelessWidget {
                       foregroundColor: const Color(0xff157a34),
                       side: const BorderSide(color: _green),
                     ),
-                    child: const Text('Renew'),
+                    child: Text(context.l10n.subRenew),
                   )
                 : FilledButton(
                     onPressed: canApply ? onApply : null,
                     style: FilledButton.styleFrom(backgroundColor: _green),
-                    child: const Text('Apply for subscription'),
+                    child: Text(context.l10n.subApply),
                   ),
           ),
         ],
@@ -591,10 +592,10 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, icon, background, border, color) = profile.isSubscribed
-        ? ('SUBSCRIBED', Icons.check_circle_outline, _green, null, _ink)
+        ? (context.l10n.subBadgeSubscribed, Icons.check_circle_outline, _green, null, _ink)
         : profile.isPending
-        ? ('UNDER REVIEW', Icons.schedule, Colors.white, _blue, _blue)
-        : ('NOT SUBSCRIBED', Icons.schedule, Colors.white, _gold, _ink);
+        ? (context.l10n.subBadgeUnderReview, Icons.schedule, Colors.white, _blue, _blue)
+        : (context.l10n.subBadgeNotSubscribed, Icons.schedule, Colors.white, _gold, _ink);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -651,17 +652,17 @@ class _RequestTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (request.status) {
-      'APPROVED' => ('Approved', const Color(0xff157a34)),
-      'REJECTED' => ('Rejected', Colors.red),
-      'CANCELLED' => ('Cancelled', Colors.blueGrey),
-      _ => ('Under review', _blue),
+      'APPROVED' => (context.l10n.subReqApproved, const Color(0xff157a34)),
+      'REJECTED' => (context.l10n.subReqRejected, Colors.red),
+      'CANCELLED' => (context.l10n.subReqCancelled, Colors.blueGrey),
+      _ => (context.l10n.subReqUnderReview, _blue),
     };
     final created = request.createdAt;
     final periodEnd = request.periodEnd;
     return ListTile(
       title: Text(
         '${request.profileName} · ${formatMoney(request.amount, request.currency)}'
-        '${request.discountPercent > 0 ? ' (${request.discountPercent}% waiver)' : ''}',
+        '${request.discountPercent > 0 ? ' (${context.l10n.subWaiverPercent(request.discountPercent)})' : ''}',
         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
       subtitle: Column(
@@ -673,12 +674,12 @@ class _RequestTile extends StatelessWidget {
           ),
           if (created != null)
             Text(
-              'Submitted ${DateFormat.yMMMd().format(created)}',
+              context.l10n.subSubmittedOn(DateFormat.yMMMd().format(created)),
               style: const TextStyle(fontSize: 12),
             ),
           if (request.status == 'APPROVED' && periodEnd != null)
             Text(
-              'Until ${DateFormat.yMMMd().format(periodEnd)}',
+              context.l10n.subUntil(DateFormat.yMMMd().format(periodEnd)),
               style: const TextStyle(fontSize: 12),
             ),
           if (request.status == 'REJECTED' && request.rejectionReason != null)
@@ -736,12 +737,12 @@ class _WaiverTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (waiver.status) {
-      'APPROVED' => ('Ready to use', const Color(0xff157a34)),
-      'USED' => ('Used', Colors.blueGrey),
-      'REJECTED' => ('Not approved', Colors.red),
-      'EXPIRED' => ('Expired', Colors.blueGrey),
-      'REVOKED' => ('Withdrawn', Colors.blueGrey),
-      _ => ('Under review', _blue),
+      'APPROVED' => (context.l10n.subWaiverReadyToUse, const Color(0xff157a34)),
+      'USED' => (context.l10n.subWaiverUsed, Colors.blueGrey),
+      'REJECTED' => (context.l10n.subWaiverNotApproved, Colors.red),
+      'EXPIRED' => (context.l10n.subWaiverExpired, Colors.blueGrey),
+      'REVOKED' => (context.l10n.subWaiverWithdrawn, Colors.blueGrey),
+      _ => (context.l10n.subReqUnderReview, _blue),
     };
     final created = waiver.createdAt;
     final expires = waiver.expiresAt;
@@ -749,7 +750,7 @@ class _WaiverTile extends StatelessWidget {
     return ListTile(
       title: Text(
         '${waiver.profileName}'
-        '${waiver.percent != null ? ' · ${waiver.percent}% off one month' : ''}',
+        '${waiver.percent != null ? ' · ${context.l10n.subWaiverOff(waiver.percent!)}' : ''}',
         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
       subtitle: Column(
@@ -757,17 +758,17 @@ class _WaiverTile extends StatelessWidget {
         children: [
           if (created != null)
             Text(
-              'Requested ${DateFormat.yMMMd().format(created)}',
+              context.l10n.subRequestedOn(DateFormat.yMMMd().format(created)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.status == 'APPROVED' && expires != null)
             Text(
-              'Use by ${DateFormat.yMMMd().format(expires)}',
+              context.l10n.subUseBy(DateFormat.yMMMd().format(expires)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.status == 'USED' && used != null)
             Text(
-              'Used ${DateFormat.yMMMd().format(used)}',
+              context.l10n.subUsedOn(DateFormat.yMMMd().format(used)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.reason != null)

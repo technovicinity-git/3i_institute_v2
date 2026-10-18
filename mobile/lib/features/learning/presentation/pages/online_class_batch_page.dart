@@ -11,6 +11,7 @@ import '../../../certificates/presentation/pages/certificates_page.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -24,18 +25,18 @@ const _cream = Color(0xFFF9F6F0);
 enum _SessionStatus { live, startingSoon, upcoming, completed }
 
 extension on _SessionStatus {
-  String get label => switch (this) {
-    _SessionStatus.live => 'Live Now',
-    _SessionStatus.startingSoon => 'Starting Soon',
-    _SessionStatus.upcoming => 'Upcoming',
-    _SessionStatus.completed => 'Completed',
+  String label(AppLocalizations l10n) => switch (this) {
+    _SessionStatus.live => l10n.scheduleStatusLive,
+    _SessionStatus.startingSoon => l10n.scheduleStatusSoon,
+    _SessionStatus.upcoming => l10n.scheduleStatusUpcoming,
+    _SessionStatus.completed => l10n.scheduleStatusCompleted,
   };
 
-  String get sectionLabel => switch (this) {
-    _SessionStatus.live => 'Live Now',
-    _SessionStatus.startingSoon => 'Starting Soon',
-    _SessionStatus.upcoming => 'Upcoming Sessions',
-    _SessionStatus.completed => 'Previous Sessions',
+  String sectionLabel(AppLocalizations l10n) => switch (this) {
+    _SessionStatus.live => l10n.scheduleStatusLive,
+    _SessionStatus.startingSoon => l10n.scheduleStatusSoon,
+    _SessionStatus.upcoming => l10n.scheduleSectionUpcoming,
+    _SessionStatus.completed => l10n.scheduleSectionCompleted,
   };
 
   Color get foreground => switch (this) {
@@ -108,8 +109,8 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view this class schedule.'),
+      return Center(
+        child: Text(context.l10n.scheduleSelectProfile),
       );
     }
     final key = '${profile.id}|${widget.batchId}';
@@ -120,8 +121,8 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
     return batchAsync.when(
       loading: () => ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        children: const [
-          _Header(title: 'Class Schedule'),
+        children: [
+          _Header(title: context.l10n.scheduleTitle),
           Padding(
             padding: EdgeInsets.only(top: 60),
             child: Center(child: CircularProgressIndicator(color: _navy)),
@@ -131,17 +132,16 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
       error: (error, _) => ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [
-          const _Header(title: 'Class Schedule'),
+          _Header(title: context.l10n.scheduleTitle),
           _StateCard(
             icon: Icons.error_outline,
             iconColor: Colors.red,
-            title: 'Class schedule unavailable',
+            title: context.l10n.scheduleUnavailable,
             message:
-                'We could not load this batch. You may no longer be enrolled '
-                'in this batch, or the batch may no longer be available.',
+                context.l10n.scheduleUnavailableBody,
             action: TextButton(
               onPressed: () => ref.invalidate(learnerBatchProvider(key)),
-              child: const Text('Try again'),
+              child: Text(context.l10n.commonTryAgain),
             ),
           ),
         ],
@@ -174,8 +174,8 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             children: [
               _Header(
-                title: 'Class Schedule',
-                subtitle: '$count session${count == 1 ? '' : 's'} scheduled',
+                title: context.l10n.scheduleTitle,
+                subtitle: context.l10n.scheduleScheduled(count),
               ),
               _BatchSummary(
                 batch: batch,
@@ -197,11 +197,11 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
               ),
               const SizedBox(height: 24),
               if (batch.sessions.isEmpty)
-                const _StateCard(
+                _StateCard(
                   icon: Icons.calendar_month_outlined,
-                  title: 'No sessions scheduled yet.',
+                  title: context.l10n.scheduleNone,
                   message:
-                      'Your instructor has not added any sessions to this batch.',
+                      context.l10n.scheduleNoneHint,
                 )
               else
                 for (final status in _SessionStatus.values)
@@ -239,7 +239,7 @@ class _Header extends StatelessWidget {
         TextButton.icon(
           onPressed: () => context.go('/online-classes'),
           icon: const Icon(Icons.chevron_left, size: 18),
-          label: const Text('Back to Online Classes'),
+          label: Text(context.l10n.scheduleBack),
           style: TextButton.styleFrom(
             alignment: Alignment.centerLeft,
             foregroundColor: _muted,
@@ -351,7 +351,7 @@ class _BatchSummary extends StatelessWidget {
               if (enrolled != null)
                 _Meta(
                   icon: Icons.calendar_today_outlined,
-                  text: 'Enrolled ${DateFormat('MMM d, y').format(enrolled)}',
+                  text: context.l10n.scheduleEnrolledOn(DateFormat.yMMMd().format(enrolled)),
                 ),
             ],
           ),
@@ -367,7 +367,7 @@ class _BatchSummary extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onChat,
                     icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                    label: const Text('Chat'),
+                    label: Text(context.l10n.classesChat),
                     style: FilledButton.styleFrom(backgroundColor: _navy),
                   ),
                 ),
@@ -377,7 +377,7 @@ class _BatchSummary extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onCertificate,
                       icon: const Icon(Icons.download_outlined, size: 18),
-                      label: const Text('Certificate'),
+                      label: Text(context.l10n.classesCertificate),
                       style: FilledButton.styleFrom(backgroundColor: _green),
                     ),
                   ),
@@ -413,7 +413,7 @@ class _Section extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              status.sectionLabel,
+              status.sectionLabel(context.l10n),
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -424,7 +424,7 @@ class _Section extends StatelessWidget {
             const Expanded(child: Divider(color: _border, height: 1)),
             const SizedBox(width: 10),
             Text(
-              '${children.length} session${children.length > 1 ? 's' : ''}',
+              context.l10n.batchSessions(children.length),
               style: const TextStyle(fontSize: 12, color: _muted),
             ),
           ],
@@ -513,13 +513,13 @@ class _SessionCard extends StatelessWidget {
                       runSpacing: 5,
                       children: [
                         _Tag(
-                          text: 'SESSION $number',
+                          text: context.l10n.scheduleSessionNumber(number).toUpperCase(),
                           foreground: _ink,
                           background: Colors.white,
                           outlined: true,
                         ),
                         _Tag(
-                          text: status.label.toUpperCase(),
+                          text: status.label(context.l10n).toUpperCase(),
                           foreground: status.foreground,
                           background: status.background,
                         ),
@@ -544,14 +544,14 @@ class _SessionCard extends StatelessWidget {
                         _Meta(
                           icon: Icons.calendar_today_outlined,
                           text: date == null
-                              ? 'Date to be announced'
-                              : DateFormat('EEE, MMM d, y').format(date),
+                              ? context.l10n.classesDateTba
+                              : DateFormat.yMMMEd().format(date),
                         ),
                         if (date != null)
                           _Meta(
                             icon: Icons.schedule,
                             text:
-                                '${DateFormat('h:mm a').format(date)} • ${session.durationMinutes} min',
+                                '${DateFormat.jm().format(date)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
                           ),
                       ],
                     ),
@@ -568,7 +568,7 @@ class _SessionCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: () => _openMeeting(context, session.meetingLink!),
                 icon: const Icon(Icons.open_in_new, size: 17),
-                label: Text(isLive ? 'Join Class' : 'Join Soon'),
+                label: Text(isLive ? context.l10n.scheduleJoin : context.l10n.scheduleJoinSoon),
                 style: FilledButton.styleFrom(
                   backgroundColor: isLive ? _green : _navy,
                 ),
@@ -578,8 +578,8 @@ class _SessionCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: isJoinable
-                  ? const Text(
-                      'No link yet',
+                  ? Text(
+                      context.l10n.scheduleNoLink,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -587,13 +587,13 @@ class _SessionCard extends StatelessWidget {
                       ),
                     )
                   : isCompleted
-                  ? const Row(
+                  ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.check_circle_outline, size: 15, color: _faint),
                         SizedBox(width: 4),
                         Text(
-                          'Completed',
+                          context.l10n.scheduleCompleted,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -602,8 +602,8 @@ class _SessionCard extends StatelessWidget {
                         ),
                       ],
                     )
-                  : const Text(
-                      'Not started',
+                  : Text(
+                      context.l10n.scheduleNotStarted,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -624,8 +624,8 @@ class _SessionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'SESSION NOTES',
+                  Text(
+                    context.l10n.batchSessionNotes.toUpperCase(),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -659,7 +659,7 @@ class _SessionCard extends StatelessWidget {
     }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the meeting link.')),
+        SnackBar(content: Text(context.l10n.scheduleLinkFailed)),
       );
     }
   }

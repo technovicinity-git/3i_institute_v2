@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import 'learner_profiles_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 double _double(Object? value) => value is num ? value.toDouble() : 0;
 String _string(Object? value, [String fallback = '']) =>
@@ -53,10 +54,10 @@ class PaymentAccount {
   final String accountNumber;
   final String details;
 
-  String get typeLabel => switch (type) {
-    'BANK' => 'Bank transfer',
-    'MOBILE_BANKING' => 'Mobile banking',
-    _ => 'Other',
+  String typeLabel(AppLocalizations l10n) => switch (type) {
+    'BANK' => l10n.subTypeBank,
+    'MOBILE_BANKING' => l10n.subTypeMobile,
+    _ => l10n.subTypeOther,
   };
 
   factory PaymentAccount.fromJson(Map<String, dynamic> json) => PaymentAccount(

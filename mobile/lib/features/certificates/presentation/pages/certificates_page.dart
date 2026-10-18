@@ -10,6 +10,7 @@ import '../../../../core/config/app_config.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/certificate.dart';
 import '../certificates_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _gold = Color(0xFFB8912F);
@@ -37,8 +38,8 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Center(
-        child: Text('Select a learner profile to view certificates.'),
+      return Center(
+        child: Text(context.l10n.certSelectProfile),
       );
     }
     final key = profile.id;
@@ -48,11 +49,11 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
           const Center(child: CircularProgressIndicator(color: _navy)),
       error: (error, _) => _CertificateState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load your certificates',
-        message: 'Check your connection and try again.',
+        title: context.l10n.certLoadFailed,
+        message: context.l10n.commonCheckConnection,
         action: TextButton(
           onPressed: () => ref.invalidate(learnerCertificatesProvider(key)),
-          child: const Text('Try again'),
+          child: Text(context.l10n.commonTryAgain),
         ),
       ),
       data: (certificates) {
@@ -81,8 +82,8 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(18, 22, 18, 32),
             children: [
-              const Text(
-                'YOUR ACHIEVEMENTS',
+              Text(
+                context.l10n.certEyebrow,
                 style: TextStyle(
                   fontSize: 10,
                   letterSpacing: 1.5,
@@ -92,15 +93,15 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
               ),
               const SizedBox(height: 5),
               Text(
-                'My Certificates',
+                context.l10n.certTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontFamily: 'serif',
                   color: const Color(0xFF0C1F33),
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'View, verify, and save certificates from your courses.',
+              Text(
+                context.l10n.certSubtitle,
                 style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
               ),
               const SizedBox(height: 19),
@@ -108,7 +109,7 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
                 controller: _search,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Search course, exam, or code...',
+                  hintText: context.l10n.certSearch,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _search.text.isEmpty
                       ? null
@@ -140,7 +141,7 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
                       if (filter != _CertificateFilter.values.first)
                         const SizedBox(width: 8),
                       ChoiceChip(
-                        label: Text(_filterName(filter)),
+                        label: Text(_filterName(context.l10n, filter)),
                         selected: _filter == filter,
                         onSelected: (_) => setState(() => _filter = filter),
                         selectedColor: const Color(0xFFEAF0F5),
@@ -167,11 +168,11 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
                 _CertificateState(
                   icon: Icons.workspace_premium_outlined,
                   title: certificates.isEmpty
-                      ? 'No certificates yet'
-                      : 'No certificates match',
+                      ? context.l10n.certEmpty
+                      : context.l10n.certNoMatch,
                   message: certificates.isEmpty
-                      ? 'Certificates you earn will appear here.'
-                      : 'Try another search or certificate type.',
+                      ? context.l10n.certEmptyHint
+                      : context.l10n.certNoMatchHint,
                   action: certificates.isEmpty
                       ? null
                       : TextButton(
@@ -179,12 +180,12 @@ class _CertificatesPageState extends ConsumerState<CertificatesPage> {
                             _search.clear();
                             setState(() => _filter = _CertificateFilter.all);
                           },
-                          child: const Text('Clear filters'),
+                          child: Text(context.l10n.coursesClearFilters),
                         ),
                 )
               else ...[
                 Text(
-                  'Showing ${filtered.length} of ${certificates.length} certificates',
+                  context.l10n.certShowing(filtered.length, certificates.length),
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
@@ -224,7 +225,7 @@ class _CertificateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final issued = certificate.issuedAt == null
-        ? 'Date unavailable'
+        ? context.l10n.certDateUnavailable
         : DateFormat.yMMMMd().format(certificate.issuedAt!);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -263,7 +264,7 @@ class _CertificateCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            _typeLabel(certificate.type),
+                            _typeLabel(context.l10n, certificate.type),
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -280,8 +281,8 @@ class _CertificateCard extends StatelessWidget {
                       color: Color(0xFF22A146),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Valid',
+                    Text(
+                      context.l10n.certValid,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -309,7 +310,7 @@ class _CertificateCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'Issued $issued',
+                      context.l10n.certIssued(issued),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
@@ -330,7 +331,7 @@ class _CertificateCard extends StatelessWidget {
                   ),
                   if (certificate.details!.score != null)
                     Text(
-                      'Result ${_number(certificate.details!.score!)} / ${certificate.details!.totalMarks}${certificate.details!.passed == true ? '  •  Passed' : ''}',
+                      '${context.l10n.certResult(_number(certificate.details!.score!), certificate.details!.totalMarks)}${certificate.details!.passed == true ? '  •  ${context.l10n.certPassed}' : ''}',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -350,7 +351,7 @@ class _CertificateCard extends StatelessWidget {
                               : Icons.visibility_outlined,
                           size: 17,
                         ),
-                        label: Text(expanded ? 'Hide' : 'Preview'),
+                        label: Text(expanded ? context.l10n.certHide : context.l10n.certPreview),
                       ),
                     ),
                     const SizedBox(width: 9),
@@ -362,7 +363,7 @@ class _CertificateCard extends StatelessWidget {
                           Icons.picture_as_pdf_outlined,
                           size: 17,
                         ),
-                        label: const Text('Save PDF'),
+                        label: Text(context.l10n.certSavePdf),
                         style: FilledButton.styleFrom(backgroundColor: _navy),
                       ),
                     ),
@@ -385,7 +386,7 @@ class _CertificatePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final details = certificate.details;
     final issued = certificate.issuedAt == null
-        ? 'Date unavailable'
+        ? context.l10n.certDateUnavailable
         : DateFormat.yMMMMd().format(certificate.issuedAt!);
     return Container(
       width: double.infinity,
@@ -412,8 +413,8 @@ class _CertificatePreview extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 11),
             child: Divider(color: Color(0xFFD8C58E), height: 1),
           ),
-          const Text(
-            'CERTIFICATE OF ACHIEVEMENT',
+          Text(
+            context.l10n.certAchievement,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -423,8 +424,8 @@ class _CertificatePreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-          const Text(
-            'Presented to',
+          Text(
+            context.l10n.certPresentedTo,
             style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 4),
@@ -438,8 +439,8 @@ class _CertificatePreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'For',
+          Text(
+            context.l10n.certFor,
             style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 4),
@@ -461,11 +462,11 @@ class _CertificatePreview extends StatelessWidget {
             ),
             if (details.score != null)
               Text(
-                'Result: ${_number(details.score!)} / ${details.totalMarks}${details.passed == null
+                '${context.l10n.certResult(_number(details.score!), details.totalMarks)}${details.passed == null
                     ? ''
                     : details.passed!
-                    ? ' • Passed'
-                    : ' • Not passed'}',
+                    ? ' • ${context.l10n.certPassed}'
+                    : ' • ${context.l10n.certNotPassed}'}',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -475,24 +476,24 @@ class _CertificatePreview extends StatelessWidget {
           if (details?.progress != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Course progress ${details!.progress}%',
+              context.l10n.certProgress(details!.progress ?? 0),
               style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
             ),
           ],
           const SizedBox(height: 12),
           Text(
-            'Issued $issued',
+            context.l10n.certIssued(issued),
             style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
           ),
           const Divider(color: Color(0xFFD8C58E), height: 24),
           Text(
-            'Certificate ID  ${certificate.id}',
+            context.l10n.certId(certificate.id),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 4),
           SelectableText(
-            'Verification code  ${certificate.verificationCode}',
+            context.l10n.certCode(certificate.verificationCode),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'monospace',
@@ -508,12 +509,12 @@ class _CertificatePreview extends StatelessWidget {
               );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Verification code copied')),
+                  SnackBar(content: Text(context.l10n.certCodeCopied)),
                 );
               }
             },
             icon: const Icon(Icons.copy, size: 15),
-            label: const Text('Copy code'),
+            label: Text(context.l10n.certCopyCode),
           ),
         ],
       ),
@@ -694,7 +695,7 @@ Future<void> printCertificatePdf(
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open PDF preview.')),
+        SnackBar(content: Text(context.l10n.certPdfFailed)),
       );
     }
   }
@@ -709,16 +710,16 @@ bool _matchesFilter(
   _CertificateFilter.completion => certificate.type == 'COMPLETION',
   _CertificateFilter.exam => certificate.type == 'EXAM',
 };
-String _filterName(_CertificateFilter filter) => switch (filter) {
-  _CertificateFilter.all => 'All types',
-  _CertificateFilter.attendance => 'Attendance',
-  _CertificateFilter.completion => 'Completion',
-  _CertificateFilter.exam => 'Exam',
+String _filterName(AppLocalizations l10n, _CertificateFilter filter) => switch (filter) {
+  _CertificateFilter.all => l10n.certAllTypes,
+  _CertificateFilter.attendance => l10n.certTypeAttendance,
+  _CertificateFilter.completion => l10n.certTypeCompletion,
+  _CertificateFilter.exam => l10n.certTypeExam,
 };
-String _typeLabel(String type) => switch (type) {
-  'ATTENDANCE' => 'Attendance',
-  'EXAM' => 'Exam',
-  _ => 'Course completion',
+String _typeLabel(AppLocalizations l10n, String type) => switch (type) {
+  'ATTENDANCE' => l10n.certTypeAttendance,
+  'EXAM' => l10n.certTypeExam,
+  _ => l10n.certTypeCourseCompletion,
 };
 String _number(double value) => value == value.roundToDouble()
     ? value.toInt().toString()

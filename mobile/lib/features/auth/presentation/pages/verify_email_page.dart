@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
@@ -33,7 +34,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     if (widget.token == null || widget.token!.isEmpty) {
       setState(() {
         _loading = false;
-        _error = 'This verification link is invalid or incomplete.';
+        _error = context.l10n.verifyInvalidLink;
       });
       return;
     }
@@ -46,9 +47,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
         setState(() {
           _expired = apiErrorCode(error) == 'VERIFICATION_LINK_EXPIRED';
           _error = _expired
-              ? 'Verification links are valid for 24 hours. We can send a '
-                    'new one to the same email address.'
-              : apiErrorMessage(error, fallback: 'Email verification failed.');
+              ? context.l10n.verifyExpiredBody
+              : apiErrorMessage(error, fallback: context.l10n.verifyFailed);
         });
       }
     } finally {
@@ -68,7 +68,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            apiErrorMessage(error, fallback: 'Could not send a new link.'),
+            apiErrorMessage(error, fallback: context.l10n.verifyNewLinkFailed),
           ),
         ),
       );
@@ -78,19 +78,18 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   }
 
   String get _title {
-    if (_loading) return 'Verifying your email...';
-    if (_resent) return 'New link sent';
-    if (_expired) return 'This link has expired';
-    return _error == null ? 'Email verified!' : 'Verification failed';
+    final l10n = context.l10n;
+    if (_loading) return l10n.verifyVerifying;
+    if (_resent) return l10n.verifyNewLinkTitle;
+    if (_expired) return l10n.verifyExpiredTitle;
+    return _error == null ? l10n.verifyVerifiedTitle : l10n.verifyFailedTitle;
   }
 
   String get _description {
-    if (_loading) return 'Please wait while we verify your email.';
-    if (_resent) {
-      return "We've sent a new verification link to your email. Open it "
-          'within 24 hours to finish setting up your account.';
-    }
-    return _error ?? 'Your email is verified. You can now log in.';
+    final l10n = context.l10n;
+    if (_loading) return l10n.verifyPleaseWait;
+    if (_resent) return l10n.verifyNewLinkBody;
+    return _error ?? l10n.verifyVerifiedBody;
   }
 
   @override
@@ -114,18 +113,18 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
           const SizedBox(height: 20),
           if (_expired && !_resent) ...[
             AuthPrimaryButton(
-              label: 'Send me a new link',
+              label: context.l10n.verifySendNewLink,
               onPressed: _resend,
               loading: _resending,
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => context.go('/login'),
-              child: const Text('Back to log in'),
+              child: Text(context.l10n.authBackToLogin),
             ),
           ] else
             AuthPrimaryButton(
-              label: 'Go to log in',
+              label: context.l10n.authGoToLogin,
               onPressed: () => context.go('/login'),
             ),
         ],

@@ -19,6 +19,7 @@ import '../../../exams/presentation/exams_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
+import '../../../../core/l10n/l10n.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -70,8 +71,8 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not reload. Check your connection.'),
+          SnackBar(
+            content: Text(context.l10n.lessonReloadFailed),
           ),
         );
       }
@@ -98,9 +99,9 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Progress could not be saved. It will retry next time.',
+              context.l10n.lessonProgressSaveFailed,
             ),
           ),
         );
@@ -128,7 +129,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     if (content.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Note cannot be empty.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.lessonNoteEmpty)));
       return;
     }
     setState(() {
@@ -144,8 +145,8 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not save note. Please try again.'),
+          SnackBar(
+            content: Text(context.l10n.lessonNoteSaveFailed),
           ),
         );
       }
@@ -158,8 +159,8 @@ class _LessonPageState extends ConsumerState<LessonPage> {
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
     if (profile == null) {
-      return const Scaffold(
-        body: Center(child: Text('Select a learner profile to continue.')),
+      return Scaffold(
+        body: Center(child: Text(context.l10n.lessonSelectProfile)),
       );
     }
     final profileId = profile.id;
@@ -185,19 +186,19 @@ class _LessonPageState extends ConsumerState<LessonPage> {
       ),
       error: (error, _) => Scaffold(
         backgroundColor: const Color(0xFFFBF9F4),
-        appBar: AppBar(title: const Text('Lesson')),
+        appBar: AppBar(title: Text(context.l10n.lessonTitle)),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Could not load course lessons.'),
+              Text(context.l10n.lessonLoadFailed),
               TextButton(
                 onPressed: () => ref.invalidate(
                   courseLearningContentProvider(
                     '${widget.courseId}|$profileId',
                   ),
                 ),
-                child: const Text('Try again'),
+                child: Text(context.l10n.commonTryAgain),
               ),
             ],
           ),
@@ -210,9 +211,9 @@ class _LessonPageState extends ConsumerState<LessonPage> {
         if (lesson == null) {
           return Scaffold(
             backgroundColor: const Color(0xFFFBF9F4),
-            appBar: AppBar(title: const Text('Lesson')),
-            body: const Center(
-              child: Text('This lesson is not part of the course.'),
+            appBar: AppBar(title: Text(context.l10n.lessonTitle)),
+            body: Center(
+              child: Text(context.l10n.lessonNotInCourse),
             ),
           );
         }
@@ -237,12 +238,12 @@ class _LessonPageState extends ConsumerState<LessonPage> {
             ),
             actions: [
               IconButton(
-                tooltip: 'Reload',
+                tooltip: context.l10n.lessonReload,
                 onPressed: () => _reload(profileId),
                 icon: const Icon(Icons.refresh, color: _navy),
               ),
               IconButton(
-                tooltip: 'Course content',
+                tooltip: context.l10n.lessonCourseContent,
                 onPressed: () =>
                     _showCourseContent(content, widget.courseId, lesson.id),
                 icon: const Icon(Icons.format_list_bulleted, color: _navy),
@@ -284,7 +285,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                             ? null
                             : () => _goLesson(widget.courseId, previous.id),
                         icon: const Icon(Icons.chevron_left),
-                        label: const Text('Previous'),
+                        label: Text(context.l10n.lessonPrevious),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -295,7 +296,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                             : () => _goLesson(widget.courseId, next.id),
                         iconAlignment: IconAlignment.end,
                         icon: const Icon(Icons.chevron_right),
-                        label: const Text('Next'),
+                        label: Text(context.l10n.lessonNext),
                         style: FilledButton.styleFrom(backgroundColor: _green),
                       ),
                     ),
@@ -315,7 +316,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   runSpacing: 6,
                   children: [
                     Text(
-                      'Course: ${content.courseTitle}',
+                      context.l10n.lessonCourseName(content.courseTitle),
                       style: const TextStyle(
                         color: Color(0xFF475569),
                         fontSize: 13,
@@ -336,13 +337,13 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                 Row(
                   children: [
                     _TabButton(
-                      text: 'Overview',
+                      text: context.l10n.lessonOverview,
                       selected: _tab == 'overview',
                       onTap: () => setState(() => _tab = 'overview'),
                     ),
                     const SizedBox(width: 22),
                     _TabButton(
-                      text: 'Notes',
+                      text: context.l10n.lessonNotes,
                       selected: _tab == 'notes',
                       onTap: () => setState(() => _tab = 'notes'),
                     ),
@@ -355,7 +356,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                     child: Text(
                       lesson.description?.trim().isNotEmpty == true
                           ? lesson.description!
-                          : 'Continue through this lesson, then use the course content button to move between topics.',
+                          : context.l10n.lessonDefaultOverview,
                       style: const TextStyle(
                         height: 1.6,
                         color: Color(0xFF475569),
@@ -373,7 +374,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                           minLines: 5,
                           maxLines: 10,
                           decoration: InputDecoration(
-                            hintText: 'Write your notes for this lesson...',
+                            hintText: context.l10n.lessonNotesHint,
                             alignLabelWithHint: true,
                             filled: true,
                             fillColor: Colors.white,
@@ -390,10 +391,10 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             if (_noteSaved)
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.only(right: 12),
                                 child: Text(
-                                  'Saved',
+                                  context.l10n.lessonSaved,
                                   style: TextStyle(color: _green),
                                 ),
                               ),
@@ -411,7 +412,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                                       ),
                                     )
                                   : const Icon(Icons.save_outlined, size: 18),
-                              label: const Text('Save note'),
+                              label: Text(context.l10n.lessonSaveNote),
                               style: FilledButton.styleFrom(
                                 backgroundColor: _navy,
                               ),
@@ -474,7 +475,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Course content',
+                        context.l10n.lessonCourseContent,
                         style: Theme.of(
                           context,
                         ).textTheme.titleLarge?.copyWith(color: _navy),
@@ -591,14 +592,14 @@ class _MediaPanel extends StatelessWidget {
                       loading: () => const Center(
                         child: CircularProgressIndicator(color: _navy),
                       ),
-                      error: (_, _) => const _MediaMessage(
+                      error: (_, _) => _MediaMessage(
                         icon: Icons.cloud_off_outlined,
-                        text: 'Document unavailable',
+                        text: context.l10n.lessonDocUnavailable,
                       ),
                       data: (media) => media.url.isEmpty
-                          ? const _MediaMessage(
+                          ? _MediaMessage(
                               icon: Icons.picture_as_pdf_outlined,
-                              text: 'Document unavailable',
+                              text: context.l10n.lessonDocUnavailable,
                             )
                           : _InlinePdfViewer(
                               url: media.url,
@@ -616,10 +617,10 @@ class _MediaPanel extends StatelessWidget {
                     color: const Color(0xFFFBF9F4),
                     child: Text(
                       documentCompleted
-                          ? 'Lesson marked complete'
+                          ? context.l10n.lessonMarkedComplete
                           : documentOpened
-                          ? 'Read-only preview • Keep reading to complete this lesson'
-                          : 'Read-only PDF preview',
+                          ? context.l10n.lessonReadOnlyKeepReading
+                          : context.l10n.lessonReadOnlyPdf,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 11,
@@ -639,27 +640,27 @@ class _MediaPanel extends StatelessWidget {
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: Colors.white),
                 ),
-                error: (_, _) => const _MediaMessage(
+                error: (_, _) => _MediaMessage(
                   icon: Icons.cloud_off_outlined,
-                  text: 'Lesson media unavailable',
+                  text: context.l10n.lessonMediaUnavailable,
                 ),
                 data: (media) {
                   if (media.url.isEmpty) {
-                    return const _MediaMessage(
+                    return _MediaMessage(
                       icon: Icons.hide_image_outlined,
-                      text: 'Lesson media unavailable',
+                      text: context.l10n.lessonMediaUnavailable,
                     );
                   }
                   if (media.contentType.toLowerCase() == 'link') {
                     return _MediaMessage(
                       icon: Icons.open_in_new,
-                      text: 'Open the lesson link',
+                      text: context.l10n.lessonOpenLinkTitle,
                       action: TextButton(
                         onPressed: () => launchUrl(
                           Uri.parse(media.url),
                           mode: LaunchMode.externalApplication,
                         ),
-                        child: const Text('Open link'),
+                        child: Text(context.l10n.lessonOpenLink),
                       ),
                     );
                   }
@@ -759,15 +760,15 @@ class _InlinePdfViewerState extends ConsumerState<_InlinePdfViewer> {
             children: [
               const Icon(Icons.picture_as_pdf_outlined, color: _navy, size: 38),
               const SizedBox(height: 10),
-              const Text(
-                'This PDF could not be displayed. Check your connection and try again.',
+              Text(
+                context.l10n.lessonPdfFailed,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: widget.onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reload PDF'),
+                label: Text(context.l10n.lessonReloadPdf),
               ),
             ],
           ),
@@ -831,7 +832,7 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       setState(() => _initialized = true);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Check your connection, then try again.');
+        setState(() => _error = context.l10n.videoCheckConnection);
       }
     }
   }
@@ -883,11 +884,11 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
     if (_error != null) {
       return _MediaMessage(
         icon: Icons.error_outline,
-        text: 'Video could not be played. ${_error!}',
+        text: context.l10n.videoCouldNotPlay(_error!),
         action: TextButton.icon(
           onPressed: widget.onRetry,
           icon: const Icon(Icons.refresh, color: Colors.white),
-          label: const Text('Try again', style: TextStyle(color: Colors.white)),
+          label: Text(context.l10n.commonTryAgain, style: const TextStyle(color: Colors.white)),
         ),
       );
     }
@@ -984,7 +985,7 @@ class _VideoLessonPlayerState extends State<_VideoLessonPlayer> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Playback was interrupted. Please try again.');
+        setState(() => _error = context.l10n.videoInterrupted);
       }
     }
   }
@@ -1040,14 +1041,14 @@ class _VideoActionBarState extends State<_VideoActionBar> {
     return Row(
       children: [
         IconButton(
-          tooltip: 'Back 10 seconds',
+          tooltip: context.l10n.videoBack10,
           visualDensity: VisualDensity.compact,
           color: Colors.white,
           onPressed: () => _seek(-10),
           icon: const Icon(Icons.replay_10),
         ),
         IconButton(
-          tooltip: 'Forward 10 seconds',
+          tooltip: context.l10n.videoForward10,
           visualDensity: VisualDensity.compact,
           color: Colors.white,
           onPressed: () => _seek(10),
@@ -1055,7 +1056,7 @@ class _VideoActionBarState extends State<_VideoActionBar> {
         ),
         const Spacer(),
         PopupMenuButton<double>(
-          tooltip: 'Playback speed',
+          tooltip: context.l10n.videoSpeed,
           initialValue: speed,
           onSelected: widget.controller.setPlaybackSpeed,
           color: const Color(0xFF12304E),
@@ -1064,7 +1065,7 @@ class _VideoActionBarState extends State<_VideoActionBar> {
               PopupMenuItem(
                 value: rate,
                 child: Text(
-                  rate == 1 ? 'Normal' : '${rate}x',
+                  rate == 1 ? context.l10n.videoNormal : '${rate}x',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -1083,7 +1084,7 @@ class _VideoActionBarState extends State<_VideoActionBar> {
         ),
         if (widget.onFullscreen != null)
           IconButton(
-            tooltip: 'Full screen',
+            tooltip: context.l10n.videoFullScreen,
             visualDensity: VisualDensity.compact,
             color: Colors.white,
             onPressed: widget.onFullscreen,
@@ -1132,7 +1133,7 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
           ),
         ),
         IconButton.filled(
-          tooltip: widget.controller.value.isPlaying ? 'Pause' : 'Play',
+          tooltip: widget.controller.value.isPlaying ? context.l10n.videoPause : context.l10n.videoPlay,
           onPressed: () => widget.controller.value.isPlaying
               ? widget.controller.pause()
               : widget.controller.play(),
@@ -1149,7 +1150,7 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
           top: 8,
           left: 8,
           child: IconButton(
-            tooltip: 'Exit full screen',
+            tooltip: context.l10n.videoExitFullScreen,
             color: Colors.white,
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.fullscreen_exit),
@@ -1297,7 +1298,7 @@ class _ExamEligibilityCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Course Exam',
+                  context.l10n.lessonCourseExam,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontFamily: 'serif',
                     color: _ink,
@@ -1310,16 +1311,16 @@ class _ExamEligibilityCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             unlocked
-                ? 'You have completed 90% of the course — you can now sit the exam.'
-                : 'Complete 90% of the course to unlock the exam. You are at $percent%.',
+                ? context.l10n.lessonExamUnlocked
+                : context.l10n.lessonExamLocked(percent),
             style: const TextStyle(color: Color(0xFF475569), height: 1.4),
           ),
           const SizedBox(height: 18),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Course progress',
+                  context.l10n.lessonCourseProgress,
                   style: TextStyle(color: _muted, fontSize: 12),
                 ),
               ),
@@ -1341,15 +1342,15 @@ class _ExamEligibilityCard extends StatelessWidget {
               minHeight: 8,
               backgroundColor: const Color(0xFFF1F5F9),
               color: unlocked ? _green : _amber,
-              semanticsLabel: 'Course progress',
+              semanticsLabel: context.l10n.lessonCourseProgress,
               semanticsValue: '$percent%',
             ),
           ),
           const SizedBox(height: 8),
           Text(
             unlocked
-                ? 'Exam unlocked — good luck!'
-                : 'The exam unlocks automatically once you reach 90% course completion.',
+                ? context.l10n.lessonExamUnlockedShort
+                : context.l10n.lessonExamUnlockHint,
             style: const TextStyle(color: _muted, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 16),
@@ -1359,13 +1360,13 @@ class _ExamEligibilityCard extends StatelessWidget {
                 ? FilledButton.icon(
                     onPressed: onTakeExam,
                     icon: const Icon(Icons.description_outlined, size: 18),
-                    label: const Text('Take Exam'),
+                    label: Text(context.l10n.lessonTakeExam),
                     style: FilledButton.styleFrom(backgroundColor: _green),
                   )
                 : FilledButton.icon(
                     onPressed: null,
                     icon: const Icon(Icons.lock_outline, size: 18),
-                    label: const Text('Locked'),
+                    label: Text(context.l10n.lessonLocked),
                     style: FilledButton.styleFrom(
                       disabledBackgroundColor: const Color(0xFFF3F4F6),
                       disabledForegroundColor: const Color(0xFF94A3B8),
@@ -1430,7 +1431,7 @@ class _CourseCertificateSectionState
             apiErrorMessage(
               error,
               fallback:
-                  'We could not generate your certificate. Please try again.',
+                  context.l10n.lessonCertificateFailed,
             ),
           ),
         ),
@@ -1467,8 +1468,8 @@ class _CourseCertificateSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Course Certificate',
+        Text(
+          context.l10n.lessonCourseCertificate,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
@@ -1478,8 +1479,8 @@ class _CourseCertificateSectionState
         const SizedBox(height: 4),
         Text(
           hasExamAttempt
-              ? 'Generate a certificate showing your course progress and last exam score. This can only be done once.'
-              : 'Take the exam at least once to unlock your certificate.',
+              ? context.l10n.lessonCertificateHint
+              : context.l10n.lessonCertificateLocked,
           style: const TextStyle(color: _muted, fontSize: 12, height: 1.4),
         ),
         const SizedBox(height: 12),
@@ -1498,7 +1499,7 @@ class _CourseCertificateSectionState
                         : Icons.lock_outline,
                     size: 18,
                   ),
-            label: Text(_issuing ? 'Generating…' : 'Generate Certificate'),
+            label: Text(_issuing ? context.l10n.lessonGenerating : context.l10n.lessonGenerateCertificate),
             style: OutlinedButton.styleFrom(
               foregroundColor: _navy,
               side: BorderSide(
@@ -1517,7 +1518,7 @@ class _CourseCertificateSectionState
     final scoreText = details == null
         ? '—'
         : score == null
-        ? 'Pending'
+        ? context.l10n.lessonPending
         : '${_formatScore(score)}/${details.totalMarks}';
 
     Widget stat(String label, String value) => Expanded(
@@ -1564,8 +1565,8 @@ class _CourseCertificateSectionState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Certificate Generated',
+                    Text(
+                      context.l10n.lessonCertificateGenerated,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -1574,7 +1575,7 @@ class _CourseCertificateSectionState
                     ),
                     if (certificate.issuedAt != null)
                       Text(
-                        'Issued on ${DateFormat('MMM d, y').format(certificate.issuedAt!.toLocal())}',
+                        context.l10n.lessonIssuedOn(DateFormat.yMMMd().format(certificate.issuedAt!.toLocal())),
                         style: const TextStyle(fontSize: 12, color: _muted),
                       ),
                   ],
@@ -1585,23 +1586,23 @@ class _CourseCertificateSectionState
           const SizedBox(height: 14),
           Row(
             children: [
-              stat('Course progress', '${details?.progress ?? 0}%'),
+              stat(context.l10n.lessonCourseProgress, '${details?.progress ?? 0}%'),
               const SizedBox(width: 12),
-              stat('Last exam score', scoreText),
+              stat(context.l10n.lessonLastExamScore, scoreText),
             ],
           ),
           if (details?.examTitle?.isNotEmpty == true) ...[
             const SizedBox(height: 10),
             Text(
-              'Latest attempt: ${details!.examTitle}'
-              '${attempt != null ? ' · Attempt #$attempt' : ''}',
+              context.l10n.lessonLatestAttempt(details!.examTitle!) +
+              (attempt != null ? ' · ${context.l10n.lessonAttemptNumber(attempt)}' : ''),
               style: const TextStyle(fontSize: 12, color: _muted),
             ),
           ],
           const SizedBox(height: 12),
           Text.rich(
             TextSpan(
-              text: 'Verification code: ',
+              text: '${context.l10n.lessonVerificationCode} ',
               children: [
                 TextSpan(
                   text: certificate.verificationCode,
@@ -1622,7 +1623,7 @@ class _CourseCertificateSectionState
             child: FilledButton.icon(
               onPressed: () => printCertificatePdf(context, certificate),
               icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-              label: const Text('Download PDF'),
+              label: Text(context.l10n.lessonDownloadPdf),
               style: FilledButton.styleFrom(backgroundColor: _navy),
             ),
           ),
