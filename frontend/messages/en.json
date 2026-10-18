@@ -1043,6 +1043,8 @@
   },
   "courses": {
     "title": "Courses",
+    "forLearner": "Showing courses suited to {name} (age {age}).",
+    "bandNotForAge": "Not for {name}'s age",
     "search": "Search courses, instructors, topics...",
     "count": "{count, plural, one {# course} other {# courses}}",
     "itemLabel": "courses",
@@ -1069,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "Failed to load course",
+    "ageNotice": {
+      "title": "This course isn't for {name}'s age",
+      "body": "It's for learners aged {range}. {name} is {age}.",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "See courses for {name}"
+    },
     "backToCourses": "Back to courses",
     "breadcrumbCourses": "Courses",
     "general": "General",

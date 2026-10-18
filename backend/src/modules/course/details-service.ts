@@ -1,10 +1,33 @@
 import { prisma } from "#/lib/prisma";
 import { NotFoundError } from "#/shared/errors";
-import { checkCourseAge } from "#/shared/course-eligibility";
+import { calculateAge, checkCourseAge } from "#/shared/course-eligibility";
 import { seatService } from "#/modules/seat/service";
 
 export class CourseDetailsService {
-  async getCourseDetails(courseId: string, learnerProfileId?: string) {
+  /**
+   * Public course page. With one of the signed-in account's own learner
+   * profiles it also returns that learner's eligibility, enrolment and
+   * progress, and related courses are limited to the learner's age.
+   */
+  async getCourseDetails(
+    courseId: string,
+    requestedProfileId?: string,
+    accountId?: string,
+  ) {
+    // Only trust a profile id that belongs to the caller: otherwise anyone
+    // could read another child's age, subscription and progress.
+    const learnerProfile =
+      accountId && requestedProfileId
+        ? await prisma.learnerProfile.findFirst({
+            where: { id: requestedProfileId, accountId, deletedAt: null },
+            select: { id: true, dateOfBirth: true },
+          })
+        : null;
+    const learnerProfileId = learnerProfile?.id;
+    const learnerAge = learnerProfile
+      ? calculateAge(learnerProfile.dateOfBirth)
+      : null;
+
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -154,6 +177,20 @@ export class CourseDetailsService {
         id: { not: courseId },
         status: "PUBLISHED",
         OR: [{ categoryId: course.categoryId }, { level: course.level }],
+        // Same age rule as the course list.
+        ...(learnerAge !== null
+          ? {
+              minimumAge: { lte: learnerAge },
+              AND: [
+                {
+                  OR: [
+                    { maximumAge: null },
+                    { maximumAge: { gte: learnerAge } },
+                  ],
+                },
+              ],
+            }
+          : {}),
       },
       include: {
         instructor: {
@@ -221,21 +258,15 @@ export class CourseDetailsService {
       canOverrideAge: boolean;
     } | null = null;
 
-    if (learnerProfileId) {
-      const profile = await prisma.learnerProfile.findUnique({
-        where: { id: learnerProfileId },
-        select: { dateOfBirth: true },
-      });
-      if (profile) {
-        const ageCheck = checkCourseAge(profile.dateOfBirth, course);
-        enrolmentEligibility = {
-          isSubscribed: await seatService.isProfileSubscribed(learnerProfileId),
-          age: ageCheck.age,
-          ageEligible: ageCheck.eligible,
-          ageMessage: ageCheck.eligible ? null : ageCheck.message,
-          canOverrideAge: !ageCheck.eligible && ageCheck.canOverride,
-        };
-      }
+    if (learnerProfile) {
+      const ageCheck = checkCourseAge(learnerProfile.dateOfBirth, course);
+      enrolmentEligibility = {
+        isSubscribed: await seatService.isProfileSubscribed(learnerProfile.id),
+        age: ageCheck.age,
+        ageEligible: ageCheck.eligible,
+        ageMessage: ageCheck.eligible ? null : ageCheck.message,
+        canOverrideAge: !ageCheck.eligible && ageCheck.canOverride,
+      };
     }
 
     if (learnerProfileId) {

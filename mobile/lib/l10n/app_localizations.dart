@@ -1004,6 +1004,36 @@ abstract class AppLocalizations {
   /// **'Courses'**
   String get coursesTitle;
 
+  /// No description provided for @coursesForLearner.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing courses suited to {name} (age {age}).'**
+  String coursesForLearner(String name, int age);
+
+  /// No description provided for @detailAgeNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This course isn\'t for {name}\'s age'**
+  String detailAgeNoticeTitle(String name);
+
+  /// No description provided for @detailAgeNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s for learners aged {range}. {name} is {age}.'**
+  String detailAgeNoticeBody(String range, String name, int age);
+
+  /// No description provided for @detailAgeNoticeBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'See courses for {name}'**
+  String detailAgeNoticeBrowse(String name);
+
+  /// No description provided for @coursesBandNotForAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Not for {name}\'s age'**
+  String coursesBandNotForAge(String name);
+
   /// No description provided for @coursesSearch.
   ///
   /// In en, this message translates to:

@@ -1043,6 +1043,8 @@
   },
   "courses": {
     "title": "کورسز",
+    "forLearner": "{name} کے لیے موزوں کورسز دکھائے جا رہے ہیں (عمر {age})۔",
+    "bandNotForAge": "{name} کی عمر کے لیے نہیں",
     "search": "کورسز، اساتذہ، موضوعات تلاش کریں...",
     "count": "{count} کورسز",
     "itemLabel": "کورسز",
@@ -1069,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "کورس لوڈ نہیں ہو سکا",
+    "ageNotice": {
+      "title": "یہ کورس {name} کی عمر کے لیے نہیں ہے",
+      "body": "یہ {range} سال کے طلبہ کے لیے ہے۔ {name} کی عمر {age} ہے۔",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "{name} کے لیے کورسز دیکھیں"
+    },
     "backToCourses": "کورسز پر واپس جائیں",
     "breadcrumbCourses": "کورسز",
     "general": "عام",

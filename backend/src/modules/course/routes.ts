@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { courseController } from "#/modules/course/controller";
 import { authenticate } from "#/middleware/authenticate";
+import { optionalAuthenticate } from "#/middleware/optional-authenticate";
 import { authorize } from "#/middleware/authorize";
 import { validate } from "#/middleware/validate";
 import {
@@ -70,7 +71,8 @@ const router: Router = Router();
  *       201:
  *         description: Course created
  */
-router.get("/", courseController.list);
+// Public. Signed-in learners get courses for their age only (see list()).
+router.get("/", optionalAuthenticate, courseController.list);
 router.post(
   "/",
   authenticate,
@@ -224,6 +226,11 @@ router.post(
  *       200:
  *         description: Full course details for course page
  */
-router.get("/:id/details", courseDetailsController.getCourseDetails);
+// Public. A signed-in learner also gets their eligibility and progress.
+router.get(
+  "/:id/details",
+  optionalAuthenticate,
+  courseDetailsController.getCourseDetails,
+);
 
 export { router as courseRoutes };

@@ -1043,6 +1043,8 @@
   },
   "courses": {
     "title": "الدورات",
+    "forLearner": "يتم عرض الدورات المناسبة لـ {name} (العمر {age}).",
+    "bandNotForAge": "غير مناسب لعمر {name}",
     "search": "ابحث عن دورات أو معلمين أو مواضيع...",
     "count": "{count} دورة",
     "itemLabel": "دورة",
@@ -1069,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "تعذّر تحميل الدورة",
+    "ageNotice": {
+      "title": "هذه الدورة ليست مناسبة لعمر {name}",
+      "body": "إنها للمتعلمين بعمر {range}. عمر {name} هو {age}.",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "عرض الدورات المناسبة لـ {name}"
+    },
     "backToCourses": "العودة إلى الدورات",
     "breadcrumbCourses": "الدورات",
     "general": "عام",

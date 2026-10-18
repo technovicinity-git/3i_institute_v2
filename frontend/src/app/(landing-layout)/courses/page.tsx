@@ -16,6 +16,8 @@ import {
 import { useCourses } from "@/hooks/use-courses";
 import { useCategories } from "@/hooks/use-categories";
 import { useProfileStore } from "@/stores/profile-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { calculateAge } from "@/lib/date-utils";
 import {
   useWishlistToggle,
 } from "@/hooks/use-wishlist";
@@ -27,6 +29,21 @@ import { localeNames, locales } from "@/i18n/config";
 
 // Filter values sent to the API; "All ages" is the backend's own band name.
 const AGE_BANDS = ["5-8", "9-12", "13-15", "16-17", "18+", "All ages"];
+
+// Lowest minimum age in each band (the API matches bands on a course's
+// minimum age). A band whose lowest age is above the learner's age can't
+// hold a course they're shown, so it's greyed out for them.
+const AGE_BAND_MIN: Record<string, number> = {
+  "5-8": 5,
+  "9-12": 9,
+  "13-15": 13,
+  "16-17": 16,
+  "18+": 18,
+  "All ages": 0,
+};
+
+const bandFitsAge = (band: string, age: number | null) =>
+  age === null || (AGE_BAND_MIN[band] ?? 0) <= age;
 
 const SORT_OPTIONS: SortOption[] = ["popularity", "newest", "rating", "title"];
 
@@ -197,6 +214,14 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
   const { activeProfile } = useProfileStore();
+  const signedIn = !!useAuthStore((state) => state.user);
+  // The API lists only courses for this learner's age; say so, so a parent
+  // knows why some courses aren't shown.
+  const ageFiltered = signedIn && !!activeProfile;
+  const learnerAge =
+    ageFiltered && activeProfile
+      ? calculateAge(activeProfile.dateOfBirth)
+      : null;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -235,6 +260,11 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
     sortBy,
   ]);
 
+  // A band picked before switching to a younger learner is ignored.
+  const activeAgeBands = selectedAgeBands.filter((band) =>
+    bandFitsAge(band, learnerAge),
+  );
+
   const filters: CourseFilters = {
     page: currentPage,
     limit: 12,
@@ -244,8 +274,7 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
     format: selectedTypes.length > 0 ? selectedTypes.join(",") : undefined,
     language:
       selectedLanguages.length > 0 ? selectedLanguages.join(",") : undefined,
-    ageBand:
-      selectedAgeBands.length > 0 ? selectedAgeBands.join(",") : undefined,
+    ageBand: activeAgeBands.length > 0 ? activeAgeBands.join(",") : undefined,
     sortBy,
     ...(activeProfile?.id ? { learnerProfileId: activeProfile.id } : {}),
   };
@@ -282,6 +311,14 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
         >
           {t("title")}
         </h1>
+        {ageFiltered && activeProfile && (
+          <p className="-mt-4 mb-6 text-sm text-[#475569]">
+            {t("forLearner", {
+              name: activeProfile.displayName,
+              age: calculateAge(activeProfile.dateOfBirth),
+            })}
+          </p>
+        )}
 
         {/* Search */}
         <div className="flex items-center gap-3 bg-white border border-[#E3E8EF] rounded-lg px-4 py-3.5 mb-6">
@@ -364,6 +401,11 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
               selectedLanguages={selectedLanguages}
               setSelectedLanguages={setSelectedLanguages}
               selectedAgeBands={selectedAgeBands}
+              learner={
+                learnerAge !== null && activeProfile
+                  ? { name: activeProfile.displayName, age: learnerAge }
+                  : null
+              }
               setSelectedAgeBands={setSelectedAgeBands}
               toggleFilter={toggleFilter}
               clearAllFilters={clearAllFilters}
@@ -388,6 +430,11 @@ function CoursesContent({ initialCategory }: { initialCategory: string }) {
                   selectedLanguages={selectedLanguages}
                   setSelectedLanguages={setSelectedLanguages}
                   selectedAgeBands={selectedAgeBands}
+                  learner={
+                    learnerAge !== null && activeProfile
+                      ? { name: activeProfile.displayName, age: learnerAge }
+                      : null
+                  }
                   setSelectedAgeBands={setSelectedAgeBands}
                   toggleFilter={toggleFilter}
                   clearAllFilters={clearAllFilters}
@@ -454,6 +501,8 @@ interface FilterPanelProps {
   selectedLanguages: string[];
   setSelectedLanguages: (v: string[]) => void;
   selectedAgeBands: string[];
+  /** The active learner, when the list is limited to their age. */
+  learner: { name: string; age: number } | null;
   setSelectedAgeBands: (v: string[]) => void;
   toggleFilter: (
     arr: string[],
@@ -475,6 +524,7 @@ function FilterPanel({
   setSelectedLanguages,
   selectedAgeBands,
   setSelectedAgeBands,
+  learner,
   toggleFilter,
   clearAllFilters,
   onClose,
@@ -588,21 +638,32 @@ function FilterPanel({
             {t("ageBand")}
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {AGE_BANDS.map((age) => (
-              <button
-                key={age}
-                onClick={() =>
-                  toggleFilter(selectedAgeBands, setSelectedAgeBands, age)
-                }
-                className={`px-2.5 py-1 text-[13px] font-medium rounded-full border transition-colors ${
-                  selectedAgeBands.includes(age)
-                    ? "bg-[#0C1F33] text-white border-[#0C1F33]"
-                    : "text-[#0C1F33] bg-white border-[#E3E8EF] hover:bg-[#F5F0E8]"
-                }`}
-              >
-                {ageBandLabel(age)}
-              </button>
-            ))}
+            {AGE_BANDS.map((age) => {
+              const fits = bandFitsAge(age, learner?.age ?? null);
+              return (
+                <button
+                  key={age}
+                  onClick={() =>
+                    toggleFilter(selectedAgeBands, setSelectedAgeBands, age)
+                  }
+                  disabled={!fits}
+                  title={
+                    fits || !learner
+                      ? undefined
+                      : t("bandNotForAge", { name: learner.name })
+                  }
+                  className={`px-2.5 py-1 text-[13px] font-medium rounded-full border transition-colors ${
+                    !fits
+                      ? "text-[#94A3B8] bg-[#F1F5F9] border-[#E3E8EF] line-through cursor-not-allowed"
+                      : selectedAgeBands.includes(age)
+                        ? "bg-[#0C1F33] text-white border-[#0C1F33]"
+                        : "text-[#0C1F33] bg-white border-[#E3E8EF] hover:bg-[#F5F0E8]"
+                  }`}
+                >
+                  {ageBandLabel(age)}
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -14,6 +14,7 @@ import { notificationEvents } from "#/modules/notification/events";
 import { emailLinks } from "#/modules/email/links";
 import { emailService } from "#/modules/email/service";
 import { canManageCourse } from "#/shared/course-access";
+import { calculateAge } from "#/shared/course-eligibility";
 
 export class CourseService {
   async create(instructorId: string, input: CreateCourseInput) {
@@ -159,11 +160,32 @@ export class CourseService {
     return course;
   }
 
+  /**
+   * Published courses for the public catalogue. When the signed-in account
+   * names one of its own learner profiles, only courses whose age range
+   * includes that learner are listed (a 13-year-old doesn't see a 14+
+   * course), and enrolled / wishlisted flags are filled in. Visitors,
+   * instructors and admins see every course.
+   */
   async list(
     query: ListCoursesQuery,
-    _accountId?: string,
-    learnerProfileId?: string,
+    accountId?: string,
+    requestedProfileId?: string,
   ) {
+    // Only trust a profile id that belongs to the caller: otherwise anyone
+    // could read another child's age band, enrolments or wishlist.
+    const learnerProfile =
+      accountId && requestedProfileId
+        ? await prisma.learnerProfile.findFirst({
+            where: { id: requestedProfileId, accountId, deletedAt: null },
+            select: { id: true, dateOfBirth: true },
+          })
+        : null;
+    const learnerProfileId = learnerProfile?.id;
+    const learnerAge = learnerProfile
+      ? calculateAge(learnerProfile.dateOfBirth)
+      : null;
+
     const {
       page,
       limit,
@@ -275,6 +297,19 @@ export class CourseService {
             ]
           : []),
         ...(ageConditions.length > 0 ? [{ OR: ageConditions }] : []),
+        // Same range as enrolment's age check (checkCourseAge). Courses a
+        // guardian could unlock with an age override are hidden too.
+        ...(learnerAge !== null
+          ? [
+              { minimumAge: { lte: learnerAge } },
+              {
+                OR: [
+                  { maximumAge: null },
+                  { maximumAge: { gte: learnerAge } },
+                ],
+              },
+            ]
+          : []),
       ],
     };
 

@@ -497,6 +497,31 @@ class AppLocalizationsBn extends AppLocalizations {
   String get coursesTitle => 'কোর্স';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '$name-এর জন্য উপযুক্ত কোর্স দেখানো হচ্ছে (বয়স $age)।';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return 'এই কোর্সটি $name-এর বয়সের জন্য নয়';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return 'এটি $range বছর বয়সীদের জন্য। $name-এর বয়স $age।';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '$name-এর জন্য কোর্স দেখুন';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '$name-এর বয়সের জন্য নয়';
+  }
+
+  @override
   String get coursesSearch => 'কোর্স, শিক্ষক বা বিষয় খুঁজুন...';
 
   @override

@@ -505,6 +505,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coursesTitle => 'Courses';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return 'Showing courses suited to $name (age $age).';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return 'This course isn\'t for $name\'s age';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return 'It\'s for learners aged $range. $name is $age.';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return 'See courses for $name';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return 'Not for $name\'s age';
+  }
+
+  @override
   String get coursesSearch => 'Search courses, instructors, topics...';
 
   @override

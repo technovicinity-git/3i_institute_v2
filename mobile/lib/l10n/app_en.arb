@@ -233,6 +233,21 @@
   "navCertificates": "Certificates",
   "navWishlist": "Wishlist",
   "coursesTitle": "Courses",
+  "coursesForLearner": "Showing courses suited to {name} (age {age}).",
+  "@coursesForLearner": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "age": {"type": "int"}
+    }
+  },
+  "detailAgeNoticeTitle": "This course isn't for {name}'s age",
+  "@detailAgeNoticeTitle": {"placeholders": {"name": {"type": "String"}}},
+  "detailAgeNoticeBody": "It's for learners aged {range}. {name} is {age}.",
+  "@detailAgeNoticeBody": {"placeholders": {"range": {"type": "String"}, "name": {"type": "String"}, "age": {"type": "int"}}},
+  "detailAgeNoticeBrowse": "See courses for {name}",
+  "@detailAgeNoticeBrowse": {"placeholders": {"name": {"type": "String"}}},
+  "coursesBandNotForAge": "Not for {name}'s age",
+  "@coursesBandNotForAge": {"placeholders": {"name": {"type": "String"}}},
   "coursesSearch": "Search courses, instructors, topics...",
   "coursesClearSearch": "Clear search",
   "coursesLoading": "Loading courses...",

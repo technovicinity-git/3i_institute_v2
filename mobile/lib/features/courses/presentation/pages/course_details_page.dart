@@ -51,6 +51,7 @@ class _CourseDetailBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _AgeNotice(course: course),
                       _EnrollmentCard(course: course, detailKey: detailKey),
                       if (course.learningOutcomes.isNotEmpty) ...[
                         const SizedBox(height: 28),
@@ -119,6 +120,69 @@ class _CourseDetailBody extends StatelessWidget {
           const SliverToBoxAdapter(child: LandingFooter()),
         ],
       );
+}
+
+/// Shown when a course page is opened directly (e.g. from a link) and the
+/// active learner is outside its age range. The course list already hides
+/// these courses for them.
+class _AgeNotice extends ConsumerWidget {
+  const _AgeNotice({required this.course});
+  final CourseDetails course;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(activeLearnerProfileProvider);
+    final eligibility = course.eligibility;
+    if (profile == null || eligibility == null || eligibility.ageEligible || course.enrolled) {
+      return const SizedBox.shrink();
+    }
+    final max = course.maximumAge;
+    final range = max == null ? '${course.minimumAge}+' : '${course.minimumAge}–$max';
+    final l10n = context.l10n;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFEA580C), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.detailAgeNoticeTitle(profile.displayName),
+                  style: const TextStyle(color: Color(0xFF7C2D12), fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.detailAgeNoticeBody(range, profile.displayName, eligibility.age),
+            style: const TextStyle(color: Color(0xFF9A3412), fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () => context.go('/courses'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF7C2D12),
+              side: const BorderSide(color: Color(0xFFFED7AA)),
+              backgroundColor: Colors.white,
+            ),
+            child: Text(l10n.detailAgeNoticeBrowse(profile.displayName)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CourseHero extends StatelessWidget {

@@ -501,6 +501,31 @@ class AppLocalizationsUr extends AppLocalizations {
   String get coursesTitle => '⁧کورسز⁩';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '⁧$name کے لیے موزوں کورسز دکھائے جا رہے ہیں (عمر $age)۔⁩';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return '⁧یہ کورس $name کی عمر کے لیے نہیں ہے⁩';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return '⁧یہ $range سال کے طلبہ کے لیے ہے۔ $name کی عمر $age ہے۔⁩';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '⁧$name کے لیے کورسز دیکھیں⁩';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '⁧$name کی عمر کے لیے نہیں⁩';
+  }
+
+  @override
   String get coursesSearch => '⁧کورسز، اساتذہ، موضوعات تلاش کریں...⁩';
 
   @override

@@ -15,6 +15,7 @@ export class CourseDetailsController {
       const data = await courseDetailsService.getCourseDetails(
         courseId,
         learnerProfileId,
+        req.user?.sub,
       );
       sendSuccess(res, data, 200);
     } catch (error) {

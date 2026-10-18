@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Star } from "lucide-react";
 import { useCourses } from "@/hooks/use-courses";
+import { useProfileStore } from "@/stores/profile-store";
 import { useTranslations } from "next-intl";
 import { levelKey } from "@/lib/course-level";
 
@@ -13,10 +14,13 @@ export default function PopularCourses() {
   const tLevel = useTranslations("courseLevel");
   const tCommon = useTranslations("common");
   const tDetails = useTranslations("courseDetails");
+  const { activeProfile } = useProfileStore();
   const { data, isLoading } = useCourses({
     page: 1,
     limit: 4,
     sortBy: "popularity",
+    // Learners only see courses for their age.
+    ...(activeProfile?.id ? { learnerProfileId: activeProfile.id } : {}),
   });
   const courses = data?.courses ?? [];
 
