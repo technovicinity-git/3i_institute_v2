@@ -1767,6 +1767,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get resultHistory => '⁧سجل المحاولات⁩';
 
   @override
+  String resultShowHistory(int count) {
+    return '⁧عرض سجل المحاولات ($count)⁩';
+  }
+
+  @override
+  String get resultHideHistory => '⁧إخفاء سجل المحاولات⁩';
+
+  @override
   String get resultReview => '⁧مراجعة الأسئلة⁩';
 
   @override
@@ -1789,6 +1797,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String resultPassedEarlier(int number) {
     return '⁧لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #$number.⁩';
   }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return '⁧ملخص المحاولة #$number⁩';
+  }
+
+  @override
+  String get resultTotalQuestions => '⁧الأسئلة⁩';
+
+  @override
+  String get resultAnswered => '⁧تمت الإجابة⁩';
+
+  @override
+  String get resultUnanswered => '⁧بلا إجابة⁩';
+
+  @override
+  String get resultMarksDeducted => '⁧درجات سالبة⁩';
 
   @override
   String get resultRetake => '⁧إعادة الاختبار⁩';

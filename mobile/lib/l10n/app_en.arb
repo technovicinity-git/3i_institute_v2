@@ -1047,6 +1047,13 @@
     }
   },
   "resultHistory": "Attempt history",
+  "resultShowHistory": "Show attempt history ({count})",
+  "@resultShowHistory": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "resultHideHistory": "Hide attempt history",
   "resultReview": "Question review",
   "resultReviewHint": "Review your answers and the correct answers.",
   "resultNoAttempts": "No attempts found.",
@@ -1072,6 +1079,16 @@
       "number": {"type": "int"}
     }
   },
+  "resultSummaryTitle": "Attempt #{number} summary",
+  "@resultSummaryTitle": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "resultTotalQuestions": "Questions",
+  "resultAnswered": "Answered",
+  "resultUnanswered": "Unanswered",
+  "resultMarksDeducted": "Negative marks",
   "resultRetake": "Retake exam",
   "resultAwarded": "{awarded} of {total} awarded",
   "@resultAwarded": {

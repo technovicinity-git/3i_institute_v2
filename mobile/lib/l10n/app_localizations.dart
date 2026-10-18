@@ -3260,6 +3260,18 @@ abstract class AppLocalizations {
   /// **'Attempt history'**
   String get resultHistory;
 
+  /// No description provided for @resultShowHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show attempt history ({count})'**
+  String resultShowHistory(int count);
+
+  /// No description provided for @resultHideHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide attempt history'**
+  String get resultHideHistory;
+
   /// No description provided for @resultReview.
   ///
   /// In en, this message translates to:
@@ -3295,6 +3307,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You didn\'t pass this attempt, but you already passed in attempt #{number}.'**
   String resultPassedEarlier(int number);
+
+  /// No description provided for @resultSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt #{number} summary'**
+  String resultSummaryTitle(int number);
+
+  /// No description provided for @resultTotalQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get resultTotalQuestions;
+
+  /// No description provided for @resultAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Answered'**
+  String get resultAnswered;
+
+  /// No description provided for @resultUnanswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Unanswered'**
+  String get resultUnanswered;
+
+  /// No description provided for @resultMarksDeducted.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative marks'**
+  String get resultMarksDeducted;
 
   /// No description provided for @resultRetake.
   ///

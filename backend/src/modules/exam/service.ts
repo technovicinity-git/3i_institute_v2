@@ -49,6 +49,30 @@ function isAnswered(answer: unknown): boolean {
   return true;
 }
 
+// Whether an auto-graded answer is right. Same rules as the scoring in
+// submitExam: exact match, or for multi_select the same options in any order.
+function isCorrectAnswer(
+  type: string,
+  correctAnswer: unknown,
+  answer: unknown,
+): boolean {
+  if (type === "multi_select") {
+    const correct = (correctAnswer as string[] | null) ?? [];
+    const given = Array.isArray(answer) ? answer : [answer];
+    return (
+      correct.length === given.length && correct.every((c) => given.includes(c))
+    );
+  }
+  return answer === correctAnswer;
+}
+
+type QuestionStatus =
+  | "correct"
+  | "partial"
+  | "incorrect"
+  | "unanswered"
+  | "pending";
+
 function assertNegativeMarksWithinMarks(
   negativeMarks: number | undefined,
   marks: number | undefined,
@@ -1302,6 +1326,7 @@ export class ExamService {
         correctAnswer: true,
         suggestedAnswer: true,
         marks: true,
+        negativeMarks: true,
         explanation: true,
       },
     });
@@ -1309,7 +1334,7 @@ export class ExamService {
     // Convert learner answers into an easy lookup object
     const answers = latestAttempt?.answers as Record<string, unknown> | null;
 
-    const summary = (a: (typeof attempts)[number]) => ({
+    const attemptSummary = (a: (typeof attempts)[number]) => ({
       id: a.id,
       examId: a.examId,
       examTitle: exam.title,
@@ -1340,6 +1365,33 @@ export class ExamService {
 
         // Marks awarded for manually graded questions
         const marksAwarded = answers?.[`${question.id}_marks`] ?? null;
+        const awarded = typeof marksAwarded === "number" ? marksAwarded : null;
+
+        // Worked out here, not in the apps, so web and mobile agree with the
+        // score (e.g. multi_select options picked in a different order).
+        let status: QuestionStatus;
+        let marksEarned: number | null;
+        if (!isAnswered(myAnswer)) {
+          status = "unanswered";
+          marksEarned = awarded ?? 0;
+        } else if (question.type === "short_answer" || question.type === "essay") {
+          status =
+            awarded === null
+              ? "pending"
+              : awarded >= marks
+                ? "correct"
+                : awarded > 0
+                  ? "partial"
+                  : "incorrect";
+          marksEarned = awarded;
+        } else if (isCorrectAnswer(question.type, question.correctAnswer, myAnswer)) {
+          status = "correct";
+          marksEarned = marks;
+        } else {
+          status = "incorrect";
+          // Negative marking only hits answered-but-wrong questions.
+          marksEarned = -question.negativeMarks;
+        }
 
         return {
           questionId: question.id,
@@ -1358,12 +1410,40 @@ export class ExamService {
 
           marks,
           marksAwarded,
+          status,
+          // Negative when a wrong answer was penalised; null until graded.
+          marksEarned,
           attemptNumber: latestAttempt?.attemptNumber ?? null,
 
           explanation: question.explanation,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    // At-a-glance counts for the latest attempt (the one questionResults
+    // shows). answered = correct + partial + incorrect + pending.
+    const count = (status: QuestionStatus) =>
+      questionResults.filter((q) => q.status === status).length;
+    const summary = latestAttempt
+      ? {
+          totalQuestions: questionResults.length,
+          answered: questionResults.length - count("unanswered"),
+          unanswered: count("unanswered"),
+          correct: count("correct"),
+          partial: count("partial"),
+          incorrect: count("incorrect"),
+          pendingGrading: count("pending"),
+          marksDeducted: roundScore(
+            questionResults.reduce(
+              (sum, q) =>
+                q.marksEarned !== null && q.marksEarned < 0
+                  ? sum - q.marksEarned
+                  : sum,
+              0,
+            ),
+          ),
+        }
+      : null;
 
     return {
       exam: {
@@ -1376,10 +1456,11 @@ export class ExamService {
         openDate: exam.openDate,
       },
 
-      attempts: attempts.map(summary),
-      bestAttempt: bestAttempt ? summary(bestAttempt) : null,
+      attempts: attempts.map(attemptSummary),
+      bestAttempt: bestAttempt ? attemptSummary(bestAttempt) : null,
       // questionResults below belong to this attempt.
-      latestAttempt: latestAttempt ? summary(latestAttempt) : null,
+      latestAttempt: latestAttempt ? attemptSummary(latestAttempt) : null,
+      summary,
 
       questionResults,
     };

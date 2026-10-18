@@ -169,7 +169,9 @@ class ExamResultPage extends ConsumerWidget {
                           : latestPassed
                           ? context.l10n.resultPassed
                           : passed
-                          ? context.l10n.resultPassedEarlier(best!.attemptNumber)
+                          ? context.l10n.resultPassedEarlier(
+                              best!.attemptNumber,
+                            )
                           : context.l10n.resultFailed,
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -192,7 +194,10 @@ class ExamResultPage extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        context.l10n.resultPassDuration(data.exam.passMark, data.exam.duration),
+                        context.l10n.resultPassDuration(
+                          data.exam.passMark,
+                          data.exam.duration,
+                        ),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
@@ -237,16 +242,21 @@ class ExamResultPage extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    // Beside the attempt count, collapsed by default.
+                    if (data.attempts.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _AttemptHistory(attempts: data.attempts),
+                    ],
                   ],
                 ),
               ),
-              if (data.attempts.isNotEmpty) ...[
+              if (data.summary != null && latest != null) ...[
                 const SizedBox(height: 18),
-                _SectionTitle(context.l10n.resultHistory),
-                const SizedBox(height: 9),
-                ...data.attempts.map(
-                  (attempt) => _AttemptTile(attempt: attempt),
+                _SectionTitle(
+                  context.l10n.resultSummaryTitle(latest.attemptNumber),
                 ),
+                const SizedBox(height: 9),
+                _SummaryGrid(summary: data.summary!),
               ],
               if (data.questionResults.isNotEmpty) ...[
                 const SizedBox(height: 18),
@@ -296,7 +306,7 @@ class ExamResultPage extends ConsumerWidget {
   }
 }
 
-enum _ReviewStatus { pending, correct, partial, incorrect }
+enum _ReviewStatus { pending, correct, partial, incorrect, unanswered }
 
 const _amber = Color(0xFFD97706);
 
@@ -308,25 +318,21 @@ class _QuestionReview extends StatelessWidget {
   Widget build(BuildContext context) {
     final written = item.type == 'short_answer' || item.type == 'essay';
     final graded = written && item.marksAwarded != null;
-    // Written answers have no correct answer to compare against; judge them
-    // by the marks the instructor awarded.
-    final status = written
-        ? (!graded
-              ? _ReviewStatus.pending
-              : item.marksAwarded! >= item.marks
-              ? _ReviewStatus.correct
-              : item.marksAwarded! > 0
-              ? _ReviewStatus.partial
-              : _ReviewStatus.incorrect)
-        : (_answersEqual(item.myAnswer, item.correctAnswer)
-              ? _ReviewStatus.correct
-              : _ReviewStatus.incorrect);
+    // From the server, so it matches how the attempt was scored.
+    final status = switch (item.status) {
+      'correct' => _ReviewStatus.correct,
+      'partial' => _ReviewStatus.partial,
+      'pending' => _ReviewStatus.pending,
+      'unanswered' => _ReviewStatus.unanswered,
+      _ => _ReviewStatus.incorrect,
+    };
     final correct = status == _ReviewStatus.correct;
     final color = switch (status) {
       _ReviewStatus.pending => Colors.orange,
       _ReviewStatus.correct => _green,
       _ReviewStatus.partial => _amber,
       _ReviewStatus.incorrect => Colors.red,
+      _ReviewStatus.unanswered => const Color(0xFF94A3B8),
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
@@ -390,6 +396,7 @@ class _QuestionReview extends StatelessWidget {
                     _ReviewStatus.correct => Icons.check_circle_outline,
                     _ReviewStatus.partial => Icons.remove_circle_outline,
                     _ReviewStatus.incorrect => Icons.cancel_outlined,
+                    _ReviewStatus.unanswered => Icons.radio_button_unchecked,
                   },
                   color: color,
                   size: 20,
@@ -398,6 +405,7 @@ class _QuestionReview extends StatelessWidget {
                     _ReviewStatus.correct => context.l10n.resultCorrect,
                     _ReviewStatus.partial => context.l10n.resultPartial,
                     _ReviewStatus.incorrect => context.l10n.resultIncorrect,
+                    _ReviewStatus.unanswered => context.l10n.resultUnanswered,
                   },
                 ),
               ],
@@ -419,6 +427,7 @@ class _QuestionReview extends StatelessWidget {
                       _ReviewStatus.correct => const Color(0xFFF0FDF4),
                       _ReviewStatus.partial => const Color(0xFFFFFBEB),
                       _ReviewStatus.incorrect => const Color(0xFFFEF2F2),
+                      _ReviewStatus.unanswered => const Color(0xFFF1F5F9),
                     },
                   ),
                   if (item.suggestedAnswer?.isNotEmpty == true) ...[
@@ -672,6 +681,134 @@ class _Stat extends StatelessWidget {
   );
 }
 
+/// Attempt list behind a toggle, collapsed by default so the latest result
+/// and answer sheet come first.
+class _AttemptHistory extends StatefulWidget {
+  const _AttemptHistory({required this.attempts});
+  final List<ExamAttempt> attempts;
+
+  @override
+  State<_AttemptHistory> createState() => _AttemptHistoryState();
+}
+
+class _AttemptHistoryState extends State<_AttemptHistory> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: TextButton.icon(
+            onPressed: () => setState(() => _open = !_open),
+            iconAlignment: IconAlignment.end,
+            icon: AnimatedRotation(
+              turns: _open ? .5 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.expand_more, size: 20),
+            ),
+            label: Text(
+              _open
+                  ? context.l10n.resultHideHistory
+                  : context.l10n.resultShowHistory(widget.attempts.length),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: _navy,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        if (_open) ...[
+          const SizedBox(height: 6),
+          ...widget.attempts.map((attempt) => _AttemptTile(attempt: attempt)),
+        ],
+      ],
+    );
+  }
+}
+
+/// Latest attempt at a glance: two tiles per row.
+class _SummaryGrid extends StatelessWidget {
+  const _SummaryGrid({required this.summary});
+  final ExamResultSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tiles = <(String, String, Color)>[
+      (
+        l10n.resultTotalQuestions,
+        '${summary.totalQuestions}',
+        const Color(0xFF0C1F33),
+      ),
+      (l10n.resultAnswered, '${summary.answered}', const Color(0xFF0C1F33)),
+      (l10n.resultCorrect, '${summary.correct}', _green),
+      (l10n.resultIncorrect, '${summary.incorrect}', Colors.red.shade700),
+      (l10n.resultUnanswered, '${summary.unanswered}', const Color(0xFF64748B)),
+      // Only when they apply to this exam.
+      if (summary.partial > 0)
+        (l10n.resultPartial, '${summary.partial}', _amber),
+      if (summary.pendingGrading > 0)
+        (
+          l10n.resultAwaitingGrading,
+          '${summary.pendingGrading}',
+          Colors.orange.shade800,
+        ),
+      if (summary.marksDeducted > 0)
+        (
+          l10n.resultMarksDeducted,
+          '-${_number(summary.marksDeducted)}',
+          Colors.red.shade700,
+        ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 8) / 2;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final (label, value, color) in tiles)
+              Container(
+                width: width,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBF9F4),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
   final String text;
@@ -700,7 +837,10 @@ class _ResultError extends StatelessWidget {
             context.l10n.resultLoadFailed,
             style: TextStyle(color: Colors.red),
           ),
-          TextButton(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n.commonTryAgain),
+          ),
           TextButton(onPressed: onBack, child: Text(context.l10n.examsBack)),
         ],
       ),
@@ -718,11 +858,6 @@ String _answerText(AppLocalizations l10n, Object? value) => value == null
     : value is List
     ? value.join(', ')
     : '$value';
-bool _answersEqual(Object? a, Object? b) {
-  final first = _asList(a), second = _asList(b);
-  if (first.length != second.length) return false;
-  return first.toSet().containsAll(second);
-}
 
 String _number(double value) => value == value.roundToDouble()
     ? value.toInt().toString()

@@ -1899,6 +1899,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultHistory => 'Attempt history';
 
   @override
+  String resultShowHistory(int count) {
+    return 'Show attempt history ($count)';
+  }
+
+  @override
+  String get resultHideHistory => 'Hide attempt history';
+
+  @override
   String get resultReview => 'Question review';
 
   @override
@@ -1921,6 +1929,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String resultPassedEarlier(int number) {
     return 'You didn\'t pass this attempt, but you already passed in attempt #$number.';
   }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return 'Attempt #$number summary';
+  }
+
+  @override
+  String get resultTotalQuestions => 'Questions';
+
+  @override
+  String get resultAnswered => 'Answered';
+
+  @override
+  String get resultUnanswered => 'Unanswered';
+
+  @override
+  String get resultMarksDeducted => 'Negative marks';
 
   @override
   String get resultRetake => 'Retake exam';

@@ -3,6 +3,7 @@ import type {
   LearnerExam,
   ExamAttemptResult,
   ExamQuestionResult,
+  ExamResultSummary,
   ExamIntroData,
   ExamStartData,
 } from "@/types/learner-exam";
@@ -71,6 +72,7 @@ export const learnerExamService = {
     bestAttempt: ExamAttemptResult | null;
     /** The attempt `questionResults` belong to (the most recent one). */
     latestAttempt: ExamAttemptResult | null;
+    summary: ExamResultSummary | null;
     questionResults: ExamQuestionResult[];
   }> => {
     const response = await apiClient.get(

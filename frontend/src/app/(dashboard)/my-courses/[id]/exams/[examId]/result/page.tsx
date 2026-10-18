@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   CheckCircle,
   XCircle,
   AlertCircle,
   ChevronLeft,
+  ChevronDown,
   Trophy,
   Target,
   Clock,
   FileText,
   MinusCircle,
+  Circle,
 } from "lucide-react";
 import { useProfileStore } from "@/stores/profile-store";
 import { useExamResult } from "@/hooks/use-learner-exams";
@@ -31,6 +34,8 @@ function minutesTaken(
 
 export default function ExamResultPage() {
   const t = useTranslations("examResult");
+  // Collapsed by default so the latest result and answer sheet come first.
+  const [showHistory, setShowHistory] = useState(false);
   const tExams = useTranslations("exams");
   const tTake = useTranslations("takeExam");
   const format = useDateFormat();
@@ -149,54 +154,52 @@ export default function ExamResultPage() {
               {t("grading")}
             </span>
           ) : latestPassed ? (
-            <span className="font-semibold text-[#22A146]">
-              {t("passed")}
-            </span>
+            <span className="font-semibold text-[#22A146]">{t("passed")}</span>
           ) : isPassed && bestAttempt ? (
             <span className="font-semibold text-[#22A146]">
               {t("passedEarlier", { number: bestAttempt.attemptNumber })}
             </span>
           ) : (
-            <span className="font-semibold text-red-600">
-              {t("failed")}
-            </span>
+            <span className="font-semibold text-red-600">{t("failed")}</span>
           )}
         </p>
 
         {/* Score */}
-        {latestAttempt?.score !== null && latestAttempt?.score !== undefined && (
-          <div className="mb-6">
-            <p className="text-5xl font-bold text-[#0C1F33]">
-              {latestAttempt.score}
-              <span className="text-2xl text-[#64748B]">
-                {" "}
-                / {displayTotalMarks}
-              </span>
-            </p>
-            <p className="text-sm text-[#64748B] mt-1">
-              {t("passDuration", {
-                mark: data.exam.passMark,
-                minutes: data.exam.duration,
-              })}
-            </p>
-            {showBest && (
-              <p className="text-sm font-semibold text-[#0C1F33] mt-2">
-                {t("bestScore", {
-                  score: bestAttempt.score ?? 0,
-                  total: bestAttempt.totalMarks,
-                  number: bestAttempt.attemptNumber,
+        {latestAttempt?.score !== null &&
+          latestAttempt?.score !== undefined && (
+            <div className="mb-6">
+              <p className="text-5xl font-bold text-[#0C1F33]">
+                {latestAttempt.score}
+                <span className="text-2xl text-[#64748B]">
+                  {" "}
+                  / {displayTotalMarks}
+                </span>
+              </p>
+              <p className="text-sm text-[#64748B] mt-1">
+                {t("passDuration", {
+                  mark: data.exam.passMark,
+                  minutes: data.exam.duration,
                 })}
               </p>
-            )}
-          </div>
-        )}
+              {showBest && (
+                <p className="text-sm font-semibold text-[#0C1F33] mt-2">
+                  {t("bestScore", {
+                    score: bestAttempt.score ?? 0,
+                    total: bestAttempt.totalMarks,
+                    number: bestAttempt.attemptNumber,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8 max-w-[400px] mx-auto">
+        <div className="grid grid-cols-3 gap-4 mb-4 max-w-[400px] mx-auto">
           <div className="bg-[#FBF9F4] rounded-lg p-4">
             <Target className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
             <p className="text-lg font-bold text-[#0C1F33]">
-              {latestAttempt?.score !== null && latestAttempt?.score !== undefined
+              {latestAttempt?.score !== null &&
+              latestAttempt?.score !== undefined
                 ? `${Math.round(((latestAttempt?.score ?? 0) / displayTotalMarks) * 100)}%`
                 : "—"}
             </p>
@@ -207,7 +210,9 @@ export default function ExamResultPage() {
             <p className="text-lg font-bold text-[#0C1F33]">
               {data.attempts.length}
             </p>
-            <p className="text-[10px] text-[#64748B] uppercase">{t("attempts")}</p>
+            <p className="text-[10px] text-[#64748B] uppercase">
+              {t("attempts")}
+            </p>
           </div>
           <div className="bg-[#FBF9F4] rounded-lg p-4">
             <Clock className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
@@ -217,57 +222,153 @@ export default function ExamResultPage() {
                 latestAttempt?.submittedAt,
               )}
             </p>
-            <p className="text-[10px] text-[#64748B] uppercase">{t("timeTaken")}</p>
+            <p className="text-[10px] text-[#64748B] uppercase">
+              {t("timeTaken")}
+            </p>
           </div>
         </div>
 
-        {/* Attempt history */}
+        {/* Attempt history: beside the attempt count, collapsed by default */}
         {data.attempts.length > 0 && (
-          <div className="text-start border-t border-[#E3E8EF] pt-4">
-            <p className="text-sm font-bold text-[#0C1F33] mb-3">
-              {t("history")}
-            </p>
-            <div className="space-y-2">
-              {data.attempts.map((attempt) => (
-                <div
-                  key={attempt.id}
-                  className="flex items-center justify-between p-3 bg-[#FBF9F4] rounded-lg"
-                >
-                  <span className="text-sm font-semibold text-[#0C1F33]">
-                    {t("attempt", { number: attempt.attemptNumber })}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    {!attempt.graded ? (
-                      <span className="flex items-center gap-1 text-xs font-bold text-orange-500">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {t("pending")}
-                      </span>
-                    ) : attempt.passed ? (
-                      <span className="flex items-center gap-1 text-xs font-bold text-[#22A146]">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        {t("passedBadge")}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs font-bold text-red-600">
-                        <XCircle className="w-3.5 h-3.5" />
-                        {t("failedBadge")}
-                      </span>
-                    )}
-                    <span className="text-sm text-[#64748B]">
-                      {attempt.score ?? "—"}/{attempt.totalMarks}
+          <div className="mb-8">
+            <button
+              type="button"
+              onClick={() => setShowHistory((open) => !open)}
+              aria-expanded={showHistory}
+              aria-controls="attempt-history"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#12304E] hover:text-[#0C1F33]"
+            >
+              {showHistory
+                ? t("hideHistory")
+                : t("showHistory", { count: data.attempts.length })}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${showHistory ? "rotate-180" : ""}`}
+              />
+            </button>
+            {showHistory && (
+              <div
+                id="attempt-history"
+                className="space-y-2 mt-3 text-start max-w-[560px] mx-auto"
+              >
+                {data.attempts.map((attempt) => (
+                  <div
+                    key={attempt.id}
+                    className="flex items-center justify-between p-3 bg-[#FBF9F4] rounded-lg"
+                  >
+                    <span className="text-sm font-semibold text-[#0C1F33]">
+                      {t("attempt", { number: attempt.attemptNumber })}
                     </span>
-                    <span className="text-xs text-[#94A3B8]">
-                      {attempt.submittedAt
-                        ? t("completedIn", {
-                            taken: formatMinutesTaken(
-                              attempt.startedAt,
-                              attempt.submittedAt,
-                            ),
-                            duration: data.exam.duration,
-                          })
-                        : format.date(attempt.startedAt)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      {!attempt.graded ? (
+                        <span className="flex items-center gap-1 text-xs font-bold text-orange-500">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          {t("pending")}
+                        </span>
+                      ) : attempt.passed ? (
+                        <span className="flex items-center gap-1 text-xs font-bold text-[#22A146]">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {t("passedBadge")}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs font-bold text-red-600">
+                          <XCircle className="w-3.5 h-3.5" />
+                          {t("failedBadge")}
+                        </span>
+                      )}
+                      <span className="text-sm text-[#64748B]">
+                        {attempt.score ?? "—"}/{attempt.totalMarks}
+                      </span>
+                      <span className="text-xs text-[#94A3B8]">
+                        {attempt.submittedAt
+                          ? t("completedIn", {
+                              taken: formatMinutesTaken(
+                                attempt.startedAt,
+                                attempt.submittedAt,
+                              ),
+                              duration: data.exam.duration,
+                            })
+                          : format.date(attempt.startedAt)}
+                      </span>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Latest attempt at a glance */}
+        {data.summary && latestAttempt && (
+          <div className="text-start border-t border-[#E3E8EF] pt-4 mb-6">
+            <p className="text-sm font-bold text-[#0C1F33] mb-3">
+              {t("summaryTitle", { number: latestAttempt.attemptNumber })}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                {
+                  label: t("totalQuestions"),
+                  value: data.summary.totalQuestions,
+                  color: "text-[#0C1F33]",
+                },
+                {
+                  label: t("answered"),
+                  value: data.summary.answered,
+                  color: "text-[#0C1F33]",
+                },
+                {
+                  label: t("correct"),
+                  value: data.summary.correct,
+                  color: "text-[#22A146]",
+                },
+                {
+                  label: t("incorrect"),
+                  value: data.summary.incorrect,
+                  color: "text-red-600",
+                },
+                {
+                  label: t("unanswered"),
+                  value: data.summary.unanswered,
+                  color: "text-[#64748B]",
+                },
+                // Only when they apply to this exam.
+                ...(data.summary.partial > 0
+                  ? [
+                      {
+                        label: t("partial"),
+                        value: data.summary.partial,
+                        color: "text-amber-600",
+                      },
+                    ]
+                  : []),
+                ...(data.summary.pendingGrading > 0
+                  ? [
+                      {
+                        label: t("awaitingGrading"),
+                        value: data.summary.pendingGrading,
+                        color: "text-orange-500",
+                      },
+                    ]
+                  : []),
+                ...(data.summary.marksDeducted > 0
+                  ? [
+                      {
+                        label: t("marksDeducted"),
+                        value: `-${data.summary.marksDeducted}`,
+                        color: "text-red-600",
+                      },
+                    ]
+                  : []),
+              ].map((tile) => (
+                <div
+                  key={tile.label}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-[#FBF9F4] px-3 py-2.5"
+                >
+                  <span className="text-xs text-[#64748B]">{tile.label}</span>
+                  <span
+                    className={`text-sm font-bold tabular-nums ${tile.color}`}
+                  >
+                    {tile.value}
+                  </span>
                 </div>
               ))}
             </div>
@@ -289,26 +390,11 @@ export default function ExamResultPage() {
 
             <div className="space-y-4">
               {data.questionResults.map((item, index) => {
-                const isCorrect =
-                  JSON.stringify(item.myAnswer) ===
-                  JSON.stringify(item.correctAnswer);
                 const isWritten =
                   item.type === "short_answer" || item.type === "essay";
-                const isWrittenGraded = isWritten && item.marksAwarded !== null;
-                // Written answers have no correct answer to compare against;
-                // judge them by the marks the instructor awarded.
-                const status: "pending" | "correct" | "partial" | "incorrect" =
-                  isWritten
-                    ? !isWrittenGraded
-                      ? "pending"
-                      : item.marksAwarded! >= item.marks
-                        ? "correct"
-                        : item.marksAwarded! > 0
-                          ? "partial"
-                          : "incorrect"
-                    : isCorrect
-                      ? "correct"
-                      : "incorrect";
+                // From the server, so it matches how the attempt was scored.
+                const status = item.status;
+                const isCorrect = status === "correct";
 
                 return (
                   <div
@@ -349,6 +435,11 @@ export default function ExamResultPage() {
                           <MinusCircle
                             className="w-5 h-5 shrink-0 text-amber-500"
                             aria-label={t("partial")}
+                          />
+                        ) : status === "unanswered" ? (
+                          <Circle
+                            className="w-5 h-5 shrink-0 text-[#94A3B8]"
+                            aria-label={t("unanswered")}
                           />
                         ) : (
                           <XCircle
@@ -413,9 +504,8 @@ export default function ExamResultPage() {
                                     : [];
 
                                 const isSelected = myAnswers.includes(option);
-                                const isCorrectOption = correctAnswers.includes(
-                                  option,
-                                );
+                                const isCorrectOption =
+                                  correctAnswers.includes(option);
 
                                 return (
                                   <div

@@ -163,6 +163,7 @@ class ExamResultData {
     required this.attempts,
     required this.bestAttempt,
     required this.latestAttempt,
+    required this.summary,
     required this.questionResults,
   });
   final ExamResultInfo exam;
@@ -171,6 +172,7 @@ class ExamResultData {
 
   /// The attempt [questionResults] belong to (the most recent one).
   final ExamAttempt? latestAttempt;
+  final ExamResultSummary? summary;
   final List<ExamQuestionResult> questionResults;
   factory ExamResultData.fromJson(Map<String, dynamic> j) {
     final attemptJson = ((j['attempts'] as List?) ?? const [])
@@ -179,6 +181,7 @@ class ExamResultData {
         .toList(growable: false);
     final best = j['bestAttempt'];
     final latest = j['latestAttempt'];
+    final summary = j['summary'];
     return ExamResultData(
       exam: ExamResultInfo.fromJson(
         j['exam'] is Map
@@ -192,6 +195,9 @@ class ExamResultData {
       latestAttempt: latest is Map
           ? ExamAttempt.fromJson(Map<String, dynamic>.from(latest))
           : (attemptJson.isEmpty ? null : attemptJson.last),
+      summary: summary is Map
+          ? ExamResultSummary.fromJson(Map<String, dynamic>.from(summary))
+          : null,
       questionResults: ((j['questionResults'] as List?) ?? const [])
           .whereType<Map>()
           .map((e) => ExamQuestionResult.fromJson(Map<String, dynamic>.from(e)))
@@ -251,6 +257,36 @@ class ExamAttempt {
   );
 }
 
+/// Counts for the latest attempt. answered = correct + partial + incorrect
+/// + pendingGrading.
+class ExamResultSummary {
+  const ExamResultSummary({
+    required this.totalQuestions,
+    required this.answered,
+    required this.unanswered,
+    required this.correct,
+    required this.partial,
+    required this.incorrect,
+    required this.pendingGrading,
+    required this.marksDeducted,
+  });
+  final int totalQuestions, answered, unanswered, correct, partial, incorrect;
+  final int pendingGrading;
+  final double marksDeducted;
+
+  factory ExamResultSummary.fromJson(Map<String, dynamic> j) =>
+      ExamResultSummary(
+        totalQuestions: _int(j['totalQuestions']),
+        answered: _int(j['answered']),
+        unanswered: _int(j['unanswered']),
+        correct: _int(j['correct']),
+        partial: _int(j['partial']),
+        incorrect: _int(j['incorrect']),
+        pendingGrading: _int(j['pendingGrading']),
+        marksDeducted: (j['marksDeducted'] as num?)?.toDouble() ?? 0,
+      );
+}
+
 class ExamQuestionResult {
   const ExamQuestionResult({
     required this.questionId,
@@ -261,6 +297,7 @@ class ExamQuestionResult {
     required this.myAnswer,
     required this.marks,
     required this.marksAwarded,
+    required this.status,
     required this.explanation,
     required this.suggestedAnswer,
   });
@@ -269,6 +306,9 @@ class ExamQuestionResult {
   final Object? correctAnswer, myAnswer;
   final int marks;
   final double? marksAwarded;
+
+  /// From the server: correct, partial, incorrect, unanswered or pending.
+  final String status;
   final String? explanation, suggestedAnswer;
   factory ExamQuestionResult.fromJson(Map<String, dynamic> j) =>
       ExamQuestionResult(
@@ -282,6 +322,7 @@ class ExamQuestionResult {
         myAnswer: j['myAnswer'],
         marks: _int(j['marks']),
         marksAwarded: (j['marksAwarded'] as num?)?.toDouble(),
+        status: j['status'] as String? ?? 'incorrect',
         explanation: j['explanation'] as String?,
         suggestedAnswer: j['suggestedAnswer'] as String?,
       );

@@ -1788,6 +1788,14 @@ class AppLocalizationsUr extends AppLocalizations {
   String get resultHistory => '⁧کوششوں کی تاریخ⁩';
 
   @override
+  String resultShowHistory(int count) {
+    return '⁧کوششوں کی تاریخ دیکھیں ($count)⁩';
+  }
+
+  @override
+  String get resultHideHistory => '⁧کوششوں کی تاریخ چھپائیں⁩';
+
+  @override
   String get resultReview => '⁧سوالات کا جائزہ⁩';
 
   @override
@@ -1810,6 +1818,23 @@ class AppLocalizationsUr extends AppLocalizations {
   String resultPassedEarlier(int number) {
     return '⁧آپ اس کوشش میں پاس نہیں ہوئے، لیکن کوشش #$number میں آپ پہلے ہی پاس ہو چکے ہیں۔⁩';
   }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return '⁧کوشش #$number کا خلاصہ⁩';
+  }
+
+  @override
+  String get resultTotalQuestions => '⁧سوالات⁩';
+
+  @override
+  String get resultAnswered => '⁧جواب دیے⁩';
+
+  @override
+  String get resultUnanswered => '⁧بغیر جواب⁩';
+
+  @override
+  String get resultMarksDeducted => '⁧منفی نمبر⁩';
 
   @override
   String get resultRetake => '⁧دوبارہ امتحان دیں⁩';

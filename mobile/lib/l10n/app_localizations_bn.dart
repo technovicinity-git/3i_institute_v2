@@ -1776,6 +1776,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get resultHistory => 'চেষ্টার ইতিহাস';
 
   @override
+  String resultShowHistory(int count) {
+    return 'চেষ্টার ইতিহাস দেখুন ($count)';
+  }
+
+  @override
+  String get resultHideHistory => 'চেষ্টার ইতিহাস লুকান';
+
+  @override
   String get resultReview => 'প্রশ্ন পর্যালোচনা';
 
   @override
@@ -1798,6 +1806,23 @@ class AppLocalizationsBn extends AppLocalizations {
   String resultPassedEarlier(int number) {
     return 'এই চেষ্টায় পাস করেননি, তবে চেষ্টা #$number-এ আপনি আগেই পাস করেছেন।';
   }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return 'চেষ্টা #$number-এর সারাংশ';
+  }
+
+  @override
+  String get resultTotalQuestions => 'প্রশ্ন';
+
+  @override
+  String get resultAnswered => 'উত্তর দেওয়া';
+
+  @override
+  String get resultUnanswered => 'উত্তর দেওয়া হয়নি';
+
+  @override
+  String get resultMarksDeducted => 'নেগেটিভ নম্বর';
 
   @override
   String get resultRetake => 'আবার পরীক্ষা দিন';
