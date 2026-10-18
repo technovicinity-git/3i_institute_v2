@@ -2993,4 +2993,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String pageUpdated(String date) {
     return 'সর্বশেষ হালনাগাদ $date';
   }
+
+  @override
+  String get languageChangeTo => 'ভাষা পরিবর্তন করুন';
 }

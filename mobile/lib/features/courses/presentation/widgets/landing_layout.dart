@@ -7,6 +7,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
 
 class LandingLayout extends ConsumerWidget {
   const LandingLayout({required this.child, super.key});
@@ -37,6 +38,8 @@ class LandingLayout extends ConsumerWidget {
           ),
         ),
         actions: [
+          if (!isInstructor)
+            const LanguageButton(color: Color(0xFF12304E)),
           TextButton.icon(
             onPressed: () => context.go('/courses'),
             icon: const Icon(Icons.menu_book_outlined, size: 19),

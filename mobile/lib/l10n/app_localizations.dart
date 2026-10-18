@@ -5383,6 +5383,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last updated {date}'**
   String pageUpdated(String date);
+
+  /// No description provided for @languageChangeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Change language'**
+  String get languageChangeTo;
 }
 
 class _AppLocalizationsDelegate

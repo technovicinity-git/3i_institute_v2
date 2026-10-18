@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:three_i_mobile/core/l10n/language_controller.dart';
 import 'package:three_i_mobile/core/l10n/l10n.dart';
 import 'package:three_i_mobile/features/auth/presentation/pages/login_page.dart';
 
-Widget _app(String language) => ProviderScope(
+Widget _app(String language, SharedPreferences preferences) => ProviderScope(
+  overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
   child: MaterialApp(
     locale: Locale(language),
     supportedLocales: AppLocalizations.supportedLocales,
@@ -32,12 +35,16 @@ void main() {
 
   for (final language in supportedLanguageCodes) {
     testWidgets('login screen renders in $language', (tester) async {
-      await tester.pumpWidget(_app(language));
+      SharedPreferences.setMockInitialValues({'language': language});
+      final preferences = await SharedPreferences.getInstance();
+      await tester.pumpWidget(_app(language, preferences));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
       final l10n = AppLocalizations.of(tester.element(find.byType(LoginPage)));
       expect(find.text(l10n.loginTitle), findsOneWidget);
+      // The language button shows the current language by name.
+      expect(find.text(languageNames[language]!), findsOneWidget);
       // The layout stays left-to-right in every language.
       expect(
         Directionality.of(tester.element(find.text(l10n.loginTitle))),

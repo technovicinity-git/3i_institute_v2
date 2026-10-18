@@ -84,6 +84,7 @@ class _CheckEmailPageState extends ConsumerState<CheckEmailPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AuthScaffold(
+    showLanguage: !widget.instructor,
     title: l10n.checkEmailTitle,
     description: l10n.checkEmailSentTo(widget.email),
     child: Column(

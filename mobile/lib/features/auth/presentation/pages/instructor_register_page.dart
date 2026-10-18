@@ -184,6 +184,7 @@ class _InstructorRegisterPageState
 
   @override
   Widget build(BuildContext context) => AuthScaffold(
+        showLanguage: false,
     title: 'Apply to teach at 3i',
     description: 'Create your account and submit your teaching application.',
     child: Form(

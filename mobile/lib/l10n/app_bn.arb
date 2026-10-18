@@ -879,5 +879,6 @@
   "helpContactUs": "যোগাযোগ করুন",
   "helpPolicies": "নীতিমালা",
   "pageUnavailable": "এই পৃষ্ঠাটি এখন উপলব্ধ নয়।",
-  "pageUpdated": "সর্বশেষ হালনাগাদ {date}"
+  "pageUpdated": "সর্বশেষ হালনাগাদ {date}",
+  "languageChangeTo": "ভাষা পরিবর্তন করুন"
 }

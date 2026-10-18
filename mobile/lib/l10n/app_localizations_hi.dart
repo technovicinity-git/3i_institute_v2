@@ -2998,4 +2998,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String pageUpdated(String date) {
     return 'अंतिम अपडेट $date';
   }
+
+  @override
+  String get languageChangeTo => 'भाषा बदलें';
 }

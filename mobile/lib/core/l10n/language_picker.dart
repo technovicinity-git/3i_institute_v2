@@ -67,3 +67,34 @@ class LanguageDropdownField extends ConsumerWidget {
         },
       );
 }
+
+/// Globe button that opens the language sheet, like the website's header
+/// switcher. [showName] adds the current language's name next to the globe.
+class LanguageButton extends ConsumerWidget {
+  const LanguageButton({this.showName = false, this.color, super.key});
+
+  final bool showName;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = languageNames[ref.watch(languageProvider)]!;
+    final tooltip = context.l10n.languageChangeTo;
+    if (!showName) {
+      return IconButton(
+        tooltip: tooltip,
+        onPressed: () => showLanguageSheet(context, ref),
+        icon: Icon(Icons.language, color: color),
+      );
+    }
+    return Tooltip(
+      message: tooltip,
+      child: TextButton.icon(
+        onPressed: () => showLanguageSheet(context, ref),
+        icon: Icon(Icons.language, size: 18, color: color),
+        label: Text(name),
+        style: TextButton.styleFrom(foregroundColor: color),
+      ),
+    );
+  }
+}

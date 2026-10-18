@@ -3011,4 +3011,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String pageUpdated(String date) {
     return '⁧آخری تازہ کاری $date⁩';
   }
+
+  @override
+  String get languageChangeTo => '⁧زبان تبدیل کریں⁩';
 }

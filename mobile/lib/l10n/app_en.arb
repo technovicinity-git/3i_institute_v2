@@ -1878,5 +1878,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "languageChangeTo": "Change language"
 }

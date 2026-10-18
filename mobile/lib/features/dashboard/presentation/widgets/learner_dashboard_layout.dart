@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
@@ -80,6 +81,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
         ],
       ),
       actions: [
+        const LanguageButton(color: Color(0xFF12304E)),
         IconButton(
           tooltip: l10n.dashboardSearchCourses,
           onPressed: () => context.go('/courses'),

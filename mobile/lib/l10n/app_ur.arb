@@ -879,5 +879,6 @@
   "helpContactUs": "\u2067ہم سے رابطہ کریں\u2069",
   "helpPolicies": "\u2067پالیسیاں\u2069",
   "pageUnavailable": "\u2067یہ صفحہ ابھی دستیاب نہیں۔\u2069",
-  "pageUpdated": "\u2067آخری تازہ کاری {date}\u2069"
+  "pageUpdated": "\u2067آخری تازہ کاری {date}\u2069",
+  "languageChangeTo": "\u2067زبان تبدیل کریں\u2069"
 }

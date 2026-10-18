@@ -2972,4 +2972,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String pageUpdated(String date) {
     return '⁧آخر تحديث $date⁩';
   }
+
+  @override
+  String get languageChangeTo => '⁧تغيير اللغة⁩';
 }

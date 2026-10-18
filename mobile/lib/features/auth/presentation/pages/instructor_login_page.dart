@@ -73,6 +73,7 @@ class _InstructorLoginPageState extends ConsumerState<InstructorLoginPage> {
 
   @override
   Widget build(BuildContext context) => AuthScaffold(
+        showLanguage: false,
     title: 'Welcome back',
     description: 'Sign in to your instructor dashboard.',
     child: Form(

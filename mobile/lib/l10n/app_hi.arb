@@ -879,5 +879,6 @@
   "helpContactUs": "संपर्क करें",
   "helpPolicies": "नीतियाँ",
   "pageUnavailable": "यह पृष्ठ अभी उपलब्ध नहीं है।",
-  "pageUpdated": "अंतिम अपडेट {date}"
+  "pageUpdated": "अंतिम अपडेट {date}",
+  "languageChangeTo": "भाषा बदलें"
 }

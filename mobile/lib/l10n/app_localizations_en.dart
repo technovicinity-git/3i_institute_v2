@@ -3142,4 +3142,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String pageUpdated(String date) {
     return 'Last updated $date';
   }
+
+  @override
+  String get languageChangeTo => 'Change language';
 }

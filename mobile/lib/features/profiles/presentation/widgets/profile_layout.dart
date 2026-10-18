@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/l10n/language_picker.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/learner_profiles_providers.dart';
 
@@ -24,6 +25,7 @@ class ProfileLayout extends ConsumerWidget {
         ),
       ),
       actions: [
+        const LanguageButton(color: Color(0xFF12304E)),
         PopupMenuButton<String>(
           tooltip: context.l10n.menuAccount,
           onSelected: (value) async {
