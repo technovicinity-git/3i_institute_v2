@@ -54,9 +54,19 @@ class ExamResultPage extends ConsumerWidget {
       ),
       data: (data) {
         final best = data.bestAttempt;
-        final latest = data.attempts.isEmpty ? null : data.attempts.last;
+        // The card and answer sheet show the most recent attempt — the one
+        // the learner just finished. The best score is mentioned when it's
+        // different.
+        final latest = data.latestAttempt;
         final pending = latest != null && !latest.graded;
+        // Passing once is enough (no retake afterwards).
         final passed = best?.passed == true;
+        final latestPassed = latest?.passed == true;
+        final showBest =
+            best != null &&
+            latest != null &&
+            best.id != latest.id &&
+            best.score != null;
         final examSummary = examsAsync.asData?.value
             .where((e) => e.id == examId)
             .firstOrNull;
@@ -78,8 +88,8 @@ class ExamResultPage extends ConsumerWidget {
             examSummary != null &&
             (examSummary.maxAttempts == null ||
                 examSummary.attemptCount < examSummary.maxAttempts!);
-        final total = best?.totalMarks ?? data.exam.totalMarks;
-        final score = best?.score;
+        final total = latest?.totalMarks ?? data.exam.totalMarks;
+        final score = latest?.score;
         final percent = score == null || total == 0
             ? null
             : (score / total * 100).round();
@@ -154,10 +164,12 @@ class ExamResultPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      passed
-                          ? context.l10n.resultPassed
-                          : pending
+                      pending
                           ? context.l10n.resultGrading
+                          : latestPassed
+                          ? context.l10n.resultPassed
+                          : passed
+                          ? context.l10n.resultPassedEarlier(best!.attemptNumber)
                           : context.l10n.resultFailed,
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -186,6 +198,22 @@ class ExamResultPage extends ConsumerWidget {
                           color: Color(0xFF64748B),
                         ),
                       ),
+                      if (showBest) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          context.l10n.resultBestScore(
+                            _number(best.score!),
+                            best.totalMarks,
+                            best.attemptNumber,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF0C1F33),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                     const SizedBox(height: 18),
                     Row(
@@ -225,23 +253,16 @@ class ExamResultPage extends ConsumerWidget {
                 _SectionTitle(context.l10n.resultReview),
                 const SizedBox(height: 4),
                 Text(
-                  context.l10n.resultReviewHint,
+                  latest == null
+                      ? context.l10n.resultReviewHint
+                      : '${context.l10n.resultReviewHint} '
+                            '${context.l10n.resultShowingAttempt(latest.attemptNumber)}',
                   style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 10),
                 ...data.questionResults.asMap().entries.map(
                   (entry) =>
                       _QuestionReview(index: entry.key + 1, item: entry.value),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  best == null
-                      ? context.l10n.resultNoAttempts
-                      : context.l10n.resultShowingAttempt(best.attemptNumber),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF64748B),
-                  ),
                 ),
               ],
               const SizedBox(height: 18),

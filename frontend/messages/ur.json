@@ -948,6 +948,8 @@
     "explanation": "وضاحت",
     "notAnswered": "جواب نہیں دیا",
     "showingAttempt": "کوشش #{number} کے جوابات دکھائے جا رہے ہیں۔",
+    "bestScore": "سب سے زیادہ نمبر: {score}/{total} (کوشش #{number})",
+    "passedEarlier": "آپ اس کوشش میں پاس نہیں ہوئے، لیکن کوشش #{number} میں آپ پہلے ہی پاس ہو چکے ہیں۔",
     "noAttempts": "کوئی کوشش نہیں ملی۔",
     "retake": "دوبارہ امتحان دیں"
   },

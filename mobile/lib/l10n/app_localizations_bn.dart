@@ -1790,6 +1790,16 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String resultBestScore(String score, int total, int number) {
+    return 'সর্বোচ্চ নম্বর: $score/$total (চেষ্টা #$number)';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return 'এই চেষ্টায় পাস করেননি, তবে চেষ্টা #$number-এ আপনি আগেই পাস করেছেন।';
+  }
+
+  @override
   String get resultRetake => 'আবার পরীক্ষা দিন';
 
   @override

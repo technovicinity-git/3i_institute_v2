@@ -530,6 +530,8 @@
   "resultReviewHint": "\u2067راجع إجاباتك والإجابات الصحيحة.\u2069",
   "resultNoAttempts": "\u2067لم يتم العثور على محاولات.\u2069",
   "resultShowingAttempt": "\u2067عرض إجابات المحاولة #{number}.\u2069",
+  "resultBestScore": "\u2067أعلى درجة: {score}/{total} (المحاولة #{number})\u2069",
+  "resultPassedEarlier": "\u2067لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #{number}.\u2069",
   "resultRetake": "\u2067إعادة الاختبار\u2069",
   "resultAwarded": "\u2067مُنح {awarded} من {total}\u2069",
   "resultAwaitingGrading": "\u2067بانتظار التقييم\u2069",

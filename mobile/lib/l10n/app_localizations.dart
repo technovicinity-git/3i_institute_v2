@@ -3284,6 +3284,18 @@ abstract class AppLocalizations {
   /// **'Showing answers from attempt #{number}.'**
   String resultShowingAttempt(int number);
 
+  /// No description provided for @resultBestScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Best score: {score}/{total} (attempt #{number})'**
+  String resultBestScore(String score, int total, int number);
+
+  /// No description provided for @resultPassedEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'You didn\'t pass this attempt, but you already passed in attempt #{number}.'**
+  String resultPassedEarlier(int number);
+
   /// No description provided for @resultRetake.
   ///
   /// In en, this message translates to:

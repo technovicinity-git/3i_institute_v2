@@ -1802,6 +1802,16 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
+  String resultBestScore(String score, int total, int number) {
+    return '⁧سب سے زیادہ نمبر: $score/$total (کوشش #$number)⁩';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return '⁧آپ اس کوشش میں پاس نہیں ہوئے، لیکن کوشش #$number میں آپ پہلے ہی پاس ہو چکے ہیں۔⁩';
+  }
+
+  @override
   String get resultRetake => '⁧دوبارہ امتحان دیں⁩';
 
   @override

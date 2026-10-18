@@ -162,11 +162,15 @@ class ExamResultData {
     required this.exam,
     required this.attempts,
     required this.bestAttempt,
+    required this.latestAttempt,
     required this.questionResults,
   });
   final ExamResultInfo exam;
   final List<ExamAttempt> attempts;
   final ExamAttempt? bestAttempt;
+
+  /// The attempt [questionResults] belong to (the most recent one).
+  final ExamAttempt? latestAttempt;
   final List<ExamQuestionResult> questionResults;
   factory ExamResultData.fromJson(Map<String, dynamic> j) {
     final attemptJson = ((j['attempts'] as List?) ?? const [])
@@ -174,6 +178,7 @@ class ExamResultData {
         .map((e) => ExamAttempt.fromJson(Map<String, dynamic>.from(e)))
         .toList(growable: false);
     final best = j['bestAttempt'];
+    final latest = j['latestAttempt'];
     return ExamResultData(
       exam: ExamResultInfo.fromJson(
         j['exam'] is Map
@@ -184,6 +189,9 @@ class ExamResultData {
       bestAttempt: best is Map
           ? ExamAttempt.fromJson(Map<String, dynamic>.from(best))
           : null,
+      latestAttempt: latest is Map
+          ? ExamAttempt.fromJson(Map<String, dynamic>.from(latest))
+          : (attemptJson.isEmpty ? null : attemptJson.last),
       questionResults: ((j['questionResults'] as List?) ?? const [])
           .whereType<Map>()
           .map((e) => ExamQuestionResult.fromJson(Map<String, dynamic>.from(e)))

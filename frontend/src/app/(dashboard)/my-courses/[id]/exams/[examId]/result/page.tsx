@@ -87,13 +87,22 @@ export default function ExamResultPage() {
   }
 
   const bestAttempt = data.bestAttempt;
-  const latestAttempt = data.attempts[data.attempts.length - 1] ?? null;
+  // The card and answer sheet show the most recent attempt — the one the
+  // learner just finished. The best score is mentioned when it's different.
+  const latestAttempt = data.latestAttempt;
+  // Passing once is enough (no retake button afterwards).
   const isPassed = bestAttempt?.passed === true;
+  const latestPassed = latestAttempt?.passed === true;
   const isPendingGrading = latestAttempt && !latestAttempt.graded;
   const access = getExamAccess(data.exam);
   // For REGULAR dynamic exams each attempt has its own random question set and
   // therefore its own total marks — prefer the attempt's total for accuracy.
-  const displayTotalMarks = bestAttempt?.totalMarks ?? data.exam.totalMarks;
+  const displayTotalMarks = latestAttempt?.totalMarks ?? data.exam.totalMarks;
+  const showBest =
+    bestAttempt &&
+    latestAttempt &&
+    bestAttempt.id !== latestAttempt.id &&
+    bestAttempt.score !== null;
 
   return (
     <div className="p-6 md:p-10 ">
@@ -135,13 +144,17 @@ export default function ExamResultPage() {
 
         {/* Status */}
         <p className="text-base mb-6">
-          {isPassed ? (
+          {isPendingGrading ? (
+            <span className="font-semibold text-orange-500">
+              {t("grading")}
+            </span>
+          ) : latestPassed ? (
             <span className="font-semibold text-[#22A146]">
               {t("passed")}
             </span>
-          ) : isPendingGrading ? (
-            <span className="font-semibold text-orange-500">
-              {t("grading")}
+          ) : isPassed && bestAttempt ? (
+            <span className="font-semibold text-[#22A146]">
+              {t("passedEarlier", { number: bestAttempt.attemptNumber })}
             </span>
           ) : (
             <span className="font-semibold text-red-600">
@@ -151,10 +164,10 @@ export default function ExamResultPage() {
         </p>
 
         {/* Score */}
-        {bestAttempt?.score !== null && bestAttempt?.score !== undefined && (
+        {latestAttempt?.score !== null && latestAttempt?.score !== undefined && (
           <div className="mb-6">
             <p className="text-5xl font-bold text-[#0C1F33]">
-              {bestAttempt.score}
+              {latestAttempt.score}
               <span className="text-2xl text-[#64748B]">
                 {" "}
                 / {displayTotalMarks}
@@ -166,6 +179,15 @@ export default function ExamResultPage() {
                 minutes: data.exam.duration,
               })}
             </p>
+            {showBest && (
+              <p className="text-sm font-semibold text-[#0C1F33] mt-2">
+                {t("bestScore", {
+                  score: bestAttempt.score ?? 0,
+                  total: bestAttempt.totalMarks,
+                  number: bestAttempt.attemptNumber,
+                })}
+              </p>
+            )}
           </div>
         )}
 
@@ -174,8 +196,8 @@ export default function ExamResultPage() {
           <div className="bg-[#FBF9F4] rounded-lg p-4">
             <Target className="w-5 h-5 text-[#B8912F] mx-auto mb-2" />
             <p className="text-lg font-bold text-[#0C1F33]">
-              {bestAttempt?.score !== null && bestAttempt?.score !== undefined
-                ? `${Math.round(((bestAttempt?.score ?? 0) / displayTotalMarks) * 100)}%`
+              {latestAttempt?.score !== null && latestAttempt?.score !== undefined
+                ? `${Math.round(((latestAttempt?.score ?? 0) / displayTotalMarks) * 100)}%`
                 : "—"}
             </p>
             <p className="text-[10px] text-[#64748B] uppercase">{t("score")}</p>
@@ -258,7 +280,11 @@ export default function ExamResultPage() {
             <div className="mb-5">
               <p className="text-sm font-bold text-[#0C1F33]">{t("review")}</p>
 
-              <p className="text-xs text-[#64748B] mt-1">{t("reviewHint")}</p>
+              <p className="text-xs text-[#64748B] mt-1">
+                {t("reviewHint")}
+                {latestAttempt &&
+                  ` ${t("showingAttempt", { number: latestAttempt.attemptNumber })}`}
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -487,11 +513,9 @@ export default function ExamResultPage() {
           </div>
         )}
 
-        <p className="text-xs text-[#64748B] mt-1">
-          {bestAttempt
-            ? t("showingAttempt", { number: bestAttempt.attemptNumber })
-            : t("noAttempts")}
-        </p>
+        {!latestAttempt && (
+          <p className="text-xs text-[#64748B] mt-1">{t("noAttempts")}</p>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3 mt-6 border-t border-[#E3E8EF] pt-6">

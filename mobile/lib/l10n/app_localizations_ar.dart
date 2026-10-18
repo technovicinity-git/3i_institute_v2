@@ -1781,6 +1781,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String resultBestScore(String score, int total, int number) {
+    return '⁧أعلى درجة: $score/$total (المحاولة #$number)⁩';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return '⁧لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #$number.⁩';
+  }
+
+  @override
   String get resultRetake => '⁧إعادة الاختبار⁩';
 
   @override

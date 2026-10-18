@@ -1913,6 +1913,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String resultBestScore(String score, int total, int number) {
+    return 'Best score: $score/$total (attempt #$number)';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return 'You didn\'t pass this attempt, but you already passed in attempt #$number.';
+  }
+
+  @override
   String get resultRetake => 'Retake exam';
 
   @override

@@ -1254,11 +1254,9 @@ export class ExamService {
       orderBy: { attemptNumber: "asc" },
     });
 
-    // Best graded attempt (highest score). When an exam contains short-answer /
-    // essay questions the whole attempt is stored with score = null until it is
-    // manually graded, so those attempts used to be dropped here and their
-    // answers never returned. Fall back to the most recent attempt so the
-    // learner's written answers are still shown while grading is pending.
+    // Best graded attempt (highest score), reported as a summary. Attempts
+    // with written answers have score = null until graded, so fall back to
+    // the most recent one.
     const gradedAttempts = attempts
       .filter((a) => a.score !== null)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
@@ -1266,14 +1264,19 @@ export class ExamService {
     const bestAttempt =
       gradedAttempts[0] ?? attempts[attempts.length - 1] ?? null;
 
+    // The answer sheet is always the most recent attempt: right after
+    // submitting, the learner wants to review the answers they just gave,
+    // even if an earlier attempt scored higher.
+    const latestAttempt = attempts[attempts.length - 1] ?? null;
+
     // Exam questions are stored as JSON on the Exam model. REGULAR dynamic
     // exams keep the per-attempt random set inside the attempt itself.
     const baseExamQuestions = exam.questions as Array<{
       questionId: string;
       marks?: number;
     }>;
-    const storedQuestionSet = bestAttempt
-      ? ((bestAttempt.answers as Record<string, unknown>)["__questionSet"] as
+    const storedQuestionSet = latestAttempt
+      ? ((latestAttempt.answers as Record<string, unknown>)["__questionSet"] as
           | Array<{ questionId: string; marks: number }>
           | undefined)
       : undefined;
@@ -1304,7 +1307,21 @@ export class ExamService {
     });
 
     // Convert learner answers into an easy lookup object
-    const answers = bestAttempt?.answers as Record<string, unknown> | null;
+    const answers = latestAttempt?.answers as Record<string, unknown> | null;
+
+    const summary = (a: (typeof attempts)[number]) => ({
+      id: a.id,
+      examId: a.examId,
+      examTitle: exam.title,
+      learnerProfileId: a.learnerProfileId,
+      attemptNumber: a.attemptNumber,
+      score: a.score,
+      totalMarks: a.totalMarks,
+      passed: a.passed,
+      graded: a.graded,
+      startedAt: a.startedAt,
+      submittedAt: a.submittedAt,
+    });
 
     // Build question-by-question result
     const questionResults = examQuestions
@@ -1341,7 +1358,7 @@ export class ExamService {
 
           marks,
           marksAwarded,
-          attemptNumber: bestAttempt?.attemptNumber ?? null,
+          attemptNumber: latestAttempt?.attemptNumber ?? null,
 
           explanation: question.explanation,
         };
@@ -1359,35 +1376,10 @@ export class ExamService {
         openDate: exam.openDate,
       },
 
-      attempts: attempts.map((a) => ({
-        id: a.id,
-        examId: a.examId,
-        examTitle: exam.title,
-        learnerProfileId: a.learnerProfileId,
-        attemptNumber: a.attemptNumber,
-        score: a.score,
-        totalMarks: a.totalMarks,
-        passed: a.passed,
-        graded: a.graded,
-        startedAt: a.startedAt,
-        submittedAt: a.submittedAt,
-      })),
-
-      bestAttempt: bestAttempt
-        ? {
-            id: bestAttempt.id,
-            examId: bestAttempt.examId,
-            examTitle: exam.title,
-            learnerProfileId: bestAttempt.learnerProfileId,
-            attemptNumber: bestAttempt.attemptNumber,
-            score: bestAttempt.score,
-            totalMarks: bestAttempt.totalMarks,
-            passed: bestAttempt.passed,
-            graded: bestAttempt.graded,
-            startedAt: bestAttempt.startedAt,
-            submittedAt: bestAttempt.submittedAt,
-          }
-        : null,
+      attempts: attempts.map(summary),
+      bestAttempt: bestAttempt ? summary(bestAttempt) : null,
+      // questionResults below belong to this attempt.
+      latestAttempt: latestAttempt ? summary(latestAttempt) : null,
 
       questionResults,
     };

@@ -69,6 +69,8 @@ export const learnerExamService = {
     };
     attempts: ExamAttemptResult[];
     bestAttempt: ExamAttemptResult | null;
+    /** The attempt `questionResults` belong to (the most recent one). */
+    latestAttempt: ExamAttemptResult | null;
     questionResults: ExamQuestionResult[];
   }> => {
     const response = await apiClient.get(

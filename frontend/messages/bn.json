@@ -948,6 +948,8 @@
     "explanation": "ব্যাখ্যা",
     "notAnswered": "উত্তর দেওয়া হয়নি",
     "showingAttempt": "চেষ্টা #{number}-এর উত্তর দেখানো হচ্ছে।",
+    "bestScore": "সর্বোচ্চ নম্বর: {score}/{total} (চেষ্টা #{number})",
+    "passedEarlier": "এই চেষ্টায় পাস করেননি, তবে চেষ্টা #{number}-এ আপনি আগেই পাস করেছেন।",
     "noAttempts": "কোনো চেষ্টা পাওয়া যায়নি।",
     "retake": "আবার পরীক্ষা দিন"
   },

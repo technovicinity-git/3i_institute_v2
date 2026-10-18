@@ -530,6 +530,8 @@
   "resultReviewHint": "अपने उत्तर और सही उत्तर देखें।",
   "resultNoAttempts": "कोई प्रयास नहीं मिला।",
   "resultShowingAttempt": "प्रयास #{number} के उत्तर दिखाए जा रहे हैं।",
+  "resultBestScore": "सर्वोच्च अंक: {score}/{total} (प्रयास #{number})",
+  "resultPassedEarlier": "आप इस प्रयास में पास नहीं हुए, लेकिन प्रयास #{number} में आप पहले ही पास हो चुके हैं।",
   "resultRetake": "फिर से परीक्षा दें",
   "resultAwarded": "{total} में से {awarded} दिए गए",
   "resultAwaitingGrading": "मूल्यांकन की प्रतीक्षा",

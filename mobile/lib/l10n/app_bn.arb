@@ -530,6 +530,8 @@
   "resultReviewHint": "আপনার উত্তর ও সঠিক উত্তর মিলিয়ে দেখুন।",
   "resultNoAttempts": "কোনো চেষ্টা পাওয়া যায়নি।",
   "resultShowingAttempt": "চেষ্টা #{number}-এর উত্তর দেখানো হচ্ছে।",
+  "resultBestScore": "সর্বোচ্চ নম্বর: {score}/{total} (চেষ্টা #{number})",
+  "resultPassedEarlier": "এই চেষ্টায় পাস করেননি, তবে চেষ্টা #{number}-এ আপনি আগেই পাস করেছেন।",
   "resultRetake": "আবার পরীক্ষা দিন",
   "resultAwarded": "{total}টির মধ্যে {awarded} দেওয়া হয়েছে",
   "resultAwaitingGrading": "মূল্যায়নের অপেক্ষায়",

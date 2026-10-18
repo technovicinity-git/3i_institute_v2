@@ -1058,6 +1058,20 @@
       }
     }
   },
+  "resultBestScore": "Best score: {score}/{total} (attempt #{number})",
+  "@resultBestScore": {
+    "placeholders": {
+      "score": {"type": "String"},
+      "total": {"type": "int"},
+      "number": {"type": "int"}
+    }
+  },
+  "resultPassedEarlier": "You didn't pass this attempt, but you already passed in attempt #{number}.",
+  "@resultPassedEarlier": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
   "resultRetake": "Retake exam",
   "resultAwarded": "{awarded} of {total} awarded",
   "@resultAwarded": {

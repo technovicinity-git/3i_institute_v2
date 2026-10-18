@@ -948,6 +948,8 @@
     "explanation": "व्याख्या",
     "notAnswered": "उत्तर नहीं दिया",
     "showingAttempt": "प्रयास #{number} के उत्तर दिखाए जा रहे हैं।",
+    "bestScore": "सर्वोच्च अंक: {score}/{total} (प्रयास #{number})",
+    "passedEarlier": "आप इस प्रयास में पास नहीं हुए, लेकिन प्रयास #{number} में आप पहले ही पास हो चुके हैं।",
     "noAttempts": "कोई प्रयास नहीं मिला।",
     "retake": "फिर से परीक्षा दें"
   },

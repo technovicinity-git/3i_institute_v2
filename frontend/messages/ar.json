@@ -948,6 +948,8 @@
     "explanation": "الشرح",
     "notAnswered": "لم تتم الإجابة",
     "showingAttempt": "عرض إجابات المحاولة #{number}.",
+    "bestScore": "أعلى درجة: {score}/{total} (المحاولة #{number})",
+    "passedEarlier": "لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #{number}.",
     "noAttempts": "لم يتم العثور على محاولات.",
     "retake": "إعادة الاختبار"
   },

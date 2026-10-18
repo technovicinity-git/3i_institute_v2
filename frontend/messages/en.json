@@ -948,6 +948,8 @@
     "explanation": "Explanation",
     "notAnswered": "Not answered",
     "showingAttempt": "Showing answers from attempt #{number}.",
+    "bestScore": "Best score: {score}/{total} (attempt #{number})",
+    "passedEarlier": "You didn't pass this attempt, but you already passed in attempt #{number}.",
     "noAttempts": "No attempts found.",
     "retake": "Retake exam"
   },
