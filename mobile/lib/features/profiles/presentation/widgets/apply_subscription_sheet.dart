@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _ink = Color(0xff0c1f33);
 const _muted = Color(0xff475569);
@@ -278,7 +278,7 @@ class _ApplySheetState extends ConsumerState<_ApplySheet> {
                           onTap: _pickDate,
                           child: InputDecorator(
                             decoration: _decoration(context.l10n.applyPaymentDate),
-                            child: Text(DateFormat.yMMMd().format(_paidAt)),
+                            child: Text(formatDate(_paidAt, DateStyle.date)),
                           ),
                         ),
                       ),

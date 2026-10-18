@@ -9,6 +9,7 @@ import type {
 } from "@/services/admin-email.service";
 import { Pagination } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 const AUDIENCE_LABEL: Record<AdminEmail["audience"], string> = {
   INSTRUCTORS: "All instructors",
@@ -39,16 +40,6 @@ function bodyPreview(markdown: string) {
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function EmailHistory() {
@@ -100,7 +91,7 @@ export function EmailHistory() {
                     </p>
                   </div>
                   <time className="shrink-0 text-xs text-[#94A3B8]">
-                    {formatDateTime(email.createdAt)}
+                    {formatDate(email.createdAt, "dateTime")}
                   </time>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">

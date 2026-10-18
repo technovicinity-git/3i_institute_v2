@@ -12,18 +12,9 @@ import type {
   ActivityEntry,
   ActivityFilters,
 } from "@/services/activity-log.service";
+import { formatDate } from "@/lib/date-format";
 
 const PAGE_SIZE = 25;
-
-function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 const TONE_DOT: Record<NonNullable<ActivityEntry["tone"]> | "none", string> = {
   success: "bg-[#22A146]",
@@ -46,7 +37,7 @@ function humanizeKey(key: string): string {
 function formatValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "string") {
-    return ISO_DATE.test(value) ? formatDateTime(value) : value;
+    return ISO_DATE.test(value) ? formatDate(value, "dateTime") : value;
   }
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (Array.isArray(value)) {
@@ -276,7 +267,7 @@ export default function AdminActivityLogPage() {
                   >
                     {/* When */}
                     <span className="md:col-span-2 text-sm text-[#64748B]">
-                      {formatDateTime(entry.createdAt)}
+                      {formatDate(entry.createdAt, "dateTime")}
                     </span>
 
                     {/* Who */}

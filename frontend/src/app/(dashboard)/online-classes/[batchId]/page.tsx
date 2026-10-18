@@ -23,7 +23,6 @@ import { useLearnerCertificates } from "@/hooks/use-learner-certificates";
 import { downloadExamCertificatePdf } from "@/services/learner-certificate.service";
 import { useTranslations } from "next-intl";
 import { useDateFormat } from "@/i18n/use-date-format";
-import { useFormatter } from "next-intl";
 
 type SessionStatus = "LIVE" | "STARTING_SOON" | "UPCOMING" | "COMPLETED";
 
@@ -76,16 +75,9 @@ export default function OnlineClassBatchPage() {
   const t = useTranslations("schedule");
   const tClasses = useTranslations("classes");
   const fmt = useDateFormat();
-  const format = useFormatter();
-  const formatDate = (date: string) =>
-    format.dateTime(new Date(date), {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  const formatMonth = (date: string) =>
-    format.dateTime(new Date(date), { month: "short" });
+  const { format } = useDateFormat();
+  const formatDate = (date: string) => format(date, "weekdayDate");
+  const formatMonth = (date: string) => format(date, "month");
   const router = useRouter();
   const params = useParams<{ batchId: string }>();
 
@@ -280,7 +272,7 @@ export default function OnlineClassBatchPage() {
                   isCompleted ? "text-[#64748B]" : "text-[#0C1F33]"
                 }`}
               >
-                {format.dateTime(new Date(session.scheduledAt), { day: "numeric" })}
+                {format(session.scheduledAt, "day")}
               </span>
             </div>
 

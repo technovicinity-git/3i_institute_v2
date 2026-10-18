@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../domain/app_notification.dart';
 import '../notifications_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF0C1F33);
 const _muted = Color(0xFF64748B);
@@ -309,5 +309,5 @@ String _timeAgo(AppLocalizations l10n, DateTime date) {
   if (diff.inMinutes < 60) return l10n.notifMinutesAgo(diff.inMinutes);
   if (diff.inHours < 24) return l10n.notifHoursAgo(diff.inHours);
   if (diff.inDays < 7) return l10n.notifDaysAgo(diff.inDays);
-  return DateFormat.yMMMd().format(date);
+  return formatDate(date, DateStyle.date);
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/share/course_share.dart';
@@ -12,6 +11,7 @@ import '../providers/courses_providers.dart';
 import '../widgets/course_card.dart';
 import '../widgets/landing_layout.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 class CourseDetailsPage extends ConsumerWidget {
   const CourseDetailsPage({required this.courseId, super.key});
@@ -1006,6 +1006,6 @@ String _levelName(AppLocalizations l10n, String level) => switch (level.toLowerC
 
 String _formatSession(AppLocalizations l10n, DateTime? date, int minutes) => date == null
     ? l10n.commonMinutes(minutes)
-    : '${DateFormat.yMMMEd().add_jm().format(date)} · ${l10n.commonMinutes(minutes)}';
+    : '${formatDate(date, DateStyle.weekdayDateTime)} · ${l10n.commonMinutes(minutes)}';
 
-String _formatReviewDate(DateTime? date) => date == null ? '' : DateFormat.yMMMd().format(date);
+String _formatReviewDate(DateTime? date) => date == null ? '' : formatDate(date, DateStyle.date);

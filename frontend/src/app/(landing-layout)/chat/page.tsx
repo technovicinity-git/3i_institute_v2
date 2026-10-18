@@ -20,7 +20,8 @@ import { useChat } from "@/hooks/use-chat";
 import { useProfileStore } from "@/stores/profile-store";
 import { useAuthStore } from "@/stores/auth-store";
 import Image from "next/image";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 function getInitials(name: string): string {
   return name
@@ -36,16 +37,9 @@ function ChatContent() {
   const tCommon = useTranslations("common");
   const tSchedule = useTranslations("schedule");
   const tLive = useTranslations("liveClasses");
-  const format = useFormatter();
-  const formatTime = (dateStr: string) =>
-    format.dateTime(new Date(dateStr), { hour: "numeric", minute: "2-digit" });
-  const formatDate = (dateStr: string) =>
-    format.dateTime(new Date(dateStr), {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+  const { format } = useDateFormat();
+  const formatTime = (dateStr: string) => format(dateStr, "time");
+  const formatDate = (dateStr: string) => format(dateStr, "fullDate");
   const searchParams = useSearchParams();
   const courseId = searchParams.get("courseId") ?? "";
   const courseTitle = searchParams.get("courseTitle") ?? t("course");
@@ -151,11 +145,7 @@ function ChatContent() {
     if (isToday) return t("todayAt", { time });
     if (isTomorrow) return t("tomorrowAt", { time });
 
-    const date2 = format.dateTime(date, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-    });
+    const date2 = format(date, "weekdayDayMonth");
     return t("dateAt", { date: date2, time });
   }
 

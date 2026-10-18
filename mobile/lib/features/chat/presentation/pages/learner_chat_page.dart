@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -12,6 +11,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../chat_providers.dart';
 import '../../data/chat_repository.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -587,7 +587,7 @@ class _DateDivider extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
-          DateFormat.yMMMMEEEEd().format(date),
+          formatDate(date, DateStyle.fullDate),
           style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -646,7 +646,7 @@ class _MessageBubble extends StatelessWidget {
                       children: [
                         if (isSelf && time != null)
                           Text(
-                            DateFormat.jm().format(time),
+                            formatDate(time, DateStyle.time),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF475569),
@@ -685,7 +685,7 @@ class _MessageBubble extends StatelessWidget {
                         if (!isSelf && time != null) ...[
                           const SizedBox(width: 6),
                           Text(
-                            DateFormat.jm().format(time),
+                            formatDate(time, DateStyle.time),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF475569),
@@ -824,5 +824,5 @@ String _time(AppLocalizations l10n, String value) {
   final date = DateTime.tryParse(value)?.toLocal();
   return date == null
       ? l10n.chatTimeTba
-      : l10n.chatDateAt(DateFormat.MMMEd().format(date), DateFormat.jm().format(date));
+      : l10n.chatDateAt(formatDate(date, DateStyle.weekdayDayMonth), formatDate(date, DateStyle.time));
 }

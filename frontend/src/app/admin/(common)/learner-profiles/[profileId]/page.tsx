@@ -5,10 +5,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Archive, ArchiveRestore, BookOpen, ClipboardList, UserRound } from "lucide-react";
 import { useAdminLearnerProfile, useArchiveLearnerProfileMutation, useRestoreLearnerProfileMutation } from "@/hooks/use-admin";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminLearnerProfileDetailsPage() {
   const params = useParams();

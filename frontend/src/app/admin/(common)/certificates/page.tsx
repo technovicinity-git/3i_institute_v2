@@ -11,14 +11,7 @@ import {
 } from "@/services/admin.service";
 import { Pagination } from "@/components/ui/pagination";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 const TYPE_BADGE: Record<AdminCertificate["type"], { label: string; className: string }> = {
   COMPLETION: { label: "COMPLETION", className: "bg-[#22A146]/10 text-[#22A146]" },

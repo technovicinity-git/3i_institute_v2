@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_error_message.dart';
@@ -9,6 +8,7 @@ import '../../domain/entities/instructor_batch.dart';
 import '../providers/instructor_courses_providers.dart';
 import '../session_notice.dart';
 import '../widgets/course_action_strip.dart';
+import '../../../../core/format/date_format.dart';
 
 class InstructorBatchesPage extends ConsumerWidget {
   const InstructorBatchesPage({required this.courseId, super.key});
@@ -960,7 +960,7 @@ class _SessionTile extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        '${date == null ? 'Date to be confirmed' : DateFormat('EEE, MMM d, yyyy · h:mm a').format(date)} · ${session.durationMinutes} min',
+                        '${date == null ? 'Date to be confirmed' : formatDate(date, DateStyle.weekdayDateTime, 'en')} · ${session.durationMinutes} min',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
@@ -1033,9 +1033,7 @@ class _SessionDatePickerState extends State<_SessionDatePicker> {
     subtitle: Text(
       widget.draft.scheduledAt == null
           ? 'Select session date and time'
-          : DateFormat(
-              'EEE, MMM d, yyyy · h:mm a',
-            ).format(widget.draft.scheduledAt!),
+          : formatDate(widget.draft.scheduledAt!, DateStyle.weekdayDateTime, 'en'),
     ),
     trailing: const Icon(Icons.edit_calendar),
     onTap: _select,
@@ -1206,7 +1204,7 @@ String _dateTime(String raw) {
   final date = DateTime.tryParse(raw)?.toLocal();
   return date == null
       ? 'To be scheduled'
-      : DateFormat('MMM d, h:mm a').format(date);
+      : formatDate(date, DateStyle.dayMonthTime, 'en');
 }
 
 Future<void> _openLink(BuildContext context, String value) async {

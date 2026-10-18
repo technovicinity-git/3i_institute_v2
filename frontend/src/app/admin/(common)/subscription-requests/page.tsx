@@ -30,24 +30,7 @@ import {
   type AdminSubscriptionRequest,
   type SubscriptionRequestStatus,
 } from "@/services/subscription.service";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 const STATUS_TABS: { value: string; label: string }[] = [
   { value: "PENDING", label: "Pending" },
@@ -115,7 +98,7 @@ export default function AdminSubscriptionRequestsPage() {
           </span>{" "}
           will be subscribed for one month
           {request.profileSubscribedUntil
-            ? `, starting when the current period ends (${formatDateTime(request.profileSubscribedUntil)})`
+            ? `, starting when the current period ends (${formatDate(request.profileSubscribedUntil, "dateTime")})`
             : " from now"}
           . It ends at 12am in the account holder&apos;s timezone.{" "}
           {request.transactionId ? (
@@ -478,14 +461,14 @@ function ReviewDialog({
                 {formatDate(request.paidAt)}
               </DetailRow>
               <DetailRow label="Submitted">
-                {formatDateTime(request.createdAt)}
+                {formatDate(request.createdAt, "dateTime")}
               </DetailRow>
               <DetailRow label="Learner age">
                 {request.learnerProfile.age}
               </DetailRow>
               {request.profileSubscribedUntil && (
                 <DetailRow label="Subscribed until">
-                  {formatDateTime(request.profileSubscribedUntil)}
+                  {formatDate(request.profileSubscribedUntil, "dateTime")}
                 </DetailRow>
               )}
               {request.note && (
@@ -497,8 +480,8 @@ function ReviewDialog({
                 request.periodStart &&
                 request.periodEnd && (
                   <DetailRow label="Period">
-                    {formatDateTime(request.periodStart)} –{" "}
-                    {formatDateTime(request.periodEnd)}
+                    {formatDate(request.periodStart, "dateTime")} –{" "}
+                    {formatDate(request.periodEnd, "dateTime")}
                   </DetailRow>
                 )}
               {request.status === "REJECTED" && request.rejectionReason && (

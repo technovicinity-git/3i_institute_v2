@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../certificates/presentation/certificates_providers.dart';
@@ -12,6 +11,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -351,7 +351,7 @@ class _BatchSummary extends StatelessWidget {
               if (enrolled != null)
                 _Meta(
                   icon: Icons.calendar_today_outlined,
-                  text: context.l10n.scheduleEnrolledOn(DateFormat.yMMMd().format(enrolled)),
+                  text: context.l10n.scheduleEnrolledOn(formatDate(enrolled, DateStyle.date)),
                 ),
             ],
           ),
@@ -484,7 +484,7 @@ class _SessionCard extends StatelessWidget {
                     Text(
                       date == null
                           ? '--'
-                          : DateFormat('MMM').format(date).toUpperCase(),
+                          : formatDate(date, DateStyle.month).toUpperCase(),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -545,13 +545,13 @@ class _SessionCard extends StatelessWidget {
                           icon: Icons.calendar_today_outlined,
                           text: date == null
                               ? context.l10n.classesDateTba
-                              : DateFormat.yMMMEd().format(date),
+                              : formatDate(date, DateStyle.weekdayDate),
                         ),
                         if (date != null)
                           _Meta(
                             icon: Icons.schedule,
                             text:
-                                '${DateFormat.jm().format(date)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
+                                '${formatDate(date, DateStyle.time)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
                           ),
                       ],
                     ),

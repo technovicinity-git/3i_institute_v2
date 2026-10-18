@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../providers/subscription_providers.dart';
@@ -10,6 +9,7 @@ import '../widgets/apply_subscription_sheet.dart';
 import '../widgets/waiver_request_sheet.dart';
 import '../widgets/learner_avatar.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xff12304e);
 const _ink = Color(0xff0c1f33);
@@ -19,7 +19,7 @@ const _gold = Color(0xffb8912f);
 const _blue = Color(0xff2d6cdf);
 const _border = Color(0xffe3e8ef);
 
-String _dateTime(DateTime date) => DateFormat.yMMMd().add_jm().format(date);
+String _dateTime(DateTime date) => formatDate(date, DateStyle.dateTime);
 
 class SubscriptionPage extends ConsumerWidget {
   const SubscriptionPage({super.key});
@@ -444,7 +444,7 @@ class _ProfileCard extends StatelessWidget {
         icon: Icons.discount_outlined,
         color: const Color(0xff157a34),
         text: expires != null
-            ? l10n.subWaiverReadyUseBy(profile.waiverPercent ?? 0, DateFormat.yMMMd().format(expires))
+            ? l10n.subWaiverReadyUseBy(profile.waiverPercent ?? 0, formatDate(expires, DateStyle.date))
             : l10n.subWaiverReady(profile.waiverPercent ?? 0),
       );
     }
@@ -479,7 +479,7 @@ class _ProfileCard extends StatelessWidget {
         else
           Text(
             next != null
-                ? l10n.subWaiverLimitNext(DateFormat.yMMMd().format(next))
+                ? l10n.subWaiverLimitNext(formatDate(next, DateStyle.date))
                 : l10n.subWaiverLimit,
             style: const TextStyle(fontSize: 12, color: _muted),
           ),
@@ -674,12 +674,12 @@ class _RequestTile extends StatelessWidget {
           ),
           if (created != null)
             Text(
-              context.l10n.subSubmittedOn(DateFormat.yMMMd().format(created)),
+              context.l10n.subSubmittedOn(formatDate(created, DateStyle.date)),
               style: const TextStyle(fontSize: 12),
             ),
           if (request.status == 'APPROVED' && periodEnd != null)
             Text(
-              context.l10n.subUntil(DateFormat.yMMMd().format(periodEnd)),
+              context.l10n.subUntil(formatDate(periodEnd, DateStyle.date)),
               style: const TextStyle(fontSize: 12),
             ),
           if (request.status == 'REJECTED' && request.rejectionReason != null)
@@ -758,17 +758,17 @@ class _WaiverTile extends StatelessWidget {
         children: [
           if (created != null)
             Text(
-              context.l10n.subRequestedOn(DateFormat.yMMMd().format(created)),
+              context.l10n.subRequestedOn(formatDate(created, DateStyle.date)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.status == 'APPROVED' && expires != null)
             Text(
-              context.l10n.subUseBy(DateFormat.yMMMd().format(expires)),
+              context.l10n.subUseBy(formatDate(expires, DateStyle.date)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.status == 'USED' && used != null)
             Text(
-              context.l10n.subUsedOn(DateFormat.yMMMd().format(used)),
+              context.l10n.subUsedOn(formatDate(used, DateStyle.date)),
               style: const TextStyle(fontSize: 12),
             ),
           if (waiver.reason != null)

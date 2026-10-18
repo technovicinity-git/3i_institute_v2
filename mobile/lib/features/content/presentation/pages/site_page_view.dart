@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../content_providers.dart';
 import '../widgets/simple_markdown.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 /// A published info/legal page, e.g. the privacy policy.
 class SitePageView extends ConsumerWidget {
@@ -59,7 +59,7 @@ class SitePageView extends ConsumerWidget {
             if (content.updatedAt != null) ...[
               const SizedBox(height: 6),
               Text(
-                context.l10n.pageUpdated(DateFormat.yMMMMd().format(content.updatedAt!)),
+                context.l10n.pageUpdated(formatDate(content.updatedAt!, DateStyle.longDate)),
                 style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
             ],

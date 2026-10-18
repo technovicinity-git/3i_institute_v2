@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-admin";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminInstructorDetailsPage() {
   const params = useParams();
@@ -246,7 +247,7 @@ export default function AdminInstructorDetailsPage() {
               {application?.wwccNumber ?? "—"}{" "}
               {application?.wwccState ? `(${application.wwccState})` : ""}
               {application?.wwccExpiry
-                ? ` · Expires ${new Date(application.wwccExpiry).toLocaleDateString()}`
+                ? ` · Expires ${formatDate(application.wwccExpiry)}`
                 : ""}
             </p>
           </div>

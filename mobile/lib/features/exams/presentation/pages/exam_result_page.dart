@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -620,7 +620,7 @@ class _AttemptTile extends StatelessWidget {
                 ),
                 if (date != null)
                   Text(
-                    DateFormat.yMMMd().add_jm().format(date),
+                    formatDate(date, DateStyle.dateTime),
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF64748B),

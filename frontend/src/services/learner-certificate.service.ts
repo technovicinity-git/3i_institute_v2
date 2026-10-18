@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { siteUrl } from "@/lib/share";
+import { formatDate } from "@/lib/date-format";
 
 export interface ExamCertificateDetails {
   /** Course progress percentage at the time the certificate was generated. */
@@ -71,11 +72,8 @@ function pdfSafeText(value: string): string {
 /** Build a small, dependency-free, printable certificate PDF. */
 export function downloadExamCertificatePdf(certificate: ExamCertificate) {
   const details = certificate.details;
-  const date = new Date(certificate.issuedAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // English: the PDF is written in plain ASCII.
+  const date = formatDate(certificate.issuedAt, "longDate");
   const result = details
     ? details.score === null
       ? "Result: Pending grading"

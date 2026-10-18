@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -11,6 +10,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/certificate.dart';
 import '../certificates_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _gold = Color(0xFFB8912F);
@@ -226,7 +226,7 @@ class _CertificateCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final issued = certificate.issuedAt == null
         ? context.l10n.certDateUnavailable
-        : DateFormat.yMMMMd().format(certificate.issuedAt!);
+        : formatDate(certificate.issuedAt!, DateStyle.longDate);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white,
@@ -387,7 +387,7 @@ class _CertificatePreview extends StatelessWidget {
     final details = certificate.details;
     final issued = certificate.issuedAt == null
         ? context.l10n.certDateUnavailable
-        : DateFormat.yMMMMd().format(certificate.issuedAt!);
+        : formatDate(certificate.issuedAt!, DateStyle.longDate);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -571,7 +571,7 @@ Future<void> printCertificatePdf(
   final details = certificate.details;
   final date = certificate.issuedAt == null
       ? 'Date unavailable'
-      : DateFormat.yMMMMd().format(certificate.issuedAt!);
+      : formatDate(certificate.issuedAt!, DateStyle.longDate);
   final document = pw.Document();
   document.addPage(
     pw.Page(

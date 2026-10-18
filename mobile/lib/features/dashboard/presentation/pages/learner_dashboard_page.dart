@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_error_message.dart';
@@ -11,6 +10,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/entities/dashboard_data.dart';
 import '../providers/dashboard_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -612,7 +612,7 @@ class _LiveClassRow extends StatelessWidget {
               Text(
                 date == null
                     ? '--'
-                    : DateFormat.MMM().format(date).toUpperCase(),
+                    : formatDate(date, DateStyle.month).toUpperCase(),
                 style: const TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -814,7 +814,7 @@ class _WeeklyActivityChart extends StatelessWidget {
                             ? context.l10n.dashThisWeekShort
                             : week.weekStart == null
                             ? ''
-                            : DateFormat.MMMd().format(week.weekStart!),
+                            : formatDate(week.weekStart!, DateStyle.dayMonth),
                         maxLines: 1,
                         overflow: TextOverflow.clip,
                         style: TextStyle(
@@ -1373,14 +1373,14 @@ Future<void> _openLink(BuildContext context, String link) async {
 }
 
 String _time(AppLocalizations l10n, DateTime? date) =>
-    date == null ? l10n.dashTimeTba : DateFormat.jm().format(date);
+    date == null ? l10n.dashTimeTba : formatDate(date, DateStyle.time);
 
 String _ago(AppLocalizations l10n, DateTime date) {
   final diff = DateTime.now().difference(date);
   if (diff.inHours < 1) return l10n.notifJustNow;
   if (diff.inHours < 24) return l10n.notifHoursAgo(diff.inHours);
   if (diff.inDays < 7) return l10n.notifDaysAgo(diff.inDays);
-  return DateFormat.MMMd().format(date);
+  return formatDate(date, DateStyle.dayMonth);
 }
 
 String _number(num value) => value == value.roundToDouble()

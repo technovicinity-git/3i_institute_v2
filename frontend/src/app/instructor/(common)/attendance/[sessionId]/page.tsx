@@ -15,23 +15,7 @@ import {
   useSessionAttendance,
   useMarkAttendanceMutation,
 } from "@/hooks/use-attendance";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 const STATUS_OPTIONS = [
   {
@@ -129,8 +113,8 @@ export default function AttendancePage() {
         </h1>
         {data && (
           <p className="text-base text-[#64748B] mt-2">
-            {data.sessionTitle} • {formatDate(data.scheduledAt)} at{" "}
-            {formatTime(data.scheduledAt)}
+            {data.sessionTitle} • {formatDate(data.scheduledAt, "fullDate")} at{" "}
+            {formatDate(data.scheduledAt, "time")}
           </p>
         )}
       </div>

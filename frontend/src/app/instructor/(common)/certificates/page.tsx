@@ -7,14 +7,7 @@ import {
   useRevokeCertificateMutation,
 } from "@/hooks/use-instructor-certificates";
 import { useInstructorCourses } from "@/hooks/use-instructor-courses";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function getTypeBadge(type: string) {
   return type === "COMPLETION"

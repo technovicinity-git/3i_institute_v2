@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/entities/instructor_batch.dart';
 import '../providers/instructor_courses_providers.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF0C1F33);
 const _muted = Color(0xFF64748B);
@@ -140,7 +140,7 @@ class _DayHeader extends StatelessWidget {
     child: Row(
       children: [
         Text(
-          DateFormat('EEE, MMM d').format(date),
+          formatDate(date, DateStyle.weekdayDayMonth, 'en'),
           style: const TextStyle(fontWeight: FontWeight.bold, color: _navy),
         ),
         const SizedBox(width: 10),
@@ -190,7 +190,7 @@ class _SessionCard extends StatelessWidget {
                     const Icon(Icons.schedule, size: 16, color: _gold),
                     const SizedBox(height: 3),
                     Text(
-                      start == null ? '--' : DateFormat('h:mm a').format(start),
+                      start == null ? '--' : formatDate(start, DateStyle.time, 'en'),
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,

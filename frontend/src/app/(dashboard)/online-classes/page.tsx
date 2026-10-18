@@ -27,22 +27,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { levelKey } from "@/lib/course-level";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 
-/** "Thu, Oct 16 • 3:00 PM" in the user's language */
+/** "Thu, 16 Oct • 3:00 PM" in the user's language */
 function useSessionFormat() {
-  const format = useFormatter();
-  return (dateStr: string) => {
-    const date = new Date(dateStr);
-    const day = format.dateTime(date, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-    const time = format.dateTime(date, { hour: "numeric", minute: "2-digit" });
-    return `${day} • ${time}`;
-  };
+  const { format } = useDateFormat();
+  return (dateStr: string) =>
+    `${format(dateStr, "weekdayDayMonth")} • ${format(dateStr, "time")}`;
 }
 
 type EnrolledCourse = NonNullable<

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
 import '../../domain/entities/instructor_student.dart';
 import '../providers/instructor_courses_providers.dart';
 import '../widgets/course_action_strip.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF0C1F33);
 const _muted = Color(0xFF64748B);
@@ -340,7 +340,7 @@ class _StudentRow extends StatelessWidget {
                 Icons.event_outlined,
                 enrolled == null
                     ? 'Enrolled —'
-                    : 'Enrolled ${DateFormat('MMM d, y').format(enrolled)}',
+                    : 'Enrolled ${formatDate(enrolled, DateStyle.date, 'en')}',
               ),
               _Meta(Icons.cake_outlined, 'Age ${_age(student.dateOfBirth)}'),
               if (showBatch)

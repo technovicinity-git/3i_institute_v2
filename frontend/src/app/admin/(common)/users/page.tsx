@@ -20,14 +20,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useAuthStore } from "@/stores/auth-store";
 import type { AdminUser } from "@/services/admin.service";
 import { Pagination } from "@/components/ui/pagination";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function getRoleBadge(role: string) {
   const roleMap: Record<string, { label: string; className: string }> = {

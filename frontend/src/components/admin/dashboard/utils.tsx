@@ -1,21 +1,16 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { formatDate } from "@/lib/date-format";
 
 export const card = "bg-white rounded-xl border border-[#E3E8EF]";
 export const serif = { fontFamily: "var(--font-display)" };
 
 export function formatShortDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatDate(value, "dayMonth");
 }
 
 export function formatTime(value: string): string {
-  return new Date(value).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatDate(value, "time");
 }
 
 export function timeAgo(value: string): string {

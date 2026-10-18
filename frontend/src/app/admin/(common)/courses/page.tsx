@@ -23,14 +23,7 @@ import {
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { Pagination } from "@/components/ui/pagination";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../certificates/domain/certificate.dart';
 import '../../../certificates/presentation/certificates_providers.dart';
@@ -10,6 +9,7 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -481,5 +481,5 @@ String _level(AppLocalizations l10n, String value) => switch (value.toLowerCase(
 String _formatDateTime(AppLocalizations l10n, String value) {
   final date = DateTime.tryParse(value)?.toLocal();
   if (date == null) return l10n.classesDateTba;
-  return '${DateFormat.MMMEd().format(date)} • ${DateFormat.jm().format(date)}';
+  return '${formatDate(date, DateStyle.weekdayDayMonth)} • ${formatDate(date, DateStyle.time)}';
 }

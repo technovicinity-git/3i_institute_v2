@@ -1,3 +1,5 @@
+import { formatDate } from "@/lib/date-format";
+
 export type ExamAccessStatus = "open" | "upcoming" | "closed";
 
 export interface ExamAccessInfo {
@@ -46,16 +48,9 @@ export function getExamAccess(exam: {
 
 export function formatExamStartTime(
   date: Date | null | undefined,
-  locale = "en-US",
+  locale = "en",
 ): string {
-  if (!date || Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(locale, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatDate(date, "dateTime", locale, "");
 }
 
 /**

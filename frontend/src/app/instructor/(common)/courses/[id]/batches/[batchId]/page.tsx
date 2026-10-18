@@ -19,25 +19,7 @@ import { EditSessionModal } from "@/components/instructor/edit-session-modal";
 import Link from "next/link";
 import type { Session } from "@/types/batch";
 import { useCourseWorkspace } from "@/lib/course-workspace";
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function BatchDetailsPage() {
   const { panelPath } = useCourseWorkspace();
@@ -152,8 +134,8 @@ export default function BatchDetailsPage() {
                           Session {index + 1}: {session.title}
                         </p>
                         <p className="text-xs text-[#64748B]">
-                          {formatDate(session.scheduledAt)} at{" "}
-                          {formatTime(session.scheduledAt)} •{" "}
+                          {formatDate(session.scheduledAt, "weekdayDate")} at{" "}
+                          {formatDate(session.scheduledAt, "time")} •{" "}
                           {session.durationMinutes} min
                         </p>
                       </div>

@@ -6,7 +6,8 @@ import type {
   CourseBatch,
   CourseBatchSession,
 } from "@/types/course-details";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 /** "Choose Your Batch": expandable batches with their sessions. */
 export function CourseBatches({ batches }: { batches: CourseBatch[] }) {
@@ -147,7 +148,7 @@ function SessionItem({
 }) {
   const t = useTranslations("courseDetails.batches");
   const tSchedule = useTranslations("schedule");
-  const format = useFormatter();
+  const { format } = useDateFormat();
   const when = new Date(session.scheduledAt);
   return (
     <div className="overflow-hidden rounded-xl border border-[#E3E8EF] bg-white">
@@ -170,14 +171,9 @@ function SessionItem({
               </h4>
 
               <p className="mt-1 text-sm text-[#64748B]">
-                {format.dateTime(when, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {format(when, "weekdayDate")}
                 {" · "}
-                {format.dateTime(when, { hour: "numeric", minute: "2-digit" })}
+                {format(when, "time")}
               </p>
             </div>
           </div>
@@ -206,14 +202,7 @@ function SessionItem({
               </p>
 
               <p className="mt-1 text-sm text-[#334155]">
-                {format.dateTime(when, {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                {format(when, "fullDateTime")}
               </p>
             </div>
 
