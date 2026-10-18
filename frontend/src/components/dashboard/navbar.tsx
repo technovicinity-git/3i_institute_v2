@@ -62,15 +62,6 @@ export default function DashboardNavbar({
 
       {/* Right - Search, Notification, Avatar */}
       <div className="flex items-center gap-3 md:gap-5">
-        {/* Search - hidden on small screens */}
-        <div className="hidden md:flex items-center gap-2 bg-[#F8F9FA] rounded-lg px-4 py-2.5 w-[240px]">
-          <Search className="w-4 h-4 text-[#94A3B8]" />
-          <input
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            className="bg-transparent text-[12px] text-[#64748B] outline-none w-full placeholder:text-[#94A3B8]"
-          />
-        </div>
 
         <LanguageSwitcher />
 
