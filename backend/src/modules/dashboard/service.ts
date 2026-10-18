@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { seatService } from "#/modules/seat/service";
 import { NotFoundError } from "#/shared/errors";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -279,6 +280,8 @@ export class DashboardService {
             take: 10,
           });
 
+    // Join links are withheld once the subscription (and grace) has ended.
+    const access = await seatService.getLearningAccess(learnerProfileId);
     const liveClasses = upcomingSessions
       .filter(
         (s) =>
@@ -295,7 +298,7 @@ export class DashboardService {
           `${session.batch.course.instructor.firstName} ${session.batch.course.instructor.lastName}`.trim(),
         scheduledAt: session.scheduledAt.toISOString(),
         durationMinutes: session.durationMinutes,
-        meetingLink: session.meetingLink,
+        meetingLink: access.hasAccess ? session.meetingLink : null,
       }));
 
     // ─── Deadlines: open exams not yet passed + unsubmitted assignments ───

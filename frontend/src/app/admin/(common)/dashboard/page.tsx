@@ -9,6 +9,7 @@ import { GrowthChart } from "@/components/admin/dashboard/growth-chart";
 import { TodaysSessionsCard } from "@/components/admin/dashboard/todays-sessions-card";
 import { TopCoursesTable } from "@/components/admin/dashboard/top-courses-table";
 import { RecentSignupsCard } from "@/components/admin/dashboard/recent-signups-card";
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminDashboardPage() {
   // Captured once so render stays pure; good enough for "live now" labels.
@@ -44,11 +45,7 @@ export default function AdminDashboardPage() {
           Admin Dashboard
         </h1>
         <p className="text-base text-[#64748B]">
-          {new Date(now).toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}{" "}
+          {formatDate(now, "fullDate")}{" "}
           · Platform overview
         </p>
       </div>

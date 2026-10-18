@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../certificates/presentation/certificates_providers.dart';
@@ -12,6 +11,8 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
+import '../../../dashboard/presentation/widgets/subscription_access_banner.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -108,15 +109,16 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
+    final locked = watchActiveLearningAccess(ref)?.locked ?? false;
     if (profile == null) {
-      return Center(
-        child: Text(context.l10n.scheduleSelectProfile),
-      );
+      return Center(child: Text(context.l10n.scheduleSelectProfile));
     }
     final key = '${profile.id}|${widget.batchId}';
     final batchAsync = ref.watch(learnerBatchProvider(key));
-    final certificates =
-        ref.watch(learnerCertificatesProvider(profile.id)).asData?.value;
+    final certificates = ref
+        .watch(learnerCertificatesProvider(profile.id))
+        .asData
+        ?.value;
 
     return batchAsync.when(
       loading: () => ListView(
@@ -137,8 +139,7 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
             icon: Icons.error_outline,
             iconColor: Colors.red,
             title: context.l10n.scheduleUnavailable,
-            message:
-                context.l10n.scheduleUnavailableBody,
+            message: context.l10n.scheduleUnavailableBody,
             action: TextButton(
               onPressed: () => ref.invalidate(learnerBatchProvider(key)),
               child: Text(context.l10n.commonTryAgain),
@@ -200,8 +201,7 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
                 _StateCard(
                   icon: Icons.calendar_month_outlined,
                   title: context.l10n.scheduleNone,
-                  message:
-                      context.l10n.scheduleNoneHint,
+                  message: context.l10n.scheduleNoneHint,
                 )
               else
                 for (final status in _SessionStatus.values)
@@ -215,6 +215,7 @@ class _OnlineClassBatchPageState extends ConsumerState<OnlineClassBatchPage> {
                               session: session,
                               number: index + 1,
                               status: status,
+                              locked: locked,
                             ),
                       ],
                     ),
@@ -351,7 +352,9 @@ class _BatchSummary extends StatelessWidget {
               if (enrolled != null)
                 _Meta(
                   icon: Icons.calendar_today_outlined,
-                  text: context.l10n.scheduleEnrolledOn(DateFormat.yMMMd().format(enrolled)),
+                  text: context.l10n.scheduleEnrolledOn(
+                    formatDate(enrolled, DateStyle.date),
+                  ),
                 ),
             ],
           ),
@@ -441,10 +444,14 @@ class _SessionCard extends StatelessWidget {
     required this.session,
     required this.number,
     required this.status,
+    this.locked = false,
   });
   final BatchSession session;
   final int number;
   final _SessionStatus status;
+
+  /// Subscription lapsed: the place is kept, but joining is locked.
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -484,7 +491,7 @@ class _SessionCard extends StatelessWidget {
                     Text(
                       date == null
                           ? '--'
-                          : DateFormat('MMM').format(date).toUpperCase(),
+                          : formatDate(date, DateStyle.month).toUpperCase(),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -513,7 +520,9 @@ class _SessionCard extends StatelessWidget {
                       runSpacing: 5,
                       children: [
                         _Tag(
-                          text: context.l10n.scheduleSessionNumber(number).toUpperCase(),
+                          text: context.l10n
+                              .scheduleSessionNumber(number)
+                              .toUpperCase(),
                           foreground: _ink,
                           background: Colors.white,
                           outlined: true,
@@ -545,13 +554,13 @@ class _SessionCard extends StatelessWidget {
                           icon: Icons.calendar_today_outlined,
                           text: date == null
                               ? context.l10n.classesDateTba
-                              : DateFormat.yMMMEd().format(date),
+                              : formatDate(date, DateStyle.weekdayDate),
                         ),
                         if (date != null)
                           _Meta(
                             icon: Icons.schedule,
                             text:
-                                '${DateFormat.jm().format(date)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
+                                '${formatDate(date, DateStyle.time)} • ${context.l10n.commonMinutes(session.durationMinutes)}',
                           ),
                       ],
                     ),
@@ -562,13 +571,30 @@ class _SessionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Action
-          if (isJoinable && hasLink)
+          if (isJoinable && locked)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/subscription'),
+                icon: const Icon(Icons.lock_outline, size: 17),
+                label: Text(context.l10n.accessRenewToJoin),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFB91C1C),
+                  side: const BorderSide(color: Color(0xFFFECACA)),
+                ),
+              ),
+            )
+          else if (isJoinable && hasLink)
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () => _openMeeting(context, session.meetingLink!),
                 icon: const Icon(Icons.open_in_new, size: 17),
-                label: Text(isLive ? context.l10n.scheduleJoin : context.l10n.scheduleJoinSoon),
+                label: Text(
+                  isLive
+                      ? context.l10n.scheduleJoin
+                      : context.l10n.scheduleJoinSoon,
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: isLive ? _green : _navy,
                 ),
@@ -590,7 +616,11 @@ class _SessionCard extends StatelessWidget {
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle_outline, size: 15, color: _faint),
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 15,
+                          color: _faint,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           context.l10n.scheduleCompleted,
@@ -658,9 +688,9 @@ class _SessionCard extends StatelessWidget {
       return;
     }
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.scheduleLinkFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.scheduleLinkFailed)));
     }
   }
 }

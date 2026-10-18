@@ -12,6 +12,11 @@ import type {
   SubmitExamInput,
 } from "#/modules/exam/schema";
 import { notificationEvents } from "#/modules/notification/events";
+import {
+  getQuestionUsage,
+  isQuestionUsed,
+  usageReason,
+} from "#/modules/exam/question-usage";
 import { canManageCourse, isAdmin } from "#/shared/course-access";
 
 // Scores can be fractional because of negative marking (e.g. -0.25).
@@ -48,6 +53,30 @@ function isAnswered(answer: unknown): boolean {
   if (Array.isArray(answer)) return answer.length > 0;
   return true;
 }
+
+// Whether an auto-graded answer is right. Same rules as the scoring in
+// submitExam: exact match, or for multi_select the same options in any order.
+function isCorrectAnswer(
+  type: string,
+  correctAnswer: unknown,
+  answer: unknown,
+): boolean {
+  if (type === "multi_select") {
+    const correct = (correctAnswer as string[] | null) ?? [];
+    const given = Array.isArray(answer) ? answer : [answer];
+    return (
+      correct.length === given.length && correct.every((c) => given.includes(c))
+    );
+  }
+  return answer === correctAnswer;
+}
+
+type QuestionStatus =
+  | "correct"
+  | "partial"
+  | "incorrect"
+  | "unanswered"
+  | "pending";
 
 function assertNegativeMarksWithinMarks(
   negativeMarks: number | undefined,
@@ -119,6 +148,7 @@ export class ExamService {
         where: {
           scope: "INSTRUCTOR",
           course: { instructorId: ownerId },
+          archivedAt: null,
         },
         include: { course: { select: { id: true, title: true } } },
         orderBy: { createdAt: "desc" },
@@ -144,6 +174,7 @@ export class ExamService {
       where: {
         scope: "INSTRUCTOR",
         courseId,
+        archivedAt: null,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -151,7 +182,7 @@ export class ExamService {
 
   async getAdminQuestions() {
     return prisma.question.findMany({
-      where: { scope: "ADMIN" },
+      where: { scope: "ADMIN", archivedAt: null },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -234,6 +265,15 @@ export class ExamService {
       throw new NotFoundError("Question not found");
     }
 
+    // Exams and results reference questions from JSON, so deleting a used
+    // one would leave them pointing at nothing.
+    const usage = (await getQuestionUsage([questionId])).get(questionId)!;
+    if (isQuestionUsed(usage)) {
+      throw new ValidationError(
+        usageReason(usage, "Ask an admin to archive it instead."),
+      );
+    }
+
     await prisma.question.delete({
       where: { id: questionId },
     });
@@ -287,12 +327,15 @@ export class ExamService {
         where: {
           id: { in: questionIds },
           courseId: input.courseId,
+          archivedAt: null,
         },
         select: { id: true },
       });
 
       if (questions.length !== questionIds.length) {
-        throw new ValidationError("All questions must belong to this course");
+        throw new ValidationError(
+          "All questions must belong to this course and not be archived",
+        );
       }
     }
 
@@ -365,12 +408,23 @@ export class ExamService {
       if (new Set(questionIds).size !== questionIds.length) {
         throw new ValidationError("A question can only be added once to an exam");
       }
+      // An archived question the exam already had may stay; new ones can't
+      // be archived.
+      const alreadyInExam = (
+        existingExam.questions as Array<{ questionId: string }>
+      ).map((q) => q.questionId);
       const questions = await prisma.question.findMany({
-        where: { id: { in: questionIds }, courseId: existingExam.courseId },
+        where: {
+          id: { in: questionIds },
+          courseId: existingExam.courseId,
+          OR: [{ archivedAt: null }, { id: { in: alreadyInExam } }],
+        },
         select: { id: true },
       });
       if (questions.length !== questionIds.length) {
-        throw new ValidationError("All questions must belong to this course");
+        throw new ValidationError(
+          "All questions must belong to this course and not be archived",
+        );
       }
     }
 
@@ -500,7 +554,7 @@ export class ExamService {
     targetMarks: number,
   ): Promise<Array<{ questionId: string; marks: number }>> {
     const bank = await prisma.question.findMany({
-      where: { courseId },
+      where: { courseId, archivedAt: null },
       select: { id: true, marks: true },
     });
 
@@ -549,6 +603,16 @@ export class ExamService {
     ]);
     if (!exam) throw new NotFoundError("Exam not found");
     if (!profile) throw new NotFoundError("Learner profile not found");
+
+    // Exams stay open after the subscription ends (a learner shouldn't miss
+    // one while a manual renewal is reviewed), but only for enrolled courses.
+    const enrolled = await prisma.enrolment.findFirst({
+      where: { learnerProfileId, courseId: exam.courseId, waitlisted: false },
+      select: { id: true },
+    });
+    if (!enrolled) {
+      throw new ForbiddenError("You are not enrolled in this course");
+    }
 
     const lockKey = `exam-start:${examId}:${learnerProfileId}`;
     const session = await prisma.$transaction(async (tx) => {
@@ -1254,11 +1318,9 @@ export class ExamService {
       orderBy: { attemptNumber: "asc" },
     });
 
-    // Best graded attempt (highest score). When an exam contains short-answer /
-    // essay questions the whole attempt is stored with score = null until it is
-    // manually graded, so those attempts used to be dropped here and their
-    // answers never returned. Fall back to the most recent attempt so the
-    // learner's written answers are still shown while grading is pending.
+    // Best graded attempt (highest score), reported as a summary. Attempts
+    // with written answers have score = null until graded, so fall back to
+    // the most recent one.
     const gradedAttempts = attempts
       .filter((a) => a.score !== null)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
@@ -1266,14 +1328,19 @@ export class ExamService {
     const bestAttempt =
       gradedAttempts[0] ?? attempts[attempts.length - 1] ?? null;
 
+    // The answer sheet is always the most recent attempt: right after
+    // submitting, the learner wants to review the answers they just gave,
+    // even if an earlier attempt scored higher.
+    const latestAttempt = attempts[attempts.length - 1] ?? null;
+
     // Exam questions are stored as JSON on the Exam model. REGULAR dynamic
     // exams keep the per-attempt random set inside the attempt itself.
     const baseExamQuestions = exam.questions as Array<{
       questionId: string;
       marks?: number;
     }>;
-    const storedQuestionSet = bestAttempt
-      ? ((bestAttempt.answers as Record<string, unknown>)["__questionSet"] as
+    const storedQuestionSet = latestAttempt
+      ? ((latestAttempt.answers as Record<string, unknown>)["__questionSet"] as
           | Array<{ questionId: string; marks: number }>
           | undefined)
       : undefined;
@@ -1299,12 +1366,27 @@ export class ExamService {
         correctAnswer: true,
         suggestedAnswer: true,
         marks: true,
+        negativeMarks: true,
         explanation: true,
       },
     });
 
     // Convert learner answers into an easy lookup object
-    const answers = bestAttempt?.answers as Record<string, unknown> | null;
+    const answers = latestAttempt?.answers as Record<string, unknown> | null;
+
+    const attemptSummary = (a: (typeof attempts)[number]) => ({
+      id: a.id,
+      examId: a.examId,
+      examTitle: exam.title,
+      learnerProfileId: a.learnerProfileId,
+      attemptNumber: a.attemptNumber,
+      score: a.score,
+      totalMarks: a.totalMarks,
+      passed: a.passed,
+      graded: a.graded,
+      startedAt: a.startedAt,
+      submittedAt: a.submittedAt,
+    });
 
     // Build question-by-question result
     const questionResults = examQuestions
@@ -1323,6 +1405,33 @@ export class ExamService {
 
         // Marks awarded for manually graded questions
         const marksAwarded = answers?.[`${question.id}_marks`] ?? null;
+        const awarded = typeof marksAwarded === "number" ? marksAwarded : null;
+
+        // Worked out here, not in the apps, so web and mobile agree with the
+        // score (e.g. multi_select options picked in a different order).
+        let status: QuestionStatus;
+        let marksEarned: number | null;
+        if (!isAnswered(myAnswer)) {
+          status = "unanswered";
+          marksEarned = awarded ?? 0;
+        } else if (question.type === "short_answer" || question.type === "essay") {
+          status =
+            awarded === null
+              ? "pending"
+              : awarded >= marks
+                ? "correct"
+                : awarded > 0
+                  ? "partial"
+                  : "incorrect";
+          marksEarned = awarded;
+        } else if (isCorrectAnswer(question.type, question.correctAnswer, myAnswer)) {
+          status = "correct";
+          marksEarned = marks;
+        } else {
+          status = "incorrect";
+          // Negative marking only hits answered-but-wrong questions.
+          marksEarned = -question.negativeMarks;
+        }
 
         return {
           questionId: question.id,
@@ -1341,12 +1450,40 @@ export class ExamService {
 
           marks,
           marksAwarded,
-          attemptNumber: bestAttempt?.attemptNumber ?? null,
+          status,
+          // Negative when a wrong answer was penalised; null until graded.
+          marksEarned,
+          attemptNumber: latestAttempt?.attemptNumber ?? null,
 
           explanation: question.explanation,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    // At-a-glance counts for the latest attempt (the one questionResults
+    // shows). answered = correct + partial + incorrect + pending.
+    const count = (status: QuestionStatus) =>
+      questionResults.filter((q) => q.status === status).length;
+    const summary = latestAttempt
+      ? {
+          totalQuestions: questionResults.length,
+          answered: questionResults.length - count("unanswered"),
+          unanswered: count("unanswered"),
+          correct: count("correct"),
+          partial: count("partial"),
+          incorrect: count("incorrect"),
+          pendingGrading: count("pending"),
+          marksDeducted: roundScore(
+            questionResults.reduce(
+              (sum, q) =>
+                q.marksEarned !== null && q.marksEarned < 0
+                  ? sum - q.marksEarned
+                  : sum,
+              0,
+            ),
+          ),
+        }
+      : null;
 
     return {
       exam: {
@@ -1359,35 +1496,11 @@ export class ExamService {
         openDate: exam.openDate,
       },
 
-      attempts: attempts.map((a) => ({
-        id: a.id,
-        examId: a.examId,
-        examTitle: exam.title,
-        learnerProfileId: a.learnerProfileId,
-        attemptNumber: a.attemptNumber,
-        score: a.score,
-        totalMarks: a.totalMarks,
-        passed: a.passed,
-        graded: a.graded,
-        startedAt: a.startedAt,
-        submittedAt: a.submittedAt,
-      })),
-
-      bestAttempt: bestAttempt
-        ? {
-            id: bestAttempt.id,
-            examId: bestAttempt.examId,
-            examTitle: exam.title,
-            learnerProfileId: bestAttempt.learnerProfileId,
-            attemptNumber: bestAttempt.attemptNumber,
-            score: bestAttempt.score,
-            totalMarks: bestAttempt.totalMarks,
-            passed: bestAttempt.passed,
-            graded: bestAttempt.graded,
-            startedAt: bestAttempt.startedAt,
-            submittedAt: bestAttempt.submittedAt,
-          }
-        : null,
+      attempts: attempts.map(attemptSummary),
+      bestAttempt: bestAttempt ? attemptSummary(bestAttempt) : null,
+      // questionResults below belong to this attempt.
+      latestAttempt: latestAttempt ? attemptSummary(latestAttempt) : null,
+      summary,
 
       questionResults,
     };

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useCourseBatches, useCloseBatchMutation } from "@/hooks/use-batches";
 import { useCourseWorkspace } from "@/lib/course-workspace";
+import { formatDate } from "@/lib/date-format";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -32,24 +33,6 @@ function getStatusBadge(status: string) {
       className: "bg-gray-100 text-gray-600",
     }
   );
-}
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 }
 
 export default function BatchesPage() {
@@ -209,7 +192,7 @@ export default function BatchesPage() {
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         Next: {formatDate(nextSession.scheduledAt)} at{" "}
-                        {formatTime(nextSession.scheduledAt)}
+                        {formatDate(nextSession.scheduledAt, "time")}
                       </span>
                     </>
                   )}

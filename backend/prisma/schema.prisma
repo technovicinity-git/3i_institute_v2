@@ -450,12 +450,18 @@ model Question {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  // Set by an admin to retire a question: it leaves question banks, can't be
+  // added to exams and isn't drawn for random exams. Exams and results that
+  // already use it keep working.
+  archivedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([scope])
   @@index([courseId])
+  @@index([archivedAt])
 }
 
 model Exam {

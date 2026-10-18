@@ -505,6 +505,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coursesTitle => 'Courses';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return 'Showing courses suited to $name (age $age).';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return 'This course isn\'t for $name\'s age';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return 'It\'s for learners aged $range. $name is $age.';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return 'See courses for $name';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return 'Not for $name\'s age';
+  }
+
+  @override
   String get coursesSearch => 'Search courses, instructors, topics...';
 
   @override
@@ -1899,6 +1924,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultHistory => 'Attempt history';
 
   @override
+  String resultShowHistory(int count) {
+    return 'Show attempt history ($count)';
+  }
+
+  @override
+  String get resultHideHistory => 'Hide attempt history';
+
+  @override
   String get resultReview => 'Question review';
 
   @override
@@ -1911,6 +1944,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String resultShowingAttempt(int number) {
     return 'Showing answers from attempt #$number.';
   }
+
+  @override
+  String resultBestScore(String score, int total, int number) {
+    return 'Best score: $score/$total (attempt #$number)';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return 'You didn\'t pass this attempt, but you already passed in attempt #$number.';
+  }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return 'Attempt #$number summary';
+  }
+
+  @override
+  String get resultTotalQuestions => 'Questions';
+
+  @override
+  String get resultAnswered => 'Answered';
+
+  @override
+  String get resultUnanswered => 'Unanswered';
+
+  @override
+  String get resultMarksDeducted => 'Negative marks';
 
   @override
   String get resultRetake => 'Retake exam';
@@ -3149,4 +3209,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'Change language';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name\'s subscription has ended';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'Lessons and live classes stay open until $date. Renew now so learning isn\'t interrupted.';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name doesn\'t have a subscription';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'Subscribe to open lessons, live classes, assignments and chat.';
+
+  @override
+  String get accessRenew => 'Renew subscription';
+
+  @override
+  String get accessSubscribe => 'Subscribe';
+
+  @override
+  String get accessRenewToJoin => 'Renew to join';
+
+  @override
+  String get accessLessonLockedTitle => 'This lesson is locked';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name\'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.';
+  }
 }

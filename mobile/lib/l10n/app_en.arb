@@ -233,6 +233,21 @@
   "navCertificates": "Certificates",
   "navWishlist": "Wishlist",
   "coursesTitle": "Courses",
+  "coursesForLearner": "Showing courses suited to {name} (age {age}).",
+  "@coursesForLearner": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "age": {"type": "int"}
+    }
+  },
+  "detailAgeNoticeTitle": "This course isn't for {name}'s age",
+  "@detailAgeNoticeTitle": {"placeholders": {"name": {"type": "String"}}},
+  "detailAgeNoticeBody": "It's for learners aged {range}. {name} is {age}.",
+  "@detailAgeNoticeBody": {"placeholders": {"range": {"type": "String"}, "name": {"type": "String"}, "age": {"type": "int"}}},
+  "detailAgeNoticeBrowse": "See courses for {name}",
+  "@detailAgeNoticeBrowse": {"placeholders": {"name": {"type": "String"}}},
+  "coursesBandNotForAge": "Not for {name}'s age",
+  "@coursesBandNotForAge": {"placeholders": {"name": {"type": "String"}}},
   "coursesSearch": "Search courses, instructors, topics...",
   "coursesClearSearch": "Clear search",
   "coursesLoading": "Loading courses...",
@@ -1047,6 +1062,13 @@
     }
   },
   "resultHistory": "Attempt history",
+  "resultShowHistory": "Show attempt history ({count})",
+  "@resultShowHistory": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "resultHideHistory": "Hide attempt history",
   "resultReview": "Question review",
   "resultReviewHint": "Review your answers and the correct answers.",
   "resultNoAttempts": "No attempts found.",
@@ -1058,6 +1080,30 @@
       }
     }
   },
+  "resultBestScore": "Best score: {score}/{total} (attempt #{number})",
+  "@resultBestScore": {
+    "placeholders": {
+      "score": {"type": "String"},
+      "total": {"type": "int"},
+      "number": {"type": "int"}
+    }
+  },
+  "resultPassedEarlier": "You didn't pass this attempt, but you already passed in attempt #{number}.",
+  "@resultPassedEarlier": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "resultSummaryTitle": "Attempt #{number} summary",
+  "@resultSummaryTitle": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "resultTotalQuestions": "Questions",
+  "resultAnswered": "Answered",
+  "resultUnanswered": "Unanswered",
+  "resultMarksDeducted": "Negative marks",
   "resultRetake": "Retake exam",
   "resultAwarded": "{awarded} of {total} awarded",
   "@resultAwarded": {
@@ -1880,5 +1926,19 @@
       }
     }
   },
-  "languageChangeTo": "Change language"
+  "languageChangeTo": "Change language",
+  "accessEndedTitle": "{name}'s subscription has ended",
+  "@accessEndedTitle": {"placeholders": {"name": {"type": "String"}}},
+  "accessGraceBody": "Lessons and live classes stay open until {date}. Renew now so learning isn't interrupted.",
+  "@accessGraceBody": {"placeholders": {"date": {"type": "String"}}},
+  "accessExpiredBody": "Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.",
+  "accessNoneTitle": "{name} doesn't have a subscription",
+  "@accessNoneTitle": {"placeholders": {"name": {"type": "String"}}},
+  "accessNoneBody": "Subscribe to open lessons, live classes, assignments and chat.",
+  "accessRenew": "Renew subscription",
+  "accessSubscribe": "Subscribe",
+  "accessRenewToJoin": "Renew to join",
+  "accessLessonLockedTitle": "This lesson is locked",
+  "accessLessonLockedBody": "{name}'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.",
+  "@accessLessonLockedBody": {"placeholders": {"name": {"type": "String"}}}
 }

@@ -17,21 +17,7 @@ import {
 } from "lucide-react";
 import { useInstructorDashboard } from "@/hooks/use-instructor-dashboard";
 import { isGradingOverdue, waitingLabel } from "@/lib/grading";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -43,7 +29,7 @@ function timeAgo(dateStr: string): string {
   if (diffHours < 1) return "Just now";
   if (diffHours < 24) return `${diffHours} hour(s) ago`;
   if (diffDays < 7) return `${diffDays} day(s) ago`;
-  return formatDate(dateStr);
+  return formatDate(dateStr, "dayMonth");
 }
 
 export default function InstructorDashboardPage() {
@@ -287,8 +273,8 @@ export default function InstructorDashboardPage() {
                       {cls.title}
                     </p>
                     <p className="text-xs text-[#64748B]">
-                      {formatDate(cls.scheduledAt)} •{" "}
-                      {formatTime(cls.scheduledAt)}
+                      {formatDate(cls.scheduledAt, "dayMonth")} •{" "}
+                      {formatDate(cls.scheduledAt, "time")}
                     </p>
                   </div>
                   {cls.meetingLink && (

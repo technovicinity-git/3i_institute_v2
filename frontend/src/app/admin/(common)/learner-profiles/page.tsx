@@ -6,10 +6,7 @@ import { Filter, Search, UsersRound, Eye, ArchiveRestore, Archive } from "lucide
 import { useAdminLearnerProfiles, useArchiveLearnerProfileMutation, useRestoreLearnerProfileMutation } from "@/hooks/use-admin";
 import { Pagination } from "@/components/ui/pagination";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminLearnerProfilesPage() {
   const [search, setSearch] = useState("");

@@ -5,6 +5,7 @@ import { Bell, History, Smartphone } from "lucide-react";
 import { useBroadcasts } from "@/hooks/use-broadcasts";
 import type { Broadcast, BroadcastScope } from "@/services/broadcast.service";
 import { Pagination } from "@/components/ui/pagination";
+import { formatDate } from "@/lib/date-format";
 
 const AUDIENCE_LABEL: Record<Broadcast["audience"], string> = {
   INSTRUCTORS: "All instructors",
@@ -22,16 +23,6 @@ function audienceText(broadcast: Broadcast) {
     return `${broadcast.batchName ?? "Batch"} · ${broadcast.courseTitle ?? "Deleted course"}`;
   }
   return AUDIENCE_LABEL[broadcast.audience];
-}
-
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function BroadcastHistory({
@@ -86,7 +77,7 @@ export function BroadcastHistory({
                   </p>
                 </div>
                 <time className="shrink-0 text-xs text-[#94A3B8]">
-                  {formatDateTime(broadcast.createdAt)}
+                  {formatDate(broadcast.createdAt, "dateTime")}
                 </time>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">

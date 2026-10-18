@@ -36,6 +36,22 @@ export class SeatController {
     }
   };
 
+  getLearningAccess = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const access = await seatService.getOwnLearningAccess(
+        req.user?.sub!,
+        req.params["learnerProfileId"] as string,
+      );
+      sendSuccess(res, access, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getProfileSeatStatus = async (
     req: Request,
     res: Response,

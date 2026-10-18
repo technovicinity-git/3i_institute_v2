@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+import '../../../core/format/date_format.dart';
 
 /// Submissions waiting longer than this are flagged as overdue so learners
 /// aren't left waiting on results and certificates.
@@ -23,5 +23,5 @@ String gradingWaitingLabel(String submittedAt) {
   if (diff.inDays < 30) {
     return 'Waiting ${diff.inDays} day${diff.inDays == 1 ? '' : 's'}';
   }
-  return 'Submitted ${DateFormat('MMM d').format(date)}';
+  return 'Submitted ${formatDate(date, DateStyle.dayMonth, 'en')}';
 }

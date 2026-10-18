@@ -13,6 +13,8 @@ async function sweep() {
   if (running) return;
   running = true;
   try {
+    // Renewal reminders (7 days / 1 day before the end). Each is sent once.
+    await subscriptionService.sendEndingReminders();
     const expired = await subscriptionService.expireDueSubscriptions();
     if (expired > 0) {
       console.log(`⏰ Expired ${expired} subscription(s)`);

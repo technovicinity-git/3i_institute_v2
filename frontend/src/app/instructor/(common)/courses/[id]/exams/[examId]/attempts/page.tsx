@@ -9,17 +9,7 @@ import {
   useIssueOnlineFinalExamCertificatesMutation,
 } from "@/hooks/use-exams";
 import { useWorkspaceCourses, useCourseWorkspace } from "@/lib/course-workspace";
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "Not submitted";
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function ExamAttemptsPage() {
   const { basePath } = useCourseWorkspace();
@@ -104,7 +94,7 @@ export default function ExamAttemptsPage() {
                 <tr key={attempt.id} className="hover:bg-gray-50/70">
                   <td className="px-5 py-4 text-sm font-semibold text-[#0C1F33]">{attempt.learnerName}</td>
                   <td className="px-5 py-4 text-sm text-[#475569]">#{attempt.attemptNumber}</td>
-                  <td className="px-5 py-4 text-sm text-[#475569]">{formatDate(attempt.submittedAt)}</td>
+                  <td className="px-5 py-4 text-sm text-[#475569]">{formatDate(attempt.submittedAt, "dateTime", "en", "Not submitted")}</td>
                   <td className="px-5 py-4 text-sm text-[#0C1F33]">
                     {attempt.graded ? `${attempt.score ?? 0} / ${attempt.totalMarks}` : "—"}
                   </td>

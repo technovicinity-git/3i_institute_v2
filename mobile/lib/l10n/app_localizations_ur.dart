@@ -501,6 +501,31 @@ class AppLocalizationsUr extends AppLocalizations {
   String get coursesTitle => '⁧کورسز⁩';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '⁧$name کے لیے موزوں کورسز دکھائے جا رہے ہیں (عمر $age)۔⁩';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return '⁧یہ کورس $name کی عمر کے لیے نہیں ہے⁩';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return '⁧یہ $range سال کے طلبہ کے لیے ہے۔ $name کی عمر $age ہے۔⁩';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '⁧$name کے لیے کورسز دیکھیں⁩';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '⁧$name کی عمر کے لیے نہیں⁩';
+  }
+
+  @override
   String get coursesSearch => '⁧کورسز، اساتذہ، موضوعات تلاش کریں...⁩';
 
   @override
@@ -1788,6 +1813,14 @@ class AppLocalizationsUr extends AppLocalizations {
   String get resultHistory => '⁧کوششوں کی تاریخ⁩';
 
   @override
+  String resultShowHistory(int count) {
+    return '⁧کوششوں کی تاریخ دیکھیں ($count)⁩';
+  }
+
+  @override
+  String get resultHideHistory => '⁧کوششوں کی تاریخ چھپائیں⁩';
+
+  @override
   String get resultReview => '⁧سوالات کا جائزہ⁩';
 
   @override
@@ -1800,6 +1833,33 @@ class AppLocalizationsUr extends AppLocalizations {
   String resultShowingAttempt(int number) {
     return '⁧کوشش #$number کے جوابات دکھائے جا رہے ہیں۔⁩';
   }
+
+  @override
+  String resultBestScore(String score, int total, int number) {
+    return '⁧سب سے زیادہ نمبر: $score/$total (کوشش #$number)⁩';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return '⁧آپ اس کوشش میں پاس نہیں ہوئے، لیکن کوشش #$number میں آپ پہلے ہی پاس ہو چکے ہیں۔⁩';
+  }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return '⁧کوشش #$number کا خلاصہ⁩';
+  }
+
+  @override
+  String get resultTotalQuestions => '⁧سوالات⁩';
+
+  @override
+  String get resultAnswered => '⁧جواب دیے⁩';
+
+  @override
+  String get resultUnanswered => '⁧بغیر جواب⁩';
+
+  @override
+  String get resultMarksDeducted => '⁧منفی نمبر⁩';
 
   @override
   String get resultRetake => '⁧دوبارہ امتحان دیں⁩';
@@ -3017,4 +3077,44 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get languageChangeTo => '⁧زبان تبدیل کریں⁩';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '⁧$name کی سبسکرپشن ختم ہو گئی ہے⁩';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return '⁧اسباق اور لائیو کلاسز $date تک کھلی رہیں گی۔ سیکھنا جاری رکھنے کے لیے ابھی تجدید کریں۔⁩';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      '⁧اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ بند ہیں۔ امتحانات، نتائج اور سرٹیفکیٹ کھلے رہیں گے۔⁩';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '⁧$name کی کوئی سبسکرپشن نہیں ہے⁩';
+  }
+
+  @override
+  String get accessNoneBody =>
+      '⁧اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ کھولنے کے لیے سبسکرائب کریں۔⁩';
+
+  @override
+  String get accessRenew => '⁧سبسکرپشن کی تجدید کریں⁩';
+
+  @override
+  String get accessSubscribe => '⁧سبسکرائب کریں⁩';
+
+  @override
+  String get accessRenewToJoin => '⁧شامل ہونے کے لیے تجدید کریں⁩';
+
+  @override
+  String get accessLessonLockedTitle => '⁧یہ سبق بند ہے⁩';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '⁧$name کی سبسکرپشن ختم ہو گئی ہے۔ جاری رکھنے کے لیے تجدید کریں — پیش رفت محفوظ ہے۔ امتحانات کھلے رہیں گے۔⁩';
+  }
 }

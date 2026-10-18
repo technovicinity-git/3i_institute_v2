@@ -89,6 +89,22 @@ export interface ExamQuestionResult {
   myAnswer: string | string[] | null;
   marks: number;
   marksAwarded: number | null;
+  /** Worked out by the server with the same rules as the score. */
+  status: "correct" | "partial" | "incorrect" | "unanswered" | "pending";
+  /** Marks this question added (negative if penalised); null until graded. */
+  marksEarned: number | null;
   attemptNumber: number | null;
   explanation: string | null;
+}
+
+/** Counts for the latest attempt. answered = correct + partial + incorrect + pending. */
+export interface ExamResultSummary {
+  totalQuestions: number;
+  answered: number;
+  unanswered: number;
+  correct: number;
+  partial: number;
+  incorrect: number;
+  pendingGrading: number;
+  marksDeducted: number;
 }

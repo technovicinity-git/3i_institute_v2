@@ -13,10 +13,11 @@ import Link from "next/link";
 import { useProfileStore } from "@/stores/profile-store";
 import { useLearnerLiveClasses } from "@/hooks/use-learner-live-classes";
 import {
-  useFormatter,
   useTranslations,
-  type DateTimeFormatOptions,
 } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
+import { RenewToJoin } from "@/components/dashboard/subscription-access-banner";
+import { useLearningAccess } from "@/hooks/use-learning-access";
 
 function isSameDay(date1: Date, date2: Date): boolean {
   return (
@@ -36,14 +37,11 @@ const ATTENDANCE_CLASS: Record<string, string> = {
 /** Dates and "Today / Tomorrow / weekday" labels in the user's language. */
 function useLiveFormat() {
   const t = useTranslations("liveClasses");
-  const format = useFormatter();
-  const date = (value: string, options: DateTimeFormatOptions) =>
-    format.dateTime(new Date(value), options);
+  const { format } = useDateFormat();
 
   return {
-    time: (value: string) => date(value, { hour: "numeric", minute: "2-digit" }),
-    full: (value: string) =>
-      date(value, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+    time: (value: string) => format(value, "time"),
+    full: (value: string) => format(value, "fullDate"),
     relativeDay: (value: string) => {
       const day = new Date(value);
       const today = new Date();
@@ -54,8 +52,8 @@ function useLiveFormat() {
       const diffDays = Math.floor(
         (day.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
       );
-      if (diffDays > 0 && diffDays < 7) return date(value, { weekday: "long" });
-      return date(value, { weekday: "short", month: "short", day: "numeric" });
+      if (diffDays > 0 && diffDays < 7) return format(value, "weekday");
+      return format(value, "weekdayDayMonth");
     },
   };
 }
@@ -65,6 +63,8 @@ export default function LearnerLiveClassesPage() {
   const tSchedule = useTranslations("schedule");
   const tClasses = useTranslations("classes");
   const fmt = useLiveFormat();
+  // Lapsed subscription: schedule stays visible, joining is locked.
+  const { locked } = useLearningAccess();
   const { activeProfile } = useProfileStore();
   const {
     data: sessions,
@@ -133,7 +133,9 @@ export default function LearnerLiveClassesPage() {
                 {nextSession.instructorName}
               </span>
             </div>
-            {nextSession.meetingLink ? (
+            {locked ? (
+              <RenewToJoin />
+            ) : nextSession.meetingLink ? (
               <a
                 href={nextSession.meetingLink}
                 target="_blank"
@@ -269,7 +271,9 @@ export default function LearnerLiveClassesPage() {
                           {tClasses("chat")}
                         </Link>
 
-                        {session.meetingLink ? (
+                        {locked ? (
+                          <RenewToJoin className="px-3 py-2" />
+                        ) : session.meetingLink ? (
                           <a
                             href={session.meetingLink}
                             target="_blank"

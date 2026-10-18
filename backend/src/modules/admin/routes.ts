@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { adminController } from "#/modules/admin/controller";
+import {
+  adminQuestionsController,
+  bulkQuestionsSchema,
+} from "#/modules/admin/questions-controller";
+import { validate } from "#/middleware/validate";
 import { authenticate } from "#/middleware/authenticate";
 import { authorize } from "#/middleware/authorize";
 
@@ -10,6 +15,17 @@ router.get("/learner-profiles", authenticate, authorize("admin.access"), adminCo
 router.get("/learner-profiles/:id", authenticate, authorize("admin.access"), adminController.getLearnerProfileDetails);
 router.post("/learner-profiles/:id/archive", authenticate, authorize("admin.access"), adminController.archiveLearnerProfile);
 router.post("/learner-profiles/:id/restore", authenticate, authorize("admin.access"), adminController.restoreLearnerProfile);
+
+// Question Bank: every question on the platform. Delete only works for
+// questions nothing uses; used ones are archived instead.
+const admin = [authenticate, authorize("admin.access")];
+router.get("/questions", ...admin, adminQuestionsController.list);
+router.get("/questions/filters", ...admin, adminQuestionsController.filterOptions);
+router.post("/questions/bulk", ...admin, validate(bulkQuestionsSchema), adminQuestionsController.bulk);
+router.get("/questions/:id", ...admin, adminQuestionsController.get);
+router.post("/questions/:id/archive", ...admin, adminQuestionsController.archive);
+router.post("/questions/:id/restore", ...admin, adminQuestionsController.restore);
+router.delete("/questions/:id", ...admin, adminQuestionsController.delete);
 
 /**
  * @swagger

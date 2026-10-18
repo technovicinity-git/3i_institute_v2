@@ -1,5 +1,10 @@
 import { prisma } from "#/lib/prisma";
-import { ConflictError, NotFoundError, ValidationError } from "#/shared/errors";
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from "#/shared/errors";
 
 /**
  * Subscriptions created by approving a manually-paid subscription request
@@ -10,6 +15,36 @@ export const MANUAL_SUBSCRIPTION_PREFIX = "manual_";
 export function isManualSubscription(sub: { stripeSubscriptionId: string }) {
   return sub.stripeSubscriptionId.startsWith(MANUAL_SUBSCRIPTION_PREFIX);
 }
+
+/**
+ * Days a learner keeps full access after their subscription period ends.
+ * Payments are manual and reviewed by an admin, so a family that pays on
+ * the last day shouldn't be locked out while the renewal is approved.
+ */
+export const SUBSCRIPTION_GRACE_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether a learner can use their enrolled courses.
+ *   SUBSCRIBED — paid-up period running
+ *   GRACE      — period ended less than SUBSCRIPTION_GRACE_DAYS ago
+ *   EXPIRED    — had a subscription, grace is over
+ *   NONE       — never subscribed
+ * After the grace period lessons, live classes, assignments and chat are
+ * locked; exams, results and certificates stay open (a learner shouldn't
+ * miss an exam while a manual renewal is reviewed). New enrolments need an
+ * active subscription, with no grace period.
+ */
+export interface LearningAccess {
+  status: "SUBSCRIBED" | "GRACE" | "EXPIRED" | "NONE";
+  hasAccess: boolean;
+  /** End of the latest subscription period, if any. */
+  periodEnd: Date | null;
+  /** When access stops (period end + grace); null while subscribed or never. */
+  graceEndsAt: Date | null;
+}
+
+export const SUBSCRIPTION_EXPIRED = "SUBSCRIPTION_EXPIRED";
 
 export class SeatService {
   /**
@@ -219,6 +254,69 @@ export class SeatService {
       hasActiveSeat: profile.seats.length > 0,
       seatId: profile.seats[0]?.id ?? null,
     };
+  }
+
+  /** See LearningAccess. */
+  async getLearningAccess(learnerProfileId: string): Promise<LearningAccess> {
+    if (await this.isProfileSubscribed(learnerProfileId)) {
+      const seat = await prisma.seat.findFirst({
+        where: { learnerProfileId, status: "ACTIVE", subscription: { status: "ACTIVE" } },
+        select: { subscription: { select: { currentPeriodEnd: true } } },
+        orderBy: { subscription: { currentPeriodEnd: "desc" } },
+      });
+      return {
+        status: "SUBSCRIBED",
+        hasAccess: true,
+        periodEnd: seat?.subscription.currentPeriodEnd ?? null,
+        graceEndsAt: null,
+      };
+    }
+
+    // Seats the family gave up (CANCELLED) don't earn a grace period.
+    const last = await prisma.seat.findFirst({
+      where: { learnerProfileId, status: { in: ["ACTIVE", "EXPIRED"] } },
+      select: { subscription: { select: { currentPeriodEnd: true } } },
+      orderBy: { subscription: { currentPeriodEnd: "desc" } },
+    });
+    if (!last) {
+      return { status: "NONE", hasAccess: false, periodEnd: null, graceEndsAt: null };
+    }
+
+    const periodEnd = last.subscription.currentPeriodEnd;
+    const graceEndsAt = new Date(periodEnd.getTime() + SUBSCRIPTION_GRACE_DAYS * DAY_MS);
+    const inGrace = Date.now() < graceEndsAt.getTime();
+    return {
+      status: inGrace ? "GRACE" : "EXPIRED",
+      hasAccess: inGrace,
+      periodEnd,
+      graceEndsAt,
+    };
+  }
+
+  /** getLearningAccess for one of the caller's own profiles. */
+  async getOwnLearningAccess(accountId: string, learnerProfileId: string) {
+    const profile = await prisma.learnerProfile.findFirst({
+      where: { id: learnerProfileId, accountId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!profile) throw new NotFoundError("Learner profile not found");
+    return {
+      ...(await this.getLearningAccess(profile.id)),
+      graceDays: SUBSCRIPTION_GRACE_DAYS,
+    };
+  }
+
+  /** Throws SUBSCRIPTION_EXPIRED (403) when lessons etc. are locked. */
+  async assertLearningAccess(learnerProfileId: string): Promise<void> {
+    const access = await this.getLearningAccess(learnerProfileId);
+    if (access.hasAccess) return;
+    throw new AppError(
+      403,
+      SUBSCRIPTION_EXPIRED,
+      access.status === "NONE"
+        ? "This learner needs a subscription to use their courses."
+        : "This learner's subscription has ended. Renew it to continue lessons and live classes. Exams stay open.",
+    );
   }
 
   /**

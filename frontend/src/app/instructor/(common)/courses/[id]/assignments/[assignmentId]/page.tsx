@@ -15,22 +15,7 @@ import {
 } from "@/hooks/use-assignments";
 import type { AssignmentSubmission } from "@/types/assignment";
 import { useCourseWorkspace } from "@/lib/course-workspace";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function AssignmentDetailsPage() {
   const { basePath } = useCourseWorkspace();
@@ -142,7 +127,7 @@ export default function AssignmentDetailsPage() {
                     </p>
                     <p className="text-xs text-[#64748B] mt-1">
                       Submitted: {formatDate(submission.submittedAt)} at{" "}
-                      {formatTime(submission.submittedAt)}
+                      {formatDate(submission.submittedAt, "time")}
                     </p>
                   </div>
                 </div>

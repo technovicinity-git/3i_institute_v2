@@ -931,6 +931,8 @@
     "timeTaken": "لگا ہوا وقت",
     "minutesShort": "{count}م",
     "history": "کوششوں کی تاریخ",
+    "showHistory": "کوششوں کی تاریخ دیکھیں ({count})",
+    "hideHistory": "کوششوں کی تاریخ چھپائیں",
     "attempt": "کوشش #{number}",
     "pending": "زیرِ التوا",
     "passedBadge": "کامیاب",
@@ -948,6 +950,13 @@
     "explanation": "وضاحت",
     "notAnswered": "جواب نہیں دیا",
     "showingAttempt": "کوشش #{number} کے جوابات دکھائے جا رہے ہیں۔",
+    "bestScore": "سب سے زیادہ نمبر: {score}/{total} (کوشش #{number})",
+    "passedEarlier": "آپ اس کوشش میں پاس نہیں ہوئے، لیکن کوشش #{number} میں آپ پہلے ہی پاس ہو چکے ہیں۔",
+    "summaryTitle": "کوشش #{number} کا خلاصہ",
+    "totalQuestions": "سوالات",
+    "answered": "جواب دیے",
+    "unanswered": "بغیر جواب",
+    "marksDeducted": "منفی نمبر",
     "noAttempts": "کوئی کوشش نہیں ملی۔",
     "retake": "دوبارہ امتحان دیں"
   },
@@ -1034,6 +1043,8 @@
   },
   "courses": {
     "title": "کورسز",
+    "forLearner": "{name} کے لیے موزوں کورسز دکھائے جا رہے ہیں (عمر {age})۔",
+    "bandNotForAge": "{name} کی عمر کے لیے نہیں",
     "search": "کورسز، اساتذہ، موضوعات تلاش کریں...",
     "count": "{count} کورسز",
     "itemLabel": "کورسز",
@@ -1060,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "کورس لوڈ نہیں ہو سکا",
+    "ageNotice": {
+      "title": "یہ کورس {name} کی عمر کے لیے نہیں ہے",
+      "body": "یہ {range} سال کے طلبہ کے لیے ہے۔ {name} کی عمر {age} ہے۔",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "{name} کے لیے کورسز دیکھیں"
+    },
     "backToCourses": "کورسز پر واپس جائیں",
     "breadcrumbCourses": "کورسز",
     "general": "عام",
@@ -1317,5 +1335,17 @@
       "reported": "پیغام کی رپورٹ ہو گئی",
       "reportFailed": "پیغام کی رپورٹ نہیں ہو سکی"
     }
+  },
+  "subscriptionAccess": {
+    "endedTitle": "{name} کی سبسکرپشن ختم ہو گئی ہے",
+    "graceBody": "اسباق اور لائیو کلاسز {date} تک کھلی رہیں گی۔ سیکھنا جاری رکھنے کے لیے ابھی تجدید کریں۔",
+    "expiredBody": "اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ بند ہیں۔ امتحانات، نتائج اور سرٹیفکیٹ کھلے رہیں گے۔",
+    "noneTitle": "{name} کی کوئی سبسکرپشن نہیں ہے",
+    "noneBody": "اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ کھولنے کے لیے سبسکرائب کریں۔",
+    "renew": "سبسکرپشن کی تجدید کریں",
+    "subscribe": "سبسکرائب کریں",
+    "renewToJoin": "شامل ہونے کے لیے تجدید کریں",
+    "lessonLockedTitle": "یہ سبق بند ہے",
+    "lessonLockedBody": "{name} کی سبسکرپشن ختم ہو گئی ہے۔ جاری رکھنے کے لیے تجدید کریں — پیش رفت محفوظ ہے۔ امتحانات کھلے رہیں گے۔"
   }
 }

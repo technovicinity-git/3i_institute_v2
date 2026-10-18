@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
+import '../../../../core/format/date_format.dart';
 
 class InstructorRegisterPage extends ConsumerStatefulWidget {
   const InstructorRegisterPage({super.key});
@@ -437,7 +438,7 @@ class _DateField extends StatelessWidget {
         suffixIcon: const Icon(Icons.calendar_today_outlined, size: 19),
       ),
       child: Text(
-        value == null ? 'Select date' : DateFormat.yMMMd().format(value!),
+        value == null ? 'Select date' : formatDate(value!, DateStyle.date, 'en'),
         style: TextStyle(
           color: value == null ? Theme.of(context).hintColor : null,
         ),

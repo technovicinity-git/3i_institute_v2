@@ -13,15 +13,7 @@ import {
   } from "lucide-react";
 import { useAssignments } from "@/hooks/use-assignments";
 import { useCourseWorkspace } from "@/lib/course-workspace";
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "No deadline";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -134,7 +126,7 @@ export default function CourseAssignmentsPage() {
                       )}
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        Due: {formatDate(assignment.dueDate)}
+                        Due: {formatDate(assignment.dueDate, "date", "en", "No deadline")}
                         {isDueSoon && (
                           <span className="text-red-500 font-semibold">
                             (Soon)

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/entities/instructor_course.dart';
 import '../providers/instructor_courses_providers.dart';
+import '../../../../core/format/date_format.dart';
 
 class InstructorAssignmentsPage extends ConsumerWidget {
   const InstructorAssignmentsPage({required this.courseId, super.key});
@@ -101,7 +102,7 @@ class InstructorAssignmentsPage extends ConsumerWidget {
     final date = DateTime.tryParse(value ?? '');
     return date == null
         ? 'No deadline'
-        : DateFormat('MMM d, yyyy').format(date.toLocal());
+        : formatDate(date.toLocal(), DateStyle.date, 'en');
   }
 }
 
@@ -213,7 +214,7 @@ class _InstructorAssignmentCreatePageState
                 subtitle: Text(
                   _dueDate == null
                       ? 'No deadline'
-                      : DateFormat('MMM d, yyyy').format(_dueDate!),
+                      : formatDate(_dueDate!, DateStyle.date, 'en'),
                 ),
                 trailing: IconButton(
                   onPressed: _selectDate,
@@ -403,7 +404,7 @@ class InstructorAssignmentDetailPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${submission.learnerName} · ${DateFormat('MMM d, yyyy').format(DateTime.tryParse(submission.submittedAt)?.toLocal() ?? DateTime.now())}',
+                '${submission.learnerName} · ${formatDate(DateTime.tryParse(submission.submittedAt)?.toLocal() ?? DateTime.now(), DateStyle.date, 'en')}',
               ),
               const SizedBox(height: 12),
               Container(
@@ -500,7 +501,7 @@ class _SubmissionCard extends StatelessWidget {
       title: Text(submission.learnerName),
       subtitle: Text(
         pending
-            ? 'Submitted ${DateFormat('MMM d, h:mm a').format(DateTime.tryParse(submission.submittedAt)?.toLocal() ?? DateTime.now())}'
+            ? 'Submitted ${formatDate(DateTime.tryParse(submission.submittedAt)?.toLocal() ?? DateTime.now(), DateStyle.dayMonthTime, 'en')}'
             : 'Marks: ${submission.marksAwarded ?? '—'} · ${submission.feedback ?? 'No feedback'}',
         maxLines: 2,
       ),

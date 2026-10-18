@@ -8,6 +8,7 @@ import { useProfileStore } from "@/stores/profile-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLearnerProfiles } from "@/hooks/use-learner-profiles";
 import { useSessionRestore } from "@/hooks/use-session-restore";
+import { SubscriptionAccessBanner } from "@/components/dashboard/subscription-access-banner";
 
 export default function DashboardLayout({
   children,
@@ -109,6 +110,7 @@ export default function DashboardLayout({
         />
 
         {/* Scrollable Content */}
+        <SubscriptionAccessBanner />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>

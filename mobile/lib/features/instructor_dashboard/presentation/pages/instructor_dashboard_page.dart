@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../instructor_courses/presentation/pages/instructor_grading_page.dart';
 import '../../domain/entities/instructor_dashboard_data.dart';
 import '../providers/instructor_dashboard_providers.dart';
+import '../../../../core/format/date_format.dart';
 
 class InstructorDashboardPage extends ConsumerWidget {
   const InstructorDashboardPage({super.key});
@@ -311,7 +311,7 @@ class InstructorDashboardPage extends ConsumerWidget {
     final date = DateTime.tryParse(raw)?.toLocal();
     return date == null
         ? 'Time to be confirmed'
-        : '${DateFormat('MMM d').format(date)} · ${DateFormat('h:mm a').format(date)}';
+        : '${formatDate(date, DateStyle.dayMonth, 'en')} · ${formatDate(date, DateStyle.time, 'en')}';
   }
 
   String _timeAgo(String raw) {
@@ -322,7 +322,7 @@ class InstructorDashboardPage extends ConsumerWidget {
     if (hours < 24) return '$hours hr ago';
     final days = hours ~/ 24;
     if (days < 7) return '$days d ago';
-    return DateFormat('MMM d').format(date);
+    return formatDate(date, DateStyle.dayMonth, 'en');
   }
 
   void _openSection(BuildContext context, String title) {

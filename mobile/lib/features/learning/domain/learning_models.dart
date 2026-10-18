@@ -223,10 +223,14 @@ class CourseLearningContent {
     required this.progress,
     required this.completedLessons,
     required this.totalLessons,
+    this.locked = false,
   });
   final String courseId, courseTitle;
   final List<LessonModule> modules;
   final int progress, completedLessons, totalLessons;
+
+  /// Lessons are closed: the subscription and its grace period have ended.
+  final bool locked;
   factory CourseLearningContent.fromJson(Map<String, dynamic> json) {
     final modules =
         ((json['modules'] as List?) ?? const [])
@@ -241,6 +245,7 @@ class CourseLearningContent {
       progress: _int(json['progress']),
       completedLessons: _int(json['completedLessons']),
       totalLessons: _int(json['totalLessons']),
+      locked: json['access'] is Map && (json['access'] as Map)['hasAccess'] == false,
     );
   }
   List<LessonItem> get allLessons =>

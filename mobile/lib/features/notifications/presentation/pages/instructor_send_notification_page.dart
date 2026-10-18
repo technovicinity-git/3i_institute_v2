@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../instructor_courses/domain/entities/instructor_course.dart';
 import '../../../instructor_courses/presentation/providers/instructor_courses_providers.dart';
 import '../../data/broadcast_repository.dart';
 import '../notifications_providers.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF0D2B45);
 const _ink = Color(0xFF0C1F33);
@@ -840,7 +840,7 @@ class _SentBroadcastCard extends StatelessWidget {
               if (b.channels.contains('PUSH'))
                 'push ${b.pushSentCount}/${b.pushDeviceCount}',
               if (b.createdAt != null)
-                DateFormat('MMM d, y · h:mm a').format(b.createdAt!),
+                formatDate(b.createdAt!, DateStyle.dateTime, 'en'),
             ].join(' · '),
             style: const TextStyle(fontSize: 11, color: _faint),
           ),

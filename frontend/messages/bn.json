@@ -931,6 +931,8 @@
     "timeTaken": "সময় লেগেছে",
     "minutesShort": "{count}মি",
     "history": "চেষ্টার ইতিহাস",
+    "showHistory": "চেষ্টার ইতিহাস দেখুন ({count})",
+    "hideHistory": "চেষ্টার ইতিহাস লুকান",
     "attempt": "চেষ্টা #{number}",
     "pending": "অপেক্ষমাণ",
     "passedBadge": "উত্তীর্ণ",
@@ -948,6 +950,13 @@
     "explanation": "ব্যাখ্যা",
     "notAnswered": "উত্তর দেওয়া হয়নি",
     "showingAttempt": "চেষ্টা #{number}-এর উত্তর দেখানো হচ্ছে।",
+    "bestScore": "সর্বোচ্চ নম্বর: {score}/{total} (চেষ্টা #{number})",
+    "passedEarlier": "এই চেষ্টায় পাস করেননি, তবে চেষ্টা #{number}-এ আপনি আগেই পাস করেছেন।",
+    "summaryTitle": "চেষ্টা #{number}-এর সারাংশ",
+    "totalQuestions": "প্রশ্ন",
+    "answered": "উত্তর দেওয়া",
+    "unanswered": "উত্তর দেওয়া হয়নি",
+    "marksDeducted": "নেগেটিভ নম্বর",
     "noAttempts": "কোনো চেষ্টা পাওয়া যায়নি।",
     "retake": "আবার পরীক্ষা দিন"
   },
@@ -1034,6 +1043,8 @@
   },
   "courses": {
     "title": "কোর্স",
+    "forLearner": "{name}-এর জন্য উপযুক্ত কোর্স দেখানো হচ্ছে (বয়স {age})।",
+    "bandNotForAge": "{name}-এর বয়সের জন্য নয়",
     "search": "কোর্স, শিক্ষক বা বিষয় খুঁজুন...",
     "count": "{count}টি কোর্স",
     "itemLabel": "কোর্স",
@@ -1060,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "কোর্স লোড করা যায়নি",
+    "ageNotice": {
+      "title": "এই কোর্সটি {name}-এর বয়সের জন্য নয়",
+      "body": "এটি {range} বছর বয়সীদের জন্য। {name}-এর বয়স {age}।",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "{name}-এর জন্য কোর্স দেখুন"
+    },
     "backToCourses": "কোর্সে ফিরে যান",
     "breadcrumbCourses": "কোর্স",
     "general": "সাধারণ",
@@ -1317,5 +1335,17 @@
       "reported": "বার্তা রিপোর্ট করা হয়েছে",
       "reportFailed": "বার্তা রিপোর্ট করা যায়নি"
     }
+  },
+  "subscriptionAccess": {
+    "endedTitle": "{name}-এর সাবস্ক্রিপশন শেষ হয়েছে",
+    "graceBody": "পাঠ ও লাইভ ক্লাস {date} পর্যন্ত খোলা থাকবে। শেখা যেন না থামে, তাই এখনই নবায়ন করুন।",
+    "expiredBody": "পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট বন্ধ। পরীক্ষা, ফলাফল ও সার্টিফিকেট খোলা থাকবে।",
+    "noneTitle": "{name}-এর কোনো সাবস্ক্রিপশন নেই",
+    "noneBody": "পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট খুলতে সাবস্ক্রাইব করুন।",
+    "renew": "সাবস্ক্রিপশন নবায়ন করুন",
+    "subscribe": "সাবস্ক্রাইব করুন",
+    "renewToJoin": "যোগ দিতে নবায়ন করুন",
+    "lessonLockedTitle": "এই পাঠটি বন্ধ",
+    "lessonLockedBody": "{name}-এর সাবস্ক্রিপশন শেষ হয়েছে। চালিয়ে যেতে নবায়ন করুন — অগ্রগতি সংরক্ষিত আছে। পরীক্ষা খোলা থাকবে।"
   }
 }

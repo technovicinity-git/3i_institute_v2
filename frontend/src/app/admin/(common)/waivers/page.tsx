@@ -30,14 +30,7 @@ import {
   type Waiver,
   type WaiverStatus,
 } from "@/services/subscription.service";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 const STATUS_TABS: { value: string; label: string }[] = [
   { value: "PENDING", label: "Pending" },

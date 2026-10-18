@@ -497,6 +497,31 @@ class AppLocalizationsHi extends AppLocalizations {
   String get coursesTitle => 'कोर्स';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '$name के लिए उपयुक्त कोर्स दिखाए जा रहे हैं (उम्र $age)।';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return 'यह कोर्स $name की उम्र के लिए नहीं है';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return 'यह $range वर्ष के शिक्षार्थियों के लिए है। $name की उम्र $age है।';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '$name के लिए कोर्स देखें';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '$name की उम्र के लिए नहीं';
+  }
+
+  @override
   String get coursesSearch => 'कोर्स, शिक्षक, विषय खोजें...';
 
   @override
@@ -1780,6 +1805,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get resultHistory => 'प्रयास इतिहास';
 
   @override
+  String resultShowHistory(int count) {
+    return 'प्रयास इतिहास देखें ($count)';
+  }
+
+  @override
+  String get resultHideHistory => 'प्रयास इतिहास छिपाएँ';
+
+  @override
   String get resultReview => 'प्रश्न समीक्षा';
 
   @override
@@ -1792,6 +1825,33 @@ class AppLocalizationsHi extends AppLocalizations {
   String resultShowingAttempt(int number) {
     return 'प्रयास #$number के उत्तर दिखाए जा रहे हैं।';
   }
+
+  @override
+  String resultBestScore(String score, int total, int number) {
+    return 'सर्वोच्च अंक: $score/$total (प्रयास #$number)';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return 'आप इस प्रयास में पास नहीं हुए, लेकिन प्रयास #$number में आप पहले ही पास हो चुके हैं।';
+  }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return 'प्रयास #$number का सारांश';
+  }
+
+  @override
+  String get resultTotalQuestions => 'प्रश्न';
+
+  @override
+  String get resultAnswered => 'उत्तर दिए';
+
+  @override
+  String get resultUnanswered => 'अनुत्तरित';
+
+  @override
+  String get resultMarksDeducted => 'ऋणात्मक अंक';
 
   @override
   String get resultRetake => 'फिर से परीक्षा दें';
@@ -3005,4 +3065,44 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'भाषा बदलें';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name की सदस्यता समाप्त हो गई है';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'पाठ और लाइव कक्षाएँ $date तक खुली रहेंगी। सीखना न रुके, इसलिए अभी नवीनीकरण करें।';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'पाठ, लाइव कक्षाएँ, असाइनमेंट और चैट बंद हैं। परीक्षाएँ, परिणाम और प्रमाणपत्र खुले रहेंगे।';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name की कोई सदस्यता नहीं है';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'पाठ, लाइव कक्षाएँ, असाइनमेंट और चैट खोलने के लिए सदस्यता लें।';
+
+  @override
+  String get accessRenew => 'सदस्यता नवीनीकृत करें';
+
+  @override
+  String get accessSubscribe => 'सदस्यता लें';
+
+  @override
+  String get accessRenewToJoin => 'जुड़ने के लिए नवीनीकरण करें';
+
+  @override
+  String get accessLessonLockedTitle => 'यह पाठ बंद है';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name की सदस्यता समाप्त हो गई है। जारी रखने के लिए नवीनीकरण करें — प्रगति सहेजी गई है। परीक्षाएँ खुली रहेंगी।';
+  }
 }

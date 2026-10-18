@@ -1,28 +1,26 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { useDateFormat } from "@/i18n/use-date-format";
 
 /** Dates, greetings and due labels for the learner dashboard, in the user's language. */
 export function useDashboardFormat() {
   const t = useTranslations("dashboardHome");
-  const format = useFormatter();
+  const dates = useDateFormat();
 
-  const shortDate = (value: string) =>
-    format.dateTime(new Date(value), { month: "short", day: "numeric" });
+  const shortDate = (value: string) => dates.format(value, "dayMonth");
 
   return {
     shortDate,
-    monthShort: (value: string) =>
-      format.dateTime(new Date(value), { month: "short" }),
-    dayOfMonth: (value: string) =>
-      format.dateTime(new Date(value), { day: "numeric" }),
-    time: (value: string) =>
-      format.dateTime(new Date(value), { hour: "numeric", minute: "2-digit" }),
+    monthShort: (value: string) => dates.format(value, "month"),
+    dayOfMonth: (value: string) => dates.format(value, "day"),
+    time: (value: string) => dates.format(value, "time"),
     /** "2 hours ago"; older than a week shows the date */
     timeAgo: (value: string) => {
       const date = new Date(value);
       const days = (Date.now() - date.getTime()) / 86_400_000;
-      return days < 7 ? format.relativeTime(date) : shortDate(value);
+      // dates.relative passes `now`, so server and browser agree.
+      return days < 7 ? dates.relative(date) : shortDate(value);
     },
     greeting: (name: string) => {
       const hour = new Date().getHours();

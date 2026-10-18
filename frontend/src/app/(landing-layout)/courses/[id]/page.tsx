@@ -14,6 +14,7 @@ import { CourseCurriculum } from "@/components/course-details/course-curriculum"
 import { CourseInstructor } from "@/components/course-details/course-instructor";
 import { CourseReviews } from "@/components/course-details/course-reviews";
 import { EnrolmentCard } from "@/components/course-details/enrolment-card";
+import { AgeNotice } from "@/components/course-details/age-notice";
 import { MembershipBand } from "@/components/course-details/membership-band";
 import { CourseFaq } from "@/components/course-details/course-faq";
 import { RelatedCourses } from "@/components/course-details/related-courses";
@@ -61,6 +62,7 @@ export default function CourseDetailsPage() {
 
       {/* ───── CONTENT SPLIT ───── */}
       <section className="bg-[#FBF9F4]">
+        <AgeNotice course={course} />
         <div className="max-w-[1200px] mx-auto px-6 pt-12 flex flex-col lg:flex-row gap-10">
           {/* LEFT COLUMN */}
           <div className="flex-1 min-w-0 flex flex-col gap-16">

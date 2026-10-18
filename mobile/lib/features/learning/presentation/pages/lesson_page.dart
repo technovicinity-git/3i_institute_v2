@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -20,6 +19,8 @@ import '../../../profiles/presentation/providers/learner_profiles_providers.dart
 import '../../domain/learning_models.dart';
 import '../learning_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
+import '../../../dashboard/presentation/widgets/subscription_access_banner.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -258,6 +259,9 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
+                if (content.locked)
+                  LessonLockedCard(learnerName: profile.displayName)
+                else
                 _MediaPanel(
                   signedAsync: signedAsync,
                   isDocument: isDocument,
@@ -1575,7 +1579,7 @@ class _CourseCertificateSectionState
                     ),
                     if (certificate.issuedAt != null)
                       Text(
-                        context.l10n.lessonIssuedOn(DateFormat.yMMMd().format(certificate.issuedAt!.toLocal())),
+                        context.l10n.lessonIssuedOn(formatDate(certificate.issuedAt!.toLocal(), DateStyle.date)),
                         style: const TextStyle(fontSize: 12, color: _muted),
                       ),
                   ],

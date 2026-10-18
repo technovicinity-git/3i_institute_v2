@@ -6,14 +6,7 @@ import { FileText, Clock, CheckCircle, Users, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
 import { Pagination } from "@/components/ui/pagination";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function getTypeBadge(type: string) {
   return type === "final"

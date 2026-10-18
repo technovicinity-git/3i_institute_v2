@@ -12,6 +12,12 @@ import '../../../../core/l10n/l10n.dart';
 
 // Values the API filters on; "All ages" is the backend's own band name.
 const _ageBands = ['5-8', '9-12', '13-15', '16-17', '18+', 'All ages'];
+
+// Lowest minimum age in each band (the API matches bands on a course's
+// minimum age). A band whose lowest age is above the learner's age can't
+// hold a course they're shown, so it's disabled for them.
+const _ageBandMin = {'5-8': 5, '9-12': 9, '13-15': 13, '16-17': 16, '18+': 18, 'All ages': 0};
+bool _bandFitsAge(String band, int? age) => age == null || (_ageBandMin[band] ?? 0) <= age;
 String _ageBandLabel(AppLocalizations l10n, String band) {
   if (band == 'All ages') return l10n.commonAllAges;
   if (band.endsWith('+')) return l10n.commonAgesFrom(band.substring(0, band.length - 1));
@@ -50,7 +56,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     super.dispose();
   }
 
-  Map<String, String> _filters(String? profileId) => {
+  Map<String, String> _filters(String? profileId, int? learnerAge) => {
         'page': '$_page',
         'limit': '12',
         'sortBy': _sortBy,
@@ -58,7 +64,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         if (_categoryId.isNotEmpty) 'category': _categoryId,
         if (_format.isNotEmpty) 'format': _format,
         if (_language.isNotEmpty) 'language': _language,
-        if (_ageBand.isNotEmpty) 'ageBand': _ageBand,
+        // A band picked before switching to a younger learner is ignored.
+        if (_ageBand.isNotEmpty && _bandFitsAge(_ageBand, learnerAge)) 'ageBand': _ageBand,
         if (profileId != null) 'learnerProfileId': profileId,
       };
 
@@ -84,7 +91,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(activeLearnerProfileProvider);
-    final query = Uri(queryParameters: _filters(profile?.id)).query;
+    final learnerAge = profile == null ? null : _ageOf(profile.dateOfBirth);
+    final query = Uri(queryParameters: _filters(profile?.id, learnerAge)).query;
     final coursesAsync = ref.watch(coursesProvider(query));
     final categoriesAsync = ref.watch(courseCategoriesProvider);
     final totalPages = coursesAsync.asData?.value.totalPages ?? 0;
@@ -106,6 +114,15 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(context.l10n.coursesTitle, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontFamily: 'serif', color: const Color(0xFF0C1F33))),
+                        // The API lists only courses for the active learner's
+                        // age; say so, so a parent knows why some are missing.
+                        if (profile != null && _ageOf(profile.dateOfBirth) != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            context.l10n.coursesForLearner(profile.displayName, _ageOf(profile.dateOfBirth)!),
+                            style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         TextField(
                           controller: _search,
@@ -144,7 +161,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                           categoryId: _categoryId,
                           format: _format,
                           language: _language,
-                          ageBand: _ageBand,
+                          ageBand: _bandFitsAge(_ageBand, learnerAge) ? _ageBand : '',
+                          learner: profile == null || learnerAge == null ? null : (name: profile.displayName, age: learnerAge),
                           sortBy: _sortBy,
                           onCategory: (value) => _changeFilter(() => _categoryId = value ?? ''),
                           onFormat: (value) => _changeFilter(() => _format = value ?? ''),
@@ -222,6 +240,7 @@ class _FilterControls extends StatelessWidget {
     required this.format,
     required this.language,
     required this.ageBand,
+    required this.learner,
     required this.sortBy,
     required this.onCategory,
     required this.onFormat,
@@ -236,6 +255,9 @@ class _FilterControls extends StatelessWidget {
   final String format;
   final String language;
   final String ageBand;
+
+  /// The active learner, when the list is limited to their age.
+  final ({String name, int age})? learner;
   final String sortBy;
   final ValueChanged<String?> onCategory;
   final ValueChanged<String?> onFormat;
@@ -273,7 +295,20 @@ class _FilterControls extends StatelessWidget {
               _filterDropDown<String>(
                 label: context.l10n.coursesAge,
                 value: ageBand,
-                items: [DropdownMenuItem(value: '', child: Text(context.l10n.commonAllAges)), ..._ageBands.map((age) => DropdownMenuItem(value: age, child: Text(_ageBandLabel(context.l10n, age))))],
+                items: [
+                  DropdownMenuItem(value: '', child: Text(context.l10n.commonAllAges)),
+                  ..._ageBands.map((age) {
+                    final fits = _bandFitsAge(age, learner?.age);
+                    return DropdownMenuItem(
+                      value: age,
+                      enabled: fits,
+                      child: Text(
+                        fits ? _ageBandLabel(context.l10n, age) : '${_ageBandLabel(context.l10n, age)} · ${context.l10n.coursesBandNotForAge(learner!.name)}',
+                        style: fits ? null : const TextStyle(color: Color(0xFF94A3B8)),
+                      ),
+                    );
+                  }),
+                ],
                 onChanged: onAgeBand,
               ),
               _filterDropDown<String>(
@@ -362,4 +397,17 @@ class _CourseError extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Age in whole years from an ISO date of birth, or null if it can't be read.
+int? _ageOf(String dateOfBirth) {
+  final dob = DateTime.tryParse(dateOfBirth);
+  if (dob == null) return null;
+  final today = DateTime.now();
+  var age = today.year - dob.year;
+  if (today.month < dob.month ||
+      (today.month == dob.month && today.day < dob.day)) {
+    age--;
+  }
+  return age;
 }

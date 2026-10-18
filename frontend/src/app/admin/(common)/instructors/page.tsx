@@ -20,14 +20,7 @@ import {
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminInstructorsPage() {
   const [tab, setTab] = useState<"instructors" | "pending">("pending");

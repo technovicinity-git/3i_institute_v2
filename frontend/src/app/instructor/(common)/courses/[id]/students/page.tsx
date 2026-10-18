@@ -12,14 +12,7 @@ import {
 } from "lucide-react";
 import { useCourseStudents } from "@/hooks/use-instructor-students";
 import { useWorkspaceCourses } from "@/lib/course-workspace";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function calculateAge(dateOfBirth: string | null): string {
   if (!dateOfBirth) return "—";

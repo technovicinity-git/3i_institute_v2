@@ -10,6 +10,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/social_auth_buttons.dart';
+import '../../../../core/format/date_format.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -154,7 +155,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     suffixIcon: const Icon(Icons.calendar_today_outlined, size: 19),
                   ),
                   child: Text(
-                    _dateOfBirth == null ? l10n.authSelectDate : DateFormat.yMMMd().format(_dateOfBirth!),
+                    _dateOfBirth == null ? l10n.authSelectDate : formatDate(_dateOfBirth!, DateStyle.date),
                     style: TextStyle(color: _dateOfBirth == null ? Theme.of(context).hintColor : null),
                   ),
                 ),

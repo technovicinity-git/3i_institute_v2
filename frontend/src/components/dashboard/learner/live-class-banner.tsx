@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { RenewToJoin } from "@/components/dashboard/subscription-access-banner";
+import { useLearningAccess } from "@/hooks/use-learning-access";
 import { ExternalLink } from "lucide-react";
 import type { LiveClass } from "@/types/dashboard";
 import { type ClassStatus } from "./utils";
@@ -14,6 +16,8 @@ export function LiveClassBanner({
   status: ClassStatus;
 }) {
   const t = useTranslations("dashboardHome");
+  // Lapsed subscription: show "Renew to join" instead of the join link.
+  const { locked } = useLearningAccess();
   const fmt = useDashboardFormat();
   const isLive = status === "LIVE";
   return (
@@ -39,7 +43,9 @@ export function LiveClassBanner({
           {liveClass.courseTitle} • {liveClass.instructor}
         </p>
       </div>
-      {liveClass.meetingLink ? (
+      {locked ? (
+        <RenewToJoin className="rounded-lg bg-white px-4 py-2 text-sm" />
+      ) : liveClass.meetingLink ? (
         <a
           href={liveClass.meetingLink}
           target="_blank"

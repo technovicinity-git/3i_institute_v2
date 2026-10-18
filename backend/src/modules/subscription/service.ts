@@ -620,6 +620,62 @@ export class SubscriptionService {
   // ─── Expiry ───
 
   /**
+   * Reminds account holders 7 days and 1 day before a manual subscription
+   * ends. Learners who already have a renewal waiting for review are left
+   * out. Runs every sweep; the notification dedupe key sends each reminder
+   * once per period.
+   */
+  async sendEndingReminders(): Promise<number> {
+    const now = Date.now();
+    const due = await prisma.subscription.findMany({
+      where: {
+        status: "ACTIVE",
+        stripeSubscriptionId: { startsWith: MANUAL_SUBSCRIPTION_PREFIX },
+        currentPeriodEnd: { gt: new Date(now), lte: new Date(now + 7 * DAY_MS) },
+      },
+      include: {
+        assignedSeats: {
+          where: { status: "ACTIVE" },
+          select: {
+            learnerProfile: {
+              select: {
+                id: true,
+                displayName: true,
+                deletedAt: true,
+                subscriptionRequests: {
+                  where: { status: "PENDING" },
+                  select: { id: true },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    let sent = 0;
+    for (const subscription of due) {
+      const daysLeft =
+        subscription.currentPeriodEnd.getTime() - now <= DAY_MS ? 1 : 7;
+      const names = subscription.assignedSeats
+        .map((seat) => seat.learnerProfile)
+        .filter((p) => !p.deletedAt && p.subscriptionRequests.length === 0)
+        .map((p) => p.displayName);
+      if (names.length === 0) continue;
+      notificationEvents.subscriptionEndingSoon(
+        subscription.id,
+        subscription.accountId,
+        names,
+        subscription.currentPeriodEnd,
+        daysLeft,
+      );
+      sent++;
+    }
+    return sent;
+  }
+
+  /**
    * Ends manual subscriptions whose period is over. Access already stops at
    * `currentPeriodEnd` (enrolment checks the time), so this just tidies up
    * statuses and tells the account holder.

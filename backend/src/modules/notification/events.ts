@@ -1109,6 +1109,36 @@ function subscriptionRequestDecided(requestId: string) {
   });
 }
 
+/**
+ * "Renew soon" reminder for a manual subscription: once when it has a week
+ * or less left (`window` 7) and once on its last day (`window` 1).
+ */
+function subscriptionEndingSoon(
+  subscriptionId: string,
+  accountId: string,
+  profileNames: string[],
+  endsAt: Date,
+  window: 7 | 1,
+) {
+  background("subscriptionEndingSoon", async () => {
+    if (profileNames.length === 0) return;
+    const who = profileNames.join(", ");
+    const days = Math.max(1, Math.ceil((endsAt.getTime() - Date.now()) / 86_400_000));
+    await notificationService.notify({
+      type: "subscription.ending_soon",
+      recipients: [{ userId: accountId }],
+      dedupeKey: `subscription.ending_soon:${subscriptionId}:${endsAt.toISOString()}:${window}`,
+      title:
+        days <= 1 ? "Subscription ends tomorrow" : `Subscription ends in ${days} days`,
+      body:
+        days <= 1
+          ? `The subscription for ${who} ends tomorrow. Renew now so lessons and live classes aren't interrupted.`
+          : `The subscription for ${who} ends in ${days} days. Payments are reviewed by our team, so renew early to avoid a gap.`,
+      data: { subscriptionId, route: "/subscription" },
+    });
+  });
+}
+
 function subscriptionExpired(
   subscriptionId: string,
   accountId: string,
@@ -1192,5 +1222,6 @@ export const notificationEvents = {
   chatMessageReported,
   subscriptionRequested,
   subscriptionRequestDecided,
+  subscriptionEndingSoon,
   subscriptionExpired,
 };

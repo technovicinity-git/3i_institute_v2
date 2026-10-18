@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
@@ -12,6 +11,7 @@ import '../../domain/exam_access.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _ink = Color(0xFF0C1F33);
@@ -971,7 +971,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
 // ─── Pieces ──────────────────────────────────────────────────
 
 String _formatDate(DateTime value) =>
-    DateFormat.yMMMd().add_jm().format(value);
+    formatDate(value, DateStyle.dateTime);
 
 int _wordCount(String text) {
   final trimmed = text.trim();

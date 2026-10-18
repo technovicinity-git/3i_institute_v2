@@ -16,22 +16,7 @@ import {
   useInstructorSessions,
   useInstructorBatches,
 } from "@/hooks/use-batches";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 function isSameDay(date1: Date, date2: Date): boolean {
   return (
@@ -196,7 +181,7 @@ export default function InstructorLiveClassesPage() {
                   {/* Date header */}
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-sm font-bold text-[#0C1F33]">
-                      {formatDate(daySessions[0]!.scheduledAt)}
+                      {formatDate(daySessions[0]!.scheduledAt, "weekdayDayMonth")}
                     </span>
                     <div className="flex-1 h-px bg-[#E3E8EF]" />
                     <span className="text-xs text-[#64748B]">
@@ -223,7 +208,7 @@ export default function InstructorLiveClassesPage() {
                             <div className="w-14 h-14 rounded-lg bg-[#F9F6F0] flex flex-col items-center justify-center shrink-0">
                               <Clock className="w-4 h-4 text-[#B8912F] mb-1" />
                               <span className="text-[10px] font-bold text-[#64748B]">
-                                {formatTime(session.scheduledAt)}
+                                {formatDate(session.scheduledAt, "time")}
                               </span>
                             </div>
 
@@ -377,8 +362,8 @@ export default function InstructorLiveClassesPage() {
                     {batch.nextSessionAt && (
                       <div className="flex items-center gap-2 mb-4 text-xs text-[#64748B]">
                         <Calendar className="w-3.5 h-3.5 text-[#B8912F]" />
-                        Next: {formatDate(batch.nextSessionAt)} at{" "}
-                        {formatTime(batch.nextSessionAt)}
+                        Next: {formatDate(batch.nextSessionAt, "weekdayDayMonth")} at{" "}
+                        {formatDate(batch.nextSessionAt, "time")}
                       </div>
                     )}
 

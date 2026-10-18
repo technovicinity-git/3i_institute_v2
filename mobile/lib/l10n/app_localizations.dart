@@ -1004,6 +1004,36 @@ abstract class AppLocalizations {
   /// **'Courses'**
   String get coursesTitle;
 
+  /// No description provided for @coursesForLearner.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing courses suited to {name} (age {age}).'**
+  String coursesForLearner(String name, int age);
+
+  /// No description provided for @detailAgeNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This course isn\'t for {name}\'s age'**
+  String detailAgeNoticeTitle(String name);
+
+  /// No description provided for @detailAgeNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s for learners aged {range}. {name} is {age}.'**
+  String detailAgeNoticeBody(String range, String name, int age);
+
+  /// No description provided for @detailAgeNoticeBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'See courses for {name}'**
+  String detailAgeNoticeBrowse(String name);
+
+  /// No description provided for @coursesBandNotForAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Not for {name}\'s age'**
+  String coursesBandNotForAge(String name);
+
   /// No description provided for @coursesSearch.
   ///
   /// In en, this message translates to:
@@ -3260,6 +3290,18 @@ abstract class AppLocalizations {
   /// **'Attempt history'**
   String get resultHistory;
 
+  /// No description provided for @resultShowHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show attempt history ({count})'**
+  String resultShowHistory(int count);
+
+  /// No description provided for @resultHideHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide attempt history'**
+  String get resultHideHistory;
+
   /// No description provided for @resultReview.
   ///
   /// In en, this message translates to:
@@ -3283,6 +3325,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Showing answers from attempt #{number}.'**
   String resultShowingAttempt(int number);
+
+  /// No description provided for @resultBestScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Best score: {score}/{total} (attempt #{number})'**
+  String resultBestScore(String score, int total, int number);
+
+  /// No description provided for @resultPassedEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'You didn\'t pass this attempt, but you already passed in attempt #{number}.'**
+  String resultPassedEarlier(int number);
+
+  /// No description provided for @resultSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt #{number} summary'**
+  String resultSummaryTitle(int number);
+
+  /// No description provided for @resultTotalQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get resultTotalQuestions;
+
+  /// No description provided for @resultAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Answered'**
+  String get resultAnswered;
+
+  /// No description provided for @resultUnanswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Unanswered'**
+  String get resultUnanswered;
+
+  /// No description provided for @resultMarksDeducted.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative marks'**
+  String get resultMarksDeducted;
 
   /// No description provided for @resultRetake.
   ///
@@ -5395,6 +5479,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change language'**
   String get languageChangeTo;
+
+  /// No description provided for @accessEndedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s subscription has ended'**
+  String accessEndedTitle(String name);
+
+  /// No description provided for @accessGraceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons and live classes stay open until {date}. Renew now so learning isn\'t interrupted.'**
+  String accessGraceBody(String date);
+
+  /// No description provided for @accessExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.'**
+  String get accessExpiredBody;
+
+  /// No description provided for @accessNoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} doesn\'t have a subscription'**
+  String accessNoneTitle(String name);
+
+  /// No description provided for @accessNoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe to open lessons, live classes, assignments and chat.'**
+  String get accessNoneBody;
+
+  /// No description provided for @accessRenew.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew subscription'**
+  String get accessRenew;
+
+  /// No description provided for @accessSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get accessSubscribe;
+
+  /// No description provided for @accessRenewToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew to join'**
+  String get accessRenewToJoin;
+
+  /// No description provided for @accessLessonLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson is locked'**
+  String get accessLessonLockedTitle;
+
+  /// No description provided for @accessLessonLockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.'**
+  String accessLessonLockedBody(String name);
 }
 
 class _AppLocalizationsDelegate

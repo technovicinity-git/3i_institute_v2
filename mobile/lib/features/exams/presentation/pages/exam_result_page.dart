@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../domain/exam_models.dart';
 import '../exams_providers.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF12304E);
 const _green = Color(0xFF22A146);
@@ -54,9 +54,19 @@ class ExamResultPage extends ConsumerWidget {
       ),
       data: (data) {
         final best = data.bestAttempt;
-        final latest = data.attempts.isEmpty ? null : data.attempts.last;
+        // The card and answer sheet show the most recent attempt — the one
+        // the learner just finished. The best score is mentioned when it's
+        // different.
+        final latest = data.latestAttempt;
         final pending = latest != null && !latest.graded;
+        // Passing once is enough (no retake afterwards).
         final passed = best?.passed == true;
+        final latestPassed = latest?.passed == true;
+        final showBest =
+            best != null &&
+            latest != null &&
+            best.id != latest.id &&
+            best.score != null;
         final examSummary = examsAsync.asData?.value
             .where((e) => e.id == examId)
             .firstOrNull;
@@ -78,8 +88,8 @@ class ExamResultPage extends ConsumerWidget {
             examSummary != null &&
             (examSummary.maxAttempts == null ||
                 examSummary.attemptCount < examSummary.maxAttempts!);
-        final total = best?.totalMarks ?? data.exam.totalMarks;
-        final score = best?.score;
+        final total = latest?.totalMarks ?? data.exam.totalMarks;
+        final score = latest?.score;
         final percent = score == null || total == 0
             ? null
             : (score / total * 100).round();
@@ -154,10 +164,14 @@ class ExamResultPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      passed
-                          ? context.l10n.resultPassed
-                          : pending
+                      pending
                           ? context.l10n.resultGrading
+                          : latestPassed
+                          ? context.l10n.resultPassed
+                          : passed
+                          ? context.l10n.resultPassedEarlier(
+                              best!.attemptNumber,
+                            )
                           : context.l10n.resultFailed,
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -180,12 +194,31 @@ class ExamResultPage extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        context.l10n.resultPassDuration(data.exam.passMark, data.exam.duration),
+                        context.l10n.resultPassDuration(
+                          data.exam.passMark,
+                          data.exam.duration,
+                        ),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                         ),
                       ),
+                      if (showBest) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          context.l10n.resultBestScore(
+                            _number(best.score!),
+                            best.totalMarks,
+                            best.attemptNumber,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF0C1F33),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                     const SizedBox(height: 18),
                     Row(
@@ -209,39 +242,37 @@ class ExamResultPage extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    // Beside the attempt count, collapsed by default.
+                    if (data.attempts.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _AttemptHistory(attempts: data.attempts),
+                    ],
                   ],
                 ),
               ),
-              if (data.attempts.isNotEmpty) ...[
+              if (data.summary != null && latest != null) ...[
                 const SizedBox(height: 18),
-                _SectionTitle(context.l10n.resultHistory),
-                const SizedBox(height: 9),
-                ...data.attempts.map(
-                  (attempt) => _AttemptTile(attempt: attempt),
+                _SectionTitle(
+                  context.l10n.resultSummaryTitle(latest.attemptNumber),
                 ),
+                const SizedBox(height: 9),
+                _SummaryGrid(summary: data.summary!),
               ],
               if (data.questionResults.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 _SectionTitle(context.l10n.resultReview),
                 const SizedBox(height: 4),
                 Text(
-                  context.l10n.resultReviewHint,
+                  latest == null
+                      ? context.l10n.resultReviewHint
+                      : '${context.l10n.resultReviewHint} '
+                            '${context.l10n.resultShowingAttempt(latest.attemptNumber)}',
                   style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 10),
                 ...data.questionResults.asMap().entries.map(
                   (entry) =>
                       _QuestionReview(index: entry.key + 1, item: entry.value),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  best == null
-                      ? context.l10n.resultNoAttempts
-                      : context.l10n.resultShowingAttempt(best.attemptNumber),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF64748B),
-                  ),
                 ),
               ],
               const SizedBox(height: 18),
@@ -275,7 +306,7 @@ class ExamResultPage extends ConsumerWidget {
   }
 }
 
-enum _ReviewStatus { pending, correct, partial, incorrect }
+enum _ReviewStatus { pending, correct, partial, incorrect, unanswered }
 
 const _amber = Color(0xFFD97706);
 
@@ -287,25 +318,21 @@ class _QuestionReview extends StatelessWidget {
   Widget build(BuildContext context) {
     final written = item.type == 'short_answer' || item.type == 'essay';
     final graded = written && item.marksAwarded != null;
-    // Written answers have no correct answer to compare against; judge them
-    // by the marks the instructor awarded.
-    final status = written
-        ? (!graded
-              ? _ReviewStatus.pending
-              : item.marksAwarded! >= item.marks
-              ? _ReviewStatus.correct
-              : item.marksAwarded! > 0
-              ? _ReviewStatus.partial
-              : _ReviewStatus.incorrect)
-        : (_answersEqual(item.myAnswer, item.correctAnswer)
-              ? _ReviewStatus.correct
-              : _ReviewStatus.incorrect);
+    // From the server, so it matches how the attempt was scored.
+    final status = switch (item.status) {
+      'correct' => _ReviewStatus.correct,
+      'partial' => _ReviewStatus.partial,
+      'pending' => _ReviewStatus.pending,
+      'unanswered' => _ReviewStatus.unanswered,
+      _ => _ReviewStatus.incorrect,
+    };
     final correct = status == _ReviewStatus.correct;
     final color = switch (status) {
       _ReviewStatus.pending => Colors.orange,
       _ReviewStatus.correct => _green,
       _ReviewStatus.partial => _amber,
       _ReviewStatus.incorrect => Colors.red,
+      _ReviewStatus.unanswered => const Color(0xFF94A3B8),
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
@@ -369,6 +396,7 @@ class _QuestionReview extends StatelessWidget {
                     _ReviewStatus.correct => Icons.check_circle_outline,
                     _ReviewStatus.partial => Icons.remove_circle_outline,
                     _ReviewStatus.incorrect => Icons.cancel_outlined,
+                    _ReviewStatus.unanswered => Icons.radio_button_unchecked,
                   },
                   color: color,
                   size: 20,
@@ -377,6 +405,7 @@ class _QuestionReview extends StatelessWidget {
                     _ReviewStatus.correct => context.l10n.resultCorrect,
                     _ReviewStatus.partial => context.l10n.resultPartial,
                     _ReviewStatus.incorrect => context.l10n.resultIncorrect,
+                    _ReviewStatus.unanswered => context.l10n.resultUnanswered,
                   },
                 ),
               ],
@@ -398,6 +427,7 @@ class _QuestionReview extends StatelessWidget {
                       _ReviewStatus.correct => const Color(0xFFF0FDF4),
                       _ReviewStatus.partial => const Color(0xFFFFFBEB),
                       _ReviewStatus.incorrect => const Color(0xFFFEF2F2),
+                      _ReviewStatus.unanswered => const Color(0xFFF1F5F9),
                     },
                   ),
                   if (item.suggestedAnswer?.isNotEmpty == true) ...[
@@ -590,7 +620,7 @@ class _AttemptTile extends StatelessWidget {
                 ),
                 if (date != null)
                   Text(
-                    DateFormat.yMMMd().add_jm().format(date),
+                    formatDate(date, DateStyle.dateTime),
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF64748B),
@@ -651,6 +681,134 @@ class _Stat extends StatelessWidget {
   );
 }
 
+/// Attempt list behind a toggle, collapsed by default so the latest result
+/// and answer sheet come first.
+class _AttemptHistory extends StatefulWidget {
+  const _AttemptHistory({required this.attempts});
+  final List<ExamAttempt> attempts;
+
+  @override
+  State<_AttemptHistory> createState() => _AttemptHistoryState();
+}
+
+class _AttemptHistoryState extends State<_AttemptHistory> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: TextButton.icon(
+            onPressed: () => setState(() => _open = !_open),
+            iconAlignment: IconAlignment.end,
+            icon: AnimatedRotation(
+              turns: _open ? .5 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.expand_more, size: 20),
+            ),
+            label: Text(
+              _open
+                  ? context.l10n.resultHideHistory
+                  : context.l10n.resultShowHistory(widget.attempts.length),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: _navy,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        if (_open) ...[
+          const SizedBox(height: 6),
+          ...widget.attempts.map((attempt) => _AttemptTile(attempt: attempt)),
+        ],
+      ],
+    );
+  }
+}
+
+/// Latest attempt at a glance: two tiles per row.
+class _SummaryGrid extends StatelessWidget {
+  const _SummaryGrid({required this.summary});
+  final ExamResultSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tiles = <(String, String, Color)>[
+      (
+        l10n.resultTotalQuestions,
+        '${summary.totalQuestions}',
+        const Color(0xFF0C1F33),
+      ),
+      (l10n.resultAnswered, '${summary.answered}', const Color(0xFF0C1F33)),
+      (l10n.resultCorrect, '${summary.correct}', _green),
+      (l10n.resultIncorrect, '${summary.incorrect}', Colors.red.shade700),
+      (l10n.resultUnanswered, '${summary.unanswered}', const Color(0xFF64748B)),
+      // Only when they apply to this exam.
+      if (summary.partial > 0)
+        (l10n.resultPartial, '${summary.partial}', _amber),
+      if (summary.pendingGrading > 0)
+        (
+          l10n.resultAwaitingGrading,
+          '${summary.pendingGrading}',
+          Colors.orange.shade800,
+        ),
+      if (summary.marksDeducted > 0)
+        (
+          l10n.resultMarksDeducted,
+          '-${_number(summary.marksDeducted)}',
+          Colors.red.shade700,
+        ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 8) / 2;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final (label, value, color) in tiles)
+              Container(
+                width: width,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBF9F4),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
   final String text;
@@ -679,7 +837,10 @@ class _ResultError extends StatelessWidget {
             context.l10n.resultLoadFailed,
             style: TextStyle(color: Colors.red),
           ),
-          TextButton(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n.commonTryAgain),
+          ),
           TextButton(onPressed: onBack, child: Text(context.l10n.examsBack)),
         ],
       ),
@@ -697,11 +858,6 @@ String _answerText(AppLocalizations l10n, Object? value) => value == null
     : value is List
     ? value.join(', ')
     : '$value';
-bool _answersEqual(Object? a, Object? b) {
-  final first = _asList(a), second = _asList(b);
-  if (first.length != second.length) return false;
-  return first.toSet().containsAll(second);
-}
 
 String _number(double value) => value == value.roundToDouble()
     ? value.toInt().toString()

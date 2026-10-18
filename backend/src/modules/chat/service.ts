@@ -1,5 +1,6 @@
 import { prisma } from "#/lib/prisma";
-import { NotFoundError, ValidationError } from "#/shared/errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "#/shared/errors";
+import { seatService } from "#/modules/seat/service";
 import { notificationEvents } from "#/modules/notification/events";
 
 export const MODERATION_ACTIONS = ["DELETE", "REMOVE"] as const;
@@ -12,6 +13,48 @@ type MessageDeletedListener = (
 ) => void;
 
 let messageDeletedListener: MessageDeletedListener | null = null;
+
+/**
+ * Who may post in a course chat: its instructor, an admin, or a learner of
+ * this account who is enrolled (in the batch, for batch rooms) and whose
+ * subscription is active or in its grace period. Returns the learner
+ * profile to post as (null for staff).
+ */
+export async function assertCanPostInChat(input: {
+  userId: string;
+  role?: string;
+  courseId: string;
+  batchId?: string | null;
+  learnerProfileId?: string | null;
+}): Promise<string | null> {
+  const course = await prisma.course.findUnique({
+    where: { id: input.courseId },
+    select: { instructorId: true },
+  });
+  if (!course) throw new NotFoundError("Course not found");
+  if (course.instructorId === input.userId || input.role === "Admin") {
+    return null;
+  }
+
+  if (!input.learnerProfileId) {
+    throw new ValidationError("learnerProfileId is required");
+  }
+  const enrolment = await prisma.enrolment.findFirst({
+    where: {
+      learnerProfileId: input.learnerProfileId,
+      learnerProfile: { accountId: input.userId, deletedAt: null },
+      courseId: input.courseId,
+      ...(input.batchId ? { batchId: input.batchId } : {}),
+      waitlisted: false,
+    },
+    select: { learnerProfileId: true },
+  });
+  if (!enrolment) throw new ForbiddenError("Not enrolled in this course");
+
+  // Reading stays open; sending needs an active subscription (or grace).
+  await seatService.assertLearningAccess(enrolment.learnerProfileId);
+  return enrolment.learnerProfileId;
+}
 
 /** Lets the socket layer broadcast deletions without a circular import. */
 export function onChatMessageDeleted(listener: MessageDeletedListener) {

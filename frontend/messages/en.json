@@ -931,6 +931,8 @@
     "timeTaken": "Time taken",
     "minutesShort": "{count}m",
     "history": "Attempt history",
+    "showHistory": "Show attempt history ({count})",
+    "hideHistory": "Hide attempt history",
     "attempt": "Attempt #{number}",
     "pending": "PENDING",
     "passedBadge": "PASSED",
@@ -948,6 +950,13 @@
     "explanation": "Explanation",
     "notAnswered": "Not answered",
     "showingAttempt": "Showing answers from attempt #{number}.",
+    "bestScore": "Best score: {score}/{total} (attempt #{number})",
+    "passedEarlier": "You didn't pass this attempt, but you already passed in attempt #{number}.",
+    "summaryTitle": "Attempt #{number} summary",
+    "totalQuestions": "Questions",
+    "answered": "Answered",
+    "unanswered": "Unanswered",
+    "marksDeducted": "Negative marks",
     "noAttempts": "No attempts found.",
     "retake": "Retake exam"
   },
@@ -1034,6 +1043,8 @@
   },
   "courses": {
     "title": "Courses",
+    "forLearner": "Showing courses suited to {name} (age {age}).",
+    "bandNotForAge": "Not for {name}'s age",
     "search": "Search courses, instructors, topics...",
     "count": "{count, plural, one {# course} other {# courses}}",
     "itemLabel": "courses",
@@ -1060,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "Failed to load course",
+    "ageNotice": {
+      "title": "This course isn't for {name}'s age",
+      "body": "It's for learners aged {range}. {name} is {age}.",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "See courses for {name}"
+    },
     "backToCourses": "Back to courses",
     "breadcrumbCourses": "Courses",
     "general": "General",
@@ -1317,5 +1335,17 @@
       "reported": "Message reported",
       "reportFailed": "Failed to report message"
     }
+  },
+  "subscriptionAccess": {
+    "endedTitle": "{name}'s subscription has ended",
+    "graceBody": "Lessons and live classes stay open until {date}. Renew now so learning isn't interrupted.",
+    "expiredBody": "Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.",
+    "noneTitle": "{name} doesn't have a subscription",
+    "noneBody": "Subscribe to open lessons, live classes, assignments and chat.",
+    "renew": "Renew subscription",
+    "subscribe": "Subscribe",
+    "renewToJoin": "Renew to join",
+    "lessonLockedTitle": "This lesson is locked",
+    "lessonLockedBody": "{name}'s subscription has ended. Renew it to continue — progress is saved. Exams stay open."
   }
 }

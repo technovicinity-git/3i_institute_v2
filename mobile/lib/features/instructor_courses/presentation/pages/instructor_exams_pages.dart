@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_error_message.dart';
 import '../../../instructor_dashboard/domain/entities/instructor_dashboard_data.dart';
@@ -12,6 +11,7 @@ import '../../domain/entities/instructor_exam.dart';
 import '../../domain/entities/instructor_question.dart';
 import '../providers/instructor_courses_providers.dart';
 import '../widgets/course_action_strip.dart';
+import '../../../../core/format/date_format.dart';
 
 const _navy = Color(0xFF0C1F33);
 const _deepNavy = Color(0xFF12304E);
@@ -24,7 +24,6 @@ const _orange = Color(0xFFEA580C);
 
 /// Regular-course exams have no attempt limit; the API expects a large number.
 const _unlimitedAttempts = 999999;
-const _dateTimeFormat = 'MMM d, y • h:mm a';
 
 InstructorCourse? _findCourse(WidgetRef ref, String courseId) => ref
     .watch(instructorCoursesProvider)
@@ -208,7 +207,7 @@ class _ExamCard extends StatelessWidget {
               if (scheduled)
                 _Meta(
                   Icons.event,
-                  DateFormat(_dateTimeFormat).format(exam.openDate!),
+                  formatDate(exam.openDate!, DateStyle.dateTime, 'en'),
                 ),
             ],
           ),
@@ -465,7 +464,7 @@ class _InstructorExamFormPageState
                 label: Text(
                   _startTime == null
                       ? 'Choose date and time'
-                      : DateFormat(_dateTimeFormat).format(_startTime!),
+                      : formatDate(_startTime!, DateStyle.dateTime, 'en'),
                 ),
               ),
               const SizedBox(height: 6),
@@ -1066,7 +1065,7 @@ class _AttemptCard extends StatelessWidget {
                 Icons.schedule,
                 submitted == null
                     ? 'Not submitted'
-                    : DateFormat(_dateTimeFormat).format(submitted),
+                    : formatDate(submitted, DateStyle.dateTime, 'en'),
               ),
               _Meta(
                 Icons.grade_outlined,

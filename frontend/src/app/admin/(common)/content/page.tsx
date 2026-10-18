@@ -24,6 +24,7 @@ import {
 import type { FaqItem, SiteSettings } from "@/services/content.service";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { SOCIAL_LABELS, type SocialNetwork } from "@/components/landing/social-icon";
+import { formatDate } from "@/lib/date-format";
 
 type Tab = "pages" | "faq" | "settings";
 
@@ -107,7 +108,7 @@ function PagesTab() {
               <p className="text-xs text-[#64748B]">
                 /pages/{page.slug}
                 {page.updatedAt &&
-                  ` · Updated ${new Date(page.updatedAt).toLocaleDateString()}`}
+                  ` · Updated ${formatDate(page.updatedAt)}`}
               </p>
             </div>
             <span

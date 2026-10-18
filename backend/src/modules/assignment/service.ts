@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { seatService } from "#/modules/seat/service";
 import {
   ForbiddenError,
   NotFoundError,
@@ -307,6 +308,9 @@ export class AssignmentService {
     if (!profile) {
       throw new NotFoundError("Learner profile not found");
     }
+
+    // Submitting work is locked once the subscription (and grace) ends.
+    await seatService.assertLearningAccess(profile.id);
 
     // Verify assignment exists
     const assignment = await prisma.assignment.findUnique({

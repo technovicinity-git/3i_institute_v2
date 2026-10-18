@@ -931,6 +931,8 @@
     "timeTaken": "الوقت المستغرق",
     "minutesShort": "{count}د",
     "history": "سجل المحاولات",
+    "showHistory": "عرض سجل المحاولات ({count})",
+    "hideHistory": "إخفاء سجل المحاولات",
     "attempt": "المحاولة #{number}",
     "pending": "معلّق",
     "passedBadge": "ناجح",
@@ -948,6 +950,13 @@
     "explanation": "الشرح",
     "notAnswered": "لم تتم الإجابة",
     "showingAttempt": "عرض إجابات المحاولة #{number}.",
+    "bestScore": "أعلى درجة: {score}/{total} (المحاولة #{number})",
+    "passedEarlier": "لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #{number}.",
+    "summaryTitle": "ملخص المحاولة #{number}",
+    "totalQuestions": "الأسئلة",
+    "answered": "تمت الإجابة",
+    "unanswered": "بلا إجابة",
+    "marksDeducted": "درجات سالبة",
     "noAttempts": "لم يتم العثور على محاولات.",
     "retake": "إعادة الاختبار"
   },
@@ -1034,6 +1043,8 @@
   },
   "courses": {
     "title": "الدورات",
+    "forLearner": "يتم عرض الدورات المناسبة لـ {name} (العمر {age}).",
+    "bandNotForAge": "غير مناسب لعمر {name}",
     "search": "ابحث عن دورات أو معلمين أو مواضيع...",
     "count": "{count} دورة",
     "itemLabel": "دورة",
@@ -1060,6 +1071,13 @@
   },
   "courseDetails": {
     "loadFailed": "تعذّر تحميل الدورة",
+    "ageNotice": {
+      "title": "هذه الدورة ليست مناسبة لعمر {name}",
+      "body": "إنها للمتعلمين بعمر {range}. عمر {name} هو {age}.",
+      "rangeFrom": "{min}+",
+      "rangeBetween": "{min}–{max}",
+      "browse": "عرض الدورات المناسبة لـ {name}"
+    },
     "backToCourses": "العودة إلى الدورات",
     "breadcrumbCourses": "الدورات",
     "general": "عام",
@@ -1317,5 +1335,17 @@
       "reported": "تم الإبلاغ عن الرسالة",
       "reportFailed": "تعذّر الإبلاغ عن الرسالة"
     }
+  },
+  "subscriptionAccess": {
+    "endedTitle": "انتهى اشتراك {name}",
+    "graceBody": "تبقى الدروس والحصص المباشرة متاحة حتى {date}. جدّد الآن حتى لا يتوقف التعلّم.",
+    "expiredBody": "الدروس والحصص المباشرة والواجبات والدردشة مغلقة. تبقى الاختبارات والنتائج والشهادات متاحة.",
+    "noneTitle": "لا يوجد اشتراك لـ {name}",
+    "noneBody": "اشترك لفتح الدروس والحصص المباشرة والواجبات والدردشة.",
+    "renew": "تجديد الاشتراك",
+    "subscribe": "اشترك",
+    "renewToJoin": "جدّد للانضمام",
+    "lessonLockedTitle": "هذا الدرس مغلق",
+    "lessonLockedBody": "انتهى اشتراك {name}. جدّده للمتابعة — تقدّمك محفوظ. تبقى الاختبارات متاحة."
   }
 }

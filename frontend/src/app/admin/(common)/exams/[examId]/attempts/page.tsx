@@ -12,22 +12,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+import { formatDate } from "@/lib/date-format";
 
 export default function AdminExamAttemptsPage() {
   const params = useParams();
@@ -58,7 +43,7 @@ export default function AdminExamAttemptsPage() {
   const failedCount = attempts?.filter((a) => a.passed === false).length ?? 0;
 
   return (
-    <div className="p-6 md:p-10 max-w-[900px] mx-auto">
+    <div className="p-6 md:p-10">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -166,7 +151,7 @@ export default function AdminExamAttemptsPage() {
                     <p className="text-xs text-[#64748B] mt-1">
                       Attempt #{attempt.attemptNumber} •{" "}
                       {attempt.submittedAt
-                        ? `Submitted ${formatDate(attempt.submittedAt)} at ${formatTime(attempt.submittedAt)}`
+                        ? `Submitted ${formatDate(attempt.submittedAt)} at ${formatDate(attempt.submittedAt, "time")}`
                         : `Started ${formatDate(attempt.startedAt)}`}
                     </p>
                   </div>

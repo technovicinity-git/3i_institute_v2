@@ -25,26 +25,9 @@ import type {
   ModerationUser,
 } from "@/services/admin.service";
 import { Pagination } from "@/components/ui/pagination";
+import { formatDate } from "@/lib/date-format";
 
 const PAGE_SIZE = 20;
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function fullName(user: ModerationUser | null | undefined): string {
   if (!user) return "Unknown user";
@@ -364,7 +347,7 @@ export default function AdminModerationPage() {
                       )}
                       {item.message && (
                         <p className="text-xs text-[#94A3B8] mt-1">
-                          Sent {formatDateTime(item.message.createdAt)}
+                          Sent {formatDate(item.message.createdAt, "dateTime")}
                         </p>
                       )}
                     </div>
@@ -502,7 +485,7 @@ export default function AdminModerationPage() {
                                 )}
                               </p>
                               <span className="text-xs text-[#94A3B8]">
-                                {formatDateTime(report.reportedAt)}
+                                {formatDate(report.reportedAt, "dateTime")}
                               </span>
                             </div>
                             <p className="text-sm text-[#334155] mt-1">

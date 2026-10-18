@@ -504,6 +504,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get coursesTitle => '⁧الدورات⁩';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '⁧يتم عرض الدورات المناسبة لـ $name (العمر $age).⁩';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return '⁧هذه الدورة ليست مناسبة لعمر $name⁩';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return '⁧إنها للمتعلمين بعمر $range. عمر $name هو $age.⁩';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '⁧عرض الدورات المناسبة لـ $name⁩';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '⁧غير مناسب لعمر $name⁩';
+  }
+
+  @override
   String get coursesSearch => '⁧ابحث عن دورات أو معلمين أو مواضيع...⁩';
 
   @override
@@ -1767,6 +1792,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get resultHistory => '⁧سجل المحاولات⁩';
 
   @override
+  String resultShowHistory(int count) {
+    return '⁧عرض سجل المحاولات ($count)⁩';
+  }
+
+  @override
+  String get resultHideHistory => '⁧إخفاء سجل المحاولات⁩';
+
+  @override
   String get resultReview => '⁧مراجعة الأسئلة⁩';
 
   @override
@@ -1779,6 +1812,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String resultShowingAttempt(int number) {
     return '⁧عرض إجابات المحاولة #$number.⁩';
   }
+
+  @override
+  String resultBestScore(String score, int total, int number) {
+    return '⁧أعلى درجة: $score/$total (المحاولة #$number)⁩';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return '⁧لم تنجح في هذه المحاولة، لكنك نجحت بالفعل في المحاولة #$number.⁩';
+  }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return '⁧ملخص المحاولة #$number⁩';
+  }
+
+  @override
+  String get resultTotalQuestions => '⁧الأسئلة⁩';
+
+  @override
+  String get resultAnswered => '⁧تمت الإجابة⁩';
+
+  @override
+  String get resultUnanswered => '⁧بلا إجابة⁩';
+
+  @override
+  String get resultMarksDeducted => '⁧درجات سالبة⁩';
 
   @override
   String get resultRetake => '⁧إعادة الاختبار⁩';
@@ -2978,4 +3038,44 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get languageChangeTo => '⁧تغيير اللغة⁩';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '⁧انتهى اشتراك $name⁩';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return '⁧تبقى الدروس والحصص المباشرة متاحة حتى $date. جدّد الآن حتى لا يتوقف التعلّم.⁩';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      '⁧الدروس والحصص المباشرة والواجبات والدردشة مغلقة. تبقى الاختبارات والنتائج والشهادات متاحة.⁩';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '⁧لا يوجد اشتراك لـ $name⁩';
+  }
+
+  @override
+  String get accessNoneBody =>
+      '⁧اشترك لفتح الدروس والحصص المباشرة والواجبات والدردشة.⁩';
+
+  @override
+  String get accessRenew => '⁧تجديد الاشتراك⁩';
+
+  @override
+  String get accessSubscribe => '⁧اشترك⁩';
+
+  @override
+  String get accessRenewToJoin => '⁧جدّد للانضمام⁩';
+
+  @override
+  String get accessLessonLockedTitle => '⁧هذا الدرس مغلق⁩';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '⁧انتهى اشتراك $name. جدّده للمتابعة — تقدّمك محفوظ. تبقى الاختبارات متاحة.⁩';
+  }
 }

@@ -497,6 +497,31 @@ class AppLocalizationsBn extends AppLocalizations {
   String get coursesTitle => 'কোর্স';
 
   @override
+  String coursesForLearner(String name, int age) {
+    return '$name-এর জন্য উপযুক্ত কোর্স দেখানো হচ্ছে (বয়স $age)।';
+  }
+
+  @override
+  String detailAgeNoticeTitle(String name) {
+    return 'এই কোর্সটি $name-এর বয়সের জন্য নয়';
+  }
+
+  @override
+  String detailAgeNoticeBody(String range, String name, int age) {
+    return 'এটি $range বছর বয়সীদের জন্য। $name-এর বয়স $age।';
+  }
+
+  @override
+  String detailAgeNoticeBrowse(String name) {
+    return '$name-এর জন্য কোর্স দেখুন';
+  }
+
+  @override
+  String coursesBandNotForAge(String name) {
+    return '$name-এর বয়সের জন্য নয়';
+  }
+
+  @override
   String get coursesSearch => 'কোর্স, শিক্ষক বা বিষয় খুঁজুন...';
 
   @override
@@ -1776,6 +1801,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get resultHistory => 'চেষ্টার ইতিহাস';
 
   @override
+  String resultShowHistory(int count) {
+    return 'চেষ্টার ইতিহাস দেখুন ($count)';
+  }
+
+  @override
+  String get resultHideHistory => 'চেষ্টার ইতিহাস লুকান';
+
+  @override
   String get resultReview => 'প্রশ্ন পর্যালোচনা';
 
   @override
@@ -1788,6 +1821,33 @@ class AppLocalizationsBn extends AppLocalizations {
   String resultShowingAttempt(int number) {
     return 'চেষ্টা #$number-এর উত্তর দেখানো হচ্ছে।';
   }
+
+  @override
+  String resultBestScore(String score, int total, int number) {
+    return 'সর্বোচ্চ নম্বর: $score/$total (চেষ্টা #$number)';
+  }
+
+  @override
+  String resultPassedEarlier(int number) {
+    return 'এই চেষ্টায় পাস করেননি, তবে চেষ্টা #$number-এ আপনি আগেই পাস করেছেন।';
+  }
+
+  @override
+  String resultSummaryTitle(int number) {
+    return 'চেষ্টা #$number-এর সারাংশ';
+  }
+
+  @override
+  String get resultTotalQuestions => 'প্রশ্ন';
+
+  @override
+  String get resultAnswered => 'উত্তর দেওয়া';
+
+  @override
+  String get resultUnanswered => 'উত্তর দেওয়া হয়নি';
+
+  @override
+  String get resultMarksDeducted => 'নেগেটিভ নম্বর';
 
   @override
   String get resultRetake => 'আবার পরীক্ষা দিন';
@@ -2999,4 +3059,44 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'ভাষা পরিবর্তন করুন';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name-এর সাবস্ক্রিপশন শেষ হয়েছে';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'পাঠ ও লাইভ ক্লাস $date পর্যন্ত খোলা থাকবে। শেখা যেন না থামে, তাই এখনই নবায়ন করুন।';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট বন্ধ। পরীক্ষা, ফলাফল ও সার্টিফিকেট খোলা থাকবে।';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name-এর কোনো সাবস্ক্রিপশন নেই';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট খুলতে সাবস্ক্রাইব করুন।';
+
+  @override
+  String get accessRenew => 'সাবস্ক্রিপশন নবায়ন করুন';
+
+  @override
+  String get accessSubscribe => 'সাবস্ক্রাইব করুন';
+
+  @override
+  String get accessRenewToJoin => 'যোগ দিতে নবায়ন করুন';
+
+  @override
+  String get accessLessonLockedTitle => 'এই পাঠটি বন্ধ';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name-এর সাবস্ক্রিপশন শেষ হয়েছে। চালিয়ে যেতে নবায়ন করুন — অগ্রগতি সংরক্ষিত আছে। পরীক্ষা খোলা থাকবে।';
+  }
 }

@@ -33,6 +33,77 @@ export interface AdminLearnerProfile {
   _count: { enrolments: number; examAttempts: number };
 }
 
+export type AdminQuestionType =
+  | "mcq"
+  | "multi_select"
+  | "true_false"
+  | "short_answer"
+  | "essay";
+
+/** Where a question is used. Used questions can be archived, not deleted. */
+export interface AdminQuestionUsage {
+  exams: number;
+  attempts: number;
+  sessions: number;
+}
+
+export interface AdminQuestion {
+  id: string;
+  question: string;
+  type: AdminQuestionType;
+  difficulty: string;
+  marks: number;
+  negativeMarks: number;
+  scope: string;
+  archivedAt: string | null;
+  createdAt: string;
+  course: { id: string; title: string };
+  instructor: { id: string; firstName: string; lastName: string };
+  usage: AdminQuestionUsage;
+}
+
+export interface AdminQuestionsResponse {
+  questions: AdminQuestion[];
+  total: number;
+  archivedCount: number;
+}
+
+export interface AdminQuestionFilters {
+  search?: string;
+  courseId?: string;
+  instructorId?: string;
+  type?: string;
+  difficulty?: string;
+  status?: string;
+}
+
+export interface AdminQuestionDetails
+  extends Omit<AdminQuestion, "instructor" | "course"> {
+  options: string[] | null;
+  correctAnswer: string | string[] | null;
+  suggestedAnswer: string | null;
+  explanation: string | null;
+  updatedAt: string;
+  course: {
+    id: string;
+    title: string;
+    instructor: { id: string; firstName: string; lastName: string };
+  };
+  exams: Array<{ id: string; title: string; type: string }>;
+}
+
+export interface AdminQuestionFilterOptions {
+  courses: Array<{ id: string; title: string }>;
+  instructors: Array<{ id: string; name: string }>;
+}
+
+export type AdminQuestionBulkAction = "archive" | "restore" | "delete";
+
+export interface AdminQuestionBulkResult {
+  succeeded: number;
+  failed: Array<{ id: string; reason: string }>;
+}
+
 export interface AdminLearnerProfilesResponse {
   profiles: AdminLearnerProfile[];
   total: number;
@@ -279,6 +350,48 @@ export const adminService = {
 
   getLearnerProfileDetails: async (id: string): Promise<AdminLearnerProfileDetails> => {
     const response = await apiClient.get(`/admin/learner-profiles/${id}`);
+    return response.data.data;
+  },
+
+  getQuestions: async (
+    page = 1,
+    filters: AdminQuestionFilters = {},
+  ): Promise<AdminQuestionsResponse> => {
+    const params = new URLSearchParams({ page: String(page), limit: "20" });
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value);
+    }
+    const response = await apiClient.get(`/admin/questions?${params.toString()}`);
+    return response.data.data;
+  },
+
+  getQuestionFilterOptions: async (): Promise<AdminQuestionFilterOptions> => {
+    const response = await apiClient.get("/admin/questions/filters");
+    return response.data.data;
+  },
+
+  getQuestion: async (id: string): Promise<AdminQuestionDetails> => {
+    const response = await apiClient.get(`/admin/questions/${id}`);
+    return response.data.data;
+  },
+
+  archiveQuestion: async (id: string): Promise<void> => {
+    await apiClient.post(`/admin/questions/${id}/archive`);
+  },
+
+  restoreQuestion: async (id: string): Promise<void> => {
+    await apiClient.post(`/admin/questions/${id}/restore`);
+  },
+
+  deleteQuestion: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/questions/${id}`);
+  },
+
+  bulkQuestions: async (
+    ids: string[],
+    action: AdminQuestionBulkAction,
+  ): Promise<AdminQuestionBulkResult> => {
+    const response = await apiClient.post("/admin/questions/bulk", { ids, action });
     return response.data.data;
   },
 
