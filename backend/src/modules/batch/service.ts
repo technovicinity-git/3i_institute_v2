@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { seatService } from "#/modules/seat/service";
 import {
   ForbiddenError,
   NotFoundError,
@@ -507,12 +508,17 @@ export class BatchService {
       orderBy: { scheduledAt: "asc" },
     });
 
+    // The learner keeps their place and sees the schedule; joining needs an
+    // active subscription (or the grace period).
+    const access = await seatService.getLearningAccess(learnerProfileId);
+
     return sessions.map((session) => ({
       id: session.id,
       title: session.title,
       scheduledAt: session.scheduledAt,
       durationMinutes: session.durationMinutes,
-      meetingLink: session.meetingLink,
+      meetingLink: access.hasAccess ? session.meetingLink : null,
+      locked: !access.hasAccess,
       notes: session.notes,
       batchId: session.batchId,
       batchName: session.batch.name,
@@ -729,6 +735,7 @@ export class BatchService {
     }
 
     const batch = enrolment.batch;
+    const access = await seatService.getLearningAccess(learnerProfileId);
 
     return {
       id: batch.id,
@@ -746,13 +753,15 @@ export class BatchService {
       },
 
       enrolledAt: enrolment.enrolledAt,
+      // Place kept; join links withheld while the subscription has lapsed.
+      access,
 
       sessions: batch.sessions.map((session) => ({
         id: session.id,
         title: session.title,
         scheduledAt: session.scheduledAt,
         durationMinutes: session.durationMinutes,
-        meetingLink: session.meetingLink,
+        meetingLink: access.hasAccess ? session.meetingLink : null,
         notes: session.notes,
       })),
     };

@@ -89,4 +89,12 @@ router.get(
   seatController.getProfileSeatStatus,
 );
 
+// Whether the learner can use their courses (subscribed / grace / expired),
+// for the apps' renew banner and lock screens.
+router.get(
+  "/access/:learnerProfileId",
+  authenticate,
+  seatController.getLearningAccess,
+);
+
 export { router as seatRoutes };

@@ -3077,4 +3077,44 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get languageChangeTo => '⁧زبان تبدیل کریں⁩';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '⁧$name کی سبسکرپشن ختم ہو گئی ہے⁩';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return '⁧اسباق اور لائیو کلاسز $date تک کھلی رہیں گی۔ سیکھنا جاری رکھنے کے لیے ابھی تجدید کریں۔⁩';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      '⁧اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ بند ہیں۔ امتحانات، نتائج اور سرٹیفکیٹ کھلے رہیں گے۔⁩';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '⁧$name کی کوئی سبسکرپشن نہیں ہے⁩';
+  }
+
+  @override
+  String get accessNoneBody =>
+      '⁧اسباق، لائیو کلاسز، اسائنمنٹس اور چیٹ کھولنے کے لیے سبسکرائب کریں۔⁩';
+
+  @override
+  String get accessRenew => '⁧سبسکرپشن کی تجدید کریں⁩';
+
+  @override
+  String get accessSubscribe => '⁧سبسکرائب کریں⁩';
+
+  @override
+  String get accessRenewToJoin => '⁧شامل ہونے کے لیے تجدید کریں⁩';
+
+  @override
+  String get accessLessonLockedTitle => '⁧یہ سبق بند ہے⁩';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '⁧$name کی سبسکرپشن ختم ہو گئی ہے۔ جاری رکھنے کے لیے تجدید کریں — پیش رفت محفوظ ہے۔ امتحانات کھلے رہیں گے۔⁩';
+  }
 }

@@ -3209,4 +3209,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'Change language';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name\'s subscription has ended';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'Lessons and live classes stay open until $date. Renew now so learning isn\'t interrupted.';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name doesn\'t have a subscription';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'Subscribe to open lessons, live classes, assignments and chat.';
+
+  @override
+  String get accessRenew => 'Renew subscription';
+
+  @override
+  String get accessSubscribe => 'Subscribe';
+
+  @override
+  String get accessRenewToJoin => 'Renew to join';
+
+  @override
+  String get accessLessonLockedTitle => 'This lesson is locked';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name\'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.';
+  }
 }

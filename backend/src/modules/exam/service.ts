@@ -604,6 +604,16 @@ export class ExamService {
     if (!exam) throw new NotFoundError("Exam not found");
     if (!profile) throw new NotFoundError("Learner profile not found");
 
+    // Exams stay open after the subscription ends (a learner shouldn't miss
+    // one while a manual renewal is reviewed), but only for enrolled courses.
+    const enrolled = await prisma.enrolment.findFirst({
+      where: { learnerProfileId, courseId: exam.courseId, waitlisted: false },
+      select: { id: true },
+    });
+    if (!enrolled) {
+      throw new ForbiddenError("You are not enrolled in this course");
+    }
+
     const lockKey = `exam-start:${examId}:${learnerProfileId}`;
     const session = await prisma.$transaction(async (tx) => {
       // One start at a time per learner + exam. Without this, two quick

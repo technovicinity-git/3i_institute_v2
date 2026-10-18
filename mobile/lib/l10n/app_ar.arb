@@ -895,5 +895,15 @@
   "helpPolicies": "\u2067السياسات\u2069",
   "pageUnavailable": "\u2067هذه الصفحة غير متاحة حاليًا.\u2069",
   "pageUpdated": "\u2067آخر تحديث {date}\u2069",
-  "languageChangeTo": "\u2067تغيير اللغة\u2069"
+  "languageChangeTo": "\u2067تغيير اللغة\u2069",
+  "accessEndedTitle": "\u2067انتهى اشتراك {name}\u2069",
+  "accessGraceBody": "\u2067تبقى الدروس والحصص المباشرة متاحة حتى {date}. جدّد الآن حتى لا يتوقف التعلّم.\u2069",
+  "accessExpiredBody": "\u2067الدروس والحصص المباشرة والواجبات والدردشة مغلقة. تبقى الاختبارات والنتائج والشهادات متاحة.\u2069",
+  "accessNoneTitle": "\u2067لا يوجد اشتراك لـ {name}\u2069",
+  "accessNoneBody": "\u2067اشترك لفتح الدروس والحصص المباشرة والواجبات والدردشة.\u2069",
+  "accessRenew": "\u2067تجديد الاشتراك\u2069",
+  "accessSubscribe": "\u2067اشترك\u2069",
+  "accessRenewToJoin": "\u2067جدّد للانضمام\u2069",
+  "accessLessonLockedTitle": "\u2067هذا الدرس مغلق\u2069",
+  "accessLessonLockedBody": "\u2067انتهى اشتراك {name}. جدّده للمتابعة — تقدّمك محفوظ. تبقى الاختبارات متاحة.\u2069"
 }

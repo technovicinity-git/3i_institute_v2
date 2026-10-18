@@ -3065,4 +3065,44 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'भाषा बदलें';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name की सदस्यता समाप्त हो गई है';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'पाठ और लाइव कक्षाएँ $date तक खुली रहेंगी। सीखना न रुके, इसलिए अभी नवीनीकरण करें।';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'पाठ, लाइव कक्षाएँ, असाइनमेंट और चैट बंद हैं। परीक्षाएँ, परिणाम और प्रमाणपत्र खुले रहेंगे।';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name की कोई सदस्यता नहीं है';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'पाठ, लाइव कक्षाएँ, असाइनमेंट और चैट खोलने के लिए सदस्यता लें।';
+
+  @override
+  String get accessRenew => 'सदस्यता नवीनीकृत करें';
+
+  @override
+  String get accessSubscribe => 'सदस्यता लें';
+
+  @override
+  String get accessRenewToJoin => 'जुड़ने के लिए नवीनीकरण करें';
+
+  @override
+  String get accessLessonLockedTitle => 'यह पाठ बंद है';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name की सदस्यता समाप्त हो गई है। जारी रखने के लिए नवीनीकरण करें — प्रगति सहेजी गई है। परीक्षाएँ खुली रहेंगी।';
+  }
 }

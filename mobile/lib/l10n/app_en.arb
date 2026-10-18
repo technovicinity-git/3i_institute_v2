@@ -1926,5 +1926,19 @@
       }
     }
   },
-  "languageChangeTo": "Change language"
+  "languageChangeTo": "Change language",
+  "accessEndedTitle": "{name}'s subscription has ended",
+  "@accessEndedTitle": {"placeholders": {"name": {"type": "String"}}},
+  "accessGraceBody": "Lessons and live classes stay open until {date}. Renew now so learning isn't interrupted.",
+  "@accessGraceBody": {"placeholders": {"date": {"type": "String"}}},
+  "accessExpiredBody": "Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.",
+  "accessNoneTitle": "{name} doesn't have a subscription",
+  "@accessNoneTitle": {"placeholders": {"name": {"type": "String"}}},
+  "accessNoneBody": "Subscribe to open lessons, live classes, assignments and chat.",
+  "accessRenew": "Renew subscription",
+  "accessSubscribe": "Subscribe",
+  "accessRenewToJoin": "Renew to join",
+  "accessLessonLockedTitle": "This lesson is locked",
+  "accessLessonLockedBody": "{name}'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.",
+  "@accessLessonLockedBody": {"placeholders": {"name": {"type": "String"}}}
 }

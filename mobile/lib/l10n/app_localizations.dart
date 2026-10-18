@@ -5479,6 +5479,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change language'**
   String get languageChangeTo;
+
+  /// No description provided for @accessEndedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s subscription has ended'**
+  String accessEndedTitle(String name);
+
+  /// No description provided for @accessGraceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons and live classes stay open until {date}. Renew now so learning isn\'t interrupted.'**
+  String accessGraceBody(String date);
+
+  /// No description provided for @accessExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.'**
+  String get accessExpiredBody;
+
+  /// No description provided for @accessNoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} doesn\'t have a subscription'**
+  String accessNoneTitle(String name);
+
+  /// No description provided for @accessNoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe to open lessons, live classes, assignments and chat.'**
+  String get accessNoneBody;
+
+  /// No description provided for @accessRenew.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew subscription'**
+  String get accessRenew;
+
+  /// No description provided for @accessSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get accessSubscribe;
+
+  /// No description provided for @accessRenewToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew to join'**
+  String get accessRenewToJoin;
+
+  /// No description provided for @accessLessonLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson is locked'**
+  String get accessLessonLockedTitle;
+
+  /// No description provided for @accessLessonLockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s subscription has ended. Renew it to continue — progress is saved. Exams stay open.'**
+  String accessLessonLockedBody(String name);
 }
 
 class _AppLocalizationsDelegate

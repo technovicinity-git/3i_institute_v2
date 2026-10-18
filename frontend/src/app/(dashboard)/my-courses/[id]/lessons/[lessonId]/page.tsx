@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Save, Lock, FileText, Award, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
+import { LessonLocked } from "@/components/dashboard/subscription-access-banner";
 import { useCourseExams } from "@/hooks/use-learner-exams";
 import {
   useExamCertificate,
@@ -220,7 +221,9 @@ export default function LessonPage() {
         <div className="flex-1 ps-4 pt-4 min-h-0 overflow-y-auto">
           {/* Video */}
           {/* Media content */}
-          {materialLoading ? (
+          {courseContent.access && !courseContent.access.hasAccess ? (
+            <LessonLocked name={activeProfile?.displayName ?? ""} />
+          ) : materialLoading ? (
             <div className="relative w-full aspect-video bg-[#111] flex items-center justify-center">
               <div className="w-10 h-10 rounded-full border-4 border-white border-t-transparent animate-spin" />
             </div>

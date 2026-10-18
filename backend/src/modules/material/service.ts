@@ -1,4 +1,5 @@
 import { prisma } from "#/lib/prisma";
+import { seatService } from "#/modules/seat/service";
 import { bunnyStream } from "#/lib/bunny";
 import { storageService } from "#/lib/storage";
 import {
@@ -225,8 +226,24 @@ export class MaterialService {
 
   async getCourseContentForLearner(
     courseId: string,
-    learnerProfileId?: string,
+    requestedProfileId?: string,
+    accountId?: string,
   ) {
+    // Only use a profile that belongs to the caller.
+    const owned =
+      requestedProfileId && accountId
+        ? await prisma.learnerProfile.findFirst({
+            where: { id: requestedProfileId, accountId, deletedAt: null },
+            select: { id: true },
+          })
+        : null;
+    const learnerProfileId = owned?.id;
+    // Tells the app whether to show the lessons or a "renew" lock screen.
+    const access = learnerProfileId
+      ? await seatService.getLearningAccess(learnerProfileId)
+      : null;
+    const locked = access !== null && !access.hasAccess;
+
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
@@ -278,7 +295,10 @@ export class MaterialService {
           title: material.title,
           description: material.description ?? null,
           type: material.type,
-          url: material.url,
+          // Videos, audio and documents are fetched through the signed-URL
+          // endpoint (which checks access); a link's URL is the content
+          // itself, so it's withheld while locked.
+          url: locked && material.type === "link" ? null : material.url,
           duration: material.duration,
           order: material.order,
           captionUrl: material.captionUrl,
@@ -306,6 +326,7 @@ export class MaterialService {
         materials.reduce((sum, m) => sum + (m.duration ?? 0), 0) / 60,
       progress,
       completedLessons,
+      access,
     };
   }
   async uploadDocument(
@@ -436,6 +457,25 @@ export class MaterialService {
 
     if (!isInstructor && !isAdmin && !isEnrolled) {
       throw new ForbiddenError("You are not enrolled in this course");
+    }
+
+    // Lessons need an active subscription (or the grace period) for at least
+    // one of the account's enrolled learners.
+    if (!isInstructor && !isAdmin) {
+      const enrolled = await prisma.enrolment.findMany({
+        where: {
+          learnerProfile: { accountId: userId, deletedAt: null },
+          courseId: material.courseId,
+          waitlisted: false,
+        },
+        select: { learnerProfileId: true },
+      });
+      const access = await Promise.all(
+        enrolled.map((e) => seatService.getLearningAccess(e.learnerProfileId)),
+      );
+      if (!access.some((a) => a.hasAccess)) {
+        await seatService.assertLearningAccess(enrolled[0]!.learnerProfileId);
+      }
     }
 
     return { material, canManage: isInstructor || isAdmin };

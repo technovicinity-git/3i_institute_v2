@@ -1335,5 +1335,17 @@
       "reported": "Message reported",
       "reportFailed": "Failed to report message"
     }
+  },
+  "subscriptionAccess": {
+    "endedTitle": "{name}'s subscription has ended",
+    "graceBody": "Lessons and live classes stay open until {date}. Renew now so learning isn't interrupted.",
+    "expiredBody": "Lessons, live classes, assignments and chat are locked. Exams, results and certificates stay open.",
+    "noneTitle": "{name} doesn't have a subscription",
+    "noneBody": "Subscribe to open lessons, live classes, assignments and chat.",
+    "renew": "Renew subscription",
+    "subscribe": "Subscribe",
+    "renewToJoin": "Renew to join",
+    "lessonLockedTitle": "This lesson is locked",
+    "lessonLockedBody": "{name}'s subscription has ended. Renew it to continue — progress is saved. Exams stay open."
   }
 }

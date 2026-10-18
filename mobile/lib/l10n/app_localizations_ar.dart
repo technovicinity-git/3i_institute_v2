@@ -3038,4 +3038,44 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get languageChangeTo => '⁧تغيير اللغة⁩';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '⁧انتهى اشتراك $name⁩';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return '⁧تبقى الدروس والحصص المباشرة متاحة حتى $date. جدّد الآن حتى لا يتوقف التعلّم.⁩';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      '⁧الدروس والحصص المباشرة والواجبات والدردشة مغلقة. تبقى الاختبارات والنتائج والشهادات متاحة.⁩';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '⁧لا يوجد اشتراك لـ $name⁩';
+  }
+
+  @override
+  String get accessNoneBody =>
+      '⁧اشترك لفتح الدروس والحصص المباشرة والواجبات والدردشة.⁩';
+
+  @override
+  String get accessRenew => '⁧تجديد الاشتراك⁩';
+
+  @override
+  String get accessSubscribe => '⁧اشترك⁩';
+
+  @override
+  String get accessRenewToJoin => '⁧جدّد للانضمام⁩';
+
+  @override
+  String get accessLessonLockedTitle => '⁧هذا الدرس مغلق⁩';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '⁧انتهى اشتراك $name. جدّده للمتابعة — تقدّمك محفوظ. تبقى الاختبارات متاحة.⁩';
+  }
 }

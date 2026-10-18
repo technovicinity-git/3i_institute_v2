@@ -28,6 +28,8 @@ export interface CourseLessonPage {
   totalDurationMinutes: number;
   progress: number;
   completedLessons: number;
+  /** The learner's access; lessons are locked when `hasAccess` is false. */
+  access: import("@/services/seat.service").LearningAccess | null;
 }
 
 export interface LessonNote {

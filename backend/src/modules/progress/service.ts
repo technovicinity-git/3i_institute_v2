@@ -1,6 +1,7 @@
 import { prisma } from "#/lib/prisma";
 import { NotFoundError, ValidationError } from "#/shared/errors";
 import type { UpdateProgressInput } from "#/modules/progress/schema";
+import { seatService } from "#/modules/seat/service";
 
 export class ProgressService {
   async update(accountId: string, input: UpdateProgressInput) {
@@ -16,6 +17,9 @@ export class ProgressService {
     if (!profile) {
       throw new NotFoundError("Learner profile not found");
     }
+
+    // Studying lessons is locked once the subscription (and grace) ends.
+    await seatService.assertLearningAccess(profile.id);
 
     // Verify material exists
     const material = await prisma.material.findUnique({

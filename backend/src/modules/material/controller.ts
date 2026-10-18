@@ -77,6 +77,7 @@ export class MaterialController {
       const result = await materialService.getCourseContentForLearner(
         courseId,
         learnerProfileId,
+        req.user?.sub,
       );
       sendSuccess(res, result, 200);
     } catch (error) {

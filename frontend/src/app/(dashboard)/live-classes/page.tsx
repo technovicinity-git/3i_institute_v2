@@ -16,6 +16,8 @@ import {
   useTranslations,
 } from "next-intl";
 import { useDateFormat } from "@/i18n/use-date-format";
+import { RenewToJoin } from "@/components/dashboard/subscription-access-banner";
+import { useLearningAccess } from "@/hooks/use-learning-access";
 
 function isSameDay(date1: Date, date2: Date): boolean {
   return (
@@ -61,6 +63,8 @@ export default function LearnerLiveClassesPage() {
   const tSchedule = useTranslations("schedule");
   const tClasses = useTranslations("classes");
   const fmt = useLiveFormat();
+  // Lapsed subscription: schedule stays visible, joining is locked.
+  const { locked } = useLearningAccess();
   const { activeProfile } = useProfileStore();
   const {
     data: sessions,
@@ -129,7 +133,9 @@ export default function LearnerLiveClassesPage() {
                 {nextSession.instructorName}
               </span>
             </div>
-            {nextSession.meetingLink ? (
+            {locked ? (
+              <RenewToJoin />
+            ) : nextSession.meetingLink ? (
               <a
                 href={nextSession.meetingLink}
                 target="_blank"
@@ -265,7 +271,9 @@ export default function LearnerLiveClassesPage() {
                           {tClasses("chat")}
                         </Link>
 
-                        {session.meetingLink ? (
+                        {locked ? (
+                          <RenewToJoin className="px-3 py-2" />
+                        ) : session.meetingLink ? (
                           <a
                             href={session.meetingLink}
                             target="_blank"

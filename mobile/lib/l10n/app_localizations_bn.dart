@@ -3059,4 +3059,44 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get languageChangeTo => 'ভাষা পরিবর্তন করুন';
+
+  @override
+  String accessEndedTitle(String name) {
+    return '$name-এর সাবস্ক্রিপশন শেষ হয়েছে';
+  }
+
+  @override
+  String accessGraceBody(String date) {
+    return 'পাঠ ও লাইভ ক্লাস $date পর্যন্ত খোলা থাকবে। শেখা যেন না থামে, তাই এখনই নবায়ন করুন।';
+  }
+
+  @override
+  String get accessExpiredBody =>
+      'পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট বন্ধ। পরীক্ষা, ফলাফল ও সার্টিফিকেট খোলা থাকবে।';
+
+  @override
+  String accessNoneTitle(String name) {
+    return '$name-এর কোনো সাবস্ক্রিপশন নেই';
+  }
+
+  @override
+  String get accessNoneBody =>
+      'পাঠ, লাইভ ক্লাস, অ্যাসাইনমেন্ট ও চ্যাট খুলতে সাবস্ক্রাইব করুন।';
+
+  @override
+  String get accessRenew => 'সাবস্ক্রিপশন নবায়ন করুন';
+
+  @override
+  String get accessSubscribe => 'সাবস্ক্রাইব করুন';
+
+  @override
+  String get accessRenewToJoin => 'যোগ দিতে নবায়ন করুন';
+
+  @override
+  String get accessLessonLockedTitle => 'এই পাঠটি বন্ধ';
+
+  @override
+  String accessLessonLockedBody(String name) {
+    return '$name-এর সাবস্ক্রিপশন শেষ হয়েছে। চালিয়ে যেতে নবায়ন করুন — অগ্রগতি সংরক্ষিত আছে। পরীক্ষা খোলা থাকবে।';
+  }
 }

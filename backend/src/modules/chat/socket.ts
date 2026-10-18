@@ -1,7 +1,11 @@
 import type { Server as HttpServer } from "node:http";
 import { Server as SocketIOServer } from "socket.io";
 import { verifyAccessToken } from "#/lib/jwt";
-import { chatService, onChatMessageDeleted } from "#/modules/chat/service";
+import {
+  assertCanPostInChat,
+  chatService,
+  onChatMessageDeleted,
+} from "#/modules/chat/service";
 import { env } from "#/config/env";
 import { prisma } from "#/lib/prisma";
 import { isAccountActive } from "#/modules/user/account-status";
@@ -151,12 +155,15 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             return;
           }
 
-          const course = await prisma.course.findUnique({
-            where: { id: courseId },
-            select: { instructorId: true },
+          // Enrolment, profile ownership and subscription (see the helper).
+          const postingProfileId = await assertCanPostInChat({
+            userId: user.sub,
+            role: user.role,
+            courseId,
+            batchId,
+            learnerProfileId: learnerProfileId ?? socket.data.learnerProfileId,
           });
-
-          const isInstructor = course?.instructorId === user.sub;
+          const isInstructor = postingProfileId === null;
 
           let displayName = user.email;
 
@@ -170,7 +177,7 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
                 `${instructor.firstName} ${instructor.lastName}`.trim();
             }
           } else {
-            const profileId = learnerProfileId ?? socket.data.learnerProfileId;
+            const profileId = postingProfileId;
             if (profileId) {
               const profile = await prisma.learnerProfile.findUnique({
                 where: { id: profileId },
@@ -189,9 +196,7 @@ function initializeSocket(httpServer: HttpServer): SocketIOServer {
             senderType: "ACCOUNT",
             displayName,
             message: message.trim(),
-            learnerProfileId: isInstructor
-              ? null
-              : (learnerProfileId ?? socket.data.learnerProfileId),
+            learnerProfileId: postingProfileId,
           });
 
           const roomName = batchId

@@ -23,6 +23,8 @@ import { useLearnerCertificates } from "@/hooks/use-learner-certificates";
 import { downloadExamCertificatePdf } from "@/services/learner-certificate.service";
 import { useTranslations } from "next-intl";
 import { useDateFormat } from "@/i18n/use-date-format";
+import { RenewToJoin } from "@/components/dashboard/subscription-access-banner";
+import { useLearningAccess } from "@/hooks/use-learning-access";
 
 type SessionStatus = "LIVE" | "STARTING_SOON" | "UPCOMING" | "COMPLETED";
 
@@ -76,6 +78,8 @@ export default function OnlineClassBatchPage() {
   const tClasses = useTranslations("classes");
   const fmt = useDateFormat();
   const { format } = useDateFormat();
+  // Lapsed subscription: schedule stays visible, joining is locked.
+  const { locked } = useLearningAccess();
   const formatDate = (date: string) => format(date, "weekdayDate");
   const formatMonth = (date: string) => format(date, "month");
   const router = useRouter();
@@ -311,7 +315,9 @@ export default function OnlineClassBatchPage() {
 
           {/* Action */}
           <div className="flex items-center gap-2 shrink-0">
-            {isJoinable && session.meetingLink ? (
+            {isJoinable && locked ? (
+              <RenewToJoin className="px-3 py-2" />
+            ) : isJoinable && session.meetingLink ? (
               <a
                 href={session.meetingLink}
                 target="_blank"

@@ -85,6 +85,7 @@ export const NOTIFICATION_EVENTS = {
   "billing.subscription_cancelled": event("billing", { email: true }),
   "subscription.approved": event("billing", { push: true, email: true }),
   "subscription.rejected": event("billing", { push: true, email: true }),
+  "subscription.ending_soon": event("billing", { push: true, email: true }),
   "subscription.expired": event("billing", {
     push: true,
     email: true,

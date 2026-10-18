@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import { authenticate } from "#/middleware/authenticate";
 import { authorize } from "#/middleware/authorize";
-import { chatService } from "#/modules/chat/service";
+import { assertCanPostInChat, chatService } from "#/modules/chat/service";
 import { sendSuccess } from "#/shared/response";
 
 const router: Router = Router();
@@ -34,7 +34,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const senderId = req.user?.sub!;
-      const { courseId, batchId, message } = req.body;
+      const { courseId, batchId, message, learnerProfileId } = req.body;
 
       if (!message || message.trim().length === 0) {
         res.status(422).json({
@@ -55,6 +55,16 @@ router.post(
         return;
       }
 
+      // Same rules as the socket: enrolled learner with an active
+      // subscription (or grace), or the course's instructor / an admin.
+      const postingProfileId = await assertCanPostInChat({
+        userId: senderId,
+        role: req.user?.role,
+        courseId,
+        batchId,
+        learnerProfileId,
+      });
+
       const savedMessage = await chatService.sendMessage({
         courseId,
         batchId: batchId ?? null,
@@ -62,6 +72,7 @@ router.post(
         senderType: "ACCOUNT",
         displayName: req.user?.email ?? "User",
         message: message.trim(),
+        learnerProfileId: postingProfileId,
       });
 
       sendSuccess(res, savedMessage, 201, "Message sent");

@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profiles/presentation/providers/learner_profiles_providers.dart';
 import '../../../profiles/presentation/widgets/learner_avatar.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
+import 'subscription_access_banner.dart';
 
 class LearnerDashboardLayout extends ConsumerWidget {
   const LearnerDashboardLayout({required this.child, super.key});
@@ -28,7 +29,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
                 child: Scaffold(
                   backgroundColor: const Color(0xFFFBF9F4),
                   appBar: _dashboardAppBar(context, ref),
-                  body: child,
+                  body: _withAccessBanner(child),
                 ),
               ),
             ],
@@ -40,9 +41,17 @@ class LearnerDashboardLayout extends ConsumerWidget {
         backgroundColor: const Color(0xFFFBF9F4),
         appBar: _dashboardAppBar(context, ref, showMenu: true),
         drawer: const Drawer(child: DashboardSidebar()),
-        body: child,
+        body: _withAccessBanner(child),
       );
     },
+  );
+
+  /// Renew banner (shown once the subscription has ended) above the page.
+  Widget _withAccessBanner(Widget page) => Column(
+    children: [
+      const SubscriptionAccessBanner(),
+      Expanded(child: page),
+    ],
   );
 
   PreferredSizeWidget _dashboardAppBar(
@@ -53,7 +62,8 @@ class LearnerDashboardLayout extends ConsumerWidget {
     final learner = ref.watch(activeLearnerProfileProvider);
     final account = ref.watch(authControllerProvider).asData?.value;
     final l10n = context.l10n;
-    final name = learner?.displayName ?? account?.firstName ?? l10n.commonLearner;
+    final name =
+        learner?.displayName ?? account?.firstName ?? l10n.commonLearner;
 
     return AppBar(
       toolbarHeight: 72,
@@ -119,10 +129,7 @@ class LearnerDashboardLayout extends ConsumerWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'switch',
-              child: Text(l10n.menuSwitchLearner),
-            ),
+            PopupMenuItem(value: 'switch', child: Text(l10n.menuSwitchLearner)),
             PopupMenuItem(value: 'courses', child: Text(l10n.menuCourses)),
             PopupMenuItem(
               value: 'online-classes',
