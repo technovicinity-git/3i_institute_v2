@@ -39,6 +39,9 @@ const authRoutes = ["/login", "/register"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // Presence check only — the middleware can't tell whether the token is
+  // still valid. That's why the API clears the cookie when a refresh is
+  // rejected; a stale cookie would bounce /login → /dashboard forever.
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
   const isProtected = protectedRoutes.some(

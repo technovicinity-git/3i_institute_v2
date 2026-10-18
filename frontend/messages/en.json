@@ -847,7 +847,8 @@
     "backToExams": "Back to exams",
     "countdownDays": "{d}d {h}h {m}m",
     "toasts": {
-      "submitFailed": "Failed to submit exam"
+      "submitFailed": "Failed to submit exam",
+      "startFailed": "Couldn't start the exam. Please try again."
     }
   },
   "takeExam": {

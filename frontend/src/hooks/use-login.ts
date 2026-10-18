@@ -16,6 +16,9 @@ export function useLoginMutation() {
   return useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
     onSuccess: (data) => {
+      // This is the learner portal. Instructors and admins have their own
+      // login pages; the API would accept their credentials here, so end
+      // the session it just created instead of signing them in.
       if (data.user.role !== "Account Holder") {
         toast.error(t("notAuthorized"));
         logoutMutation.mutate(undefined);
@@ -24,6 +27,8 @@ export function useLoginMutation() {
       setUser(data.user);
       setAccessToken(data.accessToken);
       toast.success(t("welcomeBack", { name: data.user.firstName }));
+      // An account can hold several learner profiles; the user picks one
+      // before reaching the dashboard.
       router.push("/profiles");
     },
     onError: (error: any) => {

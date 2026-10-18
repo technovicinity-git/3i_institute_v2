@@ -52,22 +52,53 @@ class LearnerExam {
   final List<Map<String, dynamic>> questions;
 }
 
-class ExamTakeData {
-  const ExamTakeData({required this.exam, required this.questions});
+ExamTakeInfo _examInfo(Object? json) => ExamTakeInfo.fromJson(
+  json is Map ? Map<String, dynamic>.from(json) : const {},
+);
+
+/// GET /exams/:examId/intro — shown before starting. No question content.
+class ExamIntroData {
+  const ExamIntroData({required this.exam, required this.questionCount});
+  final ExamTakeInfo exam;
+  final int questionCount;
+
+  factory ExamIntroData.fromJson(Map<String, dynamic> json) => ExamIntroData(
+    exam: _examInfo(json['exam']),
+    questionCount: _int(json['questionCount']),
+  );
+}
+
+/// POST /exams/:examId/start — the running attempt. Times are the server's
+/// clock; compare [serverNow] with the device clock to correct the timer.
+class ExamStartData {
+  const ExamStartData({
+    required this.sessionId,
+    required this.startedAt,
+    required this.deadline,
+    required this.serverNow,
+    required this.exam,
+    required this.questions,
+  });
+  final String sessionId;
+  final DateTime startedAt, deadline, serverNow;
   final ExamTakeInfo exam;
   final List<ExamQuestion> questions;
 
-  factory ExamTakeData.fromJson(Map<String, dynamic> json) => ExamTakeData(
-    exam: ExamTakeInfo.fromJson(
-      json['exam'] is Map
-          ? Map<String, dynamic>.from(json['exam'] as Map)
-          : const {},
-    ),
-    questions: ((json['questions'] as List?) ?? const [])
-        .whereType<Map>()
-        .map((item) => ExamQuestion.fromJson(Map<String, dynamic>.from(item)))
-        .toList(growable: false),
-  );
+  factory ExamStartData.fromJson(Map<String, dynamic> json) {
+    DateTime time(String key) =>
+        DateTime.tryParse('${json[key]}')?.toLocal() ?? DateTime.now();
+    return ExamStartData(
+      sessionId: json['sessionId'] as String? ?? '',
+      startedAt: time('startedAt'),
+      deadline: time('deadline'),
+      serverNow: time('serverNow'),
+      exam: _examInfo(json['exam']),
+      questions: ((json['questions'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((item) => ExamQuestion.fromJson(Map<String, dynamic>.from(item)))
+          .toList(growable: false),
+    );
+  }
 }
 
 class ExamTakeInfo {

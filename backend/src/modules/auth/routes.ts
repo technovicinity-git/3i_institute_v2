@@ -163,6 +163,8 @@ router.post(
  */
 router.post(
   "/login",
+  // Loose per-IP limit (many users can share one IP). Brute force on a single
+  // account is stopped by the 5-attempt lockout in AuthService.login.
   rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }),
   validate(loginSchema),
   authController.login,
@@ -205,6 +207,9 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+// No rate limit: every page load calls this, and it needs a valid refresh
+// token to do anything. No `authenticate` either — the access token is
+// usually the thing that has expired.
 router.post("/refresh", authController.refresh);
 
 /**
@@ -338,6 +343,8 @@ router.post(
  *       200:
  *         description: Logged out successfully
  */
+// Needs the access token to know whose sessions to revoke. The web client
+// refreshes an expired access token first, then retries the logout.
 router.post("/logout", authenticate, authController.logout);
 
 /**
@@ -498,6 +505,7 @@ router.post(
  */
 router.post(
   "/register/learner",
+  // Tight limit: each sign-up sends emails (verification, guardian notice).
   rateLimit({ windowMs: 5 * 60 * 1000, max: 5 }),
   validate(learnerRegistrationSchema),
   registrationController.registerLearner,

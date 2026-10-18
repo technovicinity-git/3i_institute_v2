@@ -64,24 +64,15 @@ export const createExamSchema = z.object({
 
 export type CreateExamInput = z.infer<typeof createExamSchema>;
 
-export const submitExamSchema = z.object({
-  examId: z.string().uuid(),
+export const startExamSchema = z.object({
   learnerProfileId: z.string().uuid(),
+});
+
+// The session from POST /exams/:examId/start identifies the exam, learner,
+// start time and question set, so the client sends only its answers.
+export const submitExamSchema = z.object({
+  sessionId: z.string().uuid(),
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
-  // ISO timestamp captured by the client when the learner started the exam.
-  // Used to record submission time and compute how long the learner took.
-  startedAt: z.string().optional(),
-  // For REGULAR course exams (which generate a random question set per
-  // attempt), the client echoes back the exact questions that were shown so
-  // grading can use the same set. Marks are always re-derived from the
-  // question bank to prevent tampering.
-  questionSet: z
-    .array(
-      z.object({
-        questionId: z.string().uuid(),
-      }),
-    )
-    .optional(),
 });
 
 export type SubmitExamInput = z.infer<typeof submitExamSchema>;

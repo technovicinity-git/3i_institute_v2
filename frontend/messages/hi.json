@@ -847,7 +847,8 @@
     "backToExams": "परीक्षाओं पर वापस जाएँ",
     "countdownDays": "{d}दि {h}घं {m}मि",
     "toasts": {
-      "submitFailed": "परीक्षा जमा नहीं हो सकी"
+      "submitFailed": "परीक्षा जमा नहीं हो सकी",
+      "startFailed": "परीक्षा शुरू नहीं हो सकी। कृपया फिर से कोशिश करें।"
     }
   },
   "takeExam": {

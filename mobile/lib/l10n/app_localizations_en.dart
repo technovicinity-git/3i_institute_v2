@@ -1658,6 +1658,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn\'t submit your exam. Please try again.';
 
   @override
+  String get takeStartFailed =>
+      'We couldn\'t start the exam. Please try again.';
+
+  @override
   String get takeConfirmTitle => 'Submit your exam?';
 
   @override

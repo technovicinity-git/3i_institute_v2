@@ -28,7 +28,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useProfileStore } from "@/stores/profile-store";
 import {
-  useExamQuestions,
+  useExamIntro,
+  useStartExamMutation,
   useSubmitExamMutation,
 } from "@/hooks/use-learner-exams";
 import {
@@ -42,6 +43,7 @@ import {
   isAnswered,
   loadExamSession,
   saveExamSession,
+  sessionFromStart,
   type ExamAnswer,
   type ExamSession,
 } from "@/lib/exam-session";
@@ -115,7 +117,9 @@ export default function TakeExamPage() {
     isError,
     refetch,
     isRefetching,
-  } = useExamQuestions(examId);
+  } = useExamIntro(examId);
+  const { mutateAsync: startOnServer, isPending: isStarting } =
+    useStartExamMutation();
   const { mutateAsync: submitExam, isPending: isSubmitting } =
     useSubmitExamMutation();
 
@@ -185,14 +189,12 @@ export default function TakeExamPage() {
     );
 
     try {
+      // The question set, start time and deadline belong to the server
+      // session, so only the answers are sent.
       await submitExam({
+        sessionId: current.sessionId,
         examId: current.examId,
-        learnerProfileId: current.learnerProfileId,
         answers,
-        startedAt: new Date(current.startedAt).toISOString(),
-        // Echo back exactly which questions were shown so REGULAR dynamic
-        // exams are graded against the same random set the learner answered.
-        questionSet: current.questions.map((q) => ({ questionId: q.id })),
       });
       clearExamSession(current.learnerProfileId, current.examId);
       setSubmitted(true);
@@ -303,8 +305,10 @@ export default function TakeExamPage() {
     }));
   };
 
-  const startExam = () => {
-    if (!examData || !profileId) return;
+  const startExam = async () => {
+    if (!examData || !profileId || isStarting) return;
+    // Quick check for a friendly message; the server makes the real call
+    // with its own clock.
     const access = getExamAccess({ ...examData.exam, now: new Date() });
     if (access.status !== "open") {
       toast.error(
@@ -314,22 +318,18 @@ export default function TakeExamPage() {
       );
       return;
     }
+    let start;
+    try {
+      // Resumes the server attempt if one is already running (e.g. started
+      // on another device), with its original deadline.
+      start = await startOnServer({ examId, learnerProfileId: profileId });
+    } catch {
+      return; // Toast shown by the mutation.
+    }
     autoSubmitFiredRef.current = false;
     lastRemainingRef.current = null;
     setNow(Date.now());
-    setSession({
-      version: 1,
-      examId,
-      learnerProfileId: profileId,
-      title: examData.exam.title,
-      closeDate: examData.exam.closeDate,
-      startedAt: Date.now(),
-      durationMinutes: examData.exam.duration,
-      questions: examData.questions,
-      answers: {},
-      flagged: [],
-      currentQuestion: 0,
-    });
+    setSession(sessionFromStart(start, profileId));
   };
 
   const retrySubmit = () => {
@@ -443,7 +443,7 @@ export default function TakeExamPage() {
       );
     }
 
-    if (examData.questions.length === 0) {
+    if (examData.questionCount === 0) {
       return (
         <StatusCard
           icon={<FileText className="w-12 h-12 text-gray-300" />}
@@ -464,9 +464,10 @@ export default function TakeExamPage() {
     return (
       <ExamIntro
         exam={examData.exam}
-        questionCount={examData.questions.length}
+        questionCount={examData.questionCount}
         startWindowLeftSec={startWindowLeftSec}
         windowEnd={access.windowEnd}
+        starting={isStarting}
         onStart={startExam}
         onBack={() => router.push(examsHref)}
       />
@@ -891,6 +892,7 @@ function ExamIntro({
   questionCount,
   startWindowLeftSec,
   windowEnd,
+  starting,
   onStart,
   onBack,
 }: {
@@ -904,6 +906,7 @@ function ExamIntro({
   questionCount: number;
   startWindowLeftSec: number | null;
   windowEnd: Date | null;
+  starting: boolean;
   onStart: () => void;
   onBack: () => void;
 }) {
@@ -1004,10 +1007,15 @@ function ExamIntro({
           <button
             type="button"
             onClick={onStart}
-            className="h-12 sm:h-11 px-6 inline-flex items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A]"
+            disabled={starting}
+            className="h-12 sm:h-11 px-6 inline-flex items-center justify-center gap-2 bg-[#22A146] text-white rounded-lg text-sm font-semibold hover:bg-[#1B8A3A] disabled:opacity-60"
           >
             {t("start")}
-            <ChevronRight className="w-4 h-4" />
+            {starting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

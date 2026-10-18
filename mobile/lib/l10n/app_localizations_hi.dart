@@ -1559,6 +1559,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'आपकी परीक्षा जमा नहीं हो सकी। कृपया फिर से कोशिश करें।';
 
   @override
+  String get takeStartFailed =>
+      'परीक्षा शुरू नहीं हो सकी। कृपया फिर से कोशिश करें।';
+
+  @override
   String get takeConfirmTitle => 'परीक्षा जमा करें?';
 
   @override

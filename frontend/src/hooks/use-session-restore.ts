@@ -3,6 +3,9 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useProfileStore } from "@/stores/profile-store";
 import { apiClient, refreshAccessToken } from "@/lib/api-client";
 
+// Restores the learner session after a full page load (the access token is
+// memory-only). Safe to mount in several places at once: concurrent calls
+// share a single refresh request via refreshAccessToken().
 export function useSessionRestore() {
   const { user, setUser, setAccessToken, setLoading } = useAuthStore();
   const { setActiveProfile } = useProfileStore();

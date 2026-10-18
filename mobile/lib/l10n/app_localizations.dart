@@ -2882,6 +2882,12 @@ abstract class AppLocalizations {
   /// **'We couldn\'t submit your exam. Please try again.'**
   String get takeSubmitError;
 
+  /// No description provided for @takeStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t start the exam. Please try again.'**
+  String get takeStartFailed;
+
   /// No description provided for @takeConfirmTitle.
   ///
   /// In en, this message translates to:

@@ -17,11 +17,12 @@ void main() {
   group('ExamSession', () {
     test('round-trips through JSON with answers, flags and position', () {
       final session = ExamSession(
+        sessionId: 's1',
         examId: 'e1',
         profileId: 'p1',
         title: 'Final',
-        closeDate: null,
         startedAt: DateTime(2026, 1, 1, 10),
+        deadline: DateTime(2026, 1, 1, 10, 30),
         durationMinutes: 30,
         questions: const [question],
         answers: {
@@ -30,34 +31,35 @@ void main() {
         flagged: {'q1'},
       );
       final restored = ExamSession.tryParse(jsonEncode(session.toJson()))!;
+      expect(restored.sessionId, 's1');
       expect(restored.startedAt, session.startedAt);
+      expect(restored.deadline, session.deadline);
       expect(restored.answers['q1'], ['A', 'B']);
       expect(restored.flagged, {'q1'});
       expect(restored.questions.single.options, ['A', 'B', 'C']);
       expect(restored.answeredCount, 1);
     });
 
-    test('deadline is the duration end, or just before an earlier close', () {
-      final start = DateTime(2026, 1, 1, 10);
-      ExamSession build(DateTime? close) => ExamSession(
-        examId: 'e1',
-        profileId: 'p1',
-        title: 'Final',
-        closeDate: close,
-        startedAt: start,
-        durationMinutes: 60,
+    test('fromStart uses the server deadline, corrected for clock error', () {
+      // Device clock runs 5 minutes behind the server.
+      final serverNow = DateTime.now().add(const Duration(minutes: 5));
+      final start = ExamStartData(
+        sessionId: 's1',
+        startedAt: serverNow,
+        deadline: serverNow.add(const Duration(minutes: 30)),
+        serverNow: serverNow,
+        exam: ExamTakeInfo.fromJson(const {'id': 'e1', 'duration': 30}),
         questions: const [question],
       );
-      expect(build(null).deadline, DateTime(2026, 1, 1, 11));
-      expect(
-        build(DateTime(2026, 1, 1, 10, 30)).deadline,
-        DateTime(2026, 1, 1, 10, 29, 50),
-      );
+      final session = ExamSession.fromStart(start, 'p1');
+      final left = session.deadline.difference(DateTime.now());
+      expect(session.sessionId, 's1');
+      expect(left.inSeconds, closeTo(30 * 60, 2));
     });
 
     test('rejects corrupt or empty data', () {
       expect(ExamSession.tryParse('not json'), isNull);
-      expect(ExamSession.tryParse(jsonEncode({'version': 1})), isNull);
+      expect(ExamSession.tryParse(jsonEncode({'version': 2})), isNull);
     });
   });
 

@@ -15,6 +15,9 @@ async function getStripe() {
   return stripeClient;
 }
 
+// Stripe (card) subscriptions. Runs alongside the manual subscriptions in
+// the subscription module; both write to the same Subscription table and
+// manual ones are told apart by their "manual_" id (isManualSubscription).
 export class BillingService {
   // ──────────────────────────────────
   // Subscription
@@ -32,7 +35,8 @@ export class BillingService {
       throw new NotFoundError("User not found");
     }
 
-    // Check if already has active subscription
+    // One active subscription per account (manual or Stripe); more seats
+    // means changing the quantity, not buying a second subscription.
     const existing = await prisma.subscription.findFirst({
       where: {
         accountId,
@@ -63,7 +67,8 @@ export class BillingService {
       });
     }
 
-    // Create checkout session
+    // Create checkout session. Nothing is granted here: the subscription row
+    // is only written when Stripe's webhook confirms payment (webhook.ts).
     const priceId =
       input.plan === "monthly"
         ? (env.STRIPE_MONTHLY_PRICE_ID ?? "price_monthly")
@@ -122,6 +127,8 @@ export class BillingService {
       );
     }
 
+    // Cancel at period end, not immediately: the family keeps what they paid
+    // for. Our row is updated later by the subscription.updated webhook.
     const stripe = await getStripe();
     await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
       cancel_at_period_end: true,

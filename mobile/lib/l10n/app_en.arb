@@ -884,6 +884,7 @@
   "takeWindowClosedToast": "The start window for this exam has closed",
   "takeSubmittedToast": "Exam submitted",
   "takeSubmitError": "We couldn't submit your exam. Please try again.",
+  "takeStartFailed": "We couldn't start the exam. Please try again.",
   "takeConfirmTitle": "Submit your exam?",
   "takeConfirmUnanswered": "You have {count, plural, one {{count} unanswered question} other {{count} unanswered questions}}. You can't change your answers after submitting.",
   "@takeConfirmUnanswered": {

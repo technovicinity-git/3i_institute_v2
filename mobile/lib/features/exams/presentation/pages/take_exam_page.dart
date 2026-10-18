@@ -55,6 +55,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
   Timer? _ticker;
   Timer? _saveDebounce;
   DateTime _now = DateTime.now();
+  bool _starting = false;
   bool _submitting = false;
   bool _submitted = false;
   String? _submitError;
@@ -168,7 +169,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _start(ExamTakeData data, String profileId) async {
+  Future<void> _start(ExamIntroData data, String profileId) async {
+    if (_starting) return;
+    // Quick check for a friendly message; the server makes the real call
+    // with its own clock.
     final access = ExamAccess.of(data.exam.openDate, data.exam.duration);
     if (access.status != ExamAccessStatus.open) {
       _showSnack(
@@ -178,18 +182,26 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       );
       return;
     }
-    final session = ExamSession(
-      examId: widget.examId,
-      profileId: profileId,
-      title: data.exam.title,
-      closeDate: data.exam.closeDate == null
-          ? null
-          : DateTime.tryParse(data.exam.closeDate!)?.toLocal(),
-      startedAt: DateTime.now(),
-      durationMinutes: data.exam.duration,
-      questions: data.questions,
-    );
+    setState(() => _starting = true);
+    final ExamStartData start;
+    try {
+      // Resumes the server attempt if one is already running (e.g. started
+      // on another device), with its original deadline.
+      start = await ref
+          .read(examsRepositoryProvider)
+          .startExam(widget.examId, profileId);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _starting = false);
+      _showSnack(
+        apiErrorMessage(error, fallback: context.l10n.takeStartFailed),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final session = ExamSession.fromStart(start, profileId);
     setState(() {
+      _starting = false;
       _session = session;
       _now = DateTime.now();
       _autoSubmitFired = false;
@@ -219,15 +231,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     try {
       await ref
           .read(examsRepositoryProvider)
-          .submitExam(
-            examId: session.examId,
-            profileId: session.profileId,
-            answers: answers,
-            startedAt: session.startedAt,
-            // Echo back exactly which questions were shown so REGULAR dynamic
-            // exams are graded against the same random set.
-            questions: session.questions,
-          );
+          .submitExam(sessionId: session.sessionId, answers: answers);
       _submitted = true;
       _saveDebounce?.cancel();
       await _store.clear(session.profileId, session.examId);
@@ -502,7 +506,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
 
     // Before the attempt starts: the schedule gate applies only here. Once
     // started, the learner keeps going even after the start window closes.
-    final asyncData = ref.watch(examQuestionsProvider(widget.examId));
+    final asyncData = ref.watch(examIntroProvider(widget.examId));
     return asyncData.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(color: _navy)),
@@ -518,7 +522,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           ),
           FilledButton(
             onPressed: () =>
-                ref.invalidate(examQuestionsProvider(widget.examId)),
+                ref.invalidate(examIntroProvider(widget.examId)),
             style: FilledButton.styleFrom(backgroundColor: _navy),
             child: Text(context.l10n.commonTryAgain),
           ),
@@ -556,7 +560,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             actions: [back],
           );
         }
-        if (data.questions.isEmpty) {
+        if (data.questionCount == 0) {
           return _CenteredStatus(
             icon: Icons.description_outlined,
             iconColor: const Color(0xFF94A3B8),
@@ -567,11 +571,12 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         }
         return _ExamIntro(
           exam: data.exam,
-          questionCount: data.questions.length,
+          questionCount: data.questionCount,
           windowEnd: access.windowEnd,
           windowLeftSec: access.windowEnd == null
               ? null
               : secondsUntil(access.windowEnd, _now),
+          starting: _starting,
           onStart: () => _start(data, profile.id),
           onBack: () => context.go(widget._examsPath),
         );
@@ -1220,6 +1225,7 @@ class _ExamIntro extends StatelessWidget {
     required this.questionCount,
     required this.windowEnd,
     required this.windowLeftSec,
+    required this.starting,
     required this.onStart,
     required this.onBack,
   });
@@ -1227,6 +1233,7 @@ class _ExamIntro extends StatelessWidget {
   final int questionCount;
   final DateTime? windowEnd;
   final int? windowLeftSec;
+  final bool starting;
   final VoidCallback onStart, onBack;
 
   @override
@@ -1394,9 +1401,18 @@ class _ExamIntro extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: FilledButton.icon(
-                onPressed: onStart,
+                onPressed: starting ? null : onStart,
                 iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.arrow_forward),
+                icon: starting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.arrow_forward),
                 label: Text(context.l10n.takeStart),
                 style: FilledButton.styleFrom(backgroundColor: _green),
               ),

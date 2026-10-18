@@ -1548,6 +1548,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get takeSubmitError => '⁧تعذّر إرسال اختبارك. حاول مرة أخرى.⁩';
 
   @override
+  String get takeStartFailed => '⁧تعذّر بدء الاختبار. حاول مرة أخرى.⁩';
+
+  @override
   String get takeConfirmTitle => '⁧إرسال اختبارك؟⁩';
 
   @override

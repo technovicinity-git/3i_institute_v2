@@ -20,6 +20,15 @@ import {
   type PaymentSettings,
 } from "#/modules/subscription/schema";
 
+// Manual (offline) subscriptions, one learner profile at a time:
+//   1. The family pays to one of the accounts in payment settings, then
+//      submits a request with the transaction ID (createRequest).
+//   2. An admin checks the payment and approves or rejects it.
+//   3. Approval creates a one-seat "manual_" subscription for a month, or
+//      extends the running one (approveRequest).
+//   4. The expiry job marks ended periods EXPIRED (expireDueSubscriptions).
+// An approved fee waiver discounts step 1; a 100% waiver skips payment.
+
 const PAYMENT_SETTINGS_KEY = "payment";
 
 const requestInclude = {
@@ -241,6 +250,8 @@ export class SubscriptionService {
       throw new NotFoundError("Learner profile not found");
     }
 
+    // One request in review per profile, so an admin never approves two
+    // months for the same payment by accident.
     const pending = await prisma.subscriptionRequest.findFirst({
       where: { learnerProfileId: profile.id, status: "PENDING" },
     });
@@ -298,6 +309,9 @@ export class SubscriptionService {
         );
       }
 
+      // The amount is what the family says they paid; it isn't compared with
+      // the expected price here. The admin sees both (formatRequest's
+      // expectedAmount) when reviewing.
       payment = {
         paymentMethod: input.paymentMethod,
         amount: input.amount,

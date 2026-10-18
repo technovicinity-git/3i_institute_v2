@@ -31,6 +31,8 @@ setInterval(
   5 * 60 * 1000,
 ).unref();
 
+// Fixed-window counter per client IP, kept in this process's memory: limits
+// reset on restart and are counted separately on each server instance.
 function rateLimit(options: RateLimitOptions) {
   const store = new Map<string, StoreEntry>();
   stores.add(store);

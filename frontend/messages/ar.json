@@ -847,7 +847,8 @@
     "backToExams": "العودة إلى الاختبارات",
     "countdownDays": "{d}ي {h}س {m}د",
     "toasts": {
-      "submitFailed": "تعذّر إرسال الاختبار"
+      "submitFailed": "تعذّر إرسال الاختبار",
+      "startFailed": "تعذّر بدء الاختبار. يرجى المحاولة مرة أخرى."
     }
   },
   "takeExam": {

@@ -11,6 +11,25 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
 
+  // Reverse proxies (load balancer, nginx, Cloudflare...) in front of the API.
+  // Without this, every request seems to come from the proxy's IP, so all
+  // users share one rate limit. Set it to the number of proxies (usually 1)
+  // or to their addresses ("loopback", "10.0.0.0/8"). Leave unset when the
+  // API is reached directly: trusting X-Forwarded-For then would let clients
+  // fake their IP and dodge rate limits.
+  TRUST_PROXY: emptyAsUndefined(
+    z
+      .string()
+      .optional()
+      .transform((value) =>
+        value === undefined
+          ? undefined
+          : /^\d+$/.test(value)
+            ? Number(value)
+            : value,
+      ),
+  ),
+
   // Database
   DATABASE_URL: z.string().url(),
 

@@ -1567,6 +1567,9 @@ class AppLocalizationsUr extends AppLocalizations {
       '⁧آپ کا امتحان جمع نہیں ہو سکا۔ دوبارہ کوشش کریں۔⁩';
 
   @override
+  String get takeStartFailed => '⁧امتحان شروع نہیں ہو سکا۔ دوبارہ کوشش کریں۔⁩';
+
+  @override
   String get takeConfirmTitle => '⁧امتحان جمع کرائیں؟⁩';
 
   @override

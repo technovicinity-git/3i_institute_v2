@@ -60,7 +60,8 @@ export class SeatService {
       throw new ValidationError("No active subscription found");
     }
 
-    // Check if seats available
+    // Check if seats available. Not atomic with the upsert below, so two
+    // assignments at the same moment could both take the last seat.
     if (subscription.assignedSeats.length >= subscription.seats) {
       throw new ValidationError(
         `No available seats. You have ${subscription.seats} seat(s) and ${subscription.assignedSeats.length} are assigned.`,
@@ -229,6 +230,8 @@ export class SeatService {
       where: {
         learnerProfileId,
         status: "ACTIVE",
+        // Period end is checked as well as status: status only flips to
+        // EXPIRED when the expiry job runs, which can lag behind.
         subscription: { status: "ACTIVE", currentPeriodEnd: { gt: new Date() } },
       },
       select: { id: true },

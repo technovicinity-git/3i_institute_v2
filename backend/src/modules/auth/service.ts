@@ -210,11 +210,14 @@ export class AuthService {
       },
     });
 
+    // Same message for "no such user" and "wrong password" so the response
+    // doesn't reveal which emails are registered.
     if (!user) {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    // Check account lockout (FR-AUTH-09)
+    // Check account lockout (FR-AUTH-09). While locked, the password is not
+    // even checked, so guessing during the lockout window gains nothing.
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       const remainingMinutes = Math.ceil(
         (user.lockedUntil.getTime() - Date.now()) / 60000,
@@ -227,6 +230,8 @@ export class AuthService {
     // Verify password
     const isValid = await verify(user.passwordHash, input.password);
 
+    // Each wrong password counts toward the lockout; the 5th locks the
+    // account for LOCKOUT_MINUTES and emails the owner.
     if (!isValid) {
       const failedAttempts = user.failedLoginAttempts + 1;
 
@@ -263,7 +268,8 @@ export class AuthService {
       throw new AccountInactiveError();
     }
 
-    // Reset failed attempts on success
+    // Correct password: reset the lockout counter, even if the email turns
+    // out to be unverified below — the user proved they know the password.
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -289,7 +295,8 @@ export class AuthService {
       permissions,
     });
 
-    // Store refresh token
+    // Store only a hash of the refresh token, so a database leak doesn't
+    // hand out usable sessions. One row per login = one per device.
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
@@ -325,7 +332,10 @@ export class AuthService {
       throw new UnauthorizedError("Invalid or expired refresh token");
     }
 
-    // Find the stored token by comparing hashes
+    // A valid JWT signature isn't enough: the token must also still exist in
+    // the database (not revoked by logout, password reset or rotation).
+    // Argon2 hashes are salted, so we can't look the row up by hash — load
+    // the user's live tokens and verify each one.
     const storedTokens = await prisma.refreshToken.findMany({
       where: {
         userId: payload.sub,
@@ -347,13 +357,16 @@ export class AuthService {
       throw new UnauthorizedError("Invalid refresh token");
     }
 
-    // Revoke old token
+    // Rotate: each refresh token works once. A second request with the same
+    // token gets "Invalid refresh token", so clients must not send parallel
+    // refreshes (the web app serialises them in refreshAccessToken()).
     await prisma.refreshToken.update({
       where: { id: matchingToken.id },
       data: { revokedAt: new Date() },
     });
 
-    // Get user with permissions
+    // Reload the user so role/permission changes and deactivation take
+    // effect on the next refresh, not only on the next login.
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
       include: {
@@ -403,7 +416,9 @@ export class AuthService {
   // Logout
   // ──────────────────────────────────
   async logout(userId: string) {
-    // Revoke all refresh tokens for this user
+    // Revokes every refresh token for this user, so logging out on one
+    // device signs out all devices. Access tokens already issued stay valid
+    // until they expire (JWT_ACCESS_EXPIRY).
     await prisma.refreshToken.updateMany({
       where: {
         userId,
@@ -541,6 +556,8 @@ export class AuthService {
 
     const passwordHash = await hash(input.newPassword);
 
+    // Unlike resetPassword, other sessions stay signed in: the user is
+    // already authenticated here and knew the current password.
     await prisma.user.update({
       where: { id: userId },
       data: { passwordHash },

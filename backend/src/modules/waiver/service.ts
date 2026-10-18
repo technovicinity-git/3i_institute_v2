@@ -11,6 +11,12 @@ import { emailLinks } from "#/modules/email/links";
 import { notificationEvents } from "#/modules/notification/events";
 import type { CreateWaiverInput } from "#/modules/waiver/schema";
 
+// Fee waivers: a family asks for a discount on a learner's subscription.
+//   PENDING  → admin APPROVES with a percent (stored as `tier`) or REJECTS
+//   APPROVED → applied to the next subscription request, then USED when that
+//              request is approved; or REVOKED by an admin; or EXPIRED after
+//              WAIVER_VALID_DAYS unused.
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** An approved waiver must be used on a subscription within this time. */
@@ -92,6 +98,8 @@ export async function findUsableWaiver(
       status: "APPROVED",
       expiresAt: { gt: new Date() },
     },
+    // apply() allows one open waiver per profile, so there is normally one
+    // match; if old data has more, the biggest discount wins.
     orderBy: { tier: "desc" },
   });
 }
@@ -157,6 +165,8 @@ export class WaiverService {
    * once the yearly limit is reached.
    */
   async applicationAllowance(learnerProfileId: string) {
+    // Every application counts, whatever its outcome — rejected ones too —
+    // so the limit can't be dodged by re-applying after a rejection.
     const since = new Date(Date.now() - 365 * DAY_MS);
     const recent = await prisma.waiver.findMany({
       where: { learnerProfileId, createdAt: { gte: since } },

@@ -21,10 +21,9 @@ final courseExamsProvider = FutureProvider.family<List<LearnerExam>, String>((
 
 // Auto-dispose: REGULAR exams return a fresh random question set per fetch,
 // so a retake must not reuse the previous attempt's cached set.
-final examQuestionsProvider = FutureProvider.autoDispose
-    .family<ExamTakeData, String>(
-      (ref, examId) =>
-          ref.watch(examsRepositoryProvider).getExamQuestions(examId),
+final examIntroProvider = FutureProvider.autoDispose
+    .family<ExamIntroData, String>(
+      (ref, examId) => ref.watch(examsRepositoryProvider).getExamIntro(examId),
     );
 
 /// examId → deadline of attempts in progress on this device, keyed by profile.

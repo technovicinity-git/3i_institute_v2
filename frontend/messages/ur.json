@@ -847,7 +847,8 @@
     "backToExams": "امتحانات پر واپس جائیں",
     "countdownDays": "{d}د {h}گ {m}م",
     "toasts": {
-      "submitFailed": "امتحان جمع نہیں ہو سکا"
+      "submitFailed": "امتحان جمع نہیں ہو سکا",
+      "startFailed": "امتحان شروع نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔"
     }
   },
   "takeExam": {

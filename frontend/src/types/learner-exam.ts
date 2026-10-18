@@ -47,7 +47,21 @@ export interface ExamTakeInfo {
   closeDate: string | null;
 }
 
-export interface ExamTakeData {
+/** GET /exams/:examId/intro — shown before starting. No question content. */
+export interface ExamIntroData {
+  exam: ExamTakeInfo;
+  questionCount: number;
+}
+
+/**
+ * POST /exams/:examId/start — the running attempt. Times are the server's
+ * clock; compare `serverNow` with the device clock to correct the timer.
+ */
+export interface ExamStartData {
+  sessionId: string;
+  startedAt: string;
+  deadline: string;
+  serverNow: string;
   exam: ExamTakeInfo;
   questions: ExamQuestion[];
 }

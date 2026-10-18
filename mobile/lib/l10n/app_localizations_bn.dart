@@ -1556,6 +1556,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার পরীক্ষা জমা দেওয়া যায়নি। আবার চেষ্টা করুন।';
 
   @override
+  String get takeStartFailed => 'পরীক্ষা শুরু করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
   String get takeConfirmTitle => 'পরীক্ষা জমা দেবেন?';
 
   @override

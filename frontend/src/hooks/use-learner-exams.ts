@@ -13,17 +13,29 @@ export function useCourseExams(courseId: string, learnerProfileId: string) {
   });
 }
 
-export function useExamQuestions(examId: string) {
+export function useExamIntro(examId: string) {
   return useQuery({
-    queryKey: ["exam-questions", examId],
-    queryFn: () => learnerExamService.getExamQuestions(examId),
+    queryKey: ["exam-intro", examId],
+    queryFn: () => learnerExamService.getExamIntro(examId),
     enabled: !!examId,
-    // REGULAR exams return a fresh random question set on every fetch, so a
-    // background refetch must never swap the questions under the learner.
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    // Don't keep a used question set around: a retake must get a fresh one.
-    gcTime: 0,
+  });
+}
+
+export function useStartExamMutation() {
+  const tToast = useTranslations("exams.toasts");
+
+  return useMutation({
+    mutationFn: ({
+      examId,
+      learnerProfileId,
+    }: {
+      examId: string;
+      learnerProfileId: string;
+    }) => learnerExamService.startExam(examId, learnerProfileId),
+    onError: (error: any) => {
+      const message = error.response?.data?.error?.message;
+      toast.error(message ?? tToast("startFailed"));
+    },
   });
 }
 
@@ -33,25 +45,14 @@ export function useSubmitExamMutation() {
 
   return useMutation({
     mutationFn: ({
-      examId,
-      learnerProfileId,
+      sessionId,
       answers,
-      startedAt,
-      questionSet,
     }: {
+      sessionId: string;
+      // Only used to refresh the right queries afterwards.
       examId: string;
-      learnerProfileId: string;
       answers: Record<string, string | string[]>;
-      startedAt?: string;
-      questionSet?: Array<{ questionId: string }>;
-    }) =>
-      learnerExamService.submitExam(
-        examId,
-        learnerProfileId,
-        answers,
-        startedAt,
-        questionSet,
-      ),
+    }) => learnerExamService.submitExam(sessionId, answers),
     onSuccess: (_data, { examId }) => {
       queryClient.invalidateQueries({ queryKey: ["course-exams"] });
       queryClient.invalidateQueries({ queryKey: ["exam-result", examId] });

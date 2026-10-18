@@ -1,24 +1,30 @@
-import type { ExamQuestion } from "@/types/learner-exam";
+import type { ExamQuestion, ExamStartData } from "@/types/learner-exam";
 
 export type ExamAnswer = string | string[];
 
 /**
- * An exam attempt in progress, persisted on this device so a page reload,
- * tab close or accidental navigation does not reset the timer, reshuffle a
- * random question set or lose the learner's answers.
+ * An exam attempt in progress, saved on this device so a page reload or tab
+ * close keeps the learner's answers and place. The timer and question set
+ * come from the server (POST /exams/:examId/start), which also enforces the
+ * deadline; this copy is only for display and resuming.
  */
 export interface ExamSession {
-  version: 1;
+  version: 2;
+  /** Server session id, sent back on submit. */
+  sessionId: string;
   examId: string;
   learnerProfileId: string;
   title: string;
-  /** Hard close date of the exam (ISO), if any — the server rejects later submits. */
-  closeDate: string | null;
-  /** When the learner pressed "Start Exam" (epoch ms). Anchors the timer. */
+  /** When the attempt started on the server, in device-clock epoch ms. */
   startedAt: number;
+  /**
+   * When time runs out (server deadline, already capped at the exam's close
+   * date), in device-clock epoch ms — shifted by the device's clock error.
+   */
+  deadline: number;
   /** Duration in minutes, frozen at start so a later edit can't shift it. */
   durationMinutes: number;
-  /** The exact questions shown (random set for REGULAR dynamic exams). */
+  /** The exact questions served (random set for REGULAR dynamic exams). */
   questions: ExamQuestion[];
   answers: Record<string, ExamAnswer>;
   flagged: string[];
@@ -35,10 +41,12 @@ function isValidSession(value: unknown): value is ExamSession {
   if (!value || typeof value !== "object") return false;
   const s = value as Partial<ExamSession>;
   return (
-    s.version === 1 &&
+    s.version === 2 &&
+    typeof s.sessionId === "string" &&
     typeof s.examId === "string" &&
     typeof s.learnerProfileId === "string" &&
     typeof s.startedAt === "number" &&
+    typeof s.deadline === "number" &&
     typeof s.durationMinutes === "number" &&
     Array.isArray(s.questions) &&
     s.questions.length > 0 &&
@@ -60,7 +68,6 @@ export function loadExamSession(
     return {
       ...parsed,
       title: typeof parsed.title === "string" ? parsed.title : "Exam",
-      closeDate: typeof parsed.closeDate === "string" ? parsed.closeDate : null,
       flagged: Array.isArray(parsed.flagged) ? parsed.flagged : [],
       currentQuestion: Math.min(
         Math.max(0, Number(parsed.currentQuestion) || 0),
@@ -98,19 +105,36 @@ export function clearExamSession(
   }
 }
 
-// Submit a little before a hard close date so the request lands in time.
-const CLOSE_DATE_BUFFER_MS = 10 * 1000;
+/** Device-clock epoch ms at which the session's time runs out. */
+export function getSessionDeadline(session: ExamSession): number {
+  return session.deadline;
+}
 
 /**
- * Epoch ms at which the session's time runs out: the end of the exam
- * duration, or shortly before the exam's close date if that comes first.
+ * Builds the local session from the server's start response. The device
+ * clock may be wrong, so server times are shifted by the difference between
+ * the server's "now" and the device's (network delay ignored — it only makes
+ * the timer end slightly early, and submit has a grace period).
  */
-export function getSessionDeadline(session: ExamSession): number {
-  const durationEnd = session.startedAt + session.durationMinutes * 60 * 1000;
-  const closeMs = session.closeDate ? Date.parse(session.closeDate) : NaN;
-  return Number.isNaN(closeMs)
-    ? durationEnd
-    : Math.min(durationEnd, closeMs - CLOSE_DATE_BUFFER_MS);
+export function sessionFromStart(
+  start: ExamStartData,
+  learnerProfileId: string,
+): ExamSession {
+  const clockOffset = Date.parse(start.serverNow) - Date.now();
+  return {
+    version: 2,
+    sessionId: start.sessionId,
+    examId: start.exam.id,
+    learnerProfileId,
+    title: start.exam.title,
+    startedAt: Date.parse(start.startedAt) - clockOffset,
+    deadline: Date.parse(start.deadline) - clockOffset,
+    durationMinutes: start.exam.duration,
+    questions: start.questions,
+    answers: {},
+    flagged: [],
+    currentQuestion: 0,
+  };
 }
 
 /**

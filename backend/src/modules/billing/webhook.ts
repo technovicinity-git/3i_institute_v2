@@ -1,6 +1,11 @@
 import { prisma } from "#/lib/prisma";
 import { notificationEvents } from "#/modules/notification/events";
 
+// Stripe is the source of truth for card subscriptions: these handlers copy
+// its state into our Subscription table. Stripe can deliver events more than
+// once and out of order, so handlers upsert / tolerate missing rows instead
+// of assuming "created" always arrives before "updated".
+
 interface StripeSubscriptionData {
   id: string;
   customer: string;
@@ -23,6 +28,7 @@ async function handleSubscriptionCreated(subscription: StripeSubscriptionData) {
     return;
   }
 
+  // Seat count comes from the metadata we set at checkout.
   const seats = parseInt(subscription.metadata?.seats ?? "1", 10);
 
   await prisma.subscription.upsert({
@@ -105,6 +111,8 @@ async function handleSubscriptionUpdated(subscription: StripeSubscriptionData) {
       ),
       currentPeriodStart: new Date(subscription.current_period_start * 1000),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      // Records when cancellation was requested; access continues until
+      // currentPeriodEnd. Cleared if the customer resumes the subscription.
       cancelledAt: subscription.cancel_at_period_end ? new Date() : null,
     },
   });
@@ -164,6 +172,8 @@ async function handleInvoicePaymentFailed(invoice: any) {
     });
 
     if (subscription) {
+      // PAST_DUE stops access (enrolment needs ACTIVE) while Stripe retries
+      // the card; a later successful retry sends subscription.updated → ACTIVE.
       await prisma.subscription.update({
         where: { stripeSubscriptionId: subscriptionId },
         data: { status: "PAST_DUE" },

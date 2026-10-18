@@ -27,7 +27,9 @@ export function useGoogleLoginMutation() {
     },
     onError: (error: any) => {
       const message = error.response?.data?.error?.message;
-      // Don't show error toast if DOB is required (modal will be shown instead)
+      // First Google sign-in on a new email: the API needs a date of birth
+      // to apply the age rules. GoogleButton shows a DOB modal and retries with
+      // the same idToken, so no error toast here.
       if (
         error.response?.data?.error?.code === "DATE_OF_BIRTH_REQUIRED" ||
         message?.includes("date of birth") ||
