@@ -204,7 +204,7 @@ export default function LessonPage() {
 
   if (isLoading || !courseContent) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#FBF9F4]">
+      <div className="flex items-center justify-center h-full bg-[#FBF9F4]">
         <div className="w-10 h-10 rounded-full border-4 border-[#12304E] border-t-transparent animate-spin" />
       </div>
     );
@@ -225,7 +225,7 @@ export default function LessonPage() {
 
   return (
     <div
-      className="flex h-screen min-h-0 bg-[#FBF9F4] overflow-hidden"
+      className="flex h-full min-h-0 bg-[#FBF9F4] overflow-hidden"
       style={{ fontFamily: "var(--font-body)" }}
     >
       {/* LEFT: Video + Lesson */}
