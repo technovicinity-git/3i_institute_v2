@@ -293,7 +293,7 @@ export default function LessonPage() {
             />
           )}
 
-          {/* Auto-mark document complete after 30 seconds */}
+          {/* Auto-mark document complete after 10 seconds */}
           {materialUrlData?.contentType === "document" && (
             <DocumentCompletionTracker
               activeProfileId={activeProfile?.id}
@@ -495,7 +495,7 @@ function DocumentCompletionTracker({
         {
           learnerProfileId: activeProfileId,
           materialId,
-          watchedSeconds: 30,
+          watchedSeconds: 10,
           lastPosition: 0,
           completed: true,
         },
@@ -505,7 +505,7 @@ function DocumentCompletionTracker({
           },
         },
       );
-    }, 30 * 1000);
+    }, 10 * 1000);
 
     return () => clearTimeout(timer);
   }, [
