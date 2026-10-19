@@ -659,7 +659,7 @@
     "noteSaved": "✓ Note saved",
     "noteEmpty": "Note cannot be empty",
     "courseExam": "Course exam",
-    "examUnlocked": "You have completed 90% of the course — you can now sit the exam.",
+    "examUnlocked": "The exam is unlocked — you can take it now.",
     "examLocked": "Complete 90% of the course to unlock the exam. You are at {progress}%.",
     "takeExam": "Take exam",
     "locked": "Locked",

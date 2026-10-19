@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Save, Lock, FileText, Award, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, FileText, Clock, ListVideo } from "lucide-react";
 import { toast } from "sonner";
 import { useProfileStore } from "@/stores/profile-store";
 import { LessonLocked } from "@/components/dashboard/subscription-access-banner";
@@ -25,10 +25,11 @@ import {
 } from "@/hooks/use-lesson";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar";
+import { CourseCompletionCard } from "@/components/lesson/course-completion-card";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProtectedPdfViewer } from "@/components/lesson/protected-pdf-viewer";
 import { useTranslations } from "next-intl";
-import { useDateFormat } from "@/i18n/use-date-format";
 
 function formatVideoDuration(seconds: number): string {
   const totalSeconds = Math.floor(seconds);
@@ -43,7 +44,6 @@ function formatVideoDuration(seconds: number): string {
 export default function LessonPage() {
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
-  const format = useDateFormat();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -90,6 +90,9 @@ export default function LessonPage() {
   };
 
   const [activeTab, setActiveTab] = useState<"overview" | "notes">("overview");
+
+  // Mobile lesson-list sheet; keyed to the lesson so picking another lesson closes it
+  const [lessonsSheetFor, setLessonsSheetFor] = useState<string | null>(null);
 
   const [notes, setNotes] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
@@ -207,8 +210,18 @@ export default function LessonPage() {
     );
   }
 
-  const courseProgress = courseContent.progress ?? 0;
-  const isExamUnlocked = courseProgress >= 90;
+  // Exam & certificate — REGULAR courses only
+  const completionCard =
+    courseContent.type === "REGULAR" ? (
+      <CourseCompletionCard
+        courseId={courseId}
+        courseProgress={courseContent.progress ?? 0}
+        certificate={certificate}
+        hasExamAttempt={hasExamAttempt}
+        isGenerating={issueCertMutation.isPending}
+        onGenerateCertificate={handleGenerateCertificate}
+      />
+    ) : null;
 
   return (
     <div
@@ -298,7 +311,7 @@ export default function LessonPage() {
           )}
 
           {/* Previous / Next navigation */}
-          <div className="flex items-center justify-between gap-4 mt-10 pt-6 border-t border-[#E3E8EF]">
+          <div className="flex items-center justify-between gap-3 mt-10 me-4 pt-6 border-t border-[#E3E8EF]">
             <button
               onClick={() => previousLesson && goToLesson(previousLesson.id)}
               disabled={!previousLesson}
@@ -310,6 +323,15 @@ export default function LessonPage() {
             >
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{t("previous")}</span>
+            </button>
+
+            {/* Lesson list — mobile/tablet only; desktop has the sidebar */}
+            <button
+              onClick={() => setLessonsSheetFor(lessonId)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#E3E8EF] bg-white text-sm font-semibold text-[#0C1F33] hover:bg-gray-50"
+            >
+              <ListVideo className="w-4 h-4" />
+              {t("sidebar.title")}
             </button>
 
             <button
@@ -325,6 +347,27 @@ export default function LessonPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Exam & certificate — mobile/tablet only; desktop shows it in the sidebar */}
+          {completionCard && (
+            <div className="lg:hidden mt-6 me-4 bg-white rounded-xl border border-[#E3E8EF] p-4">
+              {completionCard}
+            </div>
+          )}
+
+          <Sheet
+            open={lessonsSheetFor === lessonId}
+            onOpenChange={(open) => setLessonsSheetFor(open ? lessonId : null)}
+          >
+            <SheetContent side="right" className="w-[85%] sm:max-w-sm max-h-[calc(100vh-320px)] gap-0 p-0 lg:hidden">
+              <SheetTitle className="sr-only">{t("sidebar.title")}</SheetTitle>
+              <CourseContentSidebar
+                courseId={courseId}
+                currentLessonId={lessonId}
+                courseContent={courseContent}
+              />
+            </SheetContent>
+          </Sheet>
 
           {/* Lesson detail */}
           <section className="w-full bg-[#FBF9F4]">
@@ -416,164 +459,6 @@ export default function LessonPage() {
               </div>
             </div>
           </section>
-
-          {/* Take Exam — REGULAR courses, unlocked after 90% completion */}
-          {courseContent.type === "REGULAR" && (
-            <section className="w-full bg-[#FBF9F4]">
-              <div className="px-6 sm:px-8 pt-2 pb-12">
-                <div className="w-full max-w-4xl mx-auto bg-white rounded-xl border border-[#E3E8EF] px-6 sm:px-8 py-8">
-                  <div className="flex items-start justify-between gap-6 flex-wrap">
-                    <div className="flex-1 min-w-0">
-                      <h2
-                        className="text-xl text-[#0C1F33]"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {t("courseExam")}
-                      </h2>
-                      <p className="mt-2 text-sm text-[#475569]">
-                        {isExamUnlocked
-                          ? t("examUnlocked")
-                          : t("examLocked", { progress: courseProgress })}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => router.push(`/my-courses/${courseId}/exams`)}
-                      disabled={!isExamUnlocked}
-                      className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
-                        isExamUnlocked
-                          ? "bg-[#22A146] text-white hover:bg-[#1E9040]"
-                          : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
-                      }`}
-                    >
-                      {isExamUnlocked ? (
-                        <>
-                          <FileText className="w-4 h-4" />
-                          {t("takeExam")}
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-4 h-4" />
-                          {t("locked")}
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between text-xs text-[#64748B] mb-1.5">
-                      <span>{t("courseProgress")}</span>
-                      <span>{courseProgress}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          isExamUnlocked ? "bg-[#22A146]" : "bg-[#F59E0B]"
-                        }`}
-                        style={{ width: `${Math.min(100, courseProgress)}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-[#64748B]">
-                      {isExamUnlocked ? t("examUnlockedShort") : t("examUnlockHint")}
-                    </p>
-                  </div>
-
-                  {/* Certificate — one-time, after at least one exam attempt */}
-                  <div className="mt-6 border-t border-[#E3E8EF] pt-6">
-                    {certificate ? (
-                      <div className="bg-[#FBF9F4] rounded-lg border border-[#22A146]/30 p-6">
-                        <div className="flex items-center gap-3">
-                          <Award className="w-9 h-9 text-[#22A146]" />
-                          <div>
-                            <h3 className="text-base font-semibold text-[#0C1F33]">
-                              {t("certificateGenerated")}
-                            </h3>
-                            <p className="text-xs text-[#64748B]">
-                              {t("issuedOn", { date: format.date(certificate.issuedAt) })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-6 mt-4">
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-[#64748B]">
-                              {t("courseProgress")}
-                            </p>
-                            <p className="text-xl font-semibold text-[#0C1F33] mt-1">
-                              {certificate.details?.progress ?? 0}%
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-[#64748B]">
-                              {t("lastExamScore")}
-                            </p>
-                            <p className="text-xl font-semibold text-[#0C1F33] mt-1">
-                              {certificate.details?.score === null
-                                ? t("pending")
-                                : typeof certificate.details?.score === "number"
-                                  ? certificate.details.score
-                                  : "—"}
-                              {typeof certificate.details?.score === "number" &&
-                                `/${certificate.details?.totalMarks ?? 0}`}
-                            </p>
-                          </div>
-                        </div>
-                        {certificate.details?.examTitle && (
-                          <p className="mt-3 text-xs text-[#64748B]">
-                            {t("latestAttempt", {
-                              title: certificate.details.examTitle,
-                            })}
-                            {certificate.details.attemptNumber
-                              ? ` · ${t("attemptNumber", { number: certificate.details.attemptNumber })}`
-                              : ""}
-                          </p>
-                        )}
-                        <p className="mt-4 text-xs text-[#64748B]">
-                          {t("verificationCode")}{" "}
-                          <span dir="ltr" className="font-mono font-semibold text-[#0C1F33]">
-                            {certificate.verificationCode}
-                          </span>
-                        </p>
-                        <button
-                          onClick={() => downloadExamCertificatePdf(certificate)}
-                          className="mt-4 px-4 py-2 bg-[#12304E] text-white rounded-lg text-sm font-semibold hover:bg-[#0C1F33]"
-                        >
-                          {t("downloadPdf")}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between gap-4 flex-wrap">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#0C1F33]">
-                            {t("courseCertificate")}
-                          </p>
-                          <p className="mt-1 text-xs text-[#64748B]">
-                            {hasExamAttempt
-                              ? t("certificateHint")
-                              : t("certificateLocked")}
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleGenerateCertificate}
-                          disabled={!hasExamAttempt || issueCertMutation.isPending}
-                          className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
-                            hasExamAttempt && !issueCertMutation.isPending
-                              ? "border border-[#12304E] text-[#12304E] hover:bg-gray-50"
-                              : "bg-gray-100 text-[#94A3B8] cursor-not-allowed"
-                          }`}
-                        >
-                          <Award className="w-4 h-4" />
-                          {issueCertMutation.isPending
-                            ? t("generating")
-                            : t("generateCertificate")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
         </div>
       </div>
       {/* RIGHT: Sidebar */}
@@ -582,6 +467,7 @@ export default function LessonPage() {
           courseId={courseId}
           currentLessonId={lessonId}
           courseContent={courseContent}
+          summary={completionCard}
         />
       </aside>
     </div>

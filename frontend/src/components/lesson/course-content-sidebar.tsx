@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -31,12 +32,15 @@ interface CourseContentSidebarProps {
   courseId: string;
   currentLessonId: string;
   courseContent: CourseLessonPage;
+  /** Pinned above the lesson list (e.g. exam & certificate). */
+  summary?: ReactNode;
 }
 
 export function CourseContentSidebar({
   courseId,
   currentLessonId,
   courseContent,
+  summary,
 }: CourseContentSidebarProps) {
   const t = useTranslations("lesson");
   const router = useRouter();
@@ -55,7 +59,7 @@ export function CourseContentSidebar({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full max-h-[calc(100vh-120px)] flex-col">
       <div className="shrink-0 border-b border-[#E3E8EF] px-5 py-4">
         <h2
           className="text-lg text-[#0C1F33]"
@@ -69,6 +73,12 @@ export function CourseContentSidebar({
           })}
         </p>
       </div>
+
+      {summary && (
+        <div className="shrink-0 border-b border-[#E3E8EF] bg-[#FBF9F4] px-5 py-4">
+          {summary}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {lessons.length === 0 ? (
